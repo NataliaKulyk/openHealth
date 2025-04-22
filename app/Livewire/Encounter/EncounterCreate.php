@@ -41,6 +41,10 @@ class EncounterCreate extends EncounterComponent
         $formattedObservations = !empty($this->form->observations) ? $encounterRepository->formatObservationsRequest($this->form->observations) : null;
         $formattedDiagnosticReports = !empty($this->form->diagnosticReports) ? $encounterRepository->formatDiagnosticReportsRequest($this->form->diagnosticReports) : null;
 
+        if (!empty($this->form->observations)) {
+            $formattedObservations = $encounterRepository->formatObservationsRequest($this->form->observations);
+        }
+
         // Validate formatted data
         try {
             $this->form->validateForm('encounter', $formattedEncounter);
