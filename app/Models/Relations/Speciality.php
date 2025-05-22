@@ -4,6 +4,7 @@ namespace App\Models\Relations;
 
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,14 @@ class Speciality extends Model
 {
     use HasFactory;
     use HasCamelCasing;
+
+    protected $hidden = [
+        'id',
+        'specialityable_id',
+        'specialityable_type',
+        'created_at',
+        'updated_at'
+    ];
 
     protected $fillable = [
         'speciality',
@@ -24,4 +33,9 @@ class Speciality extends Model
         'valid_to_date',
         'certificate_number'
     ];
+
+    public function specialityable(): MorphTo
+    {
+        return $this->morphTo();
+    }
 }

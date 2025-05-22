@@ -15,6 +15,14 @@ class Education extends Model
     use HasFactory;
     use HasCamelCasing;
 
+    protected $hidden = [
+        'id',
+        'educationable_id',
+        'educationable_type',
+        'created_at',
+        'updated_at'
+    ];
+
     protected $fillable = [
         'country',
         'city',

@@ -239,5 +239,9 @@ return [
     'complete_the_interaction_and_sign' => 'Завершити взаємодію та підписати',
     'patient' => 'Пацієнт',
     'yes' => 'Так',
-    'no' => 'Ні'
+    'no' => 'Ні',
+    'update_successfull' => 'Дані оновлено успішно',
+    'errors' => [
+        'update_data' => 'Сталася помилка під час оновлення даних'
+    ]
 ];
