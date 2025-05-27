@@ -44,6 +44,7 @@
                     <use xlink:href="#svg-clock"></use>
                 </svg>
                 <input x-model="modalImmunization.time"
+                       @input="$event.target.blur()"
                        datepicker-max-date="{{ now()->format('Y-m-d') }}"
                        type="time"
                        name="immunizationTime"
@@ -156,7 +157,7 @@
                     {{ __('patients.reasons') }}
                 </label>
                 <select type="text"
-                        x-model="modalImmunization.explanation.reasonsNotGiven.coding[0].code"
+                        x-model="modalImmunization.explanation.reasonsNotGiven[0].coding[0].code"
                         id="reasonsNotGiven"
                         class="input-modal"
                         required
@@ -170,7 +171,7 @@
                 </select>
 
                 <p class="text-error text-xs"
-                   x-show="!Object.keys(reasonNotGivenExplanationsDictionary).includes(modalImmunization.explanation.reasonsNotGiven.coding[0].code)"
+                   x-show="!Object.keys(reasonNotGivenExplanationsDictionary).includes(modalImmunization.explanation.reasonsNotGiven[0].coding[0].code)"
                 >
                     {{ __('forms.field_empty') }}
                 </p>
