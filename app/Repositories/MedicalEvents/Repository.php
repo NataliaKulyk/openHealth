@@ -40,4 +40,9 @@ final class Repository
     {
         return app(ImmunizationRepository::class);
     }
+
+    public static function observation(): ObservationRepository
+    {
+        return app(ObservationRepository::class);
+    }
 }

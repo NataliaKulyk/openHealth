@@ -121,7 +121,7 @@
                 >
                     <use xlink:href="#svg-calendar-week"></use>
                 </svg>
-                <input x-model="modalObservation.date"
+                <input x-model="modalObservation.issuedDate"
                        datepicker-max-date="{{ now()->format('Y-m-d') }}"
                        type="text"
                        name="issuedDate"
@@ -132,7 +132,7 @@
                 >
             </div>
 
-            <p class="text-error text-xs" x-show="modalObservation.date.trim() === ''">
+            <p class="text-error text-xs" x-show="modalObservation.issuedDate.trim() === ''">
                 {{ __('forms.field_empty') }}
             </p>
         </div>
@@ -148,7 +148,7 @@
                 >
                     <use xlink:href="#svg-clock"></use>
                 </svg>
-                <input x-model="modalObservation.time"
+                <input x-model="modalObservation.issuedTime"
                        @input="$event.target.blur()"
                        datepicker-max-date="{{ now()->format('Y-m-d') }}"
                        type="time"
@@ -160,7 +160,7 @@
                 >
             </div>
 
-            <p class="text-error text-xs" x-show="modalObservation.time.trim() === ''">
+            <p class="text-error text-xs" x-show="modalObservation.issuedTime.trim() === ''">
                 {{ __('forms.field_empty') }}
             </p>
         </div>

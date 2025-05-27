@@ -21,10 +21,13 @@ class EncounterEdit extends EncounterComponent
 
         $this->encounterId = $encounterId;
 
-        $encounter = $this->form->encounter = Repository::encounter()->get($this->encounterId);
+        $encounter = Repository::encounter()->get($this->encounterId);
+
         if (!$encounter) {
             abort(404);
         }
+
+        $this->form->encounter = $encounter;
 
         $this->form->episode = Repository::episode()->get($this->encounterId);
 
@@ -33,6 +36,9 @@ class EncounterEdit extends EncounterComponent
 
         $this->form->immunizations = Repository::immunization()->get($this->encounterId);
         $this->form->immunizations = Repository::immunization()->formatForView($this->form->immunizations);
+
+        $this->form->observations = Repository::observation()->get($this->encounterId);
+        $this->form->observations = Repository::observation()->formatForView($this->form->observations);
 
         $this->setDefaultDate();
     }

@@ -11,6 +11,7 @@ use App\Repositories\MedicalEvents\EncounterRepository;
 use App\Repositories\MedicalEvents\EpisodeRepository;
 use App\Repositories\MedicalEvents\IdentifierRepository;
 use App\Repositories\MedicalEvents\ImmunizationRepository;
+use App\Repositories\MedicalEvents\ObservationRepository;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
 use RuntimeException;
@@ -31,6 +32,7 @@ class MedicalEventsDBServiceProvider extends ServiceProvider implements Deferrab
         $this->bindRepository(EpisodeRepository::class);
         $this->bindRepository(ConditionRepository::class);
         $this->bindRepository(ImmunizationRepository::class);
+        $this->bindRepository(ObservationRepository::class);
     }
 
     /**
@@ -72,6 +74,7 @@ class MedicalEventsDBServiceProvider extends ServiceProvider implements Deferrab
             EpisodeRepository::class,
             ConditionRepository::class,
             ImmunizationRepository::class,
+            ObservationRepository::class,
         ];
     }
 }

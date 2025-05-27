@@ -10,6 +10,7 @@ use App\Models\Employee\Employee;
 use App\Repositories\MedicalEvents\Repository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Str;
 use Throwable;
@@ -37,10 +38,12 @@ class EncounterCreate extends EncounterComponent
         $formattedEpisode = $encounterRepository->formatEpisodeRequest($this->form->episode, $this->form->encounter['period']);
         $formattedConditions = $encounterRepository->formatConditionsRequest($this->form->conditions);
 
+        $formattedImmunizations = null;
         if (!empty($this->form->immunizations)) {
             $formattedImmunizations = $encounterRepository->formatImmunizationsRequest($this->form->immunizations);
         }
 
+        $formattedObservations = null;
         if (!empty($this->form->observations)) {
             $formattedObservations = $encounterRepository->formatObservationsRequest($this->form->observations);
         }
@@ -74,20 +77,26 @@ class EncounterCreate extends EncounterComponent
             return;
         }
 
-        $createdEncounterId = Repository::encounter()->store(
-            $formattedEncounter['encounter'],
-            $formattedEpisode['episode'],
-            $this->patientId
-        );
+        DB::transaction(function () use ($formattedEncounter, $formattedEpisode, $formattedConditions, $formattedImmunizations, $formattedObservations) {
+            $createdEncounterId = Repository::encounter()->store(
+                $formattedEncounter['encounter'],
+                $formattedEpisode['episode'],
+                $this->patientId
+            );
 
-        Repository::condition()->store($formattedConditions['conditions'], $createdEncounterId);
+            Repository::condition()->store($formattedConditions['conditions'], $createdEncounterId);
 
-        if (isset($formattedImmunizations)) {
-            Repository::immunization()->store($formattedImmunizations['immunizations'], $createdEncounterId);
-        }
+            if (isset($formattedImmunizations)) {
+                Repository::immunization()->store($formattedImmunizations['immunizations'], $createdEncounterId);
+            }
+
+            if (isset($formattedObservations)) {
+                Repository::observation()->store($formattedObservations['observations'], $createdEncounterId);
+            }
+        });
 
         $encounter = PatientApi::getShortEncounterBySearchParams($this->patientUuid);
-        $job = PatientApi::getJobsDetailsById('67e64af98c67240046bb4b2f');
+        $job = PatientApi::getJobsDetailsById('683408acf712c70046293a6a');
     }
 
     /**
@@ -106,10 +115,12 @@ class EncounterCreate extends EncounterComponent
         $formattedEpisode = $encounterRepository->formatEpisodeRequest($this->form->episode, $this->form->encounter['period']);
         $formattedConditions = $encounterRepository->formatConditionsRequest($this->form->conditions);
 
+        $formattedImmunizations = [];
         if (!empty($this->form->immunizations)) {
             $formattedImmunizations = $encounterRepository->formatImmunizationsRequest($this->form->immunizations);
         }
 
+        $formattedObservations = [];
         if (!empty($this->form->observations)) {
             $formattedObservations = $encounterRepository->formatObservationsRequest($this->form->observations);
         }
@@ -123,13 +134,13 @@ class EncounterCreate extends EncounterComponent
                 $this->form->validateForm('conditions', ['conditions' => [$formattedCondition]]);
             }
 
-            if (isset($formattedImmunizations)) {
+            if (!empty($formattedImmunizations)) {
                 foreach ($formattedImmunizations['immunizations'] as $formattedImmunization) {
                     $this->form->validateForm('immunizations', ['immunizations' => [$formattedImmunization]]);
                 }
             }
 
-            if (isset($formattedObservations)) {
+            if (!empty($formattedObservations)) {
                 foreach ($formattedObservations['observations'] as $formattedObservation) {
                     $this->form->validateForm('observations', ['observations' => [$formattedObservation]]);
                 }

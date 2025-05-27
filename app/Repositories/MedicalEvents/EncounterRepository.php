@@ -350,6 +350,14 @@ class EncounterRepository extends BaseRepository
                 unset($immunization['explanation']['reasonsNotGiven']);
             }
 
+            if ($immunization['route']['coding'][0]['code'] === '') {
+                unset($immunization['route']);
+            }
+
+            if ($immunization['site']['coding'][0]['code'] === '') {
+                unset($immunization['site']);
+            }
+
             if (is_null($immunization['doseQuantity']['value'])) {
                 unset($immunization['doseQuantity']);
             }
@@ -397,8 +405,8 @@ class EncounterRepository extends BaseRepository
                 unset($observation['effectiveDateTime']);
             }
 
-            $observation['issued'] = convertToISO8601($observation['date'] . $observation['time']);
-            unset($observation['date'], $observation['time']);
+            $observation['issued'] = convertToISO8601($observation['issuedDate'] . $observation['issuedTime']);
+            unset($observation['issuedDate'], $observation['issuedTime']);
 
             $observation['context']['identifier']['type']['coding'][0] = [
                 'system' => 'eHealth/resources',
@@ -436,13 +444,26 @@ class EncounterRepository extends BaseRepository
             // combine date&time
             if (isset($observation['valueDate'], $observation['valueTime'])) {
                 $observation['valueDateTime'] = convertToISO8601($observation['valueDate'] . $observation['valueTime']);
+                unset($observation['valueDate'], $observation['valueTime']);
             }
 
-            if (empty($observation['components'][0]['code']['coding'][0]['code'])) {
+            if (empty($observation['bodySite']['coding'][0]['code'])) {
+                unset($observation['bodySite']);
+            }
+
+            if (empty($observation['interpretation']['coding'][0]['code'])) {
+                unset($observation['interpretation']);
+            }
+
+            if (empty($observation['method']['coding'][0]['code'])) {
+                unset($observation['method']);
+            }
+
+            if ($observation['components'][0]['valueCodeableConcept']['coding'][0]['code'] === '') {
                 unset($observation['components']);
             }
 
-            if (empty($observation['components'][0]['interpretation']['coding'][0]['code'])) {
+            if ($observation['components'][0]['interpretation']['coding'][0]['code'] === '') {
                 unset($observation['components']);
             }
 

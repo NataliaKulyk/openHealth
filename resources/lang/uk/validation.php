@@ -476,6 +476,7 @@ return [
             'diagnoses.rank' => 'пріоритет'
         ],
         'conditions' => 'діагнози',
+        'conditions.*.reportOrigin.coding.*.code' => 'джерело інформації',
         'conditions.*.code.coding.0.code' => 'код стану за ICPC-2',
         'conditions.*.code.coding.1.code' => 'код стану за МКХ-10',
         'conditions.*.onsetDate' => 'дата початку',

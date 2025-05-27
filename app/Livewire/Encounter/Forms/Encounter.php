@@ -103,6 +103,7 @@ class Encounter extends Form
             'conditions.*.primarySource' => ['required', 'boolean'],
             'conditions.*.asserter' => ['required_if:conditions.*.primarySource,true', 'array'],
             'conditions.*.reportOrigin' => ['required_if:conditions.*.primarySource,false', 'array'],
+            'conditions.*.reportOrigin.coding.*.code' => ['required', 'string'],
             'conditions.*.code.coding.0.code' => ['required', 'string'],
             'conditions.*.code.coding.1.code' => ['required_if:encounter.class.code,AMB, INPATIENT', 'string'],
             'conditions.*.clinicalStatus' => ['required', 'string'],
@@ -253,10 +254,10 @@ class Encounter extends Form
             'observations.*.valueBoolean' => ['sometimes', 'boolean'],
             'observations.*.valueDateTime' => ['sometimes', 'date'],
             'observations.*.method.coding.*.code' => [
-                'required', 'string', new InDictionary('eHealth/observation_methods')
+                'nullable', 'string', new InDictionary('eHealth/observation_methods')
             ],
             'observations.*.interpretation.coding.*.code' => [
-                'required', 'string', new InDictionary('eHealth/observation_interpretations')
+                'nullable', 'string', new InDictionary('eHealth/observation_interpretations')
             ],
             'observations.*.issued' => ['required', 'date'],
         ];

@@ -13,11 +13,12 @@
                   observationCodesDictionary: $wire.dictionaries['eHealth/LOINC/observation_codes'],
                   icfObservationCodesDictionary: $wire.dictionaries['eHealth/ICF/classifiers'],
                   reportOriginsDictionary: $wire.dictionaries['eHealth/report_origins'],
+                  observationInterpretationsDictionary: $wire.dictionaries['eHealth/observation_interpretations'],
                   extentOrMagnitudeOfImpairmentDictionary: $wire.dictionaries['eHealth/ICF/qualifiers/extent_or_magnitude_of_impairment'],
                   natureOfChangeInBodyStructureDictionary: $wire.dictionaries['eHealth/ICF/qualifiers/nature_of_change_in_body_structure'],
                   anatomicalLocalizationDictionary: $wire.dictionaries['eHealth/ICF/qualifiers/anatomical_localization'],
                   performanceDictionary: $wire.dictionaries['eHealth/ICF/qualifiers/performance'],
-                  capacityDictionary: $wire.dictionaries['eHealth/ICF/qualifiers/capacity'],
+                  capacityDictionary: $wire.dictionaries['eHealth/ICF/qualifiers/capacity']
               }"
     >
         <legend class="legend">
@@ -62,7 +63,7 @@
                             : $wire.dictionaries[observation.dictionaryName]?.[observation.valueCodeableConcept]
                         "
                     ></td>
-                    <td class="td-input" x-text="observation.date"></td>
+                    <td class="td-input" x-text="observation.issuedDate"></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
                         <div x-data="{
@@ -248,7 +249,7 @@
                                             "
                                             class="button-primary"
                                             :disabled="!(
-                                                modalObservation.date.trim().length > 0 && modalObservation.time.trim().length > 0 &&
+                                                modalObservation.issuedDate.trim().length > 0 && modalObservation.issuedTime.trim().length > 0 &&
                                                 modalObservation.categories[0].coding[0].code.trim().length > 0 &&
                                                 modalObservation.code.coding[0].code.trim().length > 0
                                             )"
@@ -332,8 +333,8 @@
             coding: [{system: 'eHealth/body_sites', code: ''}],
             text: ''
         };
-        date = new Date().toISOString().split('T')[0];
-        time = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false });
+        issuedDate = new Date().toISOString().split('T')[0];
+        issuedTime = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false });
         effectiveDate = new Date().toISOString().split('T')[0];
         effectiveTime = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false });
 
