@@ -37,16 +37,8 @@ class EncounterCreate extends EncounterComponent
         $formattedEncounter = $encounterRepository->formatEncounterRequest($this->form->encounter, $this->form->conditions);
         $formattedEpisode = $encounterRepository->formatEpisodeRequest($this->form->episode, $this->form->encounter['period']);
         $formattedConditions = $encounterRepository->formatConditionsRequest($this->form->conditions);
-
-        $formattedImmunizations = null;
-        if (!empty($this->form->immunizations)) {
-            $formattedImmunizations = $encounterRepository->formatImmunizationsRequest($this->form->immunizations);
-        }
-
-        $formattedObservations = null;
-        if (!empty($this->form->observations)) {
-            $formattedObservations = $encounterRepository->formatObservationsRequest($this->form->observations);
-        }
+        $formattedImmunizations = !empty($this->form->immunizations) ? $encounterRepository->formatImmunizationsRequest($this->form->immunizations) : null;
+        $formattedObservations = !empty($this->form->observations) ? $encounterRepository->formatObservationsRequest($this->form->observations) : null;
 
         // Validate formatted data
         try {
@@ -114,16 +106,8 @@ class EncounterCreate extends EncounterComponent
         $formattedEncounter = $encounterRepository->formatEncounterRequest($this->form->encounter, $this->form->conditions);
         $formattedEpisode = $encounterRepository->formatEpisodeRequest($this->form->episode, $this->form->encounter['period']);
         $formattedConditions = $encounterRepository->formatConditionsRequest($this->form->conditions);
-
-        $formattedImmunizations = [];
-        if (!empty($this->form->immunizations)) {
-            $formattedImmunizations = $encounterRepository->formatImmunizationsRequest($this->form->immunizations);
-        }
-
-        $formattedObservations = [];
-        if (!empty($this->form->observations)) {
-            $formattedObservations = $encounterRepository->formatObservationsRequest($this->form->observations);
-        }
+        $formattedImmunizations = !empty($this->form->immunizations) ? $encounterRepository->formatImmunizationsRequest($this->form->immunizations) : [];
+        $formattedObservations = !empty($this->form->observations) ? $encounterRepository->formatObservationsRequest($this->form->observations) : [];
 
         // Validate formatted data
         try {

@@ -162,7 +162,7 @@ class ImmunizationRepository extends BaseRepository
     }
 
     /**
-     * Formatting immunizations for showing in frontend.
+     * Formatting immunizations to show on the frontend.
      *
      * @param  array  $immunizations
      * @return array

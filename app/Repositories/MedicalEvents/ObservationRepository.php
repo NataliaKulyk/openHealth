@@ -154,7 +154,7 @@ class ObservationRepository extends BaseRepository
     }
 
     /**
-     * Formatting observations for showing in frontend.
+     * Formatting observations to show on the frontend.
      *
      * @param  array  $observations
      * @return array
