@@ -7,12 +7,11 @@
     <x-authentication-card>
 
         <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-            {{ __('auth.login.enter') }}
+            {{ __('forms.enter') }}
         </h2>
 
         <form
             x-data="{ isLocalAuth: $wire.entangle('isLocalAuth')  }"
-            autocomplete="off"
             wire:submit.prevent="login"
         >
             <div class="form-group group">
@@ -34,7 +33,7 @@
                 @endif
 
                 <label for="email" class="label z-10">
-                    {{ __('Email') }}
+                    {{ __('forms.email') }}
                 </label>
             </div>
 
@@ -58,7 +57,7 @@
                     @endif
 
                     <label for="password" class="label z-10">
-                        {{ __('auth.login.password') }}
+                        {{ __('forms.password') }}
                     </label>
                 </div>
             </div>
@@ -88,7 +87,7 @@
                     id="submitButton"
                     class="login-button cursor-pointer"
                 >
-                    {{ __('auth.login.enter')  }}
+                    {{ __('forms.enter')  }}
                 </button>
             </div>
 
@@ -99,16 +98,16 @@
                         class="hover:text-gray-700 text-gray-400 dark:text-gray-400"
                         href="{{ route('register') }}"
                     >
-                        {{ __('auth.login.register') }} /
+                        {{ __('forms.need_register') }} /
                     </a>
 
-                    @if (Route::has('password.request'))
+                    @if (Route::has('forgot.password'))
                         <a
                             wire:navigate
                             class="hover:text-gray-700 text-gray-400 dark:text-gray-400"
-                            href="{{ route('password.request') }}"
+                            href="{{ route('forgot.password') }}"
                         >
-                            {{ __('auth.login.forgot_password') }}
+                            {{ __('forms.forgot_password') }}
                         </a>
                     @endif
                 </p>

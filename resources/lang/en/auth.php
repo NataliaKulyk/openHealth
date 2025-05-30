@@ -15,11 +15,14 @@ return [
 
     'failed' => 'These credentials do not match our records.',
     'password' => 'The provided password is incorrect.',
-    'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
+    'throttle' => 'Too many login attempts. Please try again in :seconds sec',
     'login' => [
         'success' => [
             'user_auth' => 'AUTH: Login successful',
-            'new_user_auth' => 'AUTH: New user successfully authenticated'
+            'new_user_create' => 'User has been successfully created',
+            'new_user_auth' => 'AUTH: New user successfully authenticated',
+            'verification' => 'User\'s Email has been successfully verified',
+            'reset_link' => 'A password reset link has been sent to the specified email'
         ],
         'error' => [
             'server' => [
@@ -32,7 +35,8 @@ return [
                 'employee_data' => 'Employee Data Response Schema:',
                 'employee_request_data' => 'EmployeeRequest Data Response Schema:',
                 'auths' => 'Authentication error',
-                'credentials' => 'НWrong email or password'
+                'credentials' => 'НWrong email or password',
+                'confirm_mismatch' => 'Password mismatch'
             ],
             'lockout' => 'User locked out [too many login attempts]',
             'exceed_login_attempts' => 'Exceed login attempts',
@@ -46,12 +50,16 @@ return [
             'user_employee_update' => 'AUTH: User employee data fail update',
             'data_saving' => 'AUTH: An error occurred while saving authentication data',
             'employee_instance' => 'Not found any employee data for authenticated user',
-            'get_employee_instance' => 'Cannot get any Employee or EmployeeRequest Instance'
+            'get_employee_instance' => 'Cannot get any Employee or EmployeeRequest Instance',
+            'email_already_verified' => 'Email already verified',
+            'reset_password' => 'Error resetting password',
+            'throttle' => 'Too many attempts. Please, try again later',
+            'wrong_session' => 'Wrong session',
+            'reset_link' => 'Cannot send reset link'
         ],
-        'enter' => 'Enter',
-        'password' => 'Password',
+
         'no_ehealth_login' => 'Without eHealth authentication',
-        'register' => 'Register?',
-        'forgot_password' => 'Forgot password?'
+        'forgot_password' => 'Forgot password?',
+        'vlink_sent' => 'Verification link has been sent successfully'
     ]
 ];

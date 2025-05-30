@@ -26,12 +26,6 @@ use Illuminate\Contracts\Validation\Validator as ResponseValidator;
 #[Layout('layouts.guest')]
 class Login extends Component
 {
-    /* Amount of the seconds to another login attempt */
-    public const int DECAY_SECONDS = 300;
-
-    /* Amount of the wrtong attempt before locking out */
-    public const int MAX_LOGIN_ATTEMPTS = 5;
-
     public string $email = '';
 
     public string $password = '';
@@ -68,14 +62,24 @@ class Login extends Component
             return back();
         }
 
-        if ($user && !$this->isLocalAuth && $user->isClientId()) {
+        if (!$user->hasVerifiedEmail()) {
+            /* Save user's id to send a verification link again (if need, course) */
+            session()->put('unverified_user_id', $user->id);
+
+            $this->redirect(route('verification.notice'), navigate: true);
+
+            return;
+        }
+
+        /* ESOZ Authentication */
+        if ($user && !$this->isLocalAuth && $user->isClientId() ) {
             $url = $this->loginUrl($user);
 
             return Redirect::to($url);
         }
 
         if (!Auth::attempt($credentials)) {
-            RateLimiter::hit($key, self::DECAY_SECONDS);
+            RateLimiter::hit($key, config('ehealth.auth.decay_seconds'));
 
             $this->addError('email', __('auth.login.error.validation.credentials'));
 
@@ -84,21 +88,9 @@ class Login extends Component
 
         $this->clearLoginAttempts();
 
-        $intended = session('url.intended');
-
         Session::regenerate();
 
-        /*
-         * redirectIntended() takes the URL that Laravel stored in the session as url.intended.
-         * However, DevTools or the browser itself often make a request to /.well-known/... before the user clicks anything –
-         * and Laravel mistakenly thinks this was the "intended" URL.
-         * Therefore, before login, you need to clear url.intended so the browser doesn't land on this service path.
-         */
-        if (str($intended)->contains('favicon.ico') || str($intended)->contains('.well-known/')) {
-            session()->forget('url.intended');
-        }
-
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        return redirect( route('dashboard'));
     }
 
     protected function rules(): array
@@ -128,7 +120,7 @@ class Login extends Component
             return false;
         }
 
-        if (! RateLimiter::tooManyAttempts($key, self::MAX_LOGIN_ATTEMPTS)) {
+        if (! RateLimiter::tooManyAttempts($key, config('ehealth.auth.max_login_attempts'))) {
             return true;
         }
 
@@ -174,7 +166,7 @@ class Login extends Component
      */
     public function callback(): ?RedirectResponse
     {
-        // exchange code to token
+        /* exchange code to token */
         if (config('ehealth.api.callback_prod') === false) {
             $code = request()->input('code');
             $url = 'http://localhost/ehealth/oauth?code=' . $code;
@@ -187,6 +179,7 @@ class Login extends Component
         }
 
         try {
+
             $handleLoginUser = app(EHealthLoginUserHandler::class);
 
             $code = request()->input('code');
@@ -212,7 +205,7 @@ class Login extends Component
             try {
                 $legalEntity = LegalEntity::byUuid($authLegalEntityUUID)->firstOrFail();
             } catch (Exception $err) {
-                // Error if legal entity cannot be found
+                /* Error if legal entity cannot be found */
                 Log::error(__('auth.login.error.unexistent_legal_entity', [], 'en'), ['Error' => $err->getMessage()]);
 
                 return $handleLoginUser->breakAuth('auth.login.error.legal_entity_identity');
@@ -251,18 +244,18 @@ class Login extends Component
     */
     protected function loginUrl($user): string
     {
-        // Base URL and client ID
+        /* Base URL and client ID */
         $baseUrl = config('ehealth.api.auth_host');
         $redirectUri = config('ehealth.api.redirect_uri');
 
-        // Base query parameters
+        /* Base query parameters */
         $queryParams = [
             'client_id' => $user->legalEntity->client_id ?? '',
             'redirect_uri' => $redirectUri,
             'response_type' => 'code'
         ];
 
-        // Additional query parameters if email is provided
+        /* Additional query parameters if email is provided */
         if (!empty($user->email)) {
             $queryParams['email'] = $user->email;
             $queryParams['scope'] = $user->getScopes();
@@ -270,7 +263,7 @@ class Login extends Component
 
         session()->put(config('ehealth.api.auth_ehealth'), $user->id);
 
-        // Build the full URL with query parameters
+        /* Build the full URL with query parameters */
         return $baseUrl . '?' . http_build_query($queryParams);
     }
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->uuid()->nullable()->unique();
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('email_verified_at')->nullable()->default(null);
             $table->string('password');
             $table->foreignId('current_team_id')->nullable();
             $table->string('profile_photo_path', 2048)->nullable();
