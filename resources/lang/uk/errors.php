@@ -20,5 +20,9 @@ return [
     'home' => 'На головну',
     'oops' => 'Ой, щось пішло не так',
     'pageNotFound' => 'Сторінку не знайдено',
-
+    'policy' => [
+        'licence' => [
+            'primary_not_editable'
+        ]
+    ],
 ];

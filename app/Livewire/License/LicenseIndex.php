@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Livewire\License;
 
+use App\Classes\eHealth\Api\LicenseApi;
 use App\Models\LegalEntity;
+use App\Models\License;
 use App\Traits\FormTrait;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -103,6 +106,7 @@ class LicenseIndex extends Component
 
     public function getLicenses(): void
     {
+
         $cacheKey = $this->generateCacheKey();
 
         if (Cache::has($cacheKey)) {
@@ -134,7 +138,7 @@ class LicenseIndex extends Component
 
     public function create()
     {
-        return redirect()->route('license.form', [legalEntity(), 'store_id' => $this->storeId]);
+        return redirect()->route('license.view', [legalEntity(), 'store_id' => $this->storeId]);
     }
 
     public function sortTypeLicenses(): void
@@ -159,5 +163,38 @@ class LicenseIndex extends Component
         $licensesPagination = $query->distinct()->groupBy('licenses.id')->paginate($perPage);
 
         return view('livewire.license.license-index', ['licenseTypes' => $this->licenseTypes, 'licensesPagination' => $licensesPagination]);
+    }
+
+    /**
+     * synchronize licenses with eHealth, the method overrides existing licenses if uuid is the same
+     */
+    public function sync()
+    {
+        try {
+            $licences = LicenseApi::_get([
+                'page' => 1,
+            ]);
+        } catch (\Exception $e) {
+            $this->flashGeneralError();
+            return;
+        }
+
+        foreach ($licences as $number => $license) {
+            unset($licences[$number]['legal_entity_uuid']);
+            $licences[$number]['legal_entity_id'] = legalEntity()->id;
+        }
+
+        try {
+            License::upsert($licences, uniqueBy: ['uuid'], update: new License()->getFillable());
+        } catch (\Exception $e) {
+            $this->flashGeneralError();
+            Log::error('Error while synchronizing licenses with eHealth: ' . $e->getMessage());
+            return;
+        }
+
+        $this->dispatch('flashMessage', [
+            'message' => __('forms.license.sync_success'),
+            'type' => 'success',
+        ]);
     }
 }

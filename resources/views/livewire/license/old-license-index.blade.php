@@ -116,13 +116,13 @@
                                                     style="display: none;"
                                                     class="absolute right-0 mt-2 w-60 rounded-md bg-white shadow-md z-50"
                                                 >
-                                                    <a href="{{ route('license.show', [legalEntity(), $license->id]) }}"
+                                                    <a href="{{ route('license.view', [legalEntity(), $license->id]) }}"
                                                         class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
                                                     >
                                                         {{ __('forms.info') }}
                                                     </a>
 
-                                                    <a href="{{ route('license.form', [legalEntity(), $license->id]) }}"
+                                                    <a href="{{ route('license.view', [legalEntity(), $license->id]) }}"
                                                         class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
                                                     >
                                                         {{ __('forms.updateInfo') }}

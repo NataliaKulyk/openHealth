@@ -2,6 +2,10 @@
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="table-nav">
             <h1 class="text-xl font-bold text-gray-900 dark:text-white mt-6">{{ __('Ліцензії') }}</h1>
+            <button wire:click="sync"
+                    class="button-sync">
+                Синхронізувати
+            </button>
             <a href="{{ route('license.create', [legalEntity()]) }}" class="default-button">
                 + Нова ліцензія
             </a>
@@ -34,7 +38,7 @@
                         </td>
                         <td class="td-input text-center">
                             @if($license->is_primary)
-                                <a href="{{ route('license.show', [legalEntity(), $license->id]) }}"
+                                <a href="{{ route('license.view', [legalEntity(), $license->id]) }}"
                                    class="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white"
                                    title="Переглянути">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -44,7 +48,7 @@
                                     </svg>
                                 </a>
                             @else
-                                <a href="{{ route('license.form', [legalEntity(), $license->id]) }}"
+                                <a href="{{ route('license.view', [legalEntity(), $license->id]) }}"
                                    class="text-gray-500 hover:text-gray-800 dark:hover:text-white"
                                    title="Редагувати">
                                     <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +69,7 @@
                         <span class="badge-yellow">Додаткова</span>
                     </td>
                     <td class="td-input text-center">
-                        <a href="{{ route('license.form', [legalEntity(), 999]) }}"
+                        <a href="{{ route('license.view', [legalEntity(), 999]) }}"
                            class="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white"
                            title="Редагувати">
                             <svg class="w-6 h-6 text-gray-800 dark:text-gray-200" aria-hidden="true"

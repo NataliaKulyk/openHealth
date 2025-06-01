@@ -35,7 +35,7 @@ class LicenseShow extends Component
 
     public function render()
     {
-        return view('livewire.license.license-show');
+        return view('livewire.license.license-view');
     }
 
     public function back()
