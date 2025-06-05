@@ -18,6 +18,11 @@ input[required] ~ label:after {
     content: "*";
 }
 
+/* Acts like React's <fragment> counterpart */
+.fragment {
+    display: contents;
+}
+
 .svg-input {
     top: 0.75rem;
 
@@ -307,6 +312,10 @@ button.item-remove svg, button.item-add svg {
 }
 
 /* Buttons */
+.login-button {
+    @apply w-[150px] px-6 py-2 text-sm font-medium text-gray-600 transition-colors duration-200 bg-transparent border border-gray-300 rounded-lg hover:bg-blue-800 hover:text-white hover:border-transparent focus:outline-none dark:text-gray-300 dark:border-gray-600 dark:hover:bg-indigo-600;
+}
+
 .default-button {
     @apply cursor-pointer text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
 }

@@ -27,11 +27,15 @@ return [
                 'user_credentials' => 'ESOZ: error in user credentials. Please contact the administrator',
             ],
             'validation' => [
-                'auth' => 'Auth Response Schema:',
+                'auth' => 'Auth Response Schema: wrong data received from the auth server',
                 'user_details' => 'User Details Response Schema:',
                 'employee_data' => 'Employee Data Response Schema:',
-                'employee_request_data' => 'EmployeeRequest Data Response Schema:'
+                'employee_request_data' => 'EmployeeRequest Data Response Schema:',
+                'auths' => 'Authentication error',
+                'credentials' => 'НWrong email or password'
             ],
+            'lockout' => 'User locked out [too many login attempts]',
+            'exceed_login_attempts' => 'Exceed login attempts',
             'email_verification' => 'Your email has not been verified. Please check your email!',
             'common' => 'AUTH: Common error',
             'unexpected' => 'AUTH: Unexpected error',
@@ -43,6 +47,11 @@ return [
             'data_saving' => 'AUTH: An error occurred while saving authentication data',
             'employee_instance' => 'Not found any employee data for authenticated user',
             'get_employee_instance' => 'Cannot get any Employee or EmployeeRequest Instance'
-        ]
+        ],
+        'enter' => 'Enter',
+        'password' => 'Password',
+        'no_ehealth_login' => 'Without eHealth authentication',
+        'register' => 'Register?',
+        'forgot_password' => 'Forgot password?'
     ]
 ];

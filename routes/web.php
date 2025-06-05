@@ -2,32 +2,40 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\EmailController;
-use App\Http\Controllers\HomeController;
-use App\Livewire\Contract\ContractForm;
-use App\Livewire\Contract\ContractIndex;
-use App\Livewire\Declaration\DeclarationIndex;
-use App\Livewire\Division\DivisionForm;
-use App\Livewire\Division\DivisionIndex;
-use App\Livewire\Division\HealthcareServiceForm;
-use App\Livewire\Employee\EmployeeCreate;
-use App\Livewire\Employee\EmployeeEdit;
-use App\Livewire\Employee\EmployeeIndex;
-use App\Livewire\Encounter\EncounterCreate;
-use App\Livewire\Encounter\EncounterEdit;
-use App\Livewire\LegalEntity\CreateLegalEntity;
-use App\Livewire\LegalEntity\EditLegalEntity;
-use App\Livewire\License\Forms\CreateNewLicense;
-use App\Livewire\License\Forms\LicenseForms;
-use App\Livewire\License\LicenseIndex;
-use App\Livewire\License\LicenseShow;
+use App\Livewire\Auth\Login;
+// use App\Livewire\Auth\Register;
+use App\Livewire\Actions\Logout;
+// use App\Livewire\Auth\VerifyEmail;
+// use App\Livewire\Auth\ResetPassword;
+// use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Patient\PatientForm;
-use App\Livewire\Patient\PatientIndex;
-use App\Livewire\Patient\Records\PatientData;
-use App\Livewire\Patient\Records\PatientEpisodes;
-use App\Livewire\Patient\Records\PatientSummary;
+use App\Livewire\License\LicenseShow;
 use Illuminate\Support\Facades\Route;
+// use App\Livewire\Auth\ConfirmPassword;
+use App\Livewire\License\LicenseIndex;
+use App\Livewire\Patient\PatientIndex;
+use App\Livewire\Contract\ContractForm;
+use App\Livewire\Division\DivisionForm;
+use App\Livewire\Employee\EmployeeEdit;
+use App\Livewire\Contract\ContractIndex;
+use App\Livewire\Employee\EmployeeIndex;
+use App\Http\Controllers\HomeController;
+use App\Livewire\Division\DivisionIndex;
+use App\Http\Controllers\EmailController;
+use App\Livewire\Employee\EmployeeCreate;
+use App\Livewire\Encounter\EncounterEdit;
+use App\Livewire\Encounter\EncounterCreate;
+use App\Livewire\License\Forms\LicenseForms;
+use App\Livewire\LegalEntity\EditLegalEntity;
+use App\Livewire\Patient\Records\PatientData;
+use App\Livewire\Declaration\DeclarationIndex;
+use App\Livewire\LegalEntity\CreateLegalEntity;
+use App\Livewire\Patient\Records\PatientSummary;
+use App\Livewire\Division\HealthcareServiceForm;
+use App\Livewire\License\Forms\CreateNewLicense;
+use App\Livewire\Patient\Records\PatientEpisodes;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+// use App\Http\Controllers\Auth\VerifyEmailController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,14 +51,37 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home.index');
 Route::post('/send-email', [EmailController::class, 'sendEmail'])->name('send.email');
 
-Route::get('/ehealth/oauth/', [LoginController::class, 'callback'])->name('ehealth.oauth.callback');
-Route::post('/login', [LoginController::class, 'login'])->name('login');
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+/* Auth */
 
-Route::middleware(['auth:web,ehealth'])->group(function () {
+Route::get('/ehealth/oauth/', [Login::class, 'callback'])->name('ehealth.oauth.callback');
+
+Route::middleware('guest')->group(function () {
+    Route::get('login', Login::class)->name('login');
+    // Route::get('register', Register::class)->name('register');
+    // Route::get('forgot-password', ForgotPassword::class)->name('password.request');
+    // Route::get('reset-password/{token}', ResetPassword::class)->name('password.reset');
+});
+
+// Route::get('verify-email', VerifyEmail::class)->name('verification.notice');
+
+// Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+        // ->middleware(['signed', 'throttle:6,1'])
+        // ->name('verification.verify');
+
+Route::post('logout', Logout::class)->name('logout');
+
+/* Dashboard */
+
+Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
+    // Route::get('confirm-password', ConfirmPassword::class)->name('password.confirm');
+
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    // Route::middleware(['auth', 'store.intended', 'password.confirm'])->group( function () {
+    //     // Place here all routes need in additional protection
+    // });
 
     Route::get('/dashboard/legal-entities/create', CreateLegalEntity::class)->name('create.legalEntities');
 

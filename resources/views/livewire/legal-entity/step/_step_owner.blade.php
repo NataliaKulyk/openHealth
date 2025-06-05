@@ -136,16 +136,15 @@
 
         {{-- Owner Gender --}}
         <div class="form-group group">
-            <label
+            <div
                 for="ownerGender"
                 class='label z-10'
             >
                 {{ __('forms.gender') }} *
-            </label>
+            </div>
 
             <ul
-                id="ownerGender"
-                {{-- aria-describedby="{{ $hasOwnerGender ? 'ownerGenderErrorHelp' : '' }}" --}}
+                aria-describedby="{{ $hasOwnerGender ? 'ownerGenderErrorHelp' : '' }}"
                 class="steps-owner_gender_list {{ $hasOwnerGender ? 'text-error border-red-500 focus:border-red-500' : ''}}"
             >
                 @isset($dictionaries['GENDER'])

@@ -17,7 +17,7 @@ return [
 
     'failed' => 'Ці облікові дані не збігаються із нашими записами.',
     'password' => 'Невірно вказаний пароль.',
-    'throttle' => 'Забагато спроб логіну. Будь ласка, спробуйте пізніше через :seconds секунд.',
+    'throttle' => 'Забагато спроб логіну. Будь ласка, спробуйте пізніше через :seconds сек.',
     'login' => [
         'success' => [
             'user_auth' => 'AUTH: Успішний вхід',
@@ -29,11 +29,15 @@ return [
                 'user_credentials' => 'ЕСОЗ: помилка в облікових даних користувача. Зверніться до адміністратора',
             ],
             'validation' => [
-                'auth' => 'Auth Response Schema:',
+                'auth' => 'Auth Response Schema: неповні або хибні дані у відповіді від сервера',
                 'user_details' => 'User Details Response Schema:',
                 'employee_data' => 'Employee Data Response Schema:',
-                'employee_request_data' => 'EmployeeRequest Data Response Schema:'
+                'employee_request_data' => 'EmployeeRequest Data Response Schema:',
+                'auths' => 'Помилка автентифікації',
+                'credentials' => 'Невірний логін або пароль'
             ],
+            'lockout' => 'Користувача заблоковано [забагато спроб логіну]',
+            'exceed_login_attempts' => 'Перевищено кількість спроб входу',
             'email_verification' => 'Ваш email не підтверджено. Перевірте свою електронну пошту!',
             'common' => 'AUTH: Загальна помилка',
             'unexpected' => 'AUTH: Невідома помилка',
@@ -45,6 +49,11 @@ return [
             'data_saving' => 'AUTH: Сталася помилка під час збереження автентифікаційних даних',
             'employee_instance' => 'Не знайдено даних співробітника для автентифікованого користувача',
             'get_employee_instance' => 'Неможливо отримати екземпляр Employee чи EmployeeRequest'
-        ]
+        ],
+        'enter' => 'Вхід',
+        'password' => 'Пароль',
+        'no_ehealth_login' => 'Без авторизації у eHealth',
+        'register' => 'Зареєструватися?',
+        'forgot_password' => 'Забули свій пароль?'
     ]
 ];

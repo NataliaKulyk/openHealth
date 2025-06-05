@@ -13,6 +13,7 @@ use App\Traits\FormTrait;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use App\Traits\AddressSearch;
+use App\Livewire\Actions\Logout;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\DB;
 use App\Mail\OwnerCredentialsMail;
@@ -28,7 +29,6 @@ use App\Classes\eHealth\Api\EmployeeApi;
 use App\Models\Employee\EmployeeRequest;
 use App\Repositories\EmployeeRepository;
 use Illuminate\Support\Facades\Redirect;
-use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Validation\ValidationException;
 use App\Models\LegalEntity as LegalEntityModel;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesForms;
@@ -589,7 +589,7 @@ class LegalEntity extends Component
                 }
             });
 
-            app(LoginController::class)->logout(request(), false);
+            app(Logout::class)();
 
             return Redirect::route('login') ?? null;
         } catch (Exception $err) {
