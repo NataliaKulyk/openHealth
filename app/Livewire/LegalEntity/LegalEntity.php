@@ -136,7 +136,7 @@ class LegalEntity extends Component
     {
         // Get owner dictionary fields
         $fields = [
-            'POSITION'      => ['P1', 'P2', 'P3', 'P32', 'P4', 'P6', 'P5'],
+            'POSITION' => config('ehealth.employee_type.OWNER.position'),
             'DOCUMENT_TYPE' => ['PASSPORT', 'NATIONAL_ID']
         ];
 

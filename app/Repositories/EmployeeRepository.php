@@ -399,7 +399,10 @@ class EmployeeRepository
     {
         $employeeRoles = $user->getRoleNames()->toArray();
 
-        $employeeRequests = EmployeeRequest::employeeInstance($user->id, $legalEntityUUID, $employeeRoles, true)->where('status', 'NEW')->get();
+        $employeeRequests = EmployeeRequest::employeeInstance($user->id, $legalEntityUUID, $employeeRoles, true)
+            ->where('status', 'NEW')
+            ->whereNotNull('uuid')
+            ->get();
 
         if (!$employeeRequests->count()) {
             return true;

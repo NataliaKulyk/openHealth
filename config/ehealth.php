@@ -24,6 +24,11 @@ return [
         'retries' => 10
     ],
 
+    'auth' => [
+        'decay_seconds' => 300,     /* Amount of the seconds to another login attempt */
+        'max_login_attempts' => 5   /* Amount of the wrtong attempt before locking out */
+    ],
+
     'capitation_contract_max_period_days' => 366,
     'legal_entity_type' => [
         'PRIMARY_CARE' => [
@@ -60,8 +65,7 @@ return [
         'OWNER' => [
             'position' => [
                 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P18', 'P19', 'P22', 'P23', 'P24', 'P25', 'P26', 'P32', 'P229',
-                'P230', 'P231', 'P232', 'P233', 'P234', 'P235', 'P236', 'P237', 'P238', 'P239', 'P240', 'P247', 'P249',
-                'P257'
+                'P230', 'P231', 'P232', 'P233', 'P234', 'P235', 'P236', 'P237', 'P238', 'P239', 'P247', 'P249', 'P257'
             ]
         ],
         'ADMIN' => [
