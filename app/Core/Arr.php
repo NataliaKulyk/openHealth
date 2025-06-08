@@ -50,9 +50,4 @@ class Arr extends BaseArr
     {
         return self::toSnakeCase($data);
     }
-
-//    public static function camelKeys(array|object $data): array
-//    {
-//        return self::toCamelCase($data);
-//    }
 }
