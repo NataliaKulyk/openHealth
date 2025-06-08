@@ -4,7 +4,6 @@ namespace App\Livewire\Employee;
 
 use App\Models\Employee\EmployeeRequest;
 use App\Repositories\EmployeeRepository;
-use App\Services\LegalEntityContext;
 use App\Services\SignatureService;
 use Exception;
 use Illuminate\Support\Carbon;
@@ -41,12 +40,11 @@ class EmployeeCreate extends EmployeeComponent
     /**
      * Bootstrap the component, injecting dependencies.
      * @param EmployeeRepository $employeeRepository
-     * @param LegalEntityContext $legalEntityContext
      * @return void
      */
-    public function boot(EmployeeRepository $employeeRepository, LegalEntityContext $legalEntityContext): void
+    public function boot(EmployeeRepository $employeeRepository): void
     {
-        parent::boot($employeeRepository, $legalEntityContext);
+        parent::boot($employeeRepository);
         $this->signatureService = app(SignatureService::class);
         $this->certificateAuthorities = $this->signatureService->getCertificateAuthorities();
     }
@@ -75,8 +73,8 @@ class EmployeeCreate extends EmployeeComponent
             unset($formData['party']['position']);
 
             $formData['user_id'] = auth()->id();
-            $formData['legal_entity_id'] = $this->legalEntityContext->id();
-            $formData['legal_entity_uuid'] = $this->legalEntityContext->uuid();
+            $formData['legal_entity_id'] = legalEntity()->id;
+            $formData['legal_entity_uuid'] = legalEntity()->uuid;
 
             if (isset($formData['doctor']['divisionUuid'])) {
                 $formData['division_uuid'] = $formData['doctor']['divisionUuid'];
@@ -86,8 +84,7 @@ class EmployeeCreate extends EmployeeComponent
             }
 
             app(EmployeeRepository::class)->saveEmployeeData(
-                $formData,
-                $this->legalEntityContext->current()
+                $formData
             );
 
             session()->flash('success', __('Employee request saved successfully.'));

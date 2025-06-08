@@ -60,7 +60,7 @@ class EmployeeRepository
      * Saves or updates employee-related data, including EmployeeRequest, Party, and associated details.
      *
      * @param array $formData
-     * @param LegalEntity $legalEntity
+     * @param LegalEntity|null $legalEntity
      * @param BaseEmployee|EmployeeRequest|null $employeeModel
      * @param string|null $employeeUUID
      * @return void
@@ -68,13 +68,14 @@ class EmployeeRepository
      */
     public function saveEmployeeData(
         array                        $formData,
-        LegalEntity                  $legalEntity,
+        ?LegalEntity                 $legalEntity = null,
         BaseEmployee|EmployeeRequest $employeeModel = null,
         ?string                      $employeeUUID = null
     ): void
     {
         DB::beginTransaction();
         try {
+            $legalEntity = $legalEntity ?? legalEntity();
             $employeeRequestData = [
                 'uuid'              => Arr::get($formData, 'uuid', null),
                 'legal_entity_uuid' => Arr::get($formData, 'legal_entity_uuid', $legalEntity->uuid),

@@ -6,6 +6,7 @@ use App\Classes\eHealth\Services\SchemaService;
 use App\Services\DictionaryService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
+use App\Models\LegalEntity;
 
 if (!function_exists("all_day")) {
     function all_day(): array
@@ -225,5 +226,12 @@ if (!function_exists('arrayKeysToSnake')) {
         }
 
         return $result;
+    }
+}
+
+if (!function_exists('legalEntity')) {
+    function legalEntity(): ?LegalEntity
+    {
+        return app('legalEntity');
     }
 }

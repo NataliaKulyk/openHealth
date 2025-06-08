@@ -2,12 +2,10 @@
 
 namespace App\Livewire\Employee;
 
-use App\Models\LegalEntity;
 use App\Repositories\EmployeeRepository;
 use App\Traits\FormTrait;
 use Livewire\Component;
 use App\Livewire\Employee\Forms\EmployeeForm as Form;
-use App\Services\LegalEntityContext;
 
 class EmployeeComponent extends Component
 {
@@ -21,16 +19,6 @@ class EmployeeComponent extends Component
      * TODO remove when Repo class is implemented
      */
     protected EmployeeRepository $employeeRepository;
-
-    /*
-     * Legal entity instance associated with the logged in user
-     */
-    protected ?LegalEntity $legalEntity = null;
-
-    /**
-     * @var LegalEntityContext
-     */
-    protected LegalEntityContext $legalEntityContext;
 
     /**
      * @var array|string[] Set dictionaries to load with the component
@@ -59,15 +47,13 @@ class EmployeeComponent extends Component
      */
     public array $employeeTypePosition = [];
 
-    public function boot(EmployeeRepository $employeeRepository, LegalEntityContext $legalEntityContext): void
+    public function boot(EmployeeRepository $employeeRepository): void
     {
         $this->employeeRepository = $employeeRepository;
-        $this->legalEntityContext = $legalEntityContext;
     }
 
     public function mount(): void
     {
-        $this->legalEntity = $this->legalEntityContext->current();
         $this->getDictionary();
     }
 
