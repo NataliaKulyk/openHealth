@@ -29,32 +29,32 @@ class EmployeeForm extends Form
     public array $documents = [];
 
     public array $party = [
-        'lastName'          => '',
-        'firstName'         => '',
-        'secondName'        => '',
-        'gender'            => '',
-        'birthDate'         => '',
-        'phones'            => [
+        'lastName' => '',
+        'firstName' => '',
+        'secondName' => '',
+        'gender' => '',
+        'birthDate' => '',
+        'phones' => [
             [
-                'type'   => '',
+                'type' => '',
                 'number' => '',
             ]
         ],
-        'taxId'             => '',
-        'noTaxId'           => false,
-        'email'             => '',
+        'taxId' => '',
+        'noTaxId' => false,
+        'email' => '',
         'workingExperience' => null,
-        'aboutMyself'       => null,
+        'aboutMyself' => null,
     ];
 
     public array $doctor = [
-        'number'         => '',
-        'issued_date'    => '',
-        'valid_to'       => '',
-        'specialities'   => [],
+        'number' => '',
+        'issued_date' => '',
+        'valid_to' => '',
+        'specialities' => [],
         'scienceDegrees' => [],
         'qualifications' => [],
-        'educations'     => [],
+        'educations' => [],
     ];
 
 
@@ -80,11 +80,11 @@ class EmployeeForm extends Form
     protected function rootFieldsRules(): array
     {
         return [
-            'position'      => ['required', 'string'],
-            'employeeType'  => ['required', 'string'],
-            'startDate'     => ['required', 'date'],
-            'endDate'       => ['nullable', 'date'],
-            'status'        => ['required', 'string'],
+            'position' => ['required', 'string'],
+            'employeeType' => ['required', 'string'],
+            'startDate' => ['required', 'date'],
+            'endDate' => ['nullable', 'date'],
+            'status' => ['required', 'string'],
         ];
     }
 
@@ -95,21 +95,21 @@ class EmployeeForm extends Form
     protected function partyRules(): array
     {
         return [
-            'party.lastName'         => ['required', new Name()],
-            'party.firstName'        => ['required', new Name()],
-            'party.secondName'       => ['nullable', new Name()],
-            'party.gender'           => ['required', 'string'],
-            'party.birthDate'        => ['required', 'date', new BirthDate()],
-            'party.phones'           => ['required', 'array', 'min:1'],
-            'party.phones.*.number'  => ['required', new PhoneNumber()],
-            'party.phones.*.type'    => ['required', 'string'],
-            'party.taxId'            => [
+            'party.lastName' => ['required', new Name()],
+            'party.firstName' => ['required', new Name()],
+            'party.secondName' => ['nullable', new Name()],
+            'party.gender' => ['required', 'string'],
+            'party.birthDate' => ['required', 'date', new BirthDate()],
+            'party.phones' => ['required', 'array', 'min:1'],
+            'party.phones.*.number' => ['required', new PhoneNumber()],
+            'party.phones.*.type' => ['required', 'string'],
+            'party.taxId' => [
                 'required', 'string',
             ],
-            'party.noTaxId'          => ['boolean'],
-            'party.email'            => ['nullable', 'email', new Email()],
+            'party.noTaxId' => ['boolean'],
+            'party.email' => ['nullable', 'email', new Email()],
             'party.workingExperience' => ['nullable', 'numeric'],
-            'party.aboutMyself'      => ['nullable', 'string'],
+            'party.aboutMyself' => ['nullable', 'string'],
         ];
     }
 
@@ -120,11 +120,11 @@ class EmployeeForm extends Form
     protected function documentsRules(): array
     {
         return [
-            'documents'               => ['required', 'array', 'min:1'],
-            'documents.*.type'        => ['required', 'string'],
-            'documents.*.number'      => ['required', 'string', 'max:255'],
-            'documents.*.issuedAt'    => ['required', 'date'],
-            'documents.*.issuedBy'    => ['nullable', 'string', 'max:255'],
+            'documents' => ['required', 'array', 'min:1'],
+            'documents.*.type' => ['required', 'string'],
+            'documents.*.number' => ['required', 'string', 'max:255'],
+            'documents.*.issuedAt' => ['required', 'date'],
+            'documents.*.issuedBy' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -136,45 +136,47 @@ class EmployeeForm extends Form
     {
         $doctorTypes = config('ehealth.doctors_type');
         $isDoctor = in_array($this->employeeType, $doctorTypes, true);
-
+        $doctorArrayBaseRules = ['array'];
+        $doctorRequiredArrayRules = ['required', 'array', 'min:1'];
 
         return [
             'doctor.divisionUuid' => ['nullable', 'string', 'uuid'],
-            'doctor.educations'                    => [$isDoctor ? 'required' : 'nullable', 'array', 'min:1'],
-            'doctor.educations.*.country'          => ['required', 'string', 'max:255'],
-            'doctor.educations.*.city'             => ['required', 'string', 'max:255'],
-            'doctor.educations.*.institutionName'  => ['required', 'string', 'max:255'],
-            'doctor.educations.*.issuedDate'       => ['nullable', 'date'],
-            'doctor.educations.*.diplomaNumber'    => ['required', 'string', 'max:255'],
-            'doctor.educations.*.degree'           => ['required', 'string', 'max:255'],
-            'doctor.educations.*.speciality'       => ['required', 'string', 'max:255'],
 
-            'doctor.specialities'                  => [$isDoctor ? 'required' : 'nullable', 'array', 'min:1'],
-            'doctor.specialities.*.speciality'     => ['required', 'string', 'max:255'],
+            'doctor.educations' => $isDoctor ? $doctorRequiredArrayRules : $doctorArrayBaseRules,
+            'doctor.educations.*.country' => ['required', 'string', 'max:255'],
+            'doctor.educations.*.city' => ['required', 'string', 'max:255'],
+            'doctor.educations.*.institutionName' => ['required', 'string', 'max:255'],
+            'doctor.educations.*.issuedDate' => ['nullable', 'date'],
+            'doctor.educations.*.diplomaNumber' => ['required', 'string', 'max:255'],
+            'doctor.educations.*.degree' => ['required', 'string', 'max:255'],
+            'doctor.educations.*.speciality' => ['required', 'string', 'max:255'],
+
+            'doctor.specialities' => $isDoctor ? $doctorRequiredArrayRules : $doctorArrayBaseRules,
+            'doctor.specialities.*.speciality' => ['required', 'string', 'max:255'],
             'doctor.specialities.*.specialityOfficio' => ['required', 'boolean'],
-            'doctor.specialities.*.level'          => ['required', 'string', 'max:255'],
+            'doctor.specialities.*.level' => ['required', 'string', 'max:255'],
             'doctor.specialities.*.qualificationType' => ['required', 'string'],
             'doctor.specialities.*.attestationName' => ['required', 'string', 'max:255'],
             'doctor.specialities.*.attestationDate' => ['required', 'date'],
-            'doctor.specialities.*.validToDate'    => ['nullable', 'date'],
+            'doctor.specialities.*.validToDate' => ['nullable', 'date'],
             'doctor.specialities.*.certificateNumber' => ['required', 'string', 'max:255'],
 
-            'doctor.scienceDegrees'                => [$isDoctor ? 'required' : 'nullable', 'array', 'min:1'],
-            'doctor.scienceDegrees.*.country'      => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.city'         => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.degree'       => ['required', 'string', 'max:255'],
+            'doctor.scienceDegrees' => $isDoctor ? $doctorRequiredArrayRules : $doctorArrayBaseRules,
+            'doctor.scienceDegrees.*.country' => ['required', 'string', 'max:255'],
+            'doctor.scienceDegrees.*.city' => ['required', 'string', 'max:255'],
+            'doctor.scienceDegrees.*.degree' => ['required', 'string', 'max:255'],
             'doctor.scienceDegrees.*.institutionName' => ['required', 'string', 'max:255'],
             'doctor.scienceDegrees.*.diplomaNumber' => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.speciality'   => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.issuedDate'   => ['nullable', 'date'],
+            'doctor.scienceDegrees.*.speciality' => ['required', 'string', 'max:255'],
+            'doctor.scienceDegrees.*.issuedDate' => ['nullable', 'date'],
 
-            'doctor.qualifications'                  => ['nullable', 'array'],
-            'doctor.qualifications.*.type'           => ['required', 'string', 'max:255'],
+            'doctor.qualifications' => ['nullable', 'array'],
+            'doctor.qualifications.*.type' => ['required', 'string', 'max:255'],
             'doctor.qualifications.*.institutionName' => ['required', 'string', 'max:255'],
-            'doctor.qualifications.*.speciality'     => ['required', 'string', 'max:255'],
-            'doctor.qualifications.*.issuedDate'     => ['required', 'date'],
+            'doctor.qualifications.*.speciality' => ['required', 'string', 'max:255'],
+            'doctor.qualifications.*.issuedDate' => ['required', 'date'],
             'doctor.qualifications.*.certificateNumber' => ['required', 'string', 'max:255'],
-            'doctor.qualifications.*.validTo'        => ['nullable', 'date', 'after_or_equal:doctor.qualifications.*.issuedDate'],
+            'doctor.qualifications.*.validTo' => ['nullable', 'date', 'after_or_equal:doctor.qualifications.*.issuedDate'],
             'doctor.qualifications.*.additionalInfo' => ['nullable', 'string'],
         ];
     }
@@ -187,8 +189,8 @@ class EmployeeForm extends Form
     protected function kepRules(): array
     {
         return [
-            'knedp'              => ['nullable', 'string'],
-            'password'           => ['nullable', 'string'],
+            'knedp' => ['nullable', 'string'],
+            'password' => ['nullable', 'string'],
             'keyContainerUpload' => ['nullable', 'file', 'mimes:p7s,jks,pfx'],
         ];
     }
@@ -196,7 +198,7 @@ class EmployeeForm extends Form
     /**
      * @throws ValidationException
      */
-    public function validated(array $rules = null, array $messages = [], array $attributes = []): array
+    public function validated(?array $rules = null, array $messages = [], array $attributes = []): array // <-- ЗМІНЕНО ТУТ
     {
         $rules = $rules ?? $this->rules();
 
@@ -223,27 +225,27 @@ class EmployeeForm extends Form
         $this->status = 'NEW';
         $this->documents = [];
         $this->party = [
-            'lastName'          => '',
-            'firstName'         => '',
-            'secondName'        => '',
-            'gender'            => '',
-            'birthDate'         => '',
-            'phones'            => [
+            'lastName' => '',
+            'firstName' => '',
+            'secondName' => '',
+            'gender' => '',
+            'birthDate' => '',
+            'phones' => [
                 [
-                    'type'   => '',
+                    'type' => '',
                     'number' => '',
                 ]
             ],
-            'taxId'             => '',
-            'noTaxId'           => false,
-            'email'             => '',
+            'taxId' => '',
+            'noTaxId' => false,
+            'email' => '',
             'workingExperience' => null,
-            'aboutMyself'       => null,
+            'aboutMyself' => null,
         ];
         $this->doctor = [
-            'divisionUuid'  => null,
-            'educations'    => [],
-            'specialities'  => [],
+            'divisionUuid' => null,
+            'educations' => [],
+            'specialities' => [],
             'scienceDegrees' => [],
             'qualifications' => [],
         ];
@@ -278,7 +280,7 @@ class EmployeeForm extends Form
                 ];
             }
 
-            if (empty($this->doctor['scienceDegrees']) || count($this->doctor['scienceDegrees']) === 0) {
+            if (empty($this->doctor['scienceDegrees'])) {
                 return [
                     'error' => true,
                     'message' => __('validation.custom.science_degreesTable'),
@@ -303,10 +305,10 @@ class EmployeeForm extends Form
         $formData = $this->all();
 
         $preparedData = [
-            'position'      => $formData['position'],
+            'position' => $formData['position'],
             'employee_type' => $formData['employeeType'],
-            'start_date'    => $formData['startDate'],
-            'status'        => $formData['status'],
+            'start_date' => $formData['startDate'],
+            'status' => $formData['status'],
         ];
 
         // Додаємо end_date окремо, якщо воно не null
