@@ -29,6 +29,12 @@ class Revision extends Model
         'revisionable_id'
     ];
 
+
+    protected $casts = [
+        'data' => 'array',
+        'deleted_at' => 'datetime',
+    ];
+
     public function revisionable(): MorphTo
     {
         return $this->morphTo();

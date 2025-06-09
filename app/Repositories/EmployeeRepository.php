@@ -57,175 +57,235 @@ class EmployeeRepository
     }
 
     /**
+     * Creates or updates an employee-related model based on UUID.
+     * This method is designed to be called ONLY when $employeeModel is NOT null.
+     *
+     * @param array $data Data for the model.
+     * @param Employee|EmployeeRequest $employeeModel The model class to update/create.
+     * @param LegalEntity $legalEntity The legal entity to associate with.
+     * @return BaseEmployee The created or updated model.
+     * @throws \InvalidArgumentException If $employeeModel is null (should not happen with correct usage).
+     */
+    public function createOrUpdate($data, Employee|EmployeeRequest $employeeModel, LegalEntity $legalEntity): BaseEmployee
+    {
+        if ($employeeModel === null) {
+            throw new \InvalidArgumentException('Employee model cannot be null for createOrUpdate method. It should only be called with a non-null model class.');
+        }
+
+        $employee = $employeeModel::updateOrCreate(
+            [
+                'uuid' => $data['uuid'] ?? '',
+            ],
+            $data
+        );
+        $employee->legalEntity()->associate($legalEntity);
+        return $employee;
+    }
+
+    /**
      * Saves or updates employee-related data, including EmployeeRequest, Party, and associated details.
      *
-     * @param array $formData
-     * @param LegalEntity|null $legalEntity
-     * @param BaseEmployee|EmployeeRequest|null $employeeModel
-     * @param string|null $employeeUUID
-     * @return void
-     * @throws Exception
+     * @param array $response
+     * @param LegalEntity $legalEntity
+     * @param Employee|EmployeeRequest|null $employeeModel The model class to create/update (can be null for a new request).
+     * @param string|null $employeeUUID UUID of an existing Employee, if this is an EmployeeRequest that updates.
+     * @param bool $isNewRequest Indicates a new unique EmployeeRequest creation scenario.
+     *
+     * @return BaseEmployee
      */
     public function saveEmployeeData(
-        array                        $formData,
-        ?LegalEntity                 $legalEntity = null,
-        BaseEmployee|EmployeeRequest $employeeModel = null,
-        ?string                      $employeeUUID = null
-    ): void
+        array $response,
+        LegalEntity $legalEntity,
+        Employee|EmployeeRequest|null $employeeModel,
+        ?string $employeeUUID = null,
+        bool $isNewRequest = false
+    ): BaseEmployee
     {
-        DB::beginTransaction();
         try {
-            $legalEntity = $legalEntity ?? legalEntity();
-            $employeeRequestData = [
-                'uuid'              => Arr::get($formData, 'uuid', null),
-                'legal_entity_uuid' => Arr::get($formData, 'legal_entity_uuid', $legalEntity->uuid),
-                'legal_entity_id'   => Arr::get($formData, 'legal_entity_id', $legalEntity->id),
-                'user_id'           => Arr::get($formData, 'user_id', auth()->id()),
-                'position'          => Arr::get($formData, 'position'),
-                'status'            => Arr::get($formData, 'status', 'NEW'),
-                'employee_type'     => Arr::get($formData, 'employee_type'),
-                'start_date'        => Arr::get($formData, 'start_date'),
-                'end_date'          => Arr::get($formData, 'end_date'),
-                'inserted_at'       => now()->toIso8601String(),
-                'division_uuid'     => Arr::get($formData, 'division_uuid', null),
-                'division_id'       => Arr::get($formData, 'division_uuid') ? Division::where(
-                    'uuid',
-                    Arr::get(
-                        $formData,
-                        'division_uuid'
-                    )
-                )->first()?->id : null,
-            ];
+            if ($isNewRequest && empty($response['uuid'])) {
+                return $this->handleInitialEmployeeRequestCreation(
+                    $response,
+                    $legalEntity
+                );
+            }
 
-            $partyData = Arr::get($formData, 'party', []);
-            $partyData = Arr::toSnakeCase($partyData);
+            $partyData = $response['party'] ?? [];
+            unset($response['party']);
 
-            $phonesData = $partyData['phones'] ?? [];
-            unset($partyData['phones']);
+            if (!empty($partyData['phones'])) {
+                $phonesData = $partyData['phones'];
+                unset($partyData['phones']);
+            }
 
-            $documentsData = $partyData['documents'] ?? [];
-            unset($partyData['documents']);
+            if (!empty($partyData['documents'])) {
+                $documentsData = $partyData['documents'];
+                unset($partyData['documents']);
+            }
 
-            $doctorData = Arr::get($formData, 'doctor', []);
+            if(!empty($response['doctor'])) {
+                $doctorData = $response['doctor'];
+                unset($response['doctor']);
+            }
 
-            $employee = $this->createOrUpdate(
-                $employeeRequestData,
-                $employeeModel ?? new EmployeeRequest(),
-                $legalEntity
-            );
+            unset($response['updated_at']);
 
+            if (isset($partyData['email']) && !empty($partyData['email'])) {
+                $this->userRepository->createIfNotExist($partyData, $response['employee_type'], $legalEntity);
+            }
+
+            $employee = $this->createOrUpdate($response, $employeeModel, $legalEntity);
             $isEmployeRequest = $employee instanceof EmployeeRequest;
+            $employeeInstance = Employee::where('uuid', $employeeUUID)?->first();
+            $alreadyExistParty = $employeeInstance?->party;
+            $party = $alreadyExistParty ?? $this->partyRepository->createOrUpdate($partyData);
 
-            $party = null;
-            $email = $partyData['email'] ?? null;
-            $primaryPhone = null;
-
-            foreach ($phonesData as $phone) {
-                if (($phone['type'] ?? '') === 'MOBILE') {
-                    $primaryPhone = $phone['number'];
-                    break;
-                }
+            if ($isEmployeRequest) {
+                optional($employeeInstance, fn($instance) => $employee->employee()->associate($instance));
             }
 
-            if ($email || $primaryPhone) {
-                $query = Party::query();
-                if ($email) {
-                    $query->where('email', $email);
-                }
-                if ($primaryPhone) {
-                    $query->orWhereHas('phones', function($q) use ($primaryPhone) {
-                        $q->where('number', $primaryPhone);
-                    });
-                }
-                $party = $query->first();
+            /**
+             * If $alreadyExistParty == null it only means that EmployeeRequest expects to create through creation of the LegalEntity
+             * Because if $employee is EmployeeRequest the data below mustn't be changed until a valid user approves these changes.
+             * And therefore, if $employee is Employee, the data should be updated or created.
+             */
+            if (!$isEmployeRequest || !$alreadyExistParty) {
+                // Add documents for Party
+                $this->documentRepository->syncDocuments($party, $documentsData ?? []);
+
+                // Add phones for Party
+                $this->phoneRepository->syncPhones($party, $phonesData ?? []);
+
+                // Add educations
+                $this->educationRepository->addEducations($employee, $doctorData['educations'] ?? []);
+
+                // Add science degrees
+                $this->scienceDegreeRepository->addScienceDegrees($employee, $doctorData['science_degree'] ?? []);
+
+                // Add qualifications
+                $this->qualificationRepository->addQualifications($employee, $doctorData['qualifications'] ?? []);
+
+                // Add specialities
+                $this->specialityRepository->addSpecialities($employee, $doctorData['specialities'] ?? []);
             }
 
-            if ($party) {
-                $this->partyRepository->update($party, $partyData);
-            } else {
-                $party = $this->partyRepository->create($partyData);
-            }
-
-            // Add documents for Party
-            $this->documentRepository->syncDocuments($party, $documentsData);
-
-            // Add phones for Party
-            $this->phoneRepository->syncPhones($party, $phonesData);
-
-            // Add educations
-            $this->educationRepository->addEducations($employee, $doctorData['educations'] ?? []);
-
-            // Add science degrees
-            $this->scienceDegreeRepository->addScienceDegrees($employee, $doctorData['science_degree'] ?? []);
-
-            // Add qualifications
-            $this->qualificationRepository->addQualifications($employee, $doctorData['qualifications'] ?? []);
-
-            // Add specialities
-            $this->specialityRepository->addSpecialities($employee, $doctorData['specialities'] ?? []);
-
-            // Attach employee to Party
+            // Bind employee to Party
             $party->employees()->save($employee);
 
-            // Create revision entry
+            // Create record in the revisions table depends on the $employeeModel and its id
             if ($isEmployeRequest) {
-                $revisionData = [
-                    'employeeRequestData' => $employeeRequestData,
-                    'partyData'           => $partyData,
-                    'documentsData'       => $documentsData,
-                    'phonesData'          => $phonesData,
-                    'doctorData'          => $doctorData ?? []
+                $responseData = [
+                    'response' => $response,
+                    'party' => $partyData,
+                    'documents' => $documentsData,
+                    'phones' => $phonesData,
+                    'doctor' => $doctorData ?? []
                 ];
 
                 $this->revisionRepository->saveRevision($employee, [
-                    'data'   => json_encode($revisionData, JSON_THROW_ON_ERROR),
+                    'data' => $responseData, // Passed as array, model's casts will handle JSON encoding
                     'status' => Revision::STATUS_PENDING,
                 ]);
             }
 
-            DB::commit();
+            return $employee;
+        } catch (Exception $err) {
+            Log::error('Create Employee Error: ' . $err->getMessage(), ['exception' => $err]);
+            throw new Exception(__('Create Employee Error') . ' : ' . $err->getMessage());
+       }
+    }
+
+    /**
+     * Handles the specific logic for creating a brand new EmployeeRequest and its Party,
+     * bypassing existing general update/create logic when no UUID is provided.
+     * This is the dedicated method for the "new request" scenario.
+     *
+     * @param array $requestData The full request data from the form.
+     * @param LegalEntity $legalEntity The legal entity associated with the request.
+     * @return BaseEmployee The newly created EmployeeRequest.
+     */
+    private function handleInitialEmployeeRequestCreation(
+        array $requestData,
+        LegalEntity $legalEntity
+    ): BaseEmployee
+    {
+        try {
+            $partyData = $requestData['party'] ?? [];
+            unset($requestData['party']);
+
+            $documentsData = $requestData['documents'] ?? [];
+            $phonesData = $partyData['phones'] ?? [];
+            $doctorData = $requestData['doctor'] ?? [];
+
+            $employeeRequestFillableFields = [
+                'employee_type', 'position', 'employment_start_date', 'employment_end_date',
+                'salary_type', 'salary_amount', 'hours_per_week', 'probation_end_date',
+                'probation_reason', 'order_number', 'order_date', 'staff_unit_id', 'medical_staff_type',
+                'external_id', 'is_active', 'is_verified', 'start_date', 'end_date', 'salary',
+            ];
+            $filteredEmployeeRequestData = Arr::only($requestData, $employeeRequestFillableFields);
+
+            $partyFillableFields = [
+                'last_name', 'first_name', 'second_name', 'gender', 'birth_date',
+                'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself',
+            ];
+            $filteredPartyData = Arr::only($partyData, $partyFillableFields);
+
+            $party = $this->findOrCreatePartyForEmployeeRequest($filteredPartyData);
+
+            $employeeRequest = new EmployeeRequest();
+            $employeeRequest->fill($filteredEmployeeRequestData);
+            $employeeRequest->uuid = null;
+            $employeeRequest->status = 'NEW';
+            $employeeRequest->legalEntity()->associate($legalEntity);
+            $employeeRequest->party()->associate($party);
+            $employeeRequest->save();
+
+            $responseDataForRevision = [
+                'employee_request_data' => $requestData,
+                'party' => $filteredPartyData,
+                'documents' => $documentsData,
+                'phones' => $phonesData,
+                'doctor' => $doctorData,
+            ];
+
+            $revision = new Revision();
+            $revision->data = $responseDataForRevision; // No manual json_encode here
+            $revision->status = Revision::STATUS_PENDING;
+            $employeeRequest->revision()->save($revision);
+
+            return $employeeRequest;
 
         } catch (Exception $err) {
-            DB::rollBack();
-            throw new Exception(__('Create Employee Error') . ' : ' . $err->getMessage());
+            Log::error('Initial Employee Request Creation Error: ' . $err->getMessage(), ['exception' => $err]);
+            throw new \RuntimeException(__('Initial Employee Request Creation Error') . ' : ' . $err->getMessage());
         }
     }
 
-    protected function createOrUpdate(array $data, Employee|EmployeeRequest|null $model, LegalEntity $legalEntity): Employee|EmployeeRequest
+    /**
+     * Finds an existing Party by email or tax_id, or creates a new one if not found.
+     *
+     * @param array $partyData Filtered data for Party.
+     * @return Party The found or newly created Party model.
+     */
+    private function findOrCreatePartyForEmployeeRequest(array $partyData): Party
     {
-        $modelData = [
-            'uuid' => $data['uuid'] ?? null,
-            'legal_entity_uuid' => $data['legal_entity_uuid'],
-            'position' => $data['position'],
-            'status' => $data['status'],
-            'employee_type' => $data['employee_type'],
-            'inserted_at' => $data['inserted_at'],
-            'user_id' => $data['user_id'],
-            'legal_entity_id' => $data['legal_entity_id'],
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-            'division_uuid' => $data['division_uuid'] ?? null,
-            'division_id' => $data['division_id'] ?? null,
-        ];
+        $party = null;
 
-        $uuid = $modelData['uuid'];
-        $employee = null;
-
-        if ($uuid) {
-            $employee = $model::where('uuid', $uuid)->first();
-            if ($employee) {
-                $employee->update($modelData);
-            }
+        if (!empty($partyData['email'])) {
+            $party = Party::where('email', $partyData['email'])->first();
         }
 
-        if (!$employee) {
-            $employee = $model::create($modelData);
+        if ($party === null && !empty($partyData['tax_id'])) {
+            $party = Party::where('tax_id', $partyData['tax_id'])->first();
         }
 
-        $employee->legalEntity()->associate($legalEntity);
-        $employee->save();
+        if ($party === null) {
+            $party = new Party();
+            $party->fill($partyData);
+            $party->save();
+        }
 
-        return $employee;
+        return $party;
     }
 
     /**

@@ -20,9 +20,9 @@
             </label>
 
             @error('form.party.lastName')
-                <p class="text-error">
-                    {{$message}}
-                </p>
+            <p class="text-error">
+                {{$message}}
+            </p>
             @enderror
         </div>
 
@@ -40,9 +40,9 @@
             </label>
 
             @error('form.party.firstName')
-                <p class="text-error">
-                    {{$message}}
-                </p>
+            <p class="text-error">
+                {{$message}}
+            </p>
             @enderror
         </div>
 
@@ -60,9 +60,9 @@
             </label>
 
             @error('form.party.secondName')
-                <p class="text-error">
-                    {{$message}}
-                </p>
+            <p class="text-error">
+                {{$message}}
+            </p>
             @enderror
         </div>
     </div>
@@ -108,9 +108,9 @@
             </label>
 
             @error('form.party.birthDate')
-                <p class="text-error">
-                    {{$message}}
-                </p>
+            <p class="text-error">
+                {{$message}}
+            </p>
             @enderror
         </div>
 
@@ -134,9 +134,9 @@
             </label>
 
             @error('form.party.email')
-                <p class="text-error">
-                    {{$message}}
-                </p>
+            <p class="text-error">
+                {{$message}}
+            </p>
             @enderror
         </div>
 
@@ -163,8 +163,8 @@
     </div>
 
     <div class="form-row-4" x-data="{
-        employeePosition: $wire.entangle('form.party.position'),
-        {{-- See entangled employee type in the parent template as it's required to control which documents to show --}}
+        employeePosition: $wire.entangle('form.position'),
+        employeeType: $wire.entangle('form.employeeType'),
         employeeTypePosition: $wire.employeeTypePosition,
         availablePositions: null
     }">
@@ -172,17 +172,18 @@
         <div class="form-group group">
             <label for="employeeType" class="sr-only">{{__('forms.roleChoose')}}</label>
             <select x-model="employeeType"
+                    wire:model="form.party.employeeType"
                     id="employeeType"
-                    class="input-select peer @error('form.party.employeeType') input-error @enderror"
+                    class="input-select peer @error('form.employeeType') input-error @enderror" {{-- ЗМІНЕНО: @error --}}
                     required
             >
                 <option selected>{{__('forms.roleChoose')}} *</option>
-                @foreach($this->dictionaries['EMPLOYEE_TYPE'] as $k=>$employeeType)
-                    <option value="{{$k}}">{{$employeeType}}</option>
+                @foreach($this->dictionaries['EMPLOYEE_TYPE'] as $k=>$employeeTypeOption) {{-- Змінено ім'я змінної циклу --}}
+                <option value="{{$k}}">{{$employeeTypeOption}}</option>
                 @endforeach
             </select>
 
-            @error('form.party.employeeType')
+            @error('form.employeeType') {{-- ЗМІНЕНО: @error --}}
             <p class="text-error">
                 {{$message}}
             </p>
@@ -193,13 +194,13 @@
             <label for="position" class="sr-only">{{__('forms.select_position')}}</label>
             <select x-model="employeePosition"
                     id="position"
-                    class="input-select peer @error('form.party.position') input-error @enderror"
+                    class="input-select peer @error('form.position') input-error @enderror" {{-- ЗМІНЕНО: @error --}}
                     required
             >
                 <option selected>{{__('forms.select_position')}} *</option>
                 {{-- Only show positions associated with certain employee types --}}
-                <template x-for="(position, index) in employeeTypePosition[employeeType]">
-                    <option :value="index" x-text="position"></option>
+                <template x-for="(positionOption, index) in employeeTypePosition[employeeType]" :key="index"> {{-- Змінено ім'я змінної циклу --}}
+                    <option :value="index" x-text="positionOption"></option>
                 </template>
 
             </select>
@@ -210,12 +211,12 @@
                 <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
             </svg>
 
-            <input wire:model="form.party.startDate"
-                   datepicker-max-date="{{ now()->format('Y-m-d') }}"
+            <input wire:model="form.startDate" {{-- ЗМІНЕНО: прив'язка до кореневого startDate --}}
+            datepicker-max-date="{{ now()->format('Y-m-d') }}"
                    type="text"
                    name="startDate"
                    id="startDate"
-                   class="input datepicker-input peer @error('form.party.startDate') input-error @enderror"
+                   class="input datepicker-input peer @error('form.startDate') input-error @enderror" {{-- ЗМІНЕНО: @error --}}
                    placeholder=" "
                    required
             />
@@ -224,10 +225,10 @@
                 {{__('forms.startDateWork')}}
             </label>
 
-            @error('form.party.startDate')
-                <p class="text-error">
-                    {{$message}}
-                </p>
+            @error('form.startDate') {{-- ЗМІНЕНО: @error --}}
+            <p class="text-error">
+                {{$message}}
+            </p>
             @enderror
         </div>
 
@@ -247,9 +248,9 @@
             </label>
 
             @error('form.party.workingExperience')
-                <p class="text-error">
-                    {{$message}}
-                </p>
+            <p class="text-error">
+                {{$message}}
+            </p>
             @enderror
         </div>
     </div>
@@ -273,23 +274,20 @@
     {{-- Using Alpine to dynamically add and remove phone input fields --}}
     <div class="mb-4" x-data="{ phones: $wire.entangle('form.party.phones') }">
 
-        <template x-for="(phone, index) in phones">
+        <template x-for="(phone, index) in phones" :key="index">
             <div class="form-row-3 md:mb-0">
 
                 <div class="form-group group">
-                    <label for="phoneType" class="sr-only">{{__('forms.type_mobile')}}</label>
-                    <select x-model = "phone.type" id="phoneType" class="input-select peer" required>
+                    <label for="phoneType-@{{ index }}" class="sr-only">{{__('forms.type_mobile')}}</label>
+                    <select x-model = "phone.type" id="phoneType-@{{ index }}" class="input-select peer"
+                            :class="{ 'input-error': $wire.errors.has('form.party.phones.' + index + '.type') }"
+                            required>
                         <option selected>{{__('forms.type_mobile')}} *</option>
                         @foreach($this->dictionaries['PHONE_TYPE'] as $k => $phoneType )
                             <option value="{{$k}}">{{$phoneType}}</option>
                         @endforeach
                     </select>
-
-                    @error('form.party.phones.type')
-                        <p class="text-error">
-                            {{$message}}
-                        </p>
-                    @enderror
+                    <p class="text-error" x-text="$wire.errors.get('form.party.phones.' + index + '.type')" x-show="$wire.errors.has('form.party.phones.' + index + '.type')"></p>
                 </div>
 
                 <div class="form-group group">
@@ -299,25 +297,21 @@
 
                     <input x-model="phone.number"
                            type="tel"
-                           name="phone"
-                           id="phone"
-                           class="input peer @error('form.party.phones.number') input-error @enderror"
+                           name="phone-@{{ index }}"
+                           id="phoneNumber-@{{ index }}"
+                           class="input peer"
+                           :class="{ 'input-error': $wire.errors.has('form.party.phones.' + index + '.number') }"
                            placeholder=" "
                            required
                     />
-                    <label for="phone" class="label">
+                    <label for="phoneNumber-@{{ index }}" class="label">
                         {{__('forms.phone')}}
                     </label>
-
-                    @error('form.party.phones.number')
-                    <p class="text-error">
-                        {{$message}}
-                    </p>
-                    @enderror
+                    <p class="text-error" x-text="$wire.form.errors.get('form.party.phones.' + index + '.number')" x-show="$wire.form.errors.has('form.party.phones.' + index + '.number')" style="display: none;"></p>
                 </div>
 
                 <template x-if="index == phones.length - 1 & index != 0">
-                    <button x-on:click="phones.pop(), index--" {{-- Remove a phone if button is clicked --}}
+                    <button x-on:click="phones.pop(), index--"
                             class="item-remove"
                     >
                         <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -329,9 +323,9 @@
                 </template>
 
                 <template x-if="index == phones.length - 1">
-                    <button x-on:click="phones.push({ type: '', number: '' })" {{-- Add new phone if button is clicked --}}
+                    <button x-on:click="phones.push({ type: '', number: '' })"
                             class="item-add lg:justify-self-start"
-                            :class="{ 'lg:justify-self-start': index > 0 }" {{-- Apply this style only if it's not a first phone group --}}
+                            :class="{ 'lg:justify-self-start': index > 0 }"
                     >
                         <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7 7V5"/>

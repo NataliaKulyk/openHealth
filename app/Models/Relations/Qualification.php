@@ -25,6 +25,7 @@ class Qualification extends Model
 
     protected $fillable = [
         'type',
+        'country',
         'institution_name',
         'speciality',
         'issued_date',

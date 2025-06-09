@@ -3,39 +3,30 @@
 namespace App\Repositories;
 
 use App\Models\Relations\ScienceDegree;
+use Illuminate\Database\Eloquent\Model;
 
 class ScienceDegreeRepository
 {
     /**
-     * @param object $model
-     * @param array $scienceDegrees
+     * @param Model $model The employee or employee request model (Employee or EmployeeRequest).
+     * @param array $scienceDegreesData An array of science degree data arrays (e.g., [['degree' => 'PhD', ...], ['degree' => 'Master', ...]]).
      *
      * @return void
      */
-    public function addScienceDegrees(object $model, array $scienceDegreeData): void
+    public function addScienceDegrees(Model $model, array $scienceDegreesData): void
     {
-        if (empty($scienceDegreeData)) {
+        $model->scienceDegrees()->delete();
+
+        if (empty($scienceDegreesData)) {
             return;
         }
 
-//      foreach ($scienceDegrees as $scienceDegreeData) {
-        $scienceDegree = ScienceDegree::where(
-            [
-                'science_degreeable_type' => get_class($model),
-                'science_degreeable_id'   => $model->id
-            ],
-        )->first();
-
-        if (!$scienceDegree) {
+        foreach ($scienceDegreesData as $individualScienceDegreeData) {
             $scienceDegree = new ScienceDegree();
-            $scienceDegree->science_degreeable_type = get_class($model);
-            $scienceDegree->science_degreeable_id = $model->id;
+
+            $scienceDegree->fill($individualScienceDegreeData);
+
+            $model->scienceDegrees()->save($scienceDegree);
         }
-
-        $scienceDegree->fill($scienceDegreeData);
-
-        $model->scienceDegrees()->save($scienceDegree);
-//        }
     }
-
 }

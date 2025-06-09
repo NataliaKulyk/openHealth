@@ -1,7 +1,7 @@
 <div class="overflow-x-auto relative">
     <fieldset class="fieldset"
               x-data="{
-                  scienceDegrees: $wire.entangle('form.scienceDegrees'),
+                  scienceDegrees: $wire.entangle('form.doctor.scienceDegrees'),
                   openModal: false,
                   modalScienceDegree: new ScienceDegree(),
                   newScienceDegree: false,
@@ -34,10 +34,10 @@
                     <td class="td-input" x-text="degreeDict[scienceDegree.degree] || scienceDegree.degree"></td>
                     <td class="td-input" x-text="countryDict[scienceDegree.country] || scienceDegree.country"></td>
                     <td class="td-input" x-text="scienceDegree.city"></td>
-                    <td class="td-input" x-text="scienceDegree.issued_date"></td>
-                    <td class="td-input" x-text="scienceDegree.institution_name"></td>
+                    <td class="td-input" x-text="scienceDegree.issuedDate"></td>
+                    <td class="td-input" x-text="scienceDegree.institutionName"></td>
                     <td class="td-input" x-text="specDict[scienceDegree.speciality] || scienceDegree.speciality"></td>
-                    <td class="td-input" x-text="scienceDegree.diploma_number"></td>
+                    <td class="td-input" x-text="scienceDegree.diplomaNumber"></td>
                     <td class="td-input relative">
                         <x-dropdown-button
                             :editAction="'openModal = true; item = index; modalScienceDegree = new ScienceDegree(scienceDegrees[index]); newScienceDegree = false;'"
@@ -128,18 +128,18 @@
                                 <div>
                                     <label for="scienceIssuedDate"
                                            class="label-modal">{{ __('forms.issuedDate') }}</label>
-                                    <input id="scienceIssuedDate" x-model="modalScienceDegree.issued_date"
+                                    <input id="scienceIssuedDate" x-model="modalScienceDegree.issuedDate"
                                            class="input-modal datepicker-input" autocomplete="off" required>
                                     <p class="text-error text-xs"
-                                       x-show="!modalScienceDegree.issued_date || modalScienceDegree.issued_date.trim().length === 0">{{ __('forms.field_empty') }}</p>
+                                       x-show="!modalScienceDegree.issuedDate || modalScienceDegree.issuedDate.trim().length === 0">{{ __('forms.field_empty') }}</p>
                                 </div>
                                 <div>
                                     <label for="scienceInstitution"
                                            class="label-modal">{{ __('forms.institutionName') }}</label>
-                                    <input x-model="modalScienceDegree.institution_name" type="text"
+                                    <input x-model="modalScienceDegree.institutionName" type="text"
                                            id="scienceInstitution" class="input-modal" required>
                                     <p class="text-error text-xs"
-                                       x-show="!modalScienceDegree.institution_name || modalScienceDegree.institution_name.trim().length === 0">{{ __('forms.field_empty') }}</p>
+                                       x-show="!modalScienceDegree.institutionName || modalScienceDegree.institutionName.trim().length === 0">{{ __('forms.field_empty') }}</p>
                                 </div>
                                 <div>
                                     <label for="scienceSpeciality"
@@ -158,7 +158,7 @@
                                 <div>
                                     <label for="scienceDiplomaNumber"
                                            class="label-modal">{{ __('forms.diplomaNumber') }}</label>
-                                    <input x-model="modalScienceDegree.diploma_number" type="text"
+                                    <input x-model="modalScienceDegree.diplomaNumber" type="text"
                                            id="scienceDiplomaNumber" class="input-modal">
                                 </div>
                             </div>
@@ -181,8 +181,8 @@
                                         "
                                         class="button-primary"
                                         :disabled="!(modalScienceDegree.degree && modalScienceDegree.degree.trim().length > 0 &&
-                                            modalScienceDegree.institution_name && modalScienceDegree.institution_name.trim().length > 0 &&
-                                            modalScienceDegree.issued_date && modalScienceDegree.issued_date.trim().length > 0 &&
+                                            modalScienceDegree.institutionName && modalScienceDegree.institutionName.trim().length > 0 &&
+                                            modalScienceDegree.issuedDate && modalScienceDegree.issuedDate.trim().length > 0 &&
                                             modalScienceDegree.speciality && modalScienceDegree.speciality.trim().length > 0 &&
                                             modalScienceDegree.country && modalScienceDegree.country.trim().length > 0 &&
                                             modalScienceDegree.city && modalScienceDegree.city.trim().length > 0)"
@@ -203,10 +203,10 @@
         degree = '';
         country = '';
         city = '';
-        issued_date = '';
-        institution_name = '';
+        issuedDate = '';
+        institutionName = '';
         speciality = '';
-        diploma_number = '';
+        diplomaNumber = '';
 
         constructor(obj = null) {
             if (obj) {

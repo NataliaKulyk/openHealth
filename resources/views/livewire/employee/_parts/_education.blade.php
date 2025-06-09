@@ -1,7 +1,7 @@
 <div class="overflow-x-auto relative">
     <fieldset class="fieldset"
               x-data="{
-                  educations: $wire.entangle('form.educations'),
+                  educations: $wire.entangle('form.doctor.educations'),
                   openModal: false,
                   modalEducation: new Education(),
                   newEducation: false,
@@ -29,15 +29,18 @@
             </tr>
             </thead>
             <tbody>
-            <template x-for="(education, index) in educations">
+            <template x-for="(education, index) in educations" :key="index"> {{-- Додано :key="index" для оптимізації Alpine.js --}}
                 <tr>
                     <td class="td-input" x-text="education.country ? countryDict[education.country] : ''"></td>
                     <td class="td-input" x-text="education.city"></td>
-                    <td class="td-input" x-text="education.institution_name"></td>
+                    {{-- !!! ЗМІНА: institutionName на camelCase --}}
+                    <td class="td-input" x-text="education.institutionName"></td>
                     <td class="td-input" x-text="education.speciality ? specDict[education.speciality] : ''"></td>
                     <td class="td-input" x-text="education.degree ? degreeDict[education.degree] : ''"></td>
-                    <td class="td-input" x-text="education.issued_date"></td>
-                    <td class="td-input" x-text="education.diploma_number"></td>
+                    {{-- !!! ЗМІНА: issuedDate на camelCase --}}
+                    <td class="td-input" x-text="education.issuedDate"></td>
+                    {{-- !!! ЗМІНА: diplomaNumber на camelCase --}}
+                    <td class="td-input" x-text="education.diplomaNumber"></td>
                     <td class="td-input">
                         <div
                             x-data="{
@@ -173,12 +176,10 @@
                                         <select x-model="modalEducation.country" id="educationCountry"
                                                 class="input-modal" required>
                                             <option value="">{{ __('forms.select_country') }}</option>
-                                            <template x-for="(description, value) in countryDict">
+                                            <template x-for="(description, value) in countryDict" :key="value">
                                                 <option :value="value" x-text="description"></option>
                                             </template>
                                         </select>
-                                        <p class="text-error text-xs"
-                                           x-show="!modalEducation.country || !Object.keys(countryDict).includes(modalEducation.country)">{{__('forms.field_empty')}}</p>
                                         <p class="text-error text-xs"
                                            x-show="!modalEducation.country || modalEducation.country.trim().length === 0">{{__('forms.field_empty')}}</p>
                                     </div>
@@ -190,8 +191,9 @@
                                     </div>
                                     <div>
                                         <label for="educationInstitution" class="label-modal">{{__('forms.institutionName')}}</label>
-                                        <input x-model="modalEducation.institution_name" type="text" id="educationInstitution" class="input-modal" required>
-                                        <p class="text-error text-xs" x-show="!modalEducation.institution_name || modalEducation.institution_name.trim().length === 0">{{__('forms.field_empty')}}</p>
+                                        {{-- !!! ЗМІНА: institutionName на camelCase --}}
+                                        <input x-model="modalEducation.institutionName" type="text" id="educationInstitution" class="input-modal" required>
+                                        <p class="text-error text-xs" x-show="!modalEducation.institutionName || modalEducation.institutionName.trim().length === 0">{{__('forms.field_empty')}}</p>
                                     </div>
 
                                     <div>
@@ -200,12 +202,12 @@
                                                 x-model="modalEducation.speciality"
                                                 class="input-modal"
                                                 required>
-                                            <template x-for="(description, value) in specDict">
+                                            <template x-for="(description, value) in specDict" :key="value">
                                                 <option :value="value" x-text="description"></option>
                                             </template>
                                         </select>
                                         <p class="text-error text-xs"
-                                           x-show="!modalEducation.speciality || !Object.keys(specDict).includes(modalEducation.speciality)">{{ __('forms.field_empty') }}</p>
+                                           x-show="!modalEducation.speciality || modalEducation.speciality.trim().length === 0">{{ __('forms.field_empty') }}</p>
                                     </div>
 
                                     <div>
@@ -215,22 +217,21 @@
                                                 class="input-modal"
                                                 required>
                                             <option value="">{{ __('forms.degree') }}</option>
-                                            <template x-for="(description, value) in degreeDict">
+                                            <template x-for="(description, value) in degreeDict" :key="value">
                                                 <option :value="value" x-text="description"></option>
                                             </template>
                                         </select>
-                                        <p class="text-error text-xs" x-show="!modalEducation.degree || !Object.keys(degreeDict).includes(modalEducation.degree)">{{__('forms.field_empty')}}</p>
+                                        <p class="text-error text-xs" x-show="!modalEducation.degree || modalEducation.degree.trim().length === 0">{{__('forms.field_empty')}}</p>
                                     </div>
                                     <div>
                                         <label for="educationIssuedDate" class="label-modal">{{__('forms.issuedDate')}}</label>
-                                        <input id="educationIssuedDate" x-model="modalEducation.issued_date"  class="input-modal datepicker-input"
+                                        <input id="educationIssuedDate" x-model="modalEducation.issuedDate"  class="input-modal datepicker-input"
                                                autocomplete="off" required>
-                                        <p class="text-error text-xs" x-show="!modalEducation.issued_date || modalEducation.issued_date.trim().length === 0">{{__('forms.field_empty')}}</p>
+                                        <p class="text-error text-xs" x-show="!modalEducation.issuedDate || modalEducation.issuedDate.trim().length === 0">{{__('forms.field_empty')}}</p>
                                     </div>
                                     <div>
                                         <label for="educationDiplomaNumber" class="label-modal">{{__('forms.diplomaNumber')}}</label>
-                                        <input x-model="modalEducation.diploma_number" type="text" id="educationDiplomaNumber" class="input-modal">
-
+                                        <input x-model="modalEducation.diplomaNumber" type="text" id="educationDiplomaNumber" class="input-modal">
                                     </div>
                                 </div>
 
@@ -247,10 +248,10 @@
                                             class="button-primary"
                                             :disabled="!(modalEducation.country && modalEducation.country.trim().length > 0 &&
                                                       modalEducation.city && modalEducation.city.trim().length > 0 &&
-                                                      modalEducation.institution_name && modalEducation.institution_name.trim().length > 0 &&
+                                                      modalEducation.institutionName && modalEducation.institutionName.trim().length > 0 && {{-- !!! ЗМІНА --}}
                                                       modalEducation.speciality && modalEducation.speciality.trim().length > 0 &&
                                                       modalEducation.degree && modalEducation.degree.trim().length > 0 &&
-                                                      modalEducation.issued_date && modalEducation.issued_date.trim().length > 0)"
+                                                      modalEducation.issuedDate && modalEducation.issuedDate.trim().length > 0)" {{-- !!! ЗМІНА --}}
                                     >
                                         {{__('forms.save')}}
                                     </button>
@@ -268,11 +269,11 @@
     class Education {
         country = '';
         city = '';
-        institution_name = '';
+        institutionName = '';
         speciality = '';
         degree = '';
-        issued_date = '';
-        diploma_number = '';
+        issuedDate = '';
+        diplomaNumber = '';
 
         constructor(obj = null) {
             if (obj) {

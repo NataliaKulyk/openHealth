@@ -3,7 +3,7 @@
               {{-- Binding documents to Alpine, it will be re-used in the modal.
                 Note that it's necessary for modal to work properly --}}
               x-data="{
-                  qualifications: $wire.entangle('form.qualifications'),
+                  qualifications: $wire.entangle('form.doctor.qualifications'),
                   openModal: false,
                   modalQualification: new Qualification(),
                   newQualification: false,
@@ -33,11 +33,10 @@
                 <tr>
                     <td class="td-input" x-text="qualTypeDict[qualification.type] || qualification.type"></td>
                     <td class="td-input" x-text="countryDict[qualification.country] || qualification.country"></td>
-                    <td class="td-input" x-text="qualification.institution_name"></td>
+                    <td class="td-input" x-text="qualification.institutionName"></td>
                     <td class="td-input" x-text="qualification.speciality"></td>
-                    <td class="td-input" x-text="qualification.certificate_number"></td>
+                    <td class="td-input" x-text="qualification.certificateNumber"></td>
                     <td class="td-input relative">
-                        <!-- Кнопки редагування та видалення -->
                         <x-dropdown-button
                             :editAction="'openModal = true; item = index; modalQualification = new Qualification(qualification); newQualification = false; close($refs.button)'"
                             :deleteAction="'qualifications.splice(index, 1); close($refs.button)'"
@@ -100,7 +99,7 @@
 
                                     <div>
                                         <label for="qualificationType"
-                                               class="label-modal">{{ __('forms.qualification_type') }}</label>
+                                               class="label-modal">{{ __('forms.qualificationType') }}</label>
                                         <select id="qualificationType"
                                                 x-model="modalQualification.type"
                                                 class="input-modal"
@@ -128,15 +127,14 @@
                                         <p class="text-error text-xs"
                                            x-show="!modalQualification.country || modalQualification.country.trim().length === 0">{{ __('forms.field_empty') }}</p>
                                     </div>
-                                    {{-- ... Решта полів без змін, якщо вони не викликають помилок ... --}}
 
                                     <div>
                                         <label for="qualificationInstitution"
                                                class="label-modal">{{ __('forms.institutionName') }}</label>
-                                        <input x-model="modalQualification.institution_name" type="text"
+                                        <input x-model="modalQualification.institutionName" type="text"
                                                id="qualificationInstitution" class="input-modal" required>
                                         <p class="text-error text-xs"
-                                           x-show="!modalQualification.institution_name || modalQualification.institution_name.trim().length === 0">{{ __('forms.field_empty') }}</p>
+                                           x-show="!modalQualification.institutionName || modalQualification.institutionName.trim().length === 0">{{ __('forms.field_empty') }}</p>
                                     </div>
 
                                     <div>
@@ -157,8 +155,17 @@
                                     <div>
                                         <label for="qualificationCertificateNumber"
                                                class="label-modal">{{ __('forms.certificateNumber') }}</label>
-                                        <input x-model="modalQualification.certificate_number" type="text"
+                                        <input x-model="modalQualification.certificateNumber" type="text"
                                                id="qualificationCertificateNumber" class="input-modal">
+                                    </div>
+
+                                    <div>
+                                        <label for="qualificationIssuedDate"
+                                               class="label-modal">{{ __('forms.issuedDate') }}</label>
+                                        <input id="qualificationIssuedDate" x-model="modalQualification.issuedDate"
+                                               class="input-modal datepicker-input" autocomplete="off" required>
+                                        <p class="text-error text-xs"
+                                           x-show="!modalQualification.issuedDate || modalQualification.issuedDate.trim().length === 0">{{ __('forms.field_empty') }}</p>
                                     </div>
 
                                 </div>
@@ -176,8 +183,9 @@
                                             class="button-primary"
                                             :disabled="!(modalQualification.type && modalQualification.type.trim().length > 0 &&
                                             modalQualification.country && modalQualification.country.trim().length > 0 &&
-                                            modalQualification.institution_name && modalQualification.institution_name.trim().length > 0 &&
-                                            modalQualification.speciality && modalQualification.speciality.trim().length > 0)"
+                                            modalQualification.institutionName && modalQualification.institutionName.trim().length > 0 &&
+                                            modalQualification.speciality && modalQualification.speciality.trim().length > 0 &&
+                                            modalQualification.issuedDate && modalQualification.issuedDate.trim().length > 0)"
                                     >
                                         {{ __('forms.save') }}
                                     </button>
@@ -196,9 +204,10 @@
     class Qualification {
         type = '';
         country = '';
-        institution_name = '';
+        institutionName = '';
         speciality = '';
-        certificate_number = '';
+        certificateNumber = '';
+        issuedDate = '';
 
         constructor(obj = null) {
             if (obj) Object.assign(this, obj);

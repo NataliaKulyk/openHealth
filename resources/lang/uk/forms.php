@@ -150,7 +150,7 @@ return [
     'selectCountry' => 'Обрати країну',
     'role' => 'Роль',
     'roleChoose' => 'Обрати роль',
-    'qualification_type' => 'Тип кваліфікації',
+    'qualificationType' => 'Тип кваліфікації',
     'healthcareService' => 'Послуга здоров\'я',
     'dismissed' => 'Звільнити',
     'dismissedTextDoctor' => 'Увага! Звільнення працівника в електронній системі охорони здоров’я є незворотною дією. Здійснюйте звільнення працівника після виконання відповідних заходів на підприємстві та попередньої деактивації активних ролей працівника.
@@ -223,7 +223,7 @@ return [
     'knedp' => 'КНЕДП',
     'key_container_upload' => 'Шлях до контейнера',
     'password' => 'Пароль',
-    'speciality_officio' => 'Основна спеціалізація',
+    'specialityOfficio' => 'Основна спеціалізація',
     'specialities' => 'Спеціалізації',
     'qualifications' => 'Кваліфікації',
     'specialityQualificationType' => 'Тип навчальної діяльності',
