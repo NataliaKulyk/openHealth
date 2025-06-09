@@ -84,6 +84,20 @@ class BaseEmployee extends Model
         );
     }
 
+    /**
+     * Determine if the employee's associated user is verified.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function isVerified(): Attribute
+    {
+        return Attribute::make(
+        // The logic checks if the user relationship exists AND
+        // if the user's email_verified_at column is not null.
+            get: fn () => $this->user?->email_verified_at !== null
+        );
+    }
+
     public function getPhoneAttribute(): string
     {
         return optional(optional($this->party)->phones)->first()->number ?? '';
