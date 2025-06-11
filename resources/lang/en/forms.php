@@ -15,5 +15,11 @@ return [
     'step'=> 'Step :currentSteep with :totalSteps',
     'errors' => [
         'update_data' => 'An error has occurs during data update'
-    ]
+    ],
+    'enter' => 'Login',
+    'to_enter' => 'Login',
+    'password' => 'Password',
+    'password_confirmation' => 'Password confirmation',
+    'need_register' => 'Already register?',
+    'has_account' => 'Has account?'
 ];

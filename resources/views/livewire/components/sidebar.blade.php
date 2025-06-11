@@ -27,7 +27,7 @@
             @endif
 
             {{-- Menu items accessible only by Owners and Admins --}}
-            @hasanyrole('OWNER|ADMIN')
+            @hasanyrole('OWNER|ADMIN|DOCTOR')
 
                 <li>
                     <a href="{{route('edit.legalEntities')}}"

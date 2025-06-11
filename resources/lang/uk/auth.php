@@ -21,7 +21,10 @@ return [
     'login' => [
         'success' => [
             'user_auth' => 'AUTH: Успішний вхід',
-            'new_user_auth' => 'AUTH: Новий користувач успішно аутентифікований'
+            'new_user_create' => 'Нового користувача успішно створено',
+            'new_user_auth' => 'AUTH: Новий користувач успішно аутентифікований',
+            'verification' => 'Email користувача успішно верифіковано',
+            'reset_link' => 'Посилання на скидання пароля надіслано на вказаний email'
         ],
         'error' => [
             'server' => [
@@ -34,8 +37,10 @@ return [
                 'employee_data' => 'Employee Data Response Schema:',
                 'employee_request_data' => 'EmployeeRequest Data Response Schema:',
                 'auths' => 'Помилка автентифікації',
-                'credentials' => 'Невірний логін або пароль'
+                'credentials' => 'Невірний логін або пароль',
+                'confirm_mismatch' => 'Паролі не збігаються'
             ],
+            'vlink_not_sent' => 'Не вдалося надіслати посилання на верифікацію',
             'lockout' => 'Користувача заблоковано [забагато спроб логіну]',
             'exceed_login_attempts' => 'Перевищено кількість спроб входу',
             'email_verification' => 'Ваш email не підтверджено. Перевірте свою електронну пошту!',
@@ -48,12 +53,15 @@ return [
             'user_employee_update' => 'AUTH: Помилка під час оновлення даних співробітника',
             'data_saving' => 'AUTH: Сталася помилка під час збереження автентифікаційних даних',
             'employee_instance' => 'Не знайдено даних співробітника для автентифікованого користувача',
-            'get_employee_instance' => 'Неможливо отримати екземпляр Employee чи EmployeeRequest'
+            'get_employee_instance' => 'Неможливо отримати екземпляр Employee чи EmployeeRequest',
+            'email_already_verified' => 'Вказаний Email вже верифікоавно',
+            'reset_password' => 'Помилка при встановленні нового пароля',
+            'throttle' => 'Забагато спроб. Будь ласка, спробуйте пізніше',
+            'wrong_session' => 'Сесія недійсна',
+            'reset_link' => 'Неможливо надіслати посилання'
         ],
-        'enter' => 'Вхід',
-        'password' => 'Пароль',
         'no_ehealth_login' => 'Без авторизації у eHealth',
-        'register' => 'Зареєструватися?',
-        'forgot_password' => 'Забули свій пароль?'
+        'forgot_password' => 'Забули свій пароль?',
+        'vlink_sent' => 'Посилання на верифікацію надіслано успішно',
     ]
 ];
