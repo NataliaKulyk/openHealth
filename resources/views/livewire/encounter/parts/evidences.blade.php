@@ -26,7 +26,7 @@
             <template x-for="(evidence, index) in modalCondition.conditions.evidences[0].codes">
                 <tr>
                     <td class="td-input"
-                        x-text="`${evidence.coding[0].code} - ${dictionary[evidence.coding[0].code]}`"
+                        x-text="`${ evidence.coding[0].code } - ${ dictionary[evidence.coding[0].code] }`"
                     ></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
@@ -212,7 +212,7 @@
             {
                 coding: [{ system: 'eHealth/ICPC2/reasons', code: '' }]
             }
-        ]
+        ];
 
         constructor(obj = null) {
             if (obj) {

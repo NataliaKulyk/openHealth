@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Employee;
 
 use App\Repositories\EmployeeRepository;
@@ -65,7 +67,7 @@ class EmployeeComponent extends Component
         $this->traitGetDictionary();
 
         $this->dictionaries['EMPLOYEE_TYPE'] = $this->getDictionariesFields(
-            config('ehealth.legal_entity_type.' . auth()->user()->legalEntity->type .'.roles'),
+            config('ehealth.legal_entity_type.' . legalEntity()->type .'.roles'),
             'EMPLOYEE_TYPE'
         );
 

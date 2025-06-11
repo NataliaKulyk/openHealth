@@ -1,16 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules\DivisionRules;
 
 use Closure;
-use App\Models\Division;
 use App\Exceptions\CustomValidationException;
-use App\Models\LegalEntity;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class LegalEntityStatusRule implements ValidationRule
 {
-
     /**
      * Run the validation rule. Check that legal entity is in ‘ACTIVE’ or ‘SUSPENDED’ status
      *
@@ -18,10 +17,10 @@ class LegalEntityStatusRule implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $status = auth()->user()->legalEntity->status;
+        $status = legalEntity()->status;
 
         // CustomValidationException
-        if($status !== 'ACTIVE' && $status !== 'SUSPENDED') {
+        if ($status !== 'ACTIVE' && $status !== 'SUSPENDED') {
             throw new CustomValidationException($this->message(), 'custom');
         }
     }

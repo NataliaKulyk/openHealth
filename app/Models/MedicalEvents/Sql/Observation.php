@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\MedicalEvents\Sql;
 
 use Eloquence\Behaviours\HasCamelCasing;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -20,11 +21,18 @@ class Observation extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'issued' => 'immutable_datetime',
+        'effective_date_time' => 'immutable_datetime',
+    ];
+
     protected $hidden = [
         'id',
         'encounter_id',
         'diagnostic_report_id',
         'code_id',
+        'effective_date_time',
+        'issued',
         'performer_id',
         'report_origin_id',
         'interpretation_id',
@@ -37,6 +45,41 @@ class Observation extends Model
         'created_at',
         'updated_at'
     ];
+
+    protected $appends = [
+        'issued_date',
+        'issued_time',
+        'effective_date',
+        'effective_time'
+    ];
+
+    protected function issuedDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->issued->toDateString()
+        );
+    }
+
+    protected function issuedTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->issued->toTimeString()
+        );
+    }
+
+    protected function effectiveDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->effective_date_time->toDateString()
+        );
+    }
+
+    protected function effectiveTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->effective_date_time->toTimeString()
+        );
+    }
 
     public function encounter(): BelongsTo
     {

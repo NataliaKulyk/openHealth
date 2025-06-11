@@ -104,4 +104,32 @@ class ConditionRepository extends BaseRepository
             ->get()
             ?->toArray();
     }
+
+    /**
+     * Formatting for showing in frontend.
+     *
+     * @param  array  $conditions
+     * @param  array  $diagnoses
+     * @return array
+     */
+    public function formatForView(array $conditions, array $diagnoses): array
+    {
+        return collect($conditions)
+            ->map(function (array $condition, int $index) use ($diagnoses) {
+                // add diagnoses array to conditions
+                if (isset($diagnoses[$index])) {
+                    $condition['diagnoses'] = $diagnoses[$index];
+                }
+
+                if (empty($condition['code']['coding'][1]['code'])) {
+                    $condition['code']['coding'][1] = [
+                        'system' => 'eHealth/ICD10_AM/condition_codes',
+                        'code' => ''
+                    ];
+                }
+
+                return $condition;
+            })
+            ->toArray();
+    }
 }

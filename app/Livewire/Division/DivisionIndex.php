@@ -60,7 +60,7 @@ class DivisionIndex extends Component
 
     public function getLegalEntity()
     {
-        $this->legalEntity = auth()->user()->legalEntity;
+        $this->legalEntity = legalEntity();
     }
 
     public function tableHeaders(): void

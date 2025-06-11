@@ -548,9 +548,6 @@
                                 </button>
 
                                 <button @click.prevent="
-                                            modalCondition.conditions.code.coding = modalCondition.conditions.code.coding.filter(c => c.code.trim() !== '');
-
-                                            // Allow only 1 primary diagnose
                                             const matchingPrimaryCount = diagnoses.filter((diagnose, index) => {
                                                 // If editing — ignore the current index
                                                 if (newCondition === false && index === item) return false;
@@ -587,9 +584,11 @@
                                             showDuplicateCodeWarning = false;
                                         "
                                         class="button-primary justify-end"
-                                        :disabled="
-                                            !(modalCondition.conditions.clinicalStatus.trim().length > 0 && modalCondition.conditions.verificationStatus.trim().length > 0
-                                            && modalCondition.conditions.code.coding[0].code.trim().length > 0 && modalCondition.conditions.diagnoses.role.coding[0].code
+                                        :disabled="!(
+                                            modalCondition.conditions.clinicalStatus.trim().length > 0 &&
+                                            modalCondition.conditions.verificationStatus.trim().length > 0 &&
+                                            modalCondition.conditions.code.coding[0].code.trim().length > 0 &&
+                                            modalCondition.conditions.diagnoses.role.coding[0].code
                                         )"
                                 >
                                     {{ __('forms.save') }}

@@ -6,7 +6,6 @@ namespace App\Repositories\MedicalEvents;
 
 use App\Classes\eHealth\Api\PatientApi;
 use App\Models\MedicalEvents\Sql\EncounterDiagnose;
-use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -218,7 +217,7 @@ class EncounterRepository extends BaseRepository
     public function formatEpisodeRequest(array $episode, array $encounterPeriod): array
     {
         $episode['id'] = $this->episodeUuid;
-        $episode['managingOrganization']['identifier']['value'] = Auth::user()->legalEntity->uuid;
+        $episode['managingOrganization']['identifier']['value'] = legalEntity()->uuid;
         $episode['period']['start'] = convertToISO8601($encounterPeriod['date'] . $encounterPeriod['start']);
 
         return schemaService()
@@ -290,36 +289,6 @@ class EncounterRepository extends BaseRepository
             ->camelCaseKeys()
             ->extractFirst()
             ->getNormalizedData();
-    }
-
-    /**
-     * Formatting conditions for showing in frontend.
-     *
-     * @param  array  $conditions
-     * @param  array  $diagnoses
-     * @return array
-     */
-    public function formatConditions(array $conditions, array $diagnoses): array
-    {
-        return collect($conditions)
-            ->map(function (array $condition, int $index) use ($diagnoses) {
-                // add diagnoses array to conditions
-                if (isset($diagnoses[$index])) {
-                    $condition['diagnoses'] = $diagnoses[$index];
-                }
-
-                $originalOnsetDate = $condition['onsetDate'];
-                $originalAssertedDate = $condition['assertedDate'];
-
-                // set date
-                $condition['onsetDate'] = CarbonImmutable::parse($originalOnsetDate)->format('Y-m-d');
-                $condition['onsetTime'] = CarbonImmutable::parse($originalOnsetDate)->format('H:i');
-                $condition['assertedDate'] = CarbonImmutable::parse($originalAssertedDate)->format('Y-m-d');
-                $condition['assertedTime'] = CarbonImmutable::parse($originalAssertedDate)->format('H:i');
-
-                return $condition;
-            })
-            ->toArray();
     }
 
     /**
@@ -486,13 +455,12 @@ class EncounterRepository extends BaseRepository
      * Format diagnostic reports data before request.
      *
      * @param  array  $diagnosticReports
-     * @param  string  $legalEntityUuid
      * @param  string  $divisionUuid
      * @return array
      */
-    public function formatDiagnosticReportsRequest(array $diagnosticReports, string $legalEntityUuid, string $divisionUuid): array
+    public function formatDiagnosticReportsRequest(array $diagnosticReports, string $divisionUuid): array
     {
-        $diagnosticReportForm = array_map(function (array $diagnosticReport) use ($legalEntityUuid, $divisionUuid) {
+        $diagnosticReportForm = array_map(function (array $diagnosticReport) use ($divisionUuid) {
             // delete frontend properties
             unset($diagnosticReport['isReferralAvailable'], $diagnosticReport['referralType'], $diagnosticReport['query']);
 
@@ -538,7 +506,7 @@ class EncounterRepository extends BaseRepository
                         'coding' => [['system' => 'eHealth/resources', 'code' => 'legalEntity']],
                         'text' => ''
                     ],
-                    'value' => $legalEntityUuid
+                    'value' => legalEntity()->uuid
                 ],
             ];
 

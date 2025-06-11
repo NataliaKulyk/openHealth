@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\MedicalEvents\Sql;
 
+use Carbon\CarbonImmutable;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +20,10 @@ class Condition extends Model
 
     protected $guarded = [];
 
-    protected $appends = ['evidences'];
+    protected $casts = [
+        'onsetDate' => 'date:Y-m-d',
+        'assertedDate' => 'date:Y-m-d'
+    ];
 
     protected $hidden = [
         'id',
@@ -32,6 +36,28 @@ class Condition extends Model
         'created_at',
         'updated_at',
     ];
+
+    protected $appends = [
+        'evidences',
+        'onset_time',
+        'asserted_time'
+    ];
+
+    protected function onsetTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => CarbonImmutable::parse($this->attributes['onset_date'])->toTimeString()
+        );
+    }
+
+    protected function assertedTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => isset($this->attributes['asserted_date'])
+                ? CarbonImmutable::parse($this->attributes['asserted_date'])->toTimeString()
+                : null
+        );
+    }
 
     public function encounter(): BelongsTo
     {
@@ -72,11 +98,13 @@ class Condition extends Model
     {
         return Attribute::make(
             get: fn () => [
-                'codes' => $this->evidencesRelation()
-                    ->with(['codes.coding'])
-                    ->get()
-                    ->map(fn (ConditionEvidence $evidence) => $evidence->codes->toArray())
-                    ->toArray()
+                [
+                    'codes' => $this->evidencesRelation()
+                        ->with(['codes.coding'])
+                        ->get()
+                        ->map(fn (ConditionEvidence $evidence) => $evidence->codes->toArray())
+                        ->toArray()
+                ]
             ]
         );
     }
