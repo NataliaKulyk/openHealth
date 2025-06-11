@@ -6,7 +6,6 @@ namespace App\Providers;
 
 use App\Models\LegalEntity;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
-use Illuminate\Auth\SessionGuard;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -24,8 +23,10 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(IdeHelperServiceProvider::class);
         }
 
-        $this->app->singletonIf(LegalEntity::class, fn () => Auth::user()->legalEntity);
-        $this->app->alias(LegalEntity::class, 'legalEntity');
+        if (!$this->app->runningInConsole()) {
+            $this->app->singletonIf(LegalEntity::class, fn () => Auth::user()->legalEntity);
+            $this->app->alias(LegalEntity::class, 'legalEntity');
+        }
     }
 
     /**
