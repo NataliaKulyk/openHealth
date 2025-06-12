@@ -58,11 +58,11 @@
                     <input x-model="modalDiagnosticReport.isReferralAvailable"
                            @click="modalDiagnosticReport.isReferralAvailable = !modalDiagnosticReport.isReferralAvailable"
                            type="checkbox"
-                           name="isReferralAvailable"
-                           id="isReferralAvailable"
+                           name="isDiagnosticReferralAvailable"
+                           id="isDiagnosticReferralAvailable"
                            class="default-checkbox mb-1"
                     />
-                    <label class="default-p" for="isReferralAvailable">
+                    <label class="default-p" for="isDiagnosticReferralAvailable">
                         {{ __('patients.referral_available') }}
                     </label>
                 </div>

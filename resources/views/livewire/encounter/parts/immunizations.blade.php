@@ -138,17 +138,11 @@
             {{-- Button to trigger the modal --}}
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
-                        newImmunization = true; {{-- We are adding a new evidence --}}
-                        modalImmunization = new Immunization(); {{-- Replace the data of the previous evidence with a new one--}}
+                        newImmunization = true; {{-- We are adding a new immumization --}}
+                        modalImmunization = new Immunization(); {{-- Replace the data of the previous immumization with a new one--}}
                     "
                     class="item-add my-5"
             >
-                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
-                     viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M5 12h14m-7 7V5"
-                    />
-                </svg>
                 {{ __('forms.add') }}
             </button>
 
@@ -241,7 +235,7 @@
      */
     class Immunization {
         date = new Date().toISOString().split('T')[0];
-        time = new Date().toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit', hour12: false});
+        time = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false });
         notGiven = false;
         vaccineCode = {
             coding: [{ system: 'eHealth/vaccine_codes', code: '' }]

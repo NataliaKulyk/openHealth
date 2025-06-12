@@ -129,9 +129,6 @@
                                     @click="modalImmunization.explanation.reasons.pop(), index--"
                                     class="item-remove"
                             >
-                                <svg>
-                                    <use xlink:href="#svg-minus"></use>
-                                </svg>
                                 {{ __('forms.delete') }}
                             </button>
                         </template>
@@ -142,9 +139,6 @@
                                     class="item-add lg:justify-self-start"
                                     :class="{ 'lg:justify-self-start': index > 0 }"
                             >
-                                <svg>
-                                    <use xlink:href="#svg-plus"></use>
-                                </svg>
                                 {{ __('forms.add') }}
                             </button>
                         </template>

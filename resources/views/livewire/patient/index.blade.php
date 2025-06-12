@@ -41,7 +41,7 @@
                     <p>{{ __('patients.patient_search') }}</p>
                 </div>
 
-                @include('livewire.patient._parts._search_filter')
+                @include('livewire.patient.parts.search-filter')
 
                 <div class="py-4">
                     <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 default-button">
@@ -110,7 +110,7 @@
                                 <tr class="border-b dark:border-gray-700">
                                     <th scope="row" class="table-cell-primary">
                                         <div class="text-base"
-                                            x-text="`${patient.last_name} ${patient.first_name} ${patient.second_name || ''}`"></div>
+                                             x-text="`${patient.last_name} ${patient.first_name} ${patient.second_name || ''}`"></div>
                                         <template x-if="patient.status === 'APPLICATION'">
                                             <div class="flex gap-2 mt-2">
                                                 <a :href="`{{ route('patient.form', ['id' => '']) }}/${patient.id}`"
@@ -131,9 +131,6 @@
                                                 <button @click.prevent="$wire.redirectToEncounter(patient)"
                                                         class="button-sync flex items-center gap-2"
                                                 >
-                                                    <svg width="16" height="16">
-                                                        <use xlink:href="#svg-plus"></use>
-                                                    </svg>
                                                     {{ __('patients.start_interacting') }}
                                                 </button>
                                             </div>

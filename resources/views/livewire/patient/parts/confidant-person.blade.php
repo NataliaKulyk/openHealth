@@ -2,19 +2,19 @@
 
 <div class="relative"> {{-- This required for table overflow scrolling --}}
     <fieldset class="fieldset"
-              {{-- Binding documents to Alpine, it will be re-used in the modal.
+              {{-- Binding documentsRelationship to Alpine, it will be re-used in the modal.
                 Note that it's necessary for modal to work properly --}}
               x-data="{
-                  documents: $wire.entangle('form.documents'),
+                  documentsRelationship: $wire.entangle('form.documentsRelationship'),
                   openModal: false,
-                  modalDocument: new Doc(),
+                  modalDocument: new DocRelationship(),
                   newDocument: false,
                   item: 0,
-                  dictionary: $wire.dictionaries['DOCUMENT_TYPE']
+                  dictionary: $wire.dictionaries['DOCUMENT_RELATIONSHIP_TYPE']
               }"
     >
         <legend class="legend">
-            <h2>{{ __('patients.identity_document') }}</h2>
+            <h2>{{ __('patients.confidant_person_documents_relationship') }}</h2>
         </legend>
 
         <table class="table-input w-inherit">
@@ -24,18 +24,18 @@
                 <th scope="col" class="th-input">{{ __('forms.number') }} </th>
                 <th scope="col" class="th-input">{{ __('forms.issued_by') }}</th>
                 <th scope="col" class="th-input">{{ __('forms.issued_at') }}</th>
-                <th scope="col" class="th-input">{{ __('forms.valid_until') }}</th>
+                <th scope="col" class="th-input">{{ __('forms.active_to') }}</th>
                 <th scope="col" class="th-input">{{ __('forms.actions') }}</th>
             </tr>
             </thead>
             <tbody>
-            <template x-for="(document, index) in documents">
+            <template x-for="(document, index) in documentsRelationship">
                 <tr>
                     <td class="td-input" x-text="dictionary[document.type]"></td>
                     <td class="td-input" x-text="document.number"></td>
                     <td class="td-input" x-text="document.issuedBy"></td>
                     <td class="td-input" x-text="document.issuedAt"></td>
-                    <td class="td-input" x-text="document.expirationDate"></td>
+                    <td class="td-input" x-text="document.activeTo"></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
                         <div x-data="{
@@ -95,7 +95,7 @@
                                                     openModal = true; {{-- Open the modal --}}
                                                     item = index; {{-- Identify the item we are corrently editing --}}
                                                     {{-- Replace the previous document with the current, don't assign object directly (modalDocument = document) to avoid reactiveness --}}
-                                                    modalDocument = new Doc(document)
+                                                    modalDocument = new DocRelationship(document)
                                                     newDocument = false; {{-- This document is already created --}}
                                                 "
                                             class="dropdown-button"
@@ -103,7 +103,7 @@
                                         {{ __('forms.edit') }}
                                     </button>
 
-                                    <button @click.prevent="documents.splice(index, 1); close($refs.button)"
+                                    <button @click.prevent="documentsRelationship.splice(index, 1); close($refs.button)"
                                             class="dropdown-button dropdown-delete">
                                         {{ __('forms.delete') }}
                                     </button>
@@ -122,16 +122,10 @@
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
                         newDocument = true; {{-- We are adding a new document --}}
-                        modalDocument = new Doc() {{-- Replace the data of the previous document with a new one--}}
+                        modalDocument = new DocRelationship() {{-- Replace the data of the previous document with a new one--}}
                     "
                     class="item-add my-5"
             >
-                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
-                     viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M5 12h14m-7 7V5"/>
-                </svg>
-
                 {{ __('forms.add') }}
             </button>
 
@@ -168,7 +162,7 @@
                                 <div class="form-row-modal">
                                     <div>
                                         <label for="documentType" class="label-modal">
-                                            {{ __('forms.type') }}
+                                            {{ __('forms.document_type') }}
                                         </label>
                                         <select x-model="modalDocument.type"
                                                 id="documentType"
@@ -177,8 +171,8 @@
                                                 required
                                         >
                                             <option selected>{{ __('forms.select') }} *</option>
-                                            @foreach($this->dictionaries['DOCUMENT_TYPE'] as $key => $documentType)
-                                                <option value="{{ $key }}">{{ $documentType }}</option>
+                                            @foreach($this->dictionaries['DOCUMENT_RELATIONSHIP_TYPE'] as $key => $documentRelationshipType)
+                                                <option value="{{ $key }}">{{ $documentRelationshipType }}</option>
                                             @endforeach
                                         </select>
                                         {{-- Check if the picked value is the one from the dictionary --}}
@@ -188,6 +182,7 @@
                                             {{ __('forms.field_empty') }}
                                         </p>
                                     </div>
+
                                     <div>
                                         <label for="documentNumber" class="label-modal">
                                             {{ __('forms.document_number') }}
@@ -204,6 +199,7 @@
                                             {{ __('forms.field_empty') }}
                                         </p>
                                     </div>
+
                                     <div>
                                         <label for="documentIssuedBy" class="label-modal">
                                             {{ __('forms.document_issued_by') }}
@@ -215,10 +211,14 @@
                                                class="input-modal"
                                                autocomplete="off"
                                         >
+                                        <p class="text-error text-xs" x-show="!modalDocument.issuedBy.trim().length > 0">
+                                            {{ __('forms.field_empty') }}
+                                        </p>
                                     </div>
+
                                     <div class="relative">
                                         <svg width="20" height="20"
-                                             class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none"
+                                             class="svg-input absolute left-1 !top-1/2 transform -translate-y-1/2 pointer-events-none"
                                         >
                                             <use xlink:href="#svg-calendar-week"></use>
                                         </svg>
@@ -233,7 +233,11 @@
                                                class="input-modal datepicker-input"
                                                autocomplete="off"
                                         >
+                                        <p class="text-error text-xs" x-show="!modalDocument.issuedAt.trim().length > 0">
+                                            {{ __('forms.field_empty') }}
+                                        </p>
                                     </div>
+
                                     <div class="relative">
                                         <svg width="20" height="20"
                                              class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none"
@@ -243,7 +247,7 @@
                                         <label for="documentExpirationDate" class="label-modal">
                                             {{ __('forms.valid_until') }}
                                         </label>
-                                        <input x-model="modalDocument.expirationDate"
+                                        <input x-model="modalDocument.activeTo"
                                                datepicker-min-date="{{ now()->format('Y-m-d') }}"
                                                type="text"
                                                name="documentExpirationDate"
@@ -263,8 +267,8 @@
                                     </button>
 
                                     <button class="button-primary"
-                                            @click.prevent="newDocument !== false ? documents.push(modalDocument) : documents[item] = modalDocument; openModal = false"
-                                            :disabled="!(modalDocument.type.trim().length > 0 && modalDocument.number.trim().length > 0)"
+                                            @click.prevent="newDocument !== false ? documentsRelationship.push(modalDocument) : documentsRelationship[item] = modalDocument; openModal = false"
+                                            :disabled="!(modalDocument.type.trim().length > 0 && modalDocument.number.trim().length > 0 && modalDocument.issuedBy.trim().length > 0 && modalDocument.issuedAt.trim().length > 0)"
                                     >
                                         {{ __('forms.save') }}
                                     </button>
@@ -282,12 +286,12 @@
     /**
      * Representation of the user's personal document
      */
-    class Doc {
+    class DocRelationship {
         type = '';
         number = '';
         issuedBy = '';
         issuedAt = '';
-        expirationDate = '';
+        activeTo = '';
 
         constructor(obj = null) {
             if (obj) {

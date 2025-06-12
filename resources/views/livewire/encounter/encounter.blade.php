@@ -48,7 +48,7 @@
         </div>
 
         @if($showModal === 'signedContent')
-            @include('livewire.patient._parts.modals._modal_signed_content')
+            @include('livewire.patient.parts.modals.modal-signed-content')
         @endif
     </form>
 

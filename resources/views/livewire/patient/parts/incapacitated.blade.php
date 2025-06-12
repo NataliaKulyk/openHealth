@@ -11,8 +11,8 @@
 
     <template x-if="isIncapacitated">
         <div>
-            @include('livewire.patient._parts._search_confidant_person')
-            @include('livewire.patient._parts._confidant_person')
+            @include('livewire.patient.parts.search-confidant-person')
+            @include('livewire.patient.parts.confidant-person')
         </div>
     </template>
 </fieldset>

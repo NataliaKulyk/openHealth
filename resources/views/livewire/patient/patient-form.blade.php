@@ -15,14 +15,14 @@
     @if($viewState === 'default')
         <section class="section-form">
             <form class="form">
-                @include('livewire.patient._parts._patient')
-                @include('livewire.patient._parts._documents')
-                @include('livewire.patient._parts._identity')
-                @include('livewire.patient._parts._contact_data')
-                @include('livewire.patient._parts._addresses')
-                @include('livewire.patient._parts._emergency_contact')
-                @include('livewire.patient._parts._incapacitated')
-                @include('livewire.patient._parts._authentication_methods')
+                @include('livewire.patient.parts.patient')
+                @include('livewire.patient.parts.documents')
+                @include('livewire.patient.parts.identity')
+                @include('livewire.patient.parts.contact-data')
+                @include('livewire.patient.parts.addresses')
+                @include('livewire.patient.parts.emergency-contact')
+                @include('livewire.patient.parts.incapacitated')
+                @include('livewire.patient.parts.authentication-methods')
 
                 <div class="flex xl:flex-row gap-6 justify-between items-center">
                     <a href="{{ route('patient.index') }}" class="button-minor">
@@ -45,7 +45,7 @@
     @elseif($viewState === 'new')
         <section class="section-form">
             <form class="form">
-                @include('livewire.patient._parts._signature')
+                @include('livewire.patient.parts.signature')
             </form>
         </section>
     @endif

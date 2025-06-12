@@ -7,7 +7,7 @@
             <div class="text-gray-900 dark:text-white text-xl leading-normal mb-6">
                 {{ __('patients.patient_legal_representative') }}
             </div>
-            @include('livewire.patient._parts._search_filter')
+            @include('livewire.patient.parts.search-filter')
 
             @if(empty($selectedConfidantPatientId))
                 <div class="py-4">
