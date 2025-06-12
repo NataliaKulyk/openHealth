@@ -9,7 +9,7 @@
 
     <div class="breadcrumb-form p-4">
         <button wire:click.prevent=""
-                class="default-button mb-10"
+                class="button-primary mb-10"
         >
             {{ __('patients.get_access_to_medical_data') }}
         </button>
