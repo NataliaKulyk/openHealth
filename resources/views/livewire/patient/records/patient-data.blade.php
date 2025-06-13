@@ -16,7 +16,7 @@
             <div>
                 <button wire:click.once="getVerificationStatus"
                         type="button"
-                        class="flex items-center gap-2 default-button"
+                        class="flex items-center gap-2 button-primary"
                 >
                     {{ __('patients.update_status') }}
                     <svg width="16" height="17">

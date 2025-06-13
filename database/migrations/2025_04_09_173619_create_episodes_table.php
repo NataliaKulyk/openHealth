@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('episodes', static function (Blueprint $table) {
             $table->id();
-            $table->uuid()->unique();
+            $table->uuid();
             $table->foreignId('encounter_id')->constrained('encounters')->cascadeOnDelete();
             $table->foreignId('episode_type_id')->constrained('codings')->cascadeOnDelete();
             $table->enum('status', ['active', 'closed', 'entered_in_error']);

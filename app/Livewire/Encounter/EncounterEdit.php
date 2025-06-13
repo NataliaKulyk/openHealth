@@ -33,7 +33,7 @@ class EncounterEdit extends EncounterComponent
         $this->form->episode = $this->getEpisode();
 
         $this->form->conditions = Repository::condition()->get($this->encounterId);
-        $this->form->conditions = Repository::encounter()->formatConditions(
+        $this->form->conditions = Repository::condition()->formatForView(
             $this->form->conditions,
             $this->form->encounter['diagnoses']
         );

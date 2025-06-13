@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Division;
 
 use App\Traits\FormTrait;
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use App\Models\Division;
 use Livewire\Attributes\On;
@@ -19,8 +20,6 @@ class DivisionIndex extends Component
     use FormTrait;
 
     protected ?AddressRepository $addressRepository;
-
-    public ?object $legalEntity;
 
     public ?array $working_hours = [
         'mon' => 'Понеділок',
@@ -40,7 +39,7 @@ class DivisionIndex extends Component
         'DIVISION_TYPE'
     ];
 
-    public function boot(AddressRepository $addressRepository)
+    public function boot(AddressRepository $addressRepository): void
     {
         $this->addressRepository = $addressRepository;
     }
@@ -48,19 +47,13 @@ class DivisionIndex extends Component
     public function mount(): void
     {
         $this->tableHeaders();
-        $this->getLegalEntity();
         $this->getDictionary();
     }
 
     #[On('refreshPage')]
-    public function refreshPage()
+    public function refreshPage(): void
     {
         $this->dispatch('$refresh');
-    }
-
-    public function getLegalEntity()
-    {
-        $this->legalEntity = auth()->user()->legalEntity;
     }
 
     public function tableHeaders(): void
@@ -76,9 +69,9 @@ class DivisionIndex extends Component
         ];
     }
 
-    public function syncDivisions()
+    public function syncDivisions(): void
     {
-        $syncDivisions = DivisionRequestApi::syncDivisionRequest($this->legalEntity->uuid);
+        $syncDivisions = DivisionRequestApi::syncDivisionRequest(legalEntity()->uuid);
 
         $this->syncDivisionsSave($syncDivisions);
 
@@ -86,7 +79,7 @@ class DivisionIndex extends Component
         $this->dispatch('flashMessage', ['message' => __('Інформацію успішно оновлено'), 'type' => 'success']);
     }
 
-    public function syncDivisionsSave($responses)
+    public function syncDivisionsSave($responses): void
     {
         DB::transaction(function () use ($responses) {
             foreach ($responses as $response) {
@@ -102,7 +95,7 @@ class DivisionIndex extends Component
                 $division->setAttribute('external_id', $response['external_id']);
                 $division->setAttribute('status', $response['status']);
 
-                $savedDivision = $this->legalEntity->division()->save($division);
+                $savedDivision = legalEntity()?->division()->save($division);
 
                 $this->addressRepository->addAddresses($savedDivision, $addressData);
             }
@@ -129,10 +122,10 @@ class DivisionIndex extends Component
         $this->dispatch('refreshPage');
     }
 
-    public function render()
+    public function render(): View
     {
         $perPage = config('pagination.per_page');
-        $divisions = $this->legalEntity->division()->orderBy('uuid')->paginate($perPage);
+        $divisions = legalEntity()?->division()->orderBy('uuid')->paginate($perPage);
 
         return view('livewire.division.division-form', compact('divisions'));
     }

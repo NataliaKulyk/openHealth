@@ -57,7 +57,7 @@
             <x-forms.form-group>
                 <x-slot name="label">
                     <x-forms.button-with-icon wire:click.prevent="sendFiles"
-                                              class="default-button flex-row-reverse mt-8"
+                                              class="button-primary flex-row-reverse mt-8"
                                               label="{{ __('Відправити файли') }}"
                                               svgId="svg-arrow-right"
                     />
@@ -98,7 +98,7 @@
                 <div>
                     <button wire:click="approvePerson"
                             type="button"
-                            class="default-button w-full"
+                            class="button-primary w-full"
                     >
                         {{ __('forms.confirm') }}
                     </button>
@@ -155,7 +155,7 @@
         <div class="mt-16">
             <button wire:click="create('signedContent')"
                     type="button"
-                    class="default-button flex items-center gap-2"
+                    class="button-primary flex items-center gap-2"
             >
                 <svg width="16" height="17">
                     <use xlink:href="#svg-key"></use>

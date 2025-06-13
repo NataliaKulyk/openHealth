@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\MedicalEvents\Sql;
 
+use Carbon\CarbonImmutable;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +21,9 @@ class Immunization extends Model
 
     protected $guarded = [];
 
-    protected $appends = ['explanation'];
+    protected $casts = [
+        'date' => 'date:Y-m-d'
+    ];
 
     protected $hidden = [
         'id',
@@ -34,6 +37,18 @@ class Immunization extends Model
         'created_at',
         'updated_at'
     ];
+
+    protected $appends = [
+        'explanation',
+        'time'
+    ];
+
+    protected function time(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => CarbonImmutable::parse($this->attributes['date'])->toTimeString()
+        );
+    }
 
     public function encounter(): BelongsTo
     {

@@ -23,7 +23,7 @@
 
                 <div class="justify-end block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-8">
                     <div class="button-group">
-                        <button type="button" class="default-button">
+                        <button type="button" class="button-primary">
                             <a href="{{ route('patient.form') }}">
                                 {{ __('patients.add_patient') }}
                             </a>
@@ -44,7 +44,7 @@
                 @include('livewire.patient.parts.search-filter')
 
                 <div class="py-4">
-                    <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 default-button">
+                    <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
                         <svg width="16" height="16">
                             <use xlink:href="#svg-search"></use>
                         </svg>
@@ -78,17 +78,17 @@
             >
                 <div class="mb-6 flex items-center gap-8">
                     <button @click="activeFilter = 'all'"
-                            :class="activeFilter === 'all' ? 'default-button' : 'light-button'"
+                            :class="activeFilter === 'all' ? 'button-primary' : 'light-button'"
                     >
                         {{ __('patients.all') }}
                     </button>
                     <button @click="activeFilter = 'eHEALTH'"
-                            :class="activeFilter === 'eHEALTH' ? 'default-button' : 'light-button'"
+                            :class="activeFilter === 'eHEALTH' ? 'button-primary' : 'light-button'"
                     >
                         {{ __('patients.patients') }}
                     </button>
                     <button @click="activeFilter = 'APPLICATION'"
-                            :class="activeFilter === 'APPLICATION' ? 'default-button' : 'light-button'"
+                            :class="activeFilter === 'APPLICATION' ? 'button-primary' : 'light-button'"
                     >
                         {{ __('patients.applications') }}
                     </button>
@@ -114,7 +114,7 @@
                                         <template x-if="patient.status === 'APPLICATION'">
                                             <div class="flex gap-2 mt-2">
                                                 <a :href="`{{ route('patient.form', ['id' => '']) }}/${patient.id}`"
-                                                   class="default-button"
+                                                   class="button-primary"
                                                 >
                                                     {{ __('patients.continue_registration') }}
                                                 </a>
@@ -124,7 +124,7 @@
                                             <div class="flex gap-2 mt-2">
                                                 <button @click.prevent="$wire.redirectToPatient(patient)"
                                                         type="button"
-                                                        class="default-button"
+                                                        class="button-primary"
                                                 >
                                                     {{ __('patients.view_record') }}
                                                 </button>

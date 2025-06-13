@@ -41,7 +41,7 @@
 
             <div x-show="isReferralAvailable" class="form-group group" x-cloak>
                 <button wire:click.prevent="searchForReferralNumber"
-                        class="flex items-center gap-2 default-button"
+                        class="flex items-center gap-2 button-primary"
                 >
                     <svg width="16" height="16">
                         <use xlink:href="#svg-search"></use>

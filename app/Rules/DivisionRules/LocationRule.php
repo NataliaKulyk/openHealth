@@ -1,20 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules\DivisionRules;
 
 use Closure;
-use App\Models\Division;
 use App\Exceptions\CustomValidationException;
-use App\Models\LegalEntity;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class LocationRule implements ValidationRule
 {
-    protected array $division;
-
-    public function __construct(array $division)
+    public function __construct(protected array $division)
     {
-        $this->division = $division;
     }
 
     /**
@@ -24,11 +21,11 @@ class LocationRule implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $localEntityType = auth()->user()->legalEntity->type;
+        $localEntityType = legalEntity()->type;
         $hasLocation = $this->division['location']['longitude'] && $this->division['location']['latitude'];
 
         // CustomValidationException
-        if($localEntityType === 'PHARMACY' && !$hasLocation) {
+        if ($localEntityType === 'PHARMACY' && !$hasLocation) {
             throw new CustomValidationException($this->message(), 'custom');
         }
     }

@@ -7,7 +7,6 @@ namespace App\Repositories\MedicalEvents;
 use App\Models\MedicalEvents\Sql\ImmunizationDoseQuantity;
 use App\Models\MedicalEvents\Sql\ImmunizationExplanation;
 use App\Models\MedicalEvents\Sql\ImmunizationVaccinationProtocol;
-use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -192,9 +191,6 @@ class ImmunizationRepository extends BaseRepository
                 $immunization['doseQuantity']['value'] = null;
                 $immunization['doseQuantity']['code'] = null;
             }
-
-            $immunization['time'] = CarbonImmutable::parse($immunization['date'])->format('H:i');
-            $immunization['date'] = CarbonImmutable::parse($immunization['date'])->format('Y-m-d');
 
             return $immunization;
         }, $immunizations);

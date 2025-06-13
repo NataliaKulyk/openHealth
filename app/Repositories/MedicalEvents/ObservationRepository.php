@@ -6,7 +6,6 @@ namespace App\Repositories\MedicalEvents;
 
 use App\Models\MedicalEvents\Sql\ObservationComponent;
 use App\Models\MedicalEvents\Sql\Quantity;
-use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -154,7 +153,7 @@ class ObservationRepository extends BaseRepository
     }
 
     /**
-     * Formatting observations to show on the frontend.
+     * Formatting to show on the frontend.
      *
      * @param  array  $observations
      * @return array
@@ -162,13 +161,6 @@ class ObservationRepository extends BaseRepository
     public function formatForView(array $observations): array
     {
         return array_map(static function (array $observation) {
-            $observation['issuedDate'] = CarbonImmutable::parse($observation['issued'])->format('Y-m-d');
-            $observation['issuedTime'] = CarbonImmutable::parse($observation['issued'])->format('H:i');
-            $observation['effectiveDate'] = CarbonImmutable::parse($observation['effectiveDateTime'])->format('Y-m-d');
-            $observation['effectiveTime'] = CarbonImmutable::parse($observation['effectiveDateTime'])->format('H:i');
-
-            unset($observation['issued'], $observation['effectiveDateTime']);
-
             if (empty($observation['reportOrigin'])) {
                 $observation['reportOrigin'] = [
                     'coding' => [

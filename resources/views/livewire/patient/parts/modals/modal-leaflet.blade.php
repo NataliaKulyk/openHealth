@@ -49,7 +49,7 @@
                         </x-secondary-button>
                     </div>
                     <div class="xl:w-1/4 text-right">
-                        <button wire:click="informAndCloseModal" type="button" class="default-button">
+                        <button wire:click="informAndCloseModal" type="button" class="button-primary">
                             {{ __('forms.sign') }}
                         </button>
                     </div>

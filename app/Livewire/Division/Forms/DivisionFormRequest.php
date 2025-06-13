@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Division\Forms;
 
 use App\Rules\DivisionRules\AddressRule;
@@ -99,7 +101,7 @@ class DivisionFormRequest extends Form
     {
         foreach ($this->customRules() as $rule) {
             try {
-                $rule->validate('', '', fn() => null);
+                $rule->validate('', '', fn () => null);
             } catch (CustomValidationException $e) {
                 return $e->getMessage();
             }
@@ -129,7 +131,7 @@ class DivisionFormRequest extends Form
             if (!empty($errors)) {
                 throw ValidationException::withMessages($errors);
             }
-        } catch(ValidationException $err) {
+        } catch (ValidationException $err) {
             $errors = array_merge($err->errors(), $errors);
 
             // Throw an validation error from Division's side
@@ -206,7 +208,7 @@ class DivisionFormRequest extends Form
 
         $response['phones'] = $response['phones'][0];
 
-        $legalEntity = auth()->user()->legalEntity;
+        $legalEntity = legalEntity();
 
         $division->fill($response);
         $division->setAttribute('uuid', $response['id']);

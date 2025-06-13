@@ -390,7 +390,7 @@ class Encounter extends Form
         if ($additionalConfigKey) {
             $additionalValues = config($additionalConfigKey);
             $allowedValues = array_intersect(
-                $allowedValues[Auth::user()->legalEntity->type],
+                $allowedValues[legalEntity()->type],
                 $additionalValues[Auth::user()?->getEncounterWriterEmployee()->employeeType]
             );
         }
