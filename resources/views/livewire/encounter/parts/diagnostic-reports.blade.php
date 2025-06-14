@@ -151,7 +151,7 @@
 
                 <form>
                     @include('livewire.encounter.diagnostic-report-parts.main-information')
-                    @include('livewire.encounter.diagnostic-report-parts.additional-information')
+                    @include('livewire.encounter.diagnostic-report-parts.additional-information', ['context' => 'diagnostic-report'])
 
                     <div class="mt-6 flex justify-between space-x-2">
                         <button type="button"
@@ -252,6 +252,15 @@
                     coding: [{ system: 'eHealth/resources', code: 'employee' }],
                     text: ''
                 }
+            }
+        };
+        division = {
+            identifier: {
+                type: {
+                    coding: [{ system: 'eHealth/resources', code: 'division' }],
+                    text: ''
+                },
+                value: ''
             }
         };
         resultsInterpreter = { text: '' };

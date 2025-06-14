@@ -5,49 +5,38 @@
 
     <div>
         {{-- Category --}}
-        <div class="form-row-modal">
-            <div>
-                <label for="diagnosticCategory" class="label-modal">
-                    {{ __('forms.category') }}
-                </label>
+        <div class="form-row-3">
+            <div class="form-group group">
                 <select x-model="modalDiagnosticReport.category[0].coding[0].code"
                         id="diagnosticCategory"
-                        class="input-modal"
+                        class="input-select peer"
                         type="text"
                         required
                 >
-                    <option selected value="">{{ __('forms.select') }}</option>
+                    <option selected value="">
+                        {{ __('forms.select') }} {{ mb_strtolower(__('forms.category')) }} *
+                    </option>
                     @foreach($this->dictionaries['eHealth/diagnostic_report_categories'] as $key => $category)
                         <option value="{{ $key }}" wire:key="{{ $key }}">
                             {{ $category }}
                         </option>
                     @endforeach
                 </select>
-
-                <p class="text-error text-xs"
-                   x-show="!Object.keys(diagnosticReportCategoriesDictionary).includes(modalDiagnosticReport.category[0].coding[0].code)"
-                >
-                    {{ __('forms.field_empty') }}
-                </p>
             </div>
         </div>
 
         {{-- Services --}}
-        <div class="form-row-modal">
-            <div>
-                <label for="serviceCode" class="label-modal">
-                    {{ __('forms.services') }}
-                </label>
+        <div class="form-row-3 relative z-1">
+            <div class="form-group group">
                 <x-select2 modelPath="modalDiagnosticReport.code.identifier.value"
                            dictionaryName="custom/services"
                            id="serviceCode"
+                           name="serviceCode"
+                           class="input-select peer"
                 />
-
-                <p class="text-error text-xs"
-                   x-show="!servicesDictionary.some(service => service.id === modalDiagnosticReport.code.identifier.value)"
-                >
-                    {{ __('forms.field_empty') }}
-                </p>
+                <label for="serviceCode" class="label">
+                    {{ __('forms.select')}} {{ mb_strtolower(__('forms.services')) }} *
+                </label>
             </div>
         </div>
 
@@ -70,19 +59,18 @@
 
             {{-- When referral available --}}
             <template x-if="modalDiagnosticReport.isReferralAvailable">
-                <div>
-                    <div class="form-row-modal" x-cloak>
+                <div class="form-group group">
+                    <div class="form-row-3" x-cloak>
                         <div>
-                            <label for="referralType" class="label-modal">
-                                {{ __('patients.requisition_type') }}
-                            </label>
                             <select id="referralType"
-                                    class="input-modal"
+                                    class="input-select peer"
                                     type="text"
                                     x-model="modalDiagnosticReport.referralType"
                                     required
                             >
-                                <option selected value="">{{ __('forms.select') }}</option>
+                                <option selected value="">
+                                    {{ __('forms.select') }} {{ mb_strtolower(__('patients.requisition_type')) }}
+                                </option>
                                 <option value="electronic">{{ __('patients.electronic') }}</option>
                                 <option value="paper">{{ __('patients.paper') }}</option>
                             </select>
@@ -90,19 +78,19 @@
 
                         {{-- Electronic referral --}}
                         <template x-if="modalDiagnosticReport.referralType === 'electronic'" x-transition>
-                            <div>
-                                <label for="eReferralNumber" class="label-modal">
-                                    {{ __('forms.number') }}
-                                </label>
+                            <div class="form-group group">
                                 <input wire:model="form.encounter.episode.identifier.value"
                                        type="text"
                                        name="eReferralNumber"
                                        id="eReferralNumber"
-                                       class="input-modal"
+                                       class="input-select peer"
                                        placeholder=" "
                                        required
                                        autocomplete="off"
                                 />
+                                <label for="eReferralNumber" class="label">
+                                    {{ __('forms.number') }}
+                                </label>
                             </div>
                         </template>
                     </div>
@@ -110,113 +98,98 @@
                     {{-- Paper referral --}}
                     <template x-if="modalDiagnosticReport.referralType === 'paper'" x-transition>
                         <div>
-                            <div class="form-row-modal">
-                                <div>
-                                    <label for="requisition" class="label-modal">
-                                        {{ __('forms.number') }}
-                                    </label>
+                            <div class="form-row-3">
+                                <div class="form-group group">
                                     <input x-model="modalDiagnosticReport.paperReferral.requisition"
                                            type="text"
                                            name="requisition"
                                            id="requisition"
-                                           class="input-modal"
+                                           class="input-select peer"
+                                           placeholder=" "
                                            autocomplete="off"
                                     >
+                                    <label for="requisition" class="label">
+                                        {{ __('forms.number') }}
+                                    </label>
                                 </div>
 
-                                <div>
-                                    <label for="requesterEmployeeName" class="label-modal">
-                                        {{ __('patients.author') }}
-                                    </label>
+                                <div class="form-group group">
                                     <input x-model="modalDiagnosticReport.paperReferral.requesterEmployeeName"
                                            type="text"
                                            name="requesterEmployeeName"
                                            id="requesterEmployeeName"
-                                           class="input-modal"
+                                           class="input-select peer"
+                                           placeholder=" "
                                            autocomplete="off"
                                     >
+                                    <label for="requesterEmployeeName" class="label">
+                                        {{ __('patients.author') }}
+                                    </label>
                                 </div>
                             </div>
 
-                            <div class="form-row-modal">
-                                <div>
-                                    <label for="requesterLegalEntityEdrpou" class="label-modal">
-                                        {{ __('patients.edrpou_of_the_issuing_institution') }}
-                                    </label>
+                            <div class="form-row-3">
+                                <div class="form-group group">
                                     <input x-model="modalDiagnosticReport.paperReferral.requesterLegalEntityEdrpou"
                                            type="text"
                                            name="requesterLegalEntityEdrpou"
                                            id="requesterLegalEntityEdrpou"
-                                           class="input-modal"
+                                           class="input-select peer"
+                                           placeholder=" "
                                            autocomplete="off"
                                            required
                                     >
-
-                                    <p class="text-error text-xs"
-                                       x-show="(modalDiagnosticReport.paperReferral.requesterLegalEntityEdrpou?.trim() || '').length < 1"
-                                    >
-                                        {{ __('forms.field_empty') }}
-                                    </p>
+                                    <label for="requesterLegalEntityEdrpou" class="label">
+                                        {{ __('patients.edrpou_of_the_issuing_institution') }}
+                                    </label>
                                 </div>
 
-                                <div>
-                                    <label for="requesterLegalEntityName" class="label-modal">
-                                        {{ __('patients.name_of_the_institution_that_issued_it') }}
-                                    </label>
+                                <div class="form-group group">
                                     <input x-model="modalDiagnosticReport.paperReferral.requesterLegalEntityName"
                                            type="text"
                                            name="requesterLegalEntityName"
                                            id="requesterLegalEntityName"
-                                           class="input-modal"
+                                           class="input-select peer"
+                                           placeholder=" "
                                            autocomplete="off"
                                            required
                                     >
-
-                                    <p class="text-error text-xs"
-                                       x-show="(modalDiagnosticReport.paperReferral.requesterLegalEntityName?.trim() || '').length < 1"
-                                    >
-                                        {{ __('forms.field_empty') }}
-                                    </p>
+                                    <label for="requesterLegalEntityName" class="label">
+                                        {{ __('patients.name_of_the_institution_that_issued_it') }}
+                                    </label>
                                 </div>
                             </div>
 
-                            <div class="form-row-modal">
-                                <div>
-                                    <label for="serviceRequestDate" class="label-modal">
-                                        {{ __('patients.date') }}
-                                    </label>
-                                    <div class="relative flex items-center">
-                                        <svg width="20" height="20" class="svg-input absolute left-2.5 pointer-events-none">
-                                            <use xlink:href="#svg-calendar-week"></use>
-                                        </svg>
+                            <div class="form-row-3">
+                                <div class="form-group group">
+                                    <div class="datepicker-wrapper">
                                         <input x-model="modalDiagnosticReport.paperReferral.serviceRequestDate"
                                                type="text"
                                                name="serviceRequestDate"
                                                id="serviceRequestDate"
-                                               class="datepicker-input input-modal !pl-10"
-                                               autocomplete="off"
+                                               class="datepicker-input with-leading-icon input peer"
+                                               placeholder=" "
                                                required
+                                               autocomplete="off"
                                         >
+                                        <label for="serviceRequestDate" class="wrapped-label">
+                                            {{ __('patients.date') }}
+                                        </label>
                                     </div>
-
-                                    <p class="text-error text-xs"
-                                       x-show="(modalDiagnosticReport.paperReferral.serviceRequestDate?.trim() || '').length < 1"
-                                    >
-                                        {{ __('forms.field_empty') }}
-                                    </p>
                                 </div>
 
-                                <div>
-                                    <label for="note" class="label-modal">
-                                        {{ __('patients.notes') }}
-                                    </label>
+                                <div class="form-group group">
                                     <input x-model="modalDiagnosticReport.paperReferral.note"
                                            type="text"
                                            name="note"
                                            id="note"
-                                           class="input-modal"
+                                           class="input-select peer"
+                                           placeholder=" "
                                            autocomplete="off"
                                     >
+                                    <label for="note" class="label">
+                                        {{ __('patients.notes') }}
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -231,12 +204,9 @@
                  results: $wire.entangle('results'),
                  showResults: false
              }"
-             class="form-row-modal relative"
+             class="form-row-3 relative"
         >
-            <div>
-                <label for="conclusionCode" class="label-modal">
-                    {{ __('patients.conclusion_code') }}
-                </label>
+            <div class="form-group group">
                 <input type="text"
                        @input.debounce.300ms="
                            let value = $event.target.value;
@@ -252,10 +222,13 @@
                        x-model="modalDiagnosticReport.conclusionCode.coding[0].code"
                        id="conclusionCode"
                        name="conclusionCode"
-                       class="input-modal"
-                       placeholder="{{ __('forms.select') }}"
+                       class="input-select peer"
+                       placeholder=" "
                        autocomplete="off"
                 />
+                <label for="conclusionCode" class="label">
+                    {{ __('patients.conclusion_code') }}
+                </label>
 
                 <div x-show="showResults && results.length > 0"
                      class="absolute left-0 top-full z-10 max-h-80 w-full overflow-auto overscroll-contain rounded-lg border dark:bg-gray-800 border-gray-200 bg-white p-1.5 shadow-lg"

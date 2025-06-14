@@ -5,7 +5,8 @@
      x-model="{{ $modelPath }}"
      @click.away="hideOptions"
 >
-    <input class="input-modal"
+    <input class="{{ $attributes->get('class', 'input-modal') }}"
+           {{ $attributes->except('class') }}
            type="search"
            placeholder="{{ __('forms.select') }}"
            x-model="search"
