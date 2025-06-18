@@ -12,14 +12,13 @@ use App\Classes\eHealth\Api\ServiceRequestApi;
 use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Person\Person;
-use App\Models\User;
 use App\Traits\FormTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use App\Livewire\Encounter\Forms\Encounter as EncounterForm;
+use App\Livewire\Encounter\Forms\EncounterForm as Form;
 use Livewire\WithFileUploads;
 use RuntimeException;
 
@@ -29,7 +28,7 @@ class EncounterComponent extends Component
     use Cipher;
     use WithFileUploads;
 
-    public EncounterForm $form;
+    public Form $form;
 
     /**
      * ID of the patient for which create an encounter.
@@ -109,12 +108,6 @@ class EncounterComponent extends Component
      * @var Employee
      */
     protected Employee $authEmployee;
-
-    /**
-     * Value for finding ICD-10 code in DB.
-     * @var string
-     */
-    public string $query;
 
     /**
      * Found the ICD-10 code and description.
@@ -241,12 +234,10 @@ class EncounterComponent extends Component
      */
     public function searchICD10(string $value): void
     {
-        $this->query = $value;
-
         $this->results = DB::table('icd_10')
             ->select(['code', 'description'])
-            ->where('code', 'ILIKE', "%$this->query%")
-            ->orWhere('description', 'ILIKE', "%$this->query%")
+            ->where('code', 'ILIKE', "%$value%")
+            ->orWhere('description', 'ILIKE', "%$value%")
             ->limit(50)
             ->get()
             ->toArray();

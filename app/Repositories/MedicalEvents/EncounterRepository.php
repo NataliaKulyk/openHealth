@@ -503,7 +503,7 @@ class EncounterRepository extends BaseRepository
             $diagnosticReport['managingOrganization'] = [
                 'identifier' => [
                     'type' => [
-                        'coding' => [['system' => 'eHealth/resources', 'code' => 'legalEntity']],
+                        'coding' => [['system' => 'eHealth/resources', 'code' => 'legal_entity']],
                         'text' => ''
                     ],
                     'value' => legalEntity()->uuid

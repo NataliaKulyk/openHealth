@@ -71,13 +71,13 @@
             </x-forms.form-group>
 
             <div class="mb-4.5 flex flex-col gap-6 xl:flex-row justify-between items-center">
-                <div class="xl:w-1/4 text-left">
+                <div class="text-left">
                     <button wire:click.prevent="closeModal" class="button-minor">
                         {{ __('forms.back') }}
                     </button>
                 </div>
-                <div class="xl:w-1/4 text-right">
-                    <button wire:click="sign" type="button" class="button-primary">
+                <div class="text-right">
+                    <button @click.prevent="$wire.sign(modalDiagnosticReport)" type="button" class="button-primary">
                         {{ __('forms.send_for_approval') }}
                     </button>
                 </div>

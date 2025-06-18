@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('diagnostic_reports', static function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
-            $table->foreignId('encounter_internal_id')->constrained('encounters')->cascadeOnDelete();
+            $table->foreignId('encounter_internal_id')->nullable()->constrained('encounters')->cascadeOnDelete();
             $table->foreignId('based_on_id')->nullable()->constrained('identifiers')->cascadeOnDelete();
             $table->enum('status', ['final', 'entered_in_error']);
             $table->foreignId('code_id')->constrained('identifiers')->cascadeOnDelete();
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->text('conclusion')->nullable();
             $table->foreignId('conclusion_code_id')->nullable()->constrained('codeable_concepts')->cascadeOnDelete();
             $table->foreignId('recorded_by_id')->constrained('identifiers')->cascadeOnDelete();
-            $table->foreignId('encounter_id')->constrained('identifiers')->cascadeOnDelete();
+            $table->foreignId('encounter_id')->nullable()->constrained('identifiers')->cascadeOnDelete();
             $table->boolean('primary_source');
             $table->foreignId('division_id')->nullable()->constrained('identifiers')->cascadeOnDelete();
             $table->foreignId('managing_organization_id')->nullable()->constrained('identifiers')->cascadeOnDelete();

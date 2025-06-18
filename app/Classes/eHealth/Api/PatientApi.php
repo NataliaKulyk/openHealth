@@ -59,6 +59,23 @@ class PatientApi
     }
 
     /**
+     * Submit diagnostic report data package.
+     *
+     * @param  string  $patientId
+     * @param  array  $params
+     * @return array
+     * @throws ApiException
+     */
+    public static function submitDiagnosticReportPackage(string $patientId, array $params): array
+    {
+        return new Request(
+            HttpRequest::METHOD_POST,
+            self::ENDPOINT_PATIENT . "/$patientId/diagnostic_report_package",
+            $params
+        )->sendRequest();
+    }
+
+    /**
      * Get short encounter data by provided parameters.
      *
      * @param  string  $patientId
@@ -8221,6 +8238,1936 @@ class PatientApi
                 'managing_organization',
                 'period',
                 'care_manager'
+            ]
+        ];
+    }
+
+    public function schemaDiagnosticReportPackageRequest(): array
+    {
+        return [
+            '$schema' => 'http://json-schema.org/draft-07/schema#',
+            'type' => 'object',
+            'properties' => [
+                'diagnostic_report' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'id' => [
+                            'type' => 'string'
+                        ],
+                        'based_on' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'identifier' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'type' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'coding' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'anyOf' => [
+                                                            [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'system'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ],
+                                                'text' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ]
+                                        ],
+                                        'value' => [
+                                            'type' => 'string'
+                                        ]
+                                    ],
+                                    'required' => [
+                                        'value'
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'paper_referral' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'requisition' => [
+                                    'type' => 'string'
+                                ],
+                                'requester_legal_entity_name' => [
+                                    'type' => 'string'
+                                ],
+                                'requester_legal_entity_edrpou' => [
+                                    'type' => 'string'
+                                ],
+                                'requester_employee_name' => [
+                                    'type' => 'string'
+                                ],
+                                'service_request_date' => [
+                                    'type' => 'string'
+                                ],
+                                'note' => [
+                                    'type' => 'string'
+                                ]
+                            ],
+                            'required' => [
+                                'requester_legal_entity_edrpou',
+                                'requester_employee_name',
+                                'service_request_date'
+                            ],
+                            'additionalProperties' => false
+                        ],
+                        'status' => [
+                            'type' => 'string'
+                        ],
+                        'code' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'identifier' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'type' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'coding' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'anyOf' => [
+                                                            [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'system'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ],
+                                                'text' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ]
+                                        ],
+                                        'value' => [
+                                            'type' => 'string'
+                                        ]
+                                    ],
+                                    'required' => [
+                                        'value'
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'category' => [
+                            'type' => 'array'
+                        ],
+                        'issued' => [
+                            'type' => 'string'
+                        ],
+                        'conclusion' => [
+                            'type' => 'string'
+                        ],
+                        'conclusion_code' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'coding' => [
+                                    'type' => 'array',
+                                    'items' => [
+                                        'anyOf' => [
+                                            [
+                                                'type' => 'object',
+                                                'properties' => [
+                                                    'system' => [
+                                                        'type' => 'string'
+                                                    ],
+                                                    'code' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                                'text' => [
+                                    'type' => 'string'
+                                ]
+                            ]
+                        ],
+                        'recorded_by' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'identifier' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'type' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'coding' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'anyOf' => [
+                                                            [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'system'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ],
+                                                'text' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ],
+                                            'required' => [
+                                                'coding'
+                                            ]
+                                        ],
+                                        'value' => [
+                                            'type' => 'string'
+                                        ]
+                                    ],
+                                    'required' => [
+                                        'type',
+                                        'value'
+                                    ],
+                                    'additionalProperties' => false
+                                ]
+                            ]
+                        ],
+                        'specimens' => [
+                            'type' => 'array'
+                        ],
+                        'used_references' => [
+                            'type' => 'array'
+                        ],
+                        'primary_source' => [
+                            'type' => 'boolean'
+                        ],
+                        'performer' => [
+                            'type' => 'object',
+                            'allOf' => [
+                                [
+                                    'oneOf' => [
+                                        [
+                                            'properties' => [
+                                                'reference' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'identifier' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'type' => [
+                                                                    'type' => 'object',
+                                                                    'properties' => [
+                                                                        'coding' => [
+                                                                            'type' => 'array',
+                                                                            'items' => [
+                                                                                'anyOf' => [
+                                                                                    [
+                                                                                        'type' => 'object',
+                                                                                        'properties' => [
+                                                                                            'system' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'code' => [
+                                                                                                'type' => 'string'
+                                                                                            ]
+                                                                                        ],
+                                                                                        'required' => [
+                                                                                            'system'
+                                                                                        ]
+                                                                                    ]
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ],
+                                                                'value' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ],
+                                                            'required' => [
+                                                                'value'
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        [
+                                            'properties' => [
+                                                'text' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'managing_organization' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'identifier' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'type' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'coding' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'anyOf' => [
+                                                            [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'system'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ],
+                                                'text' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ]
+                                        ],
+                                        'value' => [
+                                            'type' => 'string'
+                                        ]
+                                    ],
+                                    'required' => [
+                                        'value'
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'division' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'identifier' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'type' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'coding' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'anyOf' => [
+                                                            [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'system'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ],
+                                                'text' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ]
+                                        ],
+                                        'value' => [
+                                            'type' => 'string'
+                                        ]
+                                    ],
+                                    'required' => [
+                                        'value'
+                                    ]
+                                ]
+                            ],
+                            'required' => [
+                                'identifier'
+                            ],
+                            'additionalProperties' => false
+                        ],
+                        'results_interpreter' => [
+                            'type' => 'object',
+                            'allOf' => [
+                                [
+                                    'oneOf' => [
+                                        [
+                                            'properties' => [
+                                                'reference' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'identifier' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'type' => [
+                                                                    'type' => 'object',
+                                                                    'properties' => [
+                                                                        'coding' => [
+                                                                            'type' => 'array',
+                                                                            'items' => [
+                                                                                'anyOf' => [
+                                                                                    [
+                                                                                        'type' => 'object',
+                                                                                        'properties' => [
+                                                                                            'system' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'code' => [
+                                                                                                'type' => 'string'
+                                                                                            ]
+                                                                                        ],
+                                                                                        'required' => [
+                                                                                            'system'
+                                                                                        ]
+                                                                                    ]
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ],
+                                                                'value' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ],
+                                                            'required' => [
+                                                                'value'
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            ]
+                                        ],
+                                        [
+                                            'properties' => [
+                                                'text' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    'allOf' => [
+                        [
+                            'oneOf' => [
+                                [
+                                    'properties' => [
+                                        'effective_date_time' => [
+                                            'type' => 'string'
+                                        ]
+                                    ]
+                                ],
+                                [
+                                    'properties' => [
+                                        'effective_period' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'start' => [
+                                                    'type' => 'string'
+                                                ],
+                                                'end' => [
+                                                    'type' => 'string'
+                                                ]
+                                            ],
+                                            'required' => [
+                                                'start'
+                                            ],
+                                            'additionalProperties' => false
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    'required' => [
+                        'id',
+                        'status',
+                        'code',
+                        'category',
+                        'issued',
+                        'recorded_by',
+                        'primary_source',
+                        'performer',
+                        'managing_organization'
+                    ]
+                ],
+                'observations' => [
+                    'type' => 'array',
+                    'items' => [
+                        'anyOf' => [
+                            [
+                                'type' => 'object',
+                                'properties' => [
+                                    'id' => [
+                                        'type' => 'string'
+                                    ],
+                                    'status' => [
+                                        'type' => 'string'
+                                    ],
+                                    'diagnostic_report' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'identifier' => [
+                                                'type' => 'object',
+                                                'properties' => [
+                                                    'type' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'coding' => [
+                                                                'type' => 'array',
+                                                                'items' => [
+                                                                    'anyOf' => [
+                                                                        [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'system' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'code' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'system'
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ],
+                                                            'text' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'coding'
+                                                        ]
+                                                    ],
+                                                    'value' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'type',
+                                                    'value'
+                                                ],
+                                                'additionalProperties' => false
+                                            ]
+                                        ]
+                                    ],
+                                    'categories' => [
+                                        'type' => 'array'
+                                    ],
+                                    'code' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'coding' => [
+                                                'type' => 'array',
+                                                'items' => [
+                                                    'anyOf' => [
+                                                        [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'system' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'code' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            ],
+                                            'text' => [
+                                                'type' => 'string'
+                                            ]
+                                        ]
+                                    ],
+                                    'issued' => [
+                                        'type' => 'string'
+                                    ],
+                                    'primary_source' => [
+                                        'type' => 'boolean'
+                                    ],
+                                    'performer' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'identifier' => [
+                                                'type' => 'object',
+                                                'properties' => [
+                                                    'type' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'coding' => [
+                                                                'type' => 'array',
+                                                                'items' => [
+                                                                    'anyOf' => [
+                                                                        [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'system' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'code' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'system'
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ],
+                                                            'text' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ]
+                                                    ],
+                                                    'value' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value'
+                                                ]
+                                            ]
+                                        ]
+                                    ],
+                                    'interpretation' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'coding' => [
+                                                'type' => 'array',
+                                                'items' => [
+                                                    'anyOf' => [
+                                                        [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'system' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'code' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            ],
+                                            'text' => [
+                                                'type' => 'string'
+                                            ]
+                                        ]
+                                    ],
+                                    'comment' => [
+                                        'type' => 'string'
+                                    ],
+                                    'body_site' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'coding' => [
+                                                'type' => 'array',
+                                                'items' => [
+                                                    'anyOf' => [
+                                                        [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'system' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'code' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            ],
+                                            'text' => [
+                                                'type' => 'string'
+                                            ]
+                                        ]
+                                    ],
+                                    'method' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'coding' => [
+                                                'type' => 'array',
+                                                'items' => [
+                                                    'anyOf' => [
+                                                        [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'system' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'code' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            ],
+                                            'text' => [
+                                                'type' => 'string'
+                                            ]
+                                        ]
+                                    ],
+                                    'reference_ranges' => [
+                                        'type' => 'array',
+                                        'items' => [
+                                            'anyOf' => [
+                                                [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'low' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'value' => [
+                                                                    'type' => 'number'
+                                                                ],
+                                                                'comparator' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'unit' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'system' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'code' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ],
+                                                            'required' => [
+                                                                'value',
+                                                                'system',
+                                                                'code'
+                                                            ]
+                                                        ],
+                                                        'high' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'value' => [
+                                                                    'type' => 'number'
+                                                                ],
+                                                                'comparator' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'unit' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'system' => [
+                                                                    'type' => 'string'
+                                                                ],
+                                                                'code' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ],
+                                                            'required' => [
+                                                                'value',
+                                                                'comparator',
+                                                                'system',
+                                                                'code'
+                                                            ]
+                                                        ],
+                                                        'type' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'coding' => [
+                                                                    'type' => 'array',
+                                                                    'items' => [
+                                                                        'anyOf' => [
+                                                                            [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'system' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'code' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ],
+                                                                'text' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ]
+                                                        ],
+                                                        'applies_to' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'coding' => [
+                                                                    'type' => 'array',
+                                                                    'items' => [
+                                                                        'anyOf' => [
+                                                                            [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'system' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'code' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ],
+                                                                'text' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ]
+                                                        ],
+                                                        'age' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'low' => [
+                                                                    'type' => 'object',
+                                                                    'properties' => [
+                                                                        'value' => [
+                                                                            'type' => 'number'
+                                                                        ],
+                                                                        'comparator' => [
+                                                                            'type' => 'string'
+                                                                        ],
+                                                                        'unit' => [
+                                                                            'type' => 'string'
+                                                                        ],
+                                                                        'system' => [
+                                                                            'type' => 'string'
+                                                                        ],
+                                                                        'code' => [
+                                                                            'type' => 'string'
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value'
+                                                                    ]
+                                                                ],
+                                                                'high' => [
+                                                                    'type' => 'object',
+                                                                    'properties' => [
+                                                                        'value' => [
+                                                                            'type' => 'number'
+                                                                        ],
+                                                                        'comparator' => [
+                                                                            'type' => 'string'
+                                                                        ],
+                                                                        'unit' => [
+                                                                            'type' => 'string'
+                                                                        ],
+                                                                        'system' => [
+                                                                            'type' => 'string'
+                                                                        ],
+                                                                        'code' => [
+                                                                            'type' => 'string'
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value'
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        ],
+                                                        'text' => [
+                                                            'type' => 'string'
+                                                        ]
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ],
+                                    'reaction_on' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'identifier' => [
+                                                'type' => 'object',
+                                                'properties' => [
+                                                    'type' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'coding' => [
+                                                                'type' => 'array',
+                                                                'items' => [
+                                                                    'anyOf' => [
+                                                                        [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'system' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'code' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'system'
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ],
+                                                            'text' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ]
+                                                    ],
+                                                    'value' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value'
+                                                ]
+                                            ]
+                                        ]
+                                    ],
+                                    'components' => [
+                                        'type' => 'array',
+                                        'items' => [
+                                            'anyOf' => [
+                                                [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'code' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'coding' => [
+                                                                    'type' => 'array',
+                                                                    'items' => [
+                                                                        'anyOf' => [
+                                                                            [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'system' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'code' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ],
+                                                                                'required' => [
+                                                                                    'system',
+                                                                                    'code'
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ],
+                                                                'text' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ],
+                                                            'required' => [
+                                                                'coding'
+                                                            ]
+                                                        ],
+                                                        'interpretation' => [
+                                                            'type' => 'object',
+                                                            'properties' => [
+                                                                'coding' => [
+                                                                    'type' => 'array',
+                                                                    'items' => [
+                                                                        'anyOf' => [
+                                                                            [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'system' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'code' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ],
+                                                                'text' => [
+                                                                    'type' => 'string'
+                                                                ]
+                                                            ]
+                                                        ],
+                                                        'reference_ranges' => [
+                                                            'type' => 'array',
+                                                            'items' => [
+                                                                'anyOf' => [
+                                                                    [
+                                                                        'type' => 'object',
+                                                                        'properties' => [
+                                                                            'low' => [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'value' => [
+                                                                                        'type' => 'number'
+                                                                                    ],
+                                                                                    'comparator' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'unit' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'system' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'code' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ],
+                                                                                'required' => [
+                                                                                    'value',
+                                                                                    'system',
+                                                                                    'code'
+                                                                                ]
+                                                                            ],
+                                                                            'high' => [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'value' => [
+                                                                                        'type' => 'number'
+                                                                                    ],
+                                                                                    'comparator' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'unit' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'system' => [
+                                                                                        'type' => 'string'
+                                                                                    ],
+                                                                                    'code' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ],
+                                                                                'required' => [
+                                                                                    'value',
+                                                                                    'comparator',
+                                                                                    'system',
+                                                                                    'code'
+                                                                                ]
+                                                                            ],
+                                                                            'type' => [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'coding' => [
+                                                                                        'type' => 'array',
+                                                                                        'items' => [
+                                                                                            'anyOf' => [
+                                                                                                [
+                                                                                                    'type' => 'object',
+                                                                                                    'properties' => [
+                                                                                                        'system' => [
+                                                                                                            'type' => 'string'
+                                                                                                        ],
+                                                                                                        'code' => [
+                                                                                                            'type' => 'string'
+                                                                                                        ]
+                                                                                                    ]
+                                                                                                ]
+                                                                                            ]
+                                                                                        ]
+                                                                                    ],
+                                                                                    'text' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ]
+                                                                            ],
+                                                                            'applies_to' => [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'coding' => [
+                                                                                        'type' => 'array',
+                                                                                        'items' => [
+                                                                                            'anyOf' => [
+                                                                                                [
+                                                                                                    'type' => 'object',
+                                                                                                    'properties' => [
+                                                                                                        'system' => [
+                                                                                                            'type' => 'string'
+                                                                                                        ],
+                                                                                                        'code' => [
+                                                                                                            'type' => 'string'
+                                                                                                        ]
+                                                                                                    ]
+                                                                                                ]
+                                                                                            ]
+                                                                                        ]
+                                                                                    ],
+                                                                                    'text' => [
+                                                                                        'type' => 'string'
+                                                                                    ]
+                                                                                ]
+                                                                            ],
+                                                                            'age' => [
+                                                                                'type' => 'object',
+                                                                                'properties' => [
+                                                                                    'low' => [
+                                                                                        'type' => 'object',
+                                                                                        'properties' => [
+                                                                                            'value' => [
+                                                                                                'type' => 'number'
+                                                                                            ],
+                                                                                            'comparator' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'unit' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'system' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'code' => [
+                                                                                                'type' => 'string'
+                                                                                            ]
+                                                                                        ],
+                                                                                        'required' => [
+                                                                                            'value'
+                                                                                        ]
+                                                                                    ],
+                                                                                    'high' => [
+                                                                                        'type' => 'object',
+                                                                                        'properties' => [
+                                                                                            'value' => [
+                                                                                                'type' => 'number'
+                                                                                            ],
+                                                                                            'comparator' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'unit' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'system' => [
+                                                                                                'type' => 'string'
+                                                                                            ],
+                                                                                            'code' => [
+                                                                                                'type' => 'string'
+                                                                                            ]
+                                                                                        ],
+                                                                                        'required' => [
+                                                                                            'value'
+                                                                                        ]
+                                                                                    ]
+                                                                                ]
+                                                                            ],
+                                                                            'text' => [
+                                                                                'type' => 'string'
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ],
+                                                    'allOf' => [
+                                                        [
+                                                            'oneOf' => [
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_string' => [
+                                                                            'type' => 'string'
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_string'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_quantity' => [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'value' => [
+                                                                                    'type' => 'number'
+                                                                                ],
+                                                                                'comparator' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'unit' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'system' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'code' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'value',
+                                                                                'system',
+                                                                                'code'
+                                                                            ]
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_quantity'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_codeable_concept' => [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'coding' => [
+                                                                                    'type' => 'array',
+                                                                                    'items' => [
+                                                                                        'anyOf' => [
+                                                                                            [
+                                                                                                'type' => 'object',
+                                                                                                'properties' => [
+                                                                                                    'system' => [
+                                                                                                        'type' => 'string'
+                                                                                                    ],
+                                                                                                    'code' => [
+                                                                                                        'type' => 'string'
+                                                                                                    ]
+                                                                                                ],
+                                                                                                'required' => [
+                                                                                                    'system',
+                                                                                                    'code'
+                                                                                                ]
+                                                                                            ]
+                                                                                        ]
+                                                                                    ]
+                                                                                ],
+                                                                                'text' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'coding'
+                                                                            ]
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_codeable_concept'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_sampled_data' => [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'origin' => [
+                                                                                    'type' => 'number'
+                                                                                ],
+                                                                                'period' => [
+                                                                                    'type' => 'number'
+                                                                                ],
+                                                                                'factor' => [
+                                                                                    'type' => 'number'
+                                                                                ],
+                                                                                'lowerLimit' => [
+                                                                                    'type' => 'number'
+                                                                                ],
+                                                                                'upperLimit' => [
+                                                                                    'type' => 'number'
+                                                                                ],
+                                                                                'dimensions' => [
+                                                                                    'type' => 'number'
+                                                                                ],
+                                                                                'data' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'data'
+                                                                            ]
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_sampled_data'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_boolean' => [
+                                                                            'type' => 'boolean'
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_boolean'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_range' => [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'low' => [
+                                                                                    'type' => 'object',
+                                                                                    'properties' => [
+                                                                                        'value' => [
+                                                                                            'type' => 'number'
+                                                                                        ],
+                                                                                        'comparator' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'unit' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'system' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'code' => [
+                                                                                            'type' => 'string'
+                                                                                        ]
+                                                                                    ],
+                                                                                    'required' => [
+                                                                                        'value',
+                                                                                        'system',
+                                                                                        'code'
+                                                                                    ]
+                                                                                ],
+                                                                                'high' => [
+                                                                                    'type' => 'object',
+                                                                                    'properties' => [
+                                                                                        'value' => [
+                                                                                            'type' => 'number'
+                                                                                        ],
+                                                                                        'comparator' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'unit' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'system' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'code' => [
+                                                                                            'type' => 'string'
+                                                                                        ]
+                                                                                    ],
+                                                                                    'required' => [
+                                                                                        'value',
+                                                                                        'system',
+                                                                                        'code'
+                                                                                    ]
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'low',
+                                                                                'high'
+                                                                            ],
+                                                                            'additionalProperties' => false
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_range'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_ratio' => [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'numerator' => [
+                                                                                    'type' => 'object',
+                                                                                    'properties' => [
+                                                                                        'value' => [
+                                                                                            'type' => 'number'
+                                                                                        ],
+                                                                                        'comparator' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'unit' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'system' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'code' => [
+                                                                                            'type' => 'string'
+                                                                                        ]
+                                                                                    ],
+                                                                                    'required' => [
+                                                                                        'value',
+                                                                                        'system',
+                                                                                        'code'
+                                                                                    ]
+                                                                                ],
+                                                                                'denominator' => [
+                                                                                    'type' => 'object',
+                                                                                    'properties' => [
+                                                                                        'value' => [
+                                                                                            'type' => 'number'
+                                                                                        ],
+                                                                                        'comparator' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'unit' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'system' => [
+                                                                                            'type' => 'string'
+                                                                                        ],
+                                                                                        'code' => [
+                                                                                            'type' => 'string'
+                                                                                        ]
+                                                                                    ],
+                                                                                    'required' => [
+                                                                                        'value',
+                                                                                        'system',
+                                                                                        'code'
+                                                                                    ]
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'numerator',
+                                                                                'denominator'
+                                                                            ]
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_ratio'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_time' => [
+                                                                            'type' => 'string'
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_time'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_date_time' => [
+                                                                            'type' => 'string'
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_date_time'
+                                                                    ]
+                                                                ],
+                                                                [
+                                                                    'properties' => [
+                                                                        'value_period' => [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'start' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'end' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'start'
+                                                                            ]
+                                                                        ]
+                                                                    ],
+                                                                    'required' => [
+                                                                        'value_period'
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ],
+                                                    'required' => [
+                                                        'code'
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ],
+                                    'specimen' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'identifier' => [
+                                                'type' => 'object',
+                                                'properties' => [
+                                                    'type' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'coding' => [
+                                                                'type' => 'array',
+                                                                'items' => [
+                                                                    'anyOf' => [
+                                                                        [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'system' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'code' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'system'
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ],
+                                                            'text' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ]
+                                                    ],
+                                                    'value' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value'
+                                                ]
+                                            ]
+                                        ]
+                                    ],
+                                    'device' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'identifier' => [
+                                                'type' => 'object',
+                                                'properties' => [
+                                                    'type' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'coding' => [
+                                                                'type' => 'array',
+                                                                'items' => [
+                                                                    'anyOf' => [
+                                                                        [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'system' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'code' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'system'
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ],
+                                                            'text' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ]
+                                                    ],
+                                                    'value' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value'
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                                'allOf' => [
+                                    [
+                                        'oneOf' => [
+                                            [
+                                                'properties' => [
+                                                    'effective_date_time' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'effective_period' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'start' => [
+                                                                'type' => 'string'
+                                                            ],
+                                                            'end' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'start'
+                                                        ],
+                                                        'additionalProperties' => false
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ],
+                                    [
+                                        'oneOf' => [
+                                            [
+                                                'properties' => [
+                                                    'value_quantity' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'value' => [
+                                                                'type' => 'number'
+                                                            ],
+                                                            'comparator' => [
+                                                                'type' => 'string'
+                                                            ],
+                                                            'unit' => [
+                                                                'type' => 'string'
+                                                            ],
+                                                            'system' => [
+                                                                'type' => 'string'
+                                                            ],
+                                                            'code' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'value',
+                                                            'system',
+                                                            'code'
+                                                        ]
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_quantity'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_codeable_concept' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'coding' => [
+                                                                'type' => 'array',
+                                                                'items' => [
+                                                                    'anyOf' => [
+                                                                        [
+                                                                            'type' => 'object',
+                                                                            'properties' => [
+                                                                                'system' => [
+                                                                                    'type' => 'string'
+                                                                                ],
+                                                                                'code' => [
+                                                                                    'type' => 'string'
+                                                                                ]
+                                                                            ],
+                                                                            'required' => [
+                                                                                'system',
+                                                                                'code'
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ],
+                                                            'text' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'coding'
+                                                        ]
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_codeable_concept'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_sampled_data' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'origin' => [
+                                                                'type' => 'number'
+                                                            ],
+                                                            'period' => [
+                                                                'type' => 'number'
+                                                            ],
+                                                            'factor' => [
+                                                                'type' => 'number'
+                                                            ],
+                                                            'lower_limit' => [
+                                                                'type' => 'number'
+                                                            ],
+                                                            'upper_limit' => [
+                                                                'type' => 'number'
+                                                            ],
+                                                            'dimensions' => [
+                                                                'type' => 'number'
+                                                            ],
+                                                            'data' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'data'
+                                                        ]
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_sampled_data'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_string' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_string'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_boolean' => [
+                                                        'type' => 'boolean'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_boolean'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_range' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'low' => [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'value' => [
+                                                                        'type' => 'number'
+                                                                    ],
+                                                                    'comparator' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'unit' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'value',
+                                                                    'system',
+                                                                    'code'
+                                                                ]
+                                                            ],
+                                                            'high' => [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'value' => [
+                                                                        'type' => 'number'
+                                                                    ],
+                                                                    'comparator' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'unit' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'value',
+                                                                    'system',
+                                                                    'code'
+                                                                ]
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'low',
+                                                            'high'
+                                                        ],
+                                                        'additionalProperties' => false
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_range'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_ratio' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'numerator' => [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'value' => [
+                                                                        'type' => 'number'
+                                                                    ],
+                                                                    'comparator' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'unit' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'value',
+                                                                    'system',
+                                                                    'code'
+                                                                ]
+                                                            ],
+                                                            'denominator' => [
+                                                                'type' => 'object',
+                                                                'properties' => [
+                                                                    'value' => [
+                                                                        'type' => 'number'
+                                                                    ],
+                                                                    'comparator' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'unit' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'system' => [
+                                                                        'type' => 'string'
+                                                                    ],
+                                                                    'code' => [
+                                                                        'type' => 'string'
+                                                                    ]
+                                                                ],
+                                                                'required' => [
+                                                                    'value',
+                                                                    'system',
+                                                                    'code'
+                                                                ]
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'numerator',
+                                                            'denominator'
+                                                        ]
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_ratio'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_time' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_time'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_date_time' => [
+                                                        'type' => 'string'
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_date_time'
+                                                ]
+                                            ],
+                                            [
+                                                'properties' => [
+                                                    'value_period' => [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'start' => [
+                                                                'type' => 'string'
+                                                            ],
+                                                            'end' => [
+                                                                'type' => 'string'
+                                                            ]
+                                                        ],
+                                                        'required' => [
+                                                            'start'
+                                                        ]
+                                                    ]
+                                                ],
+                                                'required' => [
+                                                    'value_period'
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                                'required' => [
+                                    'id',
+                                    'status',
+                                    'diagnostic_report',
+                                    'categories',
+                                    'code',
+                                    'issued',
+                                    'primary_source',
+                                    'performer'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'required' => [
+                'diagnostic_report'
             ]
         ];
     }

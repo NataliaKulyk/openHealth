@@ -539,6 +539,20 @@ return [
             'invalidNationalId' => 'Номер паспорта має бути: або 2 літери та 6 цифр, або 9 цифр',
             'invalidTaxId' => 'Ідентифікаційний номер повинен містити рівно 10 цифр',
             'date_iso' => 'Дата має бути в форматі ISO 8601',
+        ],
+        'diagnosticReport' => [
+            'category.*.coding.*.code' => 'категорія',
+            'code.identifier.value' => 'послуги',
+            'paperReferral.requisition' => 'номер',
+            'paperReferral.requesterEmployeeName' => 'автор',
+            'paperReferral.requesterLegalEntityEdrpou' => 'ЄДРПОУ закладу, що виписав',
+            'paperReferral.requesterLegalEntityName' => 'Найменування закладу, що виписав',
+            'paperReferral.serviceRequestDate' => 'дата',
+            'paperReferral.note' => 'нотатки',
+            'effectivePeriod.start' => 'дата та час початку прийому',
+            'effectivePeriod.end' => 'дата та час завершення прийому',
+            'issued' => 'дата та час внесення',
+            'resultsInterpreter.text' => 'лікар, що інтерпретував результати',
         ]
     ]
 ];

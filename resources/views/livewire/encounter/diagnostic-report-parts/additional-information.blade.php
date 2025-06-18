@@ -102,6 +102,7 @@
                    id="resultsInterpreterText"
                    class="input-select peer"
                    placeholder=" "
+                   required
                    autocomplete="off"
             >
             <label for="resultsInterpreterText" class="label">

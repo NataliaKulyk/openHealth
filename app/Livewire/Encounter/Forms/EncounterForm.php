@@ -15,7 +15,7 @@ use Illuminate\Validation\Rules\RequiredIf;
 use Illuminate\Validation\ValidationException;
 use Livewire\Form;
 
-class Encounter extends Form
+class EncounterForm extends Form
 {
     public array $encounter = [
         'status' => 'finished',
@@ -279,7 +279,7 @@ class Encounter extends Form
             'diagnosticReports.resultsInterpreter.text' => ['required', 'string', 'max:255'],
             'diagnosticReports.issued' => ['required', 'date', 'before_or_equal:now'],
             'diagnosticReports.effectivePeriod.start' => ['required', 'date', 'before_or_equal:now'],
-            'diagnosticReports.effectivePeriod.end' => ['required', 'date', 'after:encounter.period.start'],
+            'diagnosticReports.effectivePeriod.end' => ['required', 'date', 'after:diagnosticReports.effectivePeriod.start'],
         ];
     }
 
@@ -293,7 +293,7 @@ class Encounter extends Form
      */
     public function validateForm(string $formName, array $formData): void
     {
-        $rules = $this->getRulesForModel($formName);
+        $rules = $this->rulesForModel($formName)->toArray();
 
         $this->customizeRulesForModel($formName, $rules);
 
@@ -302,17 +302,6 @@ class Encounter extends Form
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-    }
-
-    /**
-     * Get all the rules for the provided model name.
-     *
-     * @param  string  $model
-     * @return array
-     */
-    public function getRulesForModel(string $model): array
-    {
-        return $this->rulesForModel($model)->toArray();
     }
 
     /**

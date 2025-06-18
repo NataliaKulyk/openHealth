@@ -4,28 +4,112 @@ declare(strict_types=1);
 
 namespace App\Repositories\MedicalEvents;
 
+use App\Classes\eHealth\Api\PatientApi;
 use App\Models\MedicalEvents\Sql\DiagnosticReportPerformer;
 use App\Models\MedicalEvents\Sql\DiagnosticReportResultsInterpreter;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class DiagnosticReportRepository extends BaseRepository
 {
+    protected string $employeeUuid;
+
+    public function __construct(Model $model)
+    {
+        parent::__construct($model);
+
+        $this->employeeUuid = Auth::user()?->getEncounterWriterEmployee()->uuid;
+    }
+
+    /**
+     * Format diagnostic reports data before request.
+     *
+     * @param  array  $diagnosticReport
+     * @return array
+     */
+    public function formatRequest(array $diagnosticReport): array
+    {
+        // delete frontend properties
+        unset($diagnosticReport['isReferralAvailable'], $diagnosticReport['referralType']);
+
+        $diagnosticReport['id'] = Str::uuid()->toString();
+        $diagnosticReport['status'] = 'final';
+
+        if ($diagnosticReport['primarySource']) {
+            unset($diagnosticReport['reportOrigin']);
+
+            $diagnosticReport['performer']['reference']['identifier']['value'] = $this->employeeUuid;
+        } else {
+            unset($diagnosticReport['performer']);
+        }
+
+        if (empty($diagnosticReport['conclusionCode']['coding'][0]['code'])) {
+            unset($diagnosticReport['conclusionCode']);
+        }
+
+        $diagnosticReport['recordedBy']['identifier']['value'] = $this->employeeUuid;
+
+        $diagnosticReport['issued'] = convertToISO8601(
+            $diagnosticReport['issuedDate'] . $diagnosticReport['issuedTime']
+        );
+        unset($diagnosticReport['issuedDate'], $diagnosticReport['issuedTime']);
+
+        $diagnosticReport['managingOrganization'] = [
+            'identifier' => [
+                'type' => [
+                    'coding' => [['system' => 'eHealth/resources', 'code' => 'legal_entity']],
+                    'text' => ''
+                ],
+                'value' => legalEntity()->uuid
+            ],
+        ];
+
+        if (empty($diagnosticReport['division']['identifier']['value'])) {
+            unset($diagnosticReport['division']);
+        }
+
+        if (empty($diagnosticReport['resultsInterpreter']['text'])) {
+            unset($diagnosticReport['resultsInterpreter']);
+        }
+
+        $normalizedData = schemaService()
+            ->setDataSchema(['diagnostic_report' => $diagnosticReport], app(PatientApi::class))
+            ->requestSchemaNormalize('schemaDiagnosticReportPackageRequest')
+            ->camelCaseKeys()
+            ->getNormalizedData();
+
+        // schema service delete effectivePeriod, so manually add it
+        $normalizedData['diagnosticReport']['effectivePeriod'] = [
+            'start' => convertToISO8601(
+                $diagnosticReport['effectivePeriodStartDate'] . $diagnosticReport['effectivePeriodStartTime']
+            ),
+            'end' => convertToISO8601(
+                $diagnosticReport['effectivePeriodEndDate'] . $diagnosticReport['effectivePeriodEndTime']
+            ),
+        ];
+        unset($diagnosticReport['effectivePeriodStartDate'], $diagnosticReport['effectivePeriodStartTime'], $diagnosticReport['effectivePeriodEndDate'], $diagnosticReport['effectivePeriodEndTime']);
+
+        return $normalizedData;
+    }
+
     /**
      * Store condition in DB.
      *
      * @param  array  $data
-     * @param  int  $createdEncounterId
+     * @param  int|null  $createdEncounterId
      * @return void
      * @throws Throwable
      */
-    public function store(array $data, int $createdEncounterId): void
+    public function store(array $data, ?int $createdEncounterId = null): void
     {
-        DB::transaction(function () use ($data, $createdEncounterId) {
-            try {
+        try {
+            DB::transaction(function () use ($data, $createdEncounterId) {
                 foreach ($data as $datum) {
                     $code = Repository::identifier()->store($datum['code']['identifier']['value']);
                     Repository::codeableConcept()->attach($code, $datum['code']);
@@ -126,16 +210,16 @@ class DiagnosticReportRepository extends BaseRepository
                         ]);
                     }
                 }
-            } catch (Exception $e) {
-                Log::channel('db_errors')->error('Error saving condition', [
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
+            });
+        } catch (Exception $e) {
+            Log::channel('db_errors')->error('Error saving diagnostic report', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
 
-                throw $e;
-            }
-        });
+            throw $e;
+        }
     }
 
     /**
