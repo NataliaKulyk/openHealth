@@ -13,6 +13,8 @@ class DiagnosticReportForm extends Form
 {
     public array $diagnosticReports;
 
+    public array $observations;
+
     protected function rules(): array
     {
         $requiredOrSometimes = $this->diagnosticReports['referralType'] === 'paper' ? 'required' : 'sometimes';
@@ -60,6 +62,40 @@ class DiagnosticReportForm extends Form
             ],
             'diagnosticReport.conclusion' => ['nullable', 'string'],
             'diagnosticReport.resultsInterpreter.text' => ['required', 'string', 'max:255'],
+
+            'observations.primarySource' => ['required', 'boolean'],
+            'observations.performer' => [
+                'required_if:observations.primarySource,true', 'prohibited_if:observations.primarySource,false', 'array'
+            ],
+            'observations.reportOrigin' => [
+                'required_if:observations.primarySource,false', 'prohibited_if:observations.primarySource,true', 'array'
+            ],
+            'observations.categories' => ['required', 'array'],
+            'observations.categories.coding.*.code' => [
+                'required', 'string', new InDictionary(['eHealth/observation_categories', 'eHealth/ICF/observation_categories'])
+            ],
+            'observations.code' => ['required', 'array'],
+            'observations.code.coding.*.code' => [
+                'required', 'string', new InDictionary(['eHealth/LOINC/observation_codes', 'eHealth/ICF/classifiers'])
+            ],
+            'observations.valueQuantity' => ['sometimes', 'array'],
+            'observations.valueQuantity.value' => ['sometimes', 'numeric'],
+            'observations.valueQuantity.comparator' => ['sometimes', 'string'],
+            'observations.valueQuantity.unit' => ['sometimes', 'string'],
+            'observations.valueQuantity.system' => ['sometimes', 'string'],
+            'observations.valueQuantity.code' => ['sometimes', 'string'],
+            'observations.valueCodeableConcept' => ['sometimes', 'array'],
+            'observations.valueString' => ['sometimes', 'string'],
+            'observations.valueBoolean' => ['sometimes', 'boolean'],
+            'observations.valueDateTime' => ['sometimes', 'date'],
+            'observations.method.coding.*.code' => [
+                'nullable', 'string', new InDictionary('eHealth/observation_methods')
+            ],
+            'observations.interpretation.coding.*.code' => [
+                'nullable', 'string', new InDictionary('eHealth/observation_interpretations')
+            ],
+            'observations.issued' => ['required', 'date', 'before_or_equal:now'],
+            'observations.effectiveDateTime' => ['nullable', 'date', 'before_or_equal:now']
         ];
     }
 

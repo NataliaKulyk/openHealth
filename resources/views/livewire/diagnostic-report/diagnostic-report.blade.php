@@ -24,6 +24,7 @@
 
         @include('livewire.encounter.diagnostic-report-parts.main-information')
         @include('livewire.encounter.diagnostic-report-parts.additional-information', ['context' => 'diagnostic-report'])
+        @include('livewire.encounter.parts.observations')
 
         <div class="flex gap-8">
             <button wire:click.prevent="" type="submit" class="button-minor">

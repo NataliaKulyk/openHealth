@@ -7,9 +7,11 @@ namespace App\Livewire\DiagnosticReport;
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
 use App\Repositories\MedicalEvents\Repository;
+use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -28,9 +30,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
      */
     public function save(array $data): void
     {
-        $this->form->diagnosticReports = $this->pruneReferralData($data);
-
-        $formattedData = Repository::diagnosticReport()->formatRequest($this->form->diagnosticReports);
+        $formattedData = $this->prepareFormattedData($data);
 
         if (!$this->validateFormatted($formattedData)) {
             return;
@@ -38,8 +38,11 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
 
         try {
             $this->storeValidatedData($formattedData);
-        } catch (Throwable) {
+        } catch (Exception|Throwable) {
             $this->flashGeneralError();
+            Log::channel('db_errors')->error('Error while saving diagnostic report');
+
+            return;
         }
     }
 
@@ -52,9 +55,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
      */
     public function sign(array $data): void
     {
-        $this->form->diagnosticReports = $this->pruneReferralData($data);
-
-        $formattedData = Repository::diagnosticReport()->formatRequest($this->form->diagnosticReports);
+        $formattedData = $this->prepareFormattedData($data);
 
         if (!$this->validateFormatted($formattedData)) {
             return;
@@ -62,8 +63,11 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
 
         try {
             $this->storeValidatedData($formattedData);
-        } catch (Throwable) {
+        } catch (Exception|Throwable) {
             $this->flashGeneralError();
+            Log::channel('db_errors')->error('Error while signing diagnostic report');
+
+            return;
         }
 
         $base64EncryptedData = $this->sendEncryptedData(
@@ -72,6 +76,30 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
         );
 
         PatientApi::submitDiagnosticReportPackage($this->patientUuid, ['signed_data' => $base64EncryptedData]);
+
+        to_route('patient.index')->with('flashMessage', [
+            'message' => 'Діагностичний звіт успішно створений',
+            'type' => 'success'
+        ]);
+    }
+
+    /**
+     * Prepare formatted data.
+     *
+     * @param  array  $data
+     * @return array
+     */
+    protected function prepareFormattedData(array $data): array
+    {
+        $this->form->diagnosticReports = $this->pruneReferralData($data);
+
+        $diagnosticReport = Repository::diagnosticReport()->formatEHealthRequest($this->form->diagnosticReports);
+        $observations = Repository::observation()->formatEHealthRequest(
+            $this->form->observations,
+            $diagnosticReport['diagnosticReport']['id']
+        );
+
+        return array_merge($diagnosticReport, $observations);
     }
 
     /**
@@ -104,6 +132,12 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
         try {
             $this->form->validateForm('diagnosticReport', $formattedData);
 
+            if (isset($formattedData['observations'])) {
+                foreach ($formattedData['observations'] as $observation) {
+                    $this->form->validateForm('observations', ['observations' => $observation]);
+                }
+            }
+
             return true;
         } catch (ValidationException $e) {
             $this->dispatch('flashMessage', [
@@ -125,7 +159,11 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
     protected function storeValidatedData(array $formattedData): void
     {
         DB::transaction(static function () use ($formattedData) {
-            Repository::diagnosticReport()->store($formattedData['diagnosticReports']);
+            $diagnosticReportId = Repository::diagnosticReport()->store([$formattedData['diagnosticReport']]);
+
+            if (isset($formattedData['observations'])) {
+                Repository::observation()->store($formattedData['observations'], diagnosticReportId: $diagnosticReportId);
+            }
         });
     }
 }

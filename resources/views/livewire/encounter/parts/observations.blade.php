@@ -52,10 +52,10 @@
                                 ? observation.valueString
                             : (observation.valueDate !== undefined && observation.valueTime !== undefined)
                                 ? observation.valueDate + ' ' + observation.valueTime
+                            : observation.valueQuantity.value !== ''
+                                ? observation.valueQuantity.value
                             : observation.dictionaryName !== ''
                                 ? $wire.dictionaries[observation.dictionaryName]?.[observation.valueCodeableConcept]
-                            : observation.valueQuantity !== undefined
-                                ? observation.valueQuantity.value
                             : '-'
                         "
                     ></td>

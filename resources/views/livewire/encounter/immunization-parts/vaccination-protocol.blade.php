@@ -160,7 +160,9 @@
 
                             {{-- Content --}}
                             <form>
-                                <template x-for="(targetDisease, index) in modalVaccinationProtocol.targetDiseases" :key="index">
+                                <template x-for="(targetDisease, index) in modalVaccinationProtocol.targetDiseases"
+                                          :key="index"
+                                >
                                     <div class="form-row-modal md:mb-0">
                                         <div class="form-group group">
                                             <label :for="'vaccinationTargetDisease-' + index" class="label-modal">
@@ -187,7 +189,9 @@
                                         </div>
 
                                         <!-- Remove Button -->
-                                        <template x-if="index == modalVaccinationProtocol.targetDiseases.length - 1 & index != 0">
+                                        <template
+                                            x-if="index == modalVaccinationProtocol.targetDiseases.length - 1 & index != 0"
+                                        >
                                             <button type="button"
                                                     @click="modalVaccinationProtocol.targetDiseases.pop(), index--"
                                                     class="item-remove"
@@ -348,7 +352,7 @@
         seriesDoses;
         targetDiseases = [
             {
-                coding: [{ system: 'eHealth/vaccination_target_diseases', code: '' }],
+                coding: [{ system: 'eHealth/vaccination_target_diseases', code: '' }]
             }
         ];
 

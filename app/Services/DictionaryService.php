@@ -11,6 +11,7 @@ use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
 use App\Services\Dictionary\Dictionary;
 use Exception;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class DictionaryService
@@ -63,8 +64,14 @@ class DictionaryService
         return Cache::remember('dictionaries', now()->addDays(7), static function (): array {
             try {
                 return DictionaryApi::getDictionaries();
-            } catch (Exception $e) {
-                throw new RuntimeException('Failed to fetch dictionaries data: ' . $e->getMessage());
+            } catch (ApiException $e) {
+                Log::channel('e_health_errors')->error('Failed to fetch dictionaries', [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+
+                throw new RuntimeException();
             }
         });
     }
@@ -151,7 +158,13 @@ class DictionaryService
 
                 return ServiceApi::getServiceDictionary($params);
             } catch (Exception $e) {
-                throw new RuntimeException('Failed to fetch dictionaries data: ' . $e->getMessage());
+                Log::channel('e_health_errors')->error('Failed to fetch service dictionary', [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+
+                throw new RuntimeException();
             }
         });
 

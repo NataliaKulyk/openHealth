@@ -438,7 +438,9 @@
         </template>
 
         {{-- Функції організму (b) --}}
-        <template x-if="modalObservation.code.coding[0].code.startsWith('b') && modalObservation.codingSystem === 'icf' && modalObservation.codingSystem === 'icf'">
+        <template
+            x-if="modalObservation.code.coding[0].code.startsWith('b') && modalObservation.codingSystem === 'icf' && modalObservation.codingSystem === 'icf'"
+        >
             <div>
                 <h3 class="default-p font-bold my-10">{{ __('patients.components') }}</h3>
 
@@ -500,7 +502,9 @@
         </template>
 
         {{-- Структури організму (s) --}}
-        <template x-if="modalObservation.code.coding[0].code.startsWith('s') && modalObservation.codingSystem === 'icf' && modalObservation.codingSystem === 'icf'">
+        <template
+            x-if="modalObservation.code.coding[0].code.startsWith('s') && modalObservation.codingSystem === 'icf' && modalObservation.codingSystem === 'icf'"
+        >
             <div>
                 <h3 class="default-p font-bold my-10">{{ __('patients.components') }}</h3>
 
@@ -698,7 +702,9 @@
         </template>
 
         {{-- Активність та Участь (d) --}}
-        <template x-if="modalObservation.code.coding[0].code.startsWith('d') && modalObservation.codingSystem === 'icf' && modalObservation.codingSystem === 'icf'">
+        <template
+            x-if="modalObservation.code.coding[0].code.startsWith('d') && modalObservation.codingSystem === 'icf' && modalObservation.codingSystem === 'icf'"
+        >
             <div>
                 <h3 class="default-p font-bold my-10">{{ __('patients.components') }}</h3>
 
@@ -828,7 +834,9 @@
         </template>
 
         {{-- Фактори середовища (e) --}}
-        <template x-if="modalObservation.code.coding[0].code.startsWith('e') && modalObservation.codingSystem === 'icf'">
+        <template
+            x-if="modalObservation.code.coding[0].code.startsWith('e') && modalObservation.codingSystem === 'icf'"
+        >
             <div>
                 <h3 class="default-p font-bold my-10">{{ __('patients.components') }}</h3>
 

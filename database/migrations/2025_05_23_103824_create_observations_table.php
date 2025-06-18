@@ -35,7 +35,7 @@ return new class extends Migration
             $table->boolean('value_boolean')->nullable();
             $table->timestamp('value_date_time')->nullable();
             $table->foreignId('reaction_on_id')->nullable()->constrained('identifiers')->cascadeOnDelete();
-            $table->foreignId('context_id')->constrained('identifiers')->cascadeOnDelete();
+            $table->foreignId('context_id')->nullable()->constrained('identifiers')->cascadeOnDelete();
             $table->timestamps();
         });
 

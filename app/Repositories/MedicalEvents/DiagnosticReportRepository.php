@@ -24,16 +24,16 @@ class DiagnosticReportRepository extends BaseRepository
     {
         parent::__construct($model);
 
-        $this->employeeUuid = Auth::user()?->getEncounterWriterEmployee()->uuid;
+        $this->employeeUuid = Auth::user()?->getDiagnosticReportWriterEmployee()->uuid;
     }
 
     /**
-     * Format diagnostic reports data before request.
+     * Format data before request.
      *
      * @param  array  $diagnosticReport
      * @return array
      */
-    public function formatRequest(array $diagnosticReport): array
+    public function formatEHealthRequest(array $diagnosticReport): array
     {
         // delete frontend properties
         unset($diagnosticReport['isReferralAvailable'], $diagnosticReport['referralType']);
@@ -103,13 +103,15 @@ class DiagnosticReportRepository extends BaseRepository
      *
      * @param  array  $data
      * @param  int|null  $createdEncounterId
-     * @return void
+     * @return int|null
      * @throws Throwable
      */
-    public function store(array $data, ?int $createdEncounterId = null): void
+    public function store(array $data, ?int $createdEncounterId = null): ?int
     {
         try {
-            DB::transaction(function () use ($data, $createdEncounterId) {
+            return DB::transaction(function () use ($data, $createdEncounterId) {
+                $diagnosticReportId = null;
+
                 foreach ($data as $datum) {
                     $code = Repository::identifier()->store($datum['code']['identifier']['value']);
                     Repository::codeableConcept()->attach($code, $datum['code']);
@@ -121,8 +123,10 @@ class DiagnosticReportRepository extends BaseRepository
                     $recordedBy = Repository::identifier()->store($datum['recordedBy']['identifier']['value']);
                     Repository::codeableConcept()->attach($recordedBy, $datum['recordedBy']);
 
-                    $encounter = Repository::identifier()->store($datum['encounter']['identifier']['value']);
-                    Repository::codeableConcept()->attach($encounter, $datum['encounter']);
+                    if ($createdEncounterId) {
+                        $encounter = Repository::identifier()->store($datum['encounter']['identifier']['value']);
+                        Repository::codeableConcept()->attach($encounter, $datum['encounter']);
+                    }
 
                     $managingOrganization = Repository::identifier()->store(
                         $datum['managingOrganization']['identifier']['value']
@@ -145,7 +149,7 @@ class DiagnosticReportRepository extends BaseRepository
                         'conclusion' => $datum['conclusion'] ?? null,
                         'conclusion_code_id' => $conclusionCode->id ?? null,
                         'recorded_by_id' => $recordedBy->id,
-                        'encounter_id' => $encounter->id,
+                        'encounter_id' => $encounter->id ?? null,
                         'primary_source' => $datum['primarySource'],
                         'managing_organization_id' => $managingOrganization->id,
                         'division_id' => $division->id,
@@ -209,7 +213,12 @@ class DiagnosticReportRepository extends BaseRepository
                             'text' => $datum['resultsInterpreter']['text'] ?? null
                         ]);
                     }
+
+                    $diagnosticReportId = $diagnosticReport->id;
                 }
+
+                // Return the ID when creating separately
+                return $createdEncounterId === null ? $diagnosticReportId : null;
             });
         } catch (Exception $e) {
             Log::channel('db_errors')->error('Error saving diagnostic report', [

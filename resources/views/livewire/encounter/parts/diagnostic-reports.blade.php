@@ -272,9 +272,17 @@
         issuedDate = this.#now.toISOString().split('T')[0];
         issuedTime = this.#now.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false });
         effectivePeriodStartDate = this.#now.toISOString().split('T')[0];
-        effectivePeriodStartTime = this.#now.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false });
+        effectivePeriodStartTime = this.#now.toLocaleTimeString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
         effectivePeriodEndDate = this.#endTime.toISOString().split('T')[0];
-        effectivePeriodEndTime = this.#endTime.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false });
+        effectivePeriodEndTime = this.#endTime.toLocaleTimeString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
 
         constructor(obj = null) {
             if (obj) {

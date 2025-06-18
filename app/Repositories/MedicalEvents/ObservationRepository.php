@@ -4,28 +4,150 @@ declare(strict_types=1);
 
 namespace App\Repositories\MedicalEvents;
 
+use App\Classes\eHealth\Api\PatientApi;
 use App\Models\MedicalEvents\Sql\ObservationComponent;
 use App\Models\MedicalEvents\Sql\Quantity;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class ObservationRepository extends BaseRepository
 {
+    protected string $employeeUuid;
+
+    public function __construct(Model $model)
+    {
+        parent::__construct($model);
+
+        $this->employeeUuid = Auth::user()?->getDiagnosticReportWriterEmployee()->uuid;
+    }
+
+    /**
+     * Format data before request.
+     *
+     * @param  array  $observations
+     * @param  string  $diagnosticReportUuid
+     * @return array
+     */
+    public function formatEHealthRequest(array $observations, string $diagnosticReportUuid): array
+    {
+        $observationForm = array_map(function (array $observation) use ($diagnosticReportUuid) {
+            // Delete frontend properties
+            unset($observation['codingSystem']);
+
+            // Connect with diagnostic report
+            $observation['diagnosticReport'] = [
+                'identifier' => [
+                    'type' => [
+                        'coding' => [
+                            [
+                                'system' => 'eHealth/resources',
+                                'code' => 'diagnostic_report'
+                            ]
+                        ]
+                    ],
+                    'value' => $diagnosticReportUuid
+                ]
+            ];
+
+            $observation['id'] = Str::uuid()->toString();
+            $observation['status'] = 'valid';
+
+            if (isset($observation['dictionaryName'])) {
+                unset($observation['dictionaryName']);
+            }
+
+            $observation['effectiveDateTime'] = convertToISO8601(
+                $observation['effectiveDate'] . $observation['effectiveTime']
+            );
+            unset($observation['effectiveDate'], $observation['effectiveTime']);
+
+            $observation['issued'] = convertToISO8601($observation['issuedDate'] . $observation['issuedTime']);
+            unset($observation['issuedDate'], $observation['issuedTime']);
+
+            if ($observation['primarySource']) {
+                unset($observation['reportOrigin']);
+                $observation['performer']['identifier']['value'] = $this->employeeUuid;
+            } else {
+                unset($observation['performer']);
+            }
+
+            if ($observation['valueQuantity']['value'] === '') {
+                unset($observation['valueQuantity']);
+            }
+
+            // format to codeable concept type
+            if (isset($observation['valueCodeableConcept'])) {
+                $observation['valueCodeableConcept'] = [
+                    'coding' => [
+                        [
+                            'system' => 'eHealth/' . $observation['code']['coding'][0]['code'],
+                            'code' => $observation['valueCodeableConcept']
+                        ]
+                    ],
+                    'text' => ''
+                ];
+            }
+
+            // combine date&time
+            if (isset($observation['valueDate'], $observation['valueTime'])) {
+                $observation['valueDateTime'] = convertToISO8601($observation['valueDate'] . $observation['valueTime']);
+                unset($observation['valueDate'], $observation['valueTime']);
+            }
+
+            if (empty($observation['interpretation']['coding'][0]['code'])) {
+                unset($observation['interpretation']);
+            }
+
+            if (empty($observation['bodySite']['coding'][0]['code'])) {
+                unset($observation['bodySite']);
+            }
+
+            if (empty($observation['method']['coding'][0]['code'])) {
+                unset($observation['method']);
+            }
+
+            if ($observation['components'][0]['valueCodeableConcept']['coding'][0]['code'] === '') {
+                unset($observation['components']);
+            }
+
+            if (isset($observation['components'][0]['interpretation']['coding'][0]['code']) && $observation['components'][0]['interpretation']['coding'][0]['code'] === '') {
+                unset($observation['components']);
+            }
+
+            return $observation;
+        }, $observations);
+
+        return schemaService()
+            ->setDataSchema(['observations' => $observationForm], app(PatientApi::class))
+            ->requestSchemaNormalize('schemaDiagnosticReportPackageRequest')
+            ->camelCaseKeys()
+            ->getNormalizedData();
+    }
+
     /**
      * Store observation in DB.
      *
      * @param  array  $data
-     * @param  int  $encounterId
+     * @param  int|null  $encounterId
+     * @param  int|null  $diagnosticReportId
      * @return void
      * @throws Throwable
      */
-    public function store(array $data, int $encounterId): void
+    public function store(array $data, ?int $encounterId = null, ?int $diagnosticReportId = null): void
     {
-        DB::transaction(function () use ($data, $encounterId) {
+        DB::transaction(function () use ($data, $encounterId, $diagnosticReportId) {
             try {
                 foreach ($data as $datum) {
+                    if ($diagnosticReportId) {
+                        $diagnosticReport = Repository::identifier()->store($datum['diagnosticReport']['identifier']['value']);
+                        Repository::codeableConcept()->attach($diagnosticReport, $datum['diagnosticReport']);
+                    }
+
                     $code = Repository::codeableConcept()->store($datum['code']);
 
                     if (isset($datum['performer'])) {
@@ -72,6 +194,7 @@ class ObservationRepository extends BaseRepository
                         'uuid' => $datum['uuid'] ?? $datum['id'],
                         'encounter_id' => $encounterId,
                         'status' => $datum['status'],
+                        'diagnostic_report_id' => $diagnosticReportId,
                         'code_id' => $code->id,
                         'effective_date_time' => $datum['effectiveDateTime'] ?? null,
                         'issued' => $datum['issued'],
