@@ -188,6 +188,8 @@ class EncounterComponent extends Component
         'eHealth/body_sites',
         'eHealth/ucum/units',
         'eHealth/diagnostic_report_categories',
+        'eHealth/procedure_categories',
+        'eHealth/procedure_outcomes'
     ];
 
     /**

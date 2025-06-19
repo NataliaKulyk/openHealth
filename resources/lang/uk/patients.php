@@ -216,4 +216,8 @@ return [
     'interpretation_of_observation' => 'Інтерпретація спостереження',
     'date_and_time_of_receiving_the_indicators' => 'Дата та час отримання показників',
     'date_and_time_of_entry' => 'Дата та час внесення',
+
+    // Procedures
+    'procedure' => 'Процедура',
+    'outcome_result' => 'Результат проведення'
 ];

@@ -122,6 +122,9 @@ class EncounterCreate extends EncounterComponent
             'observations' => !empty($this->form->observations)
                 ? $encounterRepository->formatObservationsRequest($this->form->observations)
                 : [],
+            'procedures' => !empty($this->form->procedures)
+                ? $encounterRepository->formatProceduresRequest($this->form->procedures)
+                : []
         ];
 
         // Remove empty
@@ -162,6 +165,12 @@ class EncounterCreate extends EncounterComponent
             if (isset($formattedData['observations'])) {
                 foreach ($formattedData['observations'] as $formattedObservation) {
                     $this->form->validateForm('observations', $formattedObservation);
+                }
+            }
+
+            if (isset($formattedData['procedures'])) {
+                foreach ($formattedData['procedures'] as $formattedProcedure) {
+                    $this->form->validateForm('procedures', $formattedProcedure);
                 }
             }
         } catch (ValidationException $e) {

@@ -23,6 +23,7 @@
         @include('livewire.encounter.parts.immunizations')
         @include('livewire.encounter.parts.diagnostic-reports')
         @include('livewire.encounter.parts.observations')
+        @include('livewire.encounter.parts.procedures')
 
         <div class="flex gap-8">
             <button wire:click.prevent="" type="submit" class="button-minor">

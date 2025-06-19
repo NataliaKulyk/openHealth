@@ -553,6 +553,17 @@ return [
             'effectivePeriod.end' => 'дата та час завершення прийому',
             'issued' => 'дата та час внесення',
             'resultsInterpreter.text' => 'лікар, що інтерпретував результати',
-        ]
+        ],
+        'procedures' => [
+            'category.coding.*.code' => 'категорія',
+            'code.identifier.value' => 'послуги',
+            'paperReferral.requisition' => 'номер',
+            'paperReferral.requesterEmployeeName' => 'автор',
+            'paperReferral.requesterLegalEntityEdrpou' => 'ЄДРПОУ закладу, що виписав',
+            'paperReferral.requesterLegalEntityName' => 'Найменування закладу, що виписав',
+            'paperReferral.serviceRequestDate' => 'дата',
+            'division.identifier.value' => 'місце надання послуг',
+            'outcome.coding.*.code' => 'результат проведення'
+        ],
     ]
 ];

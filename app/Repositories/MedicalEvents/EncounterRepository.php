@@ -536,6 +536,46 @@ class EncounterRepository extends BaseRepository
     }
 
     /**
+     * Format procedures data before request.
+     *
+     * @param  array  $procedures
+     * @return array
+     */
+    public function formatProceduresRequest(array $procedures): array
+    {
+        $procedureForm = array_map(function (array $procedure) {
+            if ($procedure['referralType'] === 'electronic' || $procedure['referralType'] === '') {
+                unset($procedure['paperReferral']);
+            }
+
+            // Delete frontend properties
+            unset($procedure['isReferralAvailable'],  $procedure['referralType']);
+
+            $procedure['id'] = Str::uuid()->toString();
+            $procedure['status'] = 'completed';
+
+            $procedure['encounter'] = [
+                'identifier' => [
+                    'type' => [
+                        'coding' => [['system' => 'eHealth/resources', 'code' => 'encounter']],
+                        'text' => ''
+                    ],
+                    'value' => $this->encounterUuid
+                ],
+            ];
+
+            return $procedure;
+        }, $procedures);
+
+        return schemaService()
+            ->setDataSchema(['procedures' => $procedureForm], app(PatientApi::class))
+            ->requestSchemaNormalize()
+            ->camelCaseKeys()
+            ->extractFirst()
+            ->getNormalizedData();
+    }
+
+    /**
      * Format encounter period to ISO8601 format.
      *
      * @param  array  $encounterForm

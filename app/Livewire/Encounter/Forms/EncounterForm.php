@@ -74,8 +74,12 @@ class EncounterForm extends Form
 
     public array $diagnosticReports;
 
+    public array $procedures;
+
     protected function rules(): array
     {
+        $requiredOrNullable = $this->procedures['referralType'] === 'paper' ? 'required' : 'nullable';
+
         return [
             'encounter.period.start' => ['required', 'date', 'before_or_equal:now'],
             'encounter.period.end' => ['required', 'date', 'after:encounter.period.start'],
@@ -280,6 +284,21 @@ class EncounterForm extends Form
             'diagnosticReports.issued' => ['required', 'date', 'before_or_equal:now'],
             'diagnosticReports.effectivePeriod.start' => ['required', 'date', 'before_or_equal:now'],
             'diagnosticReports.effectivePeriod.end' => ['required', 'date', 'after:diagnosticReports.effectivePeriod.start'],
+
+            'procedures.paperReferral.requisition' => ['nullable', 'string', 'max:255'],
+            'procedures.paperReferral.requesterEmployeeName' => ['nullable', 'string', 'max:255'],
+            'procedures.paperReferral.requesterLegalEntityEdrpou' => [$requiredOrNullable, 'string', 'max:255'],
+            'procedures.paperReferral.requesterLegalEntityName' => [$requiredOrNullable, 'string', 'max:255'],
+            'procedures.paperReferral.serviceRequestDate' => [$requiredOrNullable, 'date'],
+            'procedures.paperReferral.note' => ['nullable', 'string', 'max:255'],
+            'procedures.code.identifier.value' => ['required', 'uuid', 'max:255'],
+            'procedures.category.coding.*.code' => [
+                'required', 'string', new InDictionary('eHealth/procedure_categories')
+            ],
+            'procedures.division.identifier.value' => ['nullable', 'uuid'],
+            'procedures.outcome.coding.*.code' => [
+                'nullable', 'string', new InDictionary('eHealth/procedure_outcomes')
+            ],
         ];
     }
 

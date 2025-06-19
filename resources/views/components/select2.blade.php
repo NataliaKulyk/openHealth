@@ -1,6 +1,6 @@
 @props(['modelPath', 'dictionaryName'])
 
-<div x-data="selectComponent('{{ $dictionaryName }}')"
+<div x-data="selectComponent('{{ $dictionaryName }}', '{{ $modelPath }}')"
      x-modelable="selected"
      x-model="{{ $modelPath }}"
      @click.away="hideOptions"
@@ -52,7 +52,7 @@
 </div>
 
 <script>
-    function selectComponent(dictionaryKey) {
+    function selectComponent(dictionaryKey, modelPath) {
         return {
             search: '',
             selected: '',
@@ -96,8 +96,16 @@
                             this.updateIcfOptions(rawData);
                         });
                     } else if (dictionaryKey === 'custom/services') {
-                        this.$watch('modalDiagnosticReport.category[0].coding[0].code', (newCode) => {
+                        // Based on diff model, change path for watcher
+                        const rootPath = modelPath.split('.')[0];
+                        const isModalProcedure = rootPath === 'modalProcedure';
+                        const categoryPath = isModalProcedure
+                            ? `${rootPath}.category.coding[0].code`
+                            : `${rootPath}.category[0].coding[0].code`;
+
+                        this.$watch(categoryPath, (newCode) => {
                             this.options = Object.entries(rawData)
+                                // Based on category value show relevant codes or when category is not defined
                                 .filter(([_, service]) => {
                                     return service.category === newCode || service.category === null;
                                 })
