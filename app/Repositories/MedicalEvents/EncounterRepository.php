@@ -564,6 +564,20 @@ class EncounterRepository extends BaseRepository
                 ],
             ];
 
+            if ($procedure['primarySource']) {
+                unset($procedure['reportOrigin']);
+
+                $procedure['performer']['identifier']['value'] = $this->employeeUuid;
+            } else {
+                unset($procedure['performer']);
+            }
+
+            $procedure['performedPeriod']['start'] = convertToISO8601($procedure['performedPeriodStartDate'] . $procedure['performedPeriodStartTime']);
+            unset($procedure['performedPeriodStartDate'], $procedure['performedPeriodStartTime']);
+
+            $procedure['performedPeriod']['end'] = convertToISO8601($procedure['performedPeriodEndDate'] . $procedure['performedPeriodEndTime']);
+            unset($procedure['performedPeriodEndDate'], $procedure['performedPeriodEndTime']);
+
             return $procedure;
         }, $procedures);
 

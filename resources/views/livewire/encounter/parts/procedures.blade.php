@@ -149,6 +149,7 @@
                             {{-- Content --}}
                             <form>
                                 @include('livewire.encounter.procedure-parts.main-information')
+                                @include('livewire.encounter.procedure-parts.additional-information')
 
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
@@ -217,6 +218,36 @@
             coding: [{ system: 'eHealth/procedure_outcomes', code: '' }],
             text: ''
         };
+        primarySource = true;
+        performer = {
+            identifier: {
+                type: {
+                    coding: [{ system: 'eHealth/resources', code: 'employee' }],
+                    text: ''
+                }
+            }
+        };
+        reportOrigin = {
+            coding: [{ system: 'eHealth/report_origins', code: '' }],
+            text: ''
+        };
+
+        // Create date
+        #now = new Date();
+        #endTime = new Date(this.#now.getTime() + 15 * 60 * 1000); // add 15 minutes
+
+        performedPeriodStartDate = this.#now.toISOString().split('T')[0];
+        performedPeriodStartTime = this.#now.toLocaleTimeString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        performedPeriodEndDate = this.#endTime.toISOString().split('T')[0];
+        performedPeriodEndTime = this.#endTime.toLocaleTimeString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
 
         constructor(obj = null) {
             if (obj) {

@@ -78,8 +78,6 @@ class EncounterForm extends Form
 
     protected function rules(): array
     {
-        $requiredOrNullable = $this->procedures['referralType'] === 'paper' ? 'required' : 'nullable';
-
         return [
             'encounter.period.start' => ['required', 'date', 'before_or_equal:now'],
             'encounter.period.end' => ['required', 'date', 'after:encounter.period.start'],
@@ -287,9 +285,20 @@ class EncounterForm extends Form
 
             'procedures.paperReferral.requisition' => ['nullable', 'string', 'max:255'],
             'procedures.paperReferral.requesterEmployeeName' => ['nullable', 'string', 'max:255'],
-            'procedures.paperReferral.requesterLegalEntityEdrpou' => [$requiredOrNullable, 'string', 'max:255'],
-            'procedures.paperReferral.requesterLegalEntityName' => [$requiredOrNullable, 'string', 'max:255'],
-            'procedures.paperReferral.serviceRequestDate' => [$requiredOrNullable, 'date'],
+            'procedures.paperReferral.requesterLegalEntityEdrpou' => [
+                Rule::requiredIf($this->procedures['referralType'] === 'paper'),
+                'string',
+                'max:255'
+            ],
+            'procedures.paperReferral.requesterLegalEntityName' => [
+                Rule::requiredIf($this->procedures['referralType'] === 'paper'),
+                'string',
+                'max:255'
+            ],
+            'procedures.paperReferral.serviceRequestDate' => [
+                Rule::requiredIf($this->procedures['referralType'] === 'paper'),
+                'date'
+            ],
             'procedures.paperReferral.note' => ['nullable', 'string', 'max:255'],
             'procedures.code.identifier.value' => ['required', 'uuid', 'max:255'],
             'procedures.category.coding.*.code' => [
@@ -299,6 +308,11 @@ class EncounterForm extends Form
             'procedures.outcome.coding.*.code' => [
                 'nullable', 'string', new InDictionary('eHealth/procedure_outcomes')
             ],
+            'procedures.reportOrigin.coding.*.code' => [
+                'nullable' ,'string', new InDictionary('eHealth/report_origins')
+            ],
+            'procedures.performedPeriod.start' => ['required', 'date', 'before_or_equal:now'],
+            'procedures.performedPeriod.end' => ['required', 'date', 'after:procedures.performedPeriod.start']
         ];
     }
 

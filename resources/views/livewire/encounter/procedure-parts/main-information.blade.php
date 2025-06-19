@@ -5,7 +5,7 @@
 
     {{-- Is referral available --}}
     <div>
-        <div class="form-row-3">
+        <div class="form-row-modal">
             <div class="form-group group">
                 <input x-model="modalProcedure.isReferralAvailable"
                        @click="modalProcedure.isReferralAvailable = !modalProcedure.isReferralAvailable"
@@ -24,7 +24,7 @@
         {{-- When referral available --}}
         <template x-if="modalProcedure.isReferralAvailable">
             <div class="form-group group">
-                <div class="form-row-3" x-cloak>
+                <div class="form-row-modal" x-cloak>
                     <div>
                         <label for="referralType" class="label-modal">
                             {{ __('patients.requisition_type') }}
@@ -63,7 +63,7 @@
                 {{-- Paper referral --}}
                 <template x-if="modalProcedure.referralType === 'paper'" x-transition>
                     <div>
-                        <div class="form-row-3">
+                        <div class="form-row-modal">
                             <div class="form-group group">
                                 <label for="requisition" class="label-modal">
                                     {{ __('forms.number') }}
@@ -93,7 +93,7 @@
                             </div>
                         </div>
 
-                        <div class="form-row-3">
+                        <div class="form-row-modal">
                             <div class="form-group group">
                                 <label for="requesterLegalEntityEdrpou" class="label-modal">
                                     {{ __('patients.edrpou_of_the_issuing_institution') }}
@@ -137,7 +137,7 @@
                             </div>
                         </div>
 
-                        <div class="form-row-3">
+                        <div class="form-row-modal">
                             <div class="form-group group">
                                 <label for="serviceRequestDate" class="label-modal">
                                     {{ __('patients.date') }}
@@ -186,7 +186,7 @@
         </template>
 
         {{-- Category --}}
-        <div class="form-row-3">
+        <div class="form-row-modal">
             <div class="form-group group">
                 <label for="category" class="label-modal">
                     {{ __('forms.category') }}
@@ -212,7 +212,7 @@
         </div>
 
         {{-- Services --}}
-        <div class="form-row-3 relative z-1">
+        <div class="form-row-modal relative z-1">
             <div class="form-group group">
                 <label for="serviceCode" class="label-modal">
                     {{ __('forms.services')}}
@@ -232,7 +232,7 @@
         </div>
 
         {{-- Divisions --}}
-        <div class="form-row-3">
+        <div class="form-row-modal">
             <div class="form-group group">
                 <label for="divisionNames" class="label-modal">
                     {{ __('patients.division_name')}}
@@ -256,7 +256,7 @@
         </div>
 
         {{-- Outcome --}}
-        <div class="form-row-3">
+        <div class="form-row-modal">
             <div class="form-group group">
                 <label for="outcome" class="label-modal">
                     {{ __('patients.outcome_result') }}

@@ -35,6 +35,10 @@ return [
     'source_link' => 'Посилання на джерело',
     'body_part' => 'Частина тіла',
     'diagnostic_reports' => 'Діагностичні звіти',
+    'main_information' => 'Основна інформація',
+    'notes' => 'Нотатки',
+    'author' => 'Автор',
+    'division_name' => 'Місце надання послуг',
 
     'relation_type' => [
         'primary' => 'Основний',
@@ -154,7 +158,6 @@ return [
     'additional_data' => 'Додаткові дані',
     'period_start' => 'Час початку',
     'period_end' => 'Час закінчення',
-    'division_name' => 'Місце надання послуг',
 
     // Immunizations
     'immunizations' => 'Вакцинації',
@@ -187,10 +190,8 @@ return [
     'requisition_type' => 'Тип направлення',
     'electronic' => 'Електронне',
     'paper' => 'Паперове',
-    'author' => 'Автор',
     'edrpou_of_the_issuing_institution' => 'ЄДРПОУ закладу, що виписав',
     'name_of_the_institution_that_issued_it' => 'Найменування закладу, що виписав',
-    'notes' => 'Нотатки',
     'the_doctor_who_interpreted_the_results' => 'Лікар, що інтерпретував результати',
     'full_name_of_the_doctor_who_interpreted_the_results' => 'ПІБ лікаря, що інтерпретував результати',
     'doctor_submitting_a_report_to_the_system' => 'Лікар, що передає в систему звіт',
@@ -203,7 +204,6 @@ return [
     'coding_system' => 'Система кодувань',
     'loinc_observation_dictionary' => 'Довідник спостережень LOINC',
     'icf_dictionary_condition_patient' => 'Довідник станів пацієнта МКФ',
-    'main_information' => 'Основна інформація',
     'components' => 'Компоненти',
     'extent_or_magnitude_of_impairment' => 'Обсяг або величина порушення',
     'interpretation' => 'Інтерпретація',
@@ -219,5 +219,8 @@ return [
 
     // Procedures
     'procedure' => 'Процедура',
-    'outcome_result' => 'Результат проведення'
+    'outcome_result' => 'Результат проведення',
+    'doctor_who_performed' => 'Лікар, що виконав',
+    'procedure_start_date_and_time' => 'Дата та час початку процедури',
+    'procedure_end_date_and_time' => 'Дата та час завершення процедури',
 ];
