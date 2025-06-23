@@ -33,6 +33,10 @@ class ScienceDegree extends Model
         'speciality',
     ];
 
+    protected $casts = [
+        'issued_date' => 'date',
+    ];
+
     public function science_degreeable(): MorphTo
     {
         return $this->morphTo();

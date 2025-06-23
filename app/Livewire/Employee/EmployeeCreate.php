@@ -1,94 +1,40 @@
 <?php
-
 namespace App\Livewire\Employee;
 
-use App\Models\Employee\EmployeeRequest;
-use App\Repositories\EmployeeRepository;
-use Exception;
-use Illuminate\Support\Facades\Log;
+use App\Livewire\Employee\Forms\EmployeeForm;
+use App\Livewire\Employee\Traits\ManagesEmployeeForm;
+use App\Models\LegalEntity;
+use App\Models\Relations\Party;
 use Illuminate\View\View;
-use Livewire\WithFileUploads;
-use Illuminate\Validation\ValidationException;
 
 class EmployeeCreate extends EmployeeComponent
 {
-    use WithFileUploads;
+    use ManagesEmployeeForm;
+    public EmployeeForm $form;
+    public string $pageTitle;
+    public string $viewMode = 'full_create';
 
-    public Forms\EmployeeForm $form;
-
-    /**
-     * The currently active EmployeeRequest draft.
-     * @var EmployeeRequest|null
-     */
-    public ?EmployeeRequest $EmployeeRequest = null;
-
-    /**
-     * Property to control the visibility of the KEP signature block.
-     *
-     * @var bool
-     */
-    public bool $showSignatureBlock = false;
-
-    /**
-     * Bootstrap the component, injecting dependencies.
-     * @param EmployeeRepository $employeeRepository
-     * @return void
-     */
-    public function boot(EmployeeRepository $employeeRepository): void
+    public function mount(LegalEntity $legalEntity, int $partyId = null): void
     {
-        parent::boot($employeeRepository);
-    }
+        $this->getDictionary();
 
-    public function save(): void
-    {
-        try {
-            $this->form->validate();
-            $preparedData = $this->form->getPreparedData();
-            $preparedData['legal_entity_uuid'] = legalEntity()->uuid;
-            $preparedData['legal_entity_id'] = legalEntity()->id;
-
-            app(EmployeeRepository::class)->saveEmployeeData(
-                $preparedData,
-                legalEntity(),
-                null,
-                null,
-                true
-            );
-
-            session()->flash('success', __('Employee request saved successfully.'));
-            $this->showSignatureBlock = true;
-        } catch (ValidationException $e) {
-            $this->dispatch('employee-form-failed');
-
-            Log::error(
-                'Validation Error in EmployeeCreate::save(): ' . json_encode(
-                    $e->errors(),
-                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
-                )
-            );
-            session()->flash('error', __('Validation failed. Please check the form.'));
-            throw $e;
-        } catch (Exception $e) {
-            $this->dispatch('employee-form-failed');
-
-            Log::error('Critical Error in EmployeeCreate::save(): ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-            session()->flash('error', __('Failed to save employee. An unexpected error occurred.'));
-            $this->showSignatureBlock = false;
+        if ($partyId) {
+            $this->pageTitle = __('forms.addPosition');
+            $party = Party::findOrFail($partyId);
+            $this->form->populateFromParty($party);
+            $this->lockPartyFields = true;
+        } else {
+            $this->pageTitle = __('forms.addEmployee');
+            $this->lockPartyFields = false;
         }
     }
 
-    /**
-     * Render the component view.
-     *
-     * @return View
-     */
     public function render(): View
     {
-        $pageTitle = __('forms.add_employee');
-        return view('livewire.employee.employee-create', compact('pageTitle'));
+        return view('livewire.employee.employee-create', [
+            'pageTitle' => $this->pageTitle,
+            'employee' => $this->employee,
+            'viewMode' => $this->viewMode,
+        ]);
     }
 }

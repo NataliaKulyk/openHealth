@@ -10,8 +10,8 @@ use Carbon\Carbon;
 
 class CipherApi
 {
-    const SIGNATORY_INITIATOR_BUSINESS = 'Business';
-    const SIGNATORY_INITIATOR_PERSON = 'Person';
+    const string SIGNATORY_INITIATOR_BUSINESS = 'Business';
+    const string SIGNATORY_INITIATOR_PERSON   = 'Person';
 
     private string $ticketUuid = '';
     private string $base64File = '';
@@ -24,11 +24,13 @@ class CipherApi
      * Send request to create session and subsequently upload KEYP.
      *
      * @param string $dataSignature Base64 encoded signed data.
-     * @param string $password Password for KEYP creation.
-     * @param string $base64File KEYP file in base64 format.
-     * @param string $knedp Certificate Authority Identifier (KNEPD).
-     * @return string Returns KEYP in base64 format.
-     * @throws array ApiException
+     * @param string $password      Password for KEYP creation.
+     * @param string $base64File    KEYP file in base64 format.
+     * @param string $knedp         Certificate Authority Identifier (KNEPD).
+     * @param string $initiator
+     * @param string $taxId
+     *
+     * @return array|string Returns KEYP in base64 format.
      */
     public function sendSession(
         string $dataSignature,
@@ -167,10 +169,12 @@ class CipherApi
 
         // If KEP key is not valid (ex. very old one)
         if (!$cipherResponse['canBeUsed']) {
-            ErrorHandler::throwError([
-                'message' => __('validation.custom.cipher.kepNotValid'),
-                'failureCause' => ''
-            ]);
+            ErrorHandler::throwError(
+                [
+                    'message'      => __('validation.custom.cipher.kepNotValid'),
+                    'failureCause' => '',
+                ]
+            );
         }
 
         $keyData = Arr::get($cipherResponse, 'certificateInfo.extensionsCertificateInfo.value.personalData.value');
@@ -189,43 +193,54 @@ class CipherApi
         $expirationDate = Carbon::parse($endDate);
 
         if ($expirationDate <= Carbon::now()) {
-            ErrorHandler::throwError([
-                'message' => __('validation.custom.cipher.kepTimeExpired'),
-                'failureCause' => ''
-            ]);
+            ErrorHandler::throwError(
+                [
+                    'message'      => __('validation.custom.cipher.kepTimeExpired'),
+                    'failureCause' => '',
+                ]
+            );
         }
 
         if ($initiator === self::SIGNATORY_INITIATOR_BUSINESS) {
             // Check if key is not a personal key
             if (!$isBusinessKey) {
-                ErrorHandler::throwError([
-                    'message' => __('validation.custom.cipher.initiator_differ_business'),
-                    'failureCause' => ''
-                ]);
+                ErrorHandler::throwError(
+                    [
+                        'message'      => __('validation.custom.cipher.initiator_differ_business'),
+                        'failureCause' => '',
+                    ]
+                );
             }
 
             // Check for EDRPOU value match between key and form ones
             if ($inKeyEdrpou !== $taxId) {
-                ErrorHandler::throwError([
-                    'message' => __('validation.custom.cipher.edrpouDiffer'),
-                    'failureCause' => ''
-                ]);
+                ErrorHandler::throwError(
+                    [
+                        'message'      => __('validation.custom.cipher.edrpouDiffer'),
+                        'failureCause' => '',
+                    ]
+                );
             }
         } else {
             // Check if key is a personal key
             if ($isBusinessKey) {
-                ErrorHandler::throwError([
-                    'message' => __('validation.custom.cipher.initiator_differ_person'),
-                    'failureCause' => ''
-                ]);
+                ErrorHandler::throwError(
+                    [
+                        'message'      => __('validation.custom.cipher.initiator_differ_person'),
+                        'failureCause' => '',
+                    ]
+                );
             }
 
             // Check for DRFOU value match between key and form ones
-            if ($inKeyDrfou !== $taxId) {
-                ErrorHandler::throwError([
-                    'message' => __('validation.custom.cipher.drfouDiffer'),
-                    'failureCause' => ''
-                ]);
+            //TODO refactor  && $isBusinessKey cause it locking sign createEmployee request by personal ESign
+            if ($inKeyDrfou !== $taxId && $initiator !== self::SIGNATORY_INITIATOR_PERSON) {
+                ErrorHandler::throwError(
+                    [
+                        'message'      => __('validation.custom.cipher.drfouDiffer'),
+                        'failureCause' => '',
+                    ]
+                );
             }
         }
     }

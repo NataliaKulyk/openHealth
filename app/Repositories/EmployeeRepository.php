@@ -85,21 +85,22 @@ class EmployeeRepository
     /**
      * Saves or updates employee-related data, including EmployeeRequest, Party, and associated details.
      *
-     * @param array $response
-     * @param LegalEntity $legalEntity
+     * @param array                         $response
+     * @param LegalEntity                   $legalEntity
      * @param Employee|EmployeeRequest|null $employeeModel The model class to create/update (can be null for a new request).
-     * @param string|null $employeeUUID UUID of an existing Employee, if this is an EmployeeRequest that updates.
-     * @param bool $isNewRequest Indicates a new unique EmployeeRequest creation scenario.
+     * @param string|null                   $employeeUUID  UUID of an existing Employee, if this is an EmployeeRequest that updates.
+     * @param bool                          $isNewRequest  Indicates a new unique EmployeeRequest creation scenario.
      *
-     * @return BaseEmployee
+     * @return Employee|EmployeeRequest
+     * @throws Exception
      */
-    public function saveEmployeeData(
+    public function store(
         array $response,
         LegalEntity $legalEntity,
         Employee|EmployeeRequest|null $employeeModel,
         ?string $employeeUUID = null,
         bool $isNewRequest = false
-    ): BaseEmployee
+    ): Employee|EmployeeRequest
     {
         try {
             if ($isNewRequest && empty($response['uuid'])) {
@@ -168,10 +169,8 @@ class EmployeeRepository
                 $this->specialityRepository->addSpecialities($employee, $doctorData['specialities'] ?? []);
             }
 
-            // Bind employee to Party
             $party->employees()->save($employee);
 
-            // Create record in the revisions table depends on the $employeeModel and its id
             if ($isEmployeRequest) {
                 $responseData = [
                     'response' => $response,
@@ -182,12 +181,13 @@ class EmployeeRepository
                 ];
 
                 $this->revisionRepository->saveRevision($employee, [
-                    'data' => $responseData, // Passed as array, model's casts will handle JSON encoding
+                    'data' => $responseData,
                     'status' => Revision::STATUS_PENDING,
                 ]);
             }
 
             return $employee;
+
         } catch (Exception $err) {
             Log::error('Create Employee Error: ' . $err->getMessage(), ['exception' => $err]);
             throw new Exception(__('Create Employee Error') . ' : ' . $err->getMessage());
@@ -199,14 +199,15 @@ class EmployeeRepository
      * bypassing existing general update/create logic when no UUID is provided.
      * This is the dedicated method for the "new request" scenario.
      *
-     * @param array $requestData The full request data from the form.
+     * @param array       $requestData The full request data from the form.
      * @param LegalEntity $legalEntity The legal entity associated with the request.
-     * @return BaseEmployee The newly created EmployeeRequest.
+     *
+     * @return Employee|EmployeeRequest The newly created EmployeeRequest.
      */
     private function handleInitialEmployeeRequestCreation(
         array $requestData,
         LegalEntity $legalEntity
-    ): BaseEmployee
+    ): Employee|EmployeeRequest
     {
         try {
             $partyData = $requestData['party'] ?? [];
@@ -249,7 +250,7 @@ class EmployeeRepository
             ];
 
             $revision = new Revision();
-            $revision->data = $responseDataForRevision; // No manual json_encode here
+            $revision->data = $responseDataForRevision;
             $revision->status = Revision::STATUS_PENDING;
             $employeeRequest->revision()->save($revision);
 
@@ -286,6 +287,114 @@ class EmployeeRepository
         }
 
         return $party;
+    }
+
+    /**
+     * RENAMED: The parameter is now $inputData instead of $preparedData.
+     */
+    public function createChangeRequestForExistingEmployee(
+        array $inputData,
+        string $employeeUuid,
+        LegalEntity $legalEntity
+    ): EmployeeRequest {
+        return DB::transaction(function () use ($inputData, $employeeUuid, $legalEntity) {
+            $existingEmployee = Employee::with('party')->where('uuid', $employeeUuid)->firstOrFail();
+            $newRequest = new EmployeeRequest();
+            $requestAttributes = Arr::except($inputData, ['party', 'doctor', 'documents', 'phones']);
+            $newRequest->fill($requestAttributes);
+            $newRequest->status = 'NEW';
+            $newRequest->legalEntity()->associate($legalEntity);
+            $newRequest->employee()->associate($existingEmployee);
+            $newRequest->party()->associate($existingEmployee->party);
+            $newRequest->save();
+
+            $this->revisionRepository->saveRevision($newRequest, [
+                'data' => $inputData,
+                'status' => Revision::STATUS_PENDING,
+            ]);
+
+            return $newRequest;
+        });
+    }
+
+    /**
+     * Prepares data for signing and sending to the eHealth API.
+     * This method is designed to be moved to a repository or a dedicated service.
+     *
+     * @param array $revisionData The data from the revision record.
+     *
+     * @return array|null The final payload structured for the API.
+     */
+    public function formatEHealthRequest(array $revisionData): array|null
+    {
+        $sourceData = $revisionData['employee_request_data'] ?? $revisionData;
+
+        [
+            'party' => $partyData,
+            'documents' => $documentsData,
+            'doctor' => $doctorData,
+        ] = $sourceData + ['party' => [], 'documents' => [], 'doctor' => []];
+
+        $apiEmployeeRequest = [
+            'position' => $sourceData['position'] ?? null,
+            'status' => 'NEW',
+            'employee_type' => $sourceData['employee_type'] ?? null,
+            'legal_entity_id' => (string)($sourceData['legal_entity_id'] ?? legalEntity()->id),
+            'start_date' => isset($sourceData['start_date']) ? Carbon::parse($sourceData['start_date'])->format('Y-m-d') : null,
+            'party' => [
+                'first_name' => $partyData['first_name'] ?? null,
+                'last_name' => $partyData['last_name'] ?? null,
+                'second_name' => $partyData['second_name'] ?? null,
+                'birth_date' => isset($partyData['birth_date']) ? Carbon::parse($partyData['birth_date'])->format('Y-m-d') : null,
+                'gender' => $partyData['gender'] ?? null,
+                'no_tax_id' => (bool)($partyData['no_tax_id'] ?? false),
+                'tax_id' => $partyData['tax_id'] ?? null,
+                'email' => $partyData['email'] ?? null,
+                'working_experience' => isset($partyData['working_experience']) ? (int)$partyData['working_experience'] : null,
+                'about_myself' => $partyData['about_myself'] ?? null,
+                'phones' => array_map(
+                    fn($phone) => ['type' => $phone['type'], 'number' => $phone['number']],
+                    $partyData['phones'] ?? []
+                ),
+                'documents' => array_map(
+                    fn($doc) => [
+                        'type' => $doc['type'],
+                        'number' => $doc['number'],
+                        'issued_by' => $doc['issued_by'] ?? null,
+                        'issued_at' => isset($doc['issued_at']) ? Carbon::parse($doc['issued_at'])->format('Y-m-d') : null
+                    ],
+                    $documentsData
+                ),
+            ],
+        ];
+
+        if (!empty($sourceData['end_date'])) {
+            $apiEmployeeRequest['end_date'] = Carbon::parse($sourceData['end_date'])->format('Y-m-d');
+        }
+
+        if (($sourceData['employee_type'] ?? null) === 'DOCTOR') {
+            $doctorPayload = [];
+            if (!empty($doctorData['division_uuid'])) {
+                $doctorPayload['division_id'] = $doctorData['division_uuid'];
+            }
+            if (!empty($doctorData['educations'])) {
+                $doctorPayload['educations'] = $doctorData['educations'];
+            }
+            if (!empty($doctorData['qualifications'])) {
+                $doctorPayload['qualifications'] = $doctorData['qualifications'];
+            }
+            if (!empty($doctorData['specialities'])) {
+                $doctorPayload['specialities'] = $doctorData['specialities'];
+            }
+            if (!empty($doctorData['science_degrees'])) {
+                $doctorPayload['science_degree'] = $doctorData['science_degrees'][0];
+            }
+            if (!empty($doctorPayload)) {
+                $apiEmployeeRequest['doctor'] = $doctorPayload;
+            }
+        }
+
+        return ['employee_request' => $apiEmployeeRequest];
     }
 
     /**
@@ -327,7 +436,7 @@ class EmployeeRepository
             $user->save();
         }
 
-        $this->saveEmployeeData($employeeResponse, $legalEntity, new Employee());
+        $this->store($employeeResponse, $legalEntity, new Employee());
     }
 
     /**
@@ -596,7 +705,7 @@ class EmployeeRepository
      */
     protected function getRevisionEmployeeData(EmployeeRequest $employeeRequest): array
     {
-        $revisionData = json_decode($employeeRequest->revision->data, true);
+        $revisionData = $employeeRequest->revision()->data;
 
         $employee = $employeeRequest->employee;
 
@@ -679,6 +788,7 @@ class EmployeeRepository
             'id' => 'required|string',
             'legal_entity_id' => 'required|string',
             'inserted_at' => 'required|string',
+            'updated_at' => 'required|string',
             'party' => 'required|array',
             'party.birth_date' => 'nullable|string',
             'party.email' => 'nullable|string',
@@ -694,7 +804,7 @@ class EmployeeRepository
             'party.phones.*.number' => 'required_with:party.phones|string',
             'status' => 'required|string',
             'position' => 'required|string',
-            'start_date' => 'required|string',
+            'start_date' => 'nullable|string',
             'end_date' => 'nullable|string',
         ]);
     }

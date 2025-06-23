@@ -31,6 +31,12 @@ class Document extends Model
         'expiration_date'
     ];
 
+
+    protected $casts = [
+        'issued_at' => 'date',
+        'expiration_date' => 'date',
+    ];
+
     public function documentable(): MorphTo
     {
         return $this->morphTo();

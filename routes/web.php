@@ -10,7 +10,10 @@ use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
+use App\Livewire\Employee\EmployeeShow;
+use App\Livewire\Patient\PatientForm;
 use App\Livewire\License\LicenseShow;
+use App\Models\LegalEntity;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\License\LicenseIndex;
 use App\Livewire\Patient\PatientIndex;
@@ -35,7 +38,6 @@ use App\Livewire\Division\HealthcareServiceForm;
 use App\Livewire\License\Forms\CreateNewLicense;
 use App\Livewire\Patient\Records\PatientEpisodes;
 use App\Http\Controllers\Auth\VerifyEmailController;
-use App\Models\LegalEntity;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,12 +92,12 @@ Route::middleware(['auth:ehealth', 'can:access,legalEntity'])->prefix('/dashboar
         Route::get('/{division}/healthcare-service', HealthcareServiceForm::class)->name('healthcare_service.index');
     });
 
-    Route::prefix('employee')->group(function () {
-        Route::get('/', EmployeeIndex::class)->name('employee.index');
-        Route::get('/{id}', EmployeeEdit::class)
-            ->name('employee.edit')
-            ->where('id', '[0-9]+');
-        Route::get('/new', EmployeeCreate::class)->name('employee.create');
+
+    Route::prefix('employees')->name('employee.')->group(function () {
+        Route::get('/', EmployeeIndex::class)->name('index');
+        Route::get('/create', EmployeeCreate::class)->name('create');
+        Route::get('/{employee}', EmployeeShow::class)->name('show');
+        Route::get('/{employeeId}/edit', EmployeeEdit::class)->name('edit');
     });
 
     Route::prefix('contract')->group(function () {

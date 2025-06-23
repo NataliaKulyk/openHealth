@@ -2,67 +2,126 @@
 
 namespace App\Livewire\Employee;
 
+use AllowDynamicProperties;
 use App\Classes\eHealth\Api\EmployeeApi;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
-
 use App\Models\Relations\Party;
-use App\Models\Relations\Phone;
 use App\Repositories\EmployeeRepository;
 use App\Traits\FormTrait;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 
+#[AllowDynamicProperties]
 class EmployeeIndex extends Component
 {
+    use FormTrait;
 
-    use FormTrait,
-        WithPagination;
+    public Collection $parties;
 
-    const CACHE_PREFIX = 'register_employee_form';
+    // This property is kept for backwards compatibility with the Blade template's @php block.
+    public Collection $employees;
 
-    public object $employees;
+    // Properties for filtering.
+    public string $status = 'APPROVED';
+    public string $search = '';
 
-    public array $tableHeaders = [];
-    protected string $employeeCacheKey;
-
-    public int $storeId = 0;
-    public string $dismiss_text;
-    public int $dismissed_id;
+    // Properties for the dismissal modal, likely managed by FormTrait.
+    public string $dismiss_text = '';
+    public int $dismissed_id = 0;
 
     private LegalEntity $legalEntity;
 
-    public string $email = '';
-    protected ?EmployeeRepository $employeeRepository; // nullable
-
     public array $dictionaryNames = [
-        'POSITION'
+        'POSITION', 'EMPLOYEE_TYPE', 'GENDER'
     ];
 
-    public string $status = 'APPROVED';
-
-
-    public function boot(EmployeeRepository $employeeRepository): void
+    /**
+     * The boot method is called on every request.
+     * It's the perfect place to initialize properties that are always needed.
+     */
+    public function boot(): void
     {
-        $this->employeeCacheKey = self::CACHE_PREFIX.'-'.Auth::user()->legalEntity->uuid;
-        $this->employeeRepository = $employeeRepository;
-        $this->legalEntity = Auth::user()->legalEntity;
+        $this->legalEntity = legalEntity();
     }
 
-    public function mount(LegalEntity $legalEntity)
+    /**
+     * The mount method is called only on the initial page load.
+     * We use it to set up the initial state.
+     */
+    public function mount(LegalEntity $legalEntity): void
     {
-        $this->tableHeaders();
-        $this->getLastStoreId();
-        $this->getEmployees();
         $this->getDictionary();
+        $this->parties = new Collection();
+        $this->employees = new Collection();
+        $this->loadParties();
     }
 
+    /**
+     * Re-fetch data when a filter changes.
+     */
+    public function updated($property): void
+    {
+        if (in_array($property, ['status', 'search'])) {
+            $this->loadParties();
+        }
+    }
+
+    /**
+     * The main method to fetch and structure data for the view.
+     */
+    public function loadParties(): void
+    {
+        $legalEntityId = $this->legalEntity->id;
+
+        $query = Party::query()
+            ->where(function ($q) use ($legalEntityId) {
+                $q->whereHas('employees', fn($subq) => $subq->where('legal_entity_id', $legalEntityId))
+                    ->orWhereHas('employeeRequests', fn($subq) => $subq->where('legal_entity_id', $legalEntityId));
+            })
+            ->with([
+                       'phones',
+                       'employees' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
+                       'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division')
+                   ]);
+
+        if (!empty($this->search)) {
+            $query->where(function ($q) {
+                $q->where('last_name', 'ilike', "%{$this->search}%")
+                    ->orWhere('first_name', 'ilike', "%{$this->search}%")
+                    ->orWhere('second_name', 'ilike', "%{$this->search}%");
+            });
+        }
+
+        if ($this->status === 'APPROVED') {
+            $query->whereHas('employees', fn($q) => $q->where('status', 'APPROVED'));
+        } elseif ($this->status === 'NEW') {
+            $query->whereHas('employeeRequests', fn($q) => $q->where('status', 'NEW'));
+        }
+
+        $this->parties = $query->get();
+        $this->employees = $this->parties->flatMap(fn($party) => $party->employees->concat($party->employeeRequests));
+    }
+
+    /**
+     * Prepares and shows the dismissal modal.
+     */
+    public function showModalDismissed(int $id): void
+    {
+        $employee = Employee::find($id);
+        if (!$employee) return;
+
+        $this->dismiss_text = ($employee->employee_type === 'DOCTOR')
+            ? __('forms.dismissed_text_doctor')
+            : __('forms.dismissed_text');
+
+        $this->dismissed_id = $employee->id;
+        $this->openModal(); // Method from FormTrait
+    }
 
     #[On('refreshPage')]
     public function refreshPage()
@@ -82,9 +141,9 @@ class EmployeeIndex extends Component
     {
         if (Cache::has($this->employeeCacheKey)) {
             return collect(Cache::get($this->employeeCacheKey))->map(function ($data) {
-                $employee = (new BaseEmployee())->forceFill($data['party']);
-                $employee->party = (new Party())->forceFill($data['party'] ?? []);
-                $employee->party->phones = (new Phone())->forceFill($data['party']['phones'] ?? []);
+                $employee = new BaseEmployee()->forceFill($data['party']);
+                $employee->party = new Party()->forceFill($data['party'] ?? []);
+                $employee->party->phones = new Phone()->forceFill($data['party']['phones'] ?? []);
                 return $employee;
             });
         }
@@ -123,32 +182,26 @@ class EmployeeIndex extends Component
         $this->getEmployees();
     }
 
-    public function dismissed(Employee $employee)
+    public function dismissed(int $employeeId): void
     {
-        $dismissed = EmployeeRequestApi::dismissedEmployeeRequest($employee->uuid);
-
-        if (!empty($dismissed)) {
-            $employee->update([
-                'status'   => 'DISMISSED',
-                'end_date' => Carbon::now()->format('Y-m-d'),
-            ]);
+        $employee = Employee::find($employeeId);
+        if (!$employee) {
+            $this->closeModal();
+            return;
         }
-        $this->closeModal();
-        $this->getEmployees();
-        // $this->dispatch('refreshPage');
-    }
 
-    public function showModalDismissed($id)
-    {
-        $employee = Employee::find($id);
-        if ($employee->employee_type === 'DOCTOR') {
-            $this->dismiss_text = __('forms.dismissed_text_doctor');
-        } else {
-            $this->dismiss_text = __('forms.dismissed_textr');
-        }
-        $this->dismissed_id = $employee->id;
+        // Your API call logic for dismissal
+        // $dismissed = EmployeeRequestApi::dismissedEmployeeRequest($employee->uuid);
 
-        $this->openModal();
+        // if (!empty($dismissed)) {
+        //     $employee->update([
+        //         'status'   => 'DISMISSED',
+        //         'end_date' => \Carbon\Carbon::now()->format('Y-m-d'),
+        //     ]);
+        // }
+
+        $this->closeModal(); // This method comes from your FormTrait
+        $this->loadParties(); // FIX: Call the correct data loading method to refresh the list
     }
 
     //TODO: Створити багато співробітників в статусі не підтверджено, створювати таблицю EmployeeRequest? перевірити Rate Limit
@@ -160,8 +213,8 @@ class EmployeeIndex extends Component
     /**
      * Syncs employees by fetching data from the EmployeeRequestApi and saving it using the employeeSyncService.
      *
+     * @throws \Exception
      */
-
     public function syncEmployees(): void
     {
         $requests = EmployeeRequestApi::getEmployees($this->legalEntity->uuid);
@@ -173,14 +226,15 @@ class EmployeeIndex extends Component
                 ->snakeCaseKeys(true)
                 ->getNormalizedData();
             app(EmployeeRepository::class)
-                ->saveEmployeeData($employeeResponse,
-                auth()->user()->legalEntity,
-                new Employee());
+                ->store($employeeResponse,
+                       legalEntity(),
+                        new Employee());
         }
 
         $this->dispatchErrorMessage(__('Співробітники успішно синхронізовано'));
 
         $this->getEmployees();
+        $this->loadParties();
         // $this->dispatch('refreshPage');
     }
 

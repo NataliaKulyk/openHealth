@@ -231,7 +231,7 @@ class LegalEntity extends Component
             ->first()
             ?->uuid;
 
-        app(EmployeeRepository::class)->saveEmployeeData($employeeResponse, $legalEntity,new EmployeeRequest(), $employeeUUID);
+        app(EmployeeRepository::class)->store($employeeResponse, $legalEntity, new EmployeeRequest(), $employeeUUID);
     }
 
     /**

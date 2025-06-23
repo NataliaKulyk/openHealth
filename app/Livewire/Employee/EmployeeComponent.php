@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Employee;
 
-use App\Repositories\EmployeeRepository;
 use App\Traits\FormTrait;
 use Livewire\Component;
 use App\Livewire\Employee\Forms\EmployeeForm as Form;
-use App\Models\LegalEntity;
 
 class EmployeeComponent extends Component
 {
@@ -19,49 +17,21 @@ class EmployeeComponent extends Component
     public Form $form;
 
     /**
-     * TODO remove when Repo class is implemented
-     */
-    protected EmployeeRepository $employeeRepository;
-
-    /**
      * @var array|string[] Set dictionaries to load with the component
      */
     public ?array $dictionaryNames = [
-        'PHONE_TYPE',
-        'COUNTRY',
-        'SETTLEMENT_TYPE',
-        'SPECIALITY_TYPE',
-        'DIVISION_TYPE',
-        'SPECIALITY_LEVEL',
-        'GENDER',
-        'QUALIFICATION_TYPE',
-        'SCIENCE_DEGREE',
-        'DOCUMENT_TYPE',
-        'SPEC_QUALIFICATION_TYPE',
-        'EMPLOYEE_TYPE',
-        'POSITION',
-        'EDUCATION_DEGREE',
-        'EMPLOYEE_TYPE',
+        'PHONE_TYPE', 'COUNTRY', 'SETTLEMENT_TYPE', 'SPECIALITY_TYPE', 'DIVISION_TYPE',
+        'SPECIALITY_LEVEL', 'GENDER', 'QUALIFICATION_TYPE', 'SCIENCE_DEGREE', 'DOCUMENT_TYPE',
+        'SPEC_QUALIFICATION_TYPE', 'EMPLOYEE_TYPE', 'POSITION', 'EDUCATION_DEGREE',
     ];
 
-    /*
-     * Holds information about relation between employee type, e.g., ADMIN - administrator and position, like P5 - head of dept;
-     * See config/ehealth.php employee_type for more details
+    /**
+     * @var array Holds information about relation between employee type and position
      */
     public array $employeeTypePosition = [];
 
-    public function boot(EmployeeRepository $employeeRepository): void
-    {
-        $this->employeeRepository = $employeeRepository;
-    }
-
-    public function mount(LegalEntity $legalEntity): void
-    {
-        $this->getDictionary();
-    }
-
     /**
-     * Override FormTrait method to filter dictionary data to specific entity type
+     * Override FormTrait method to filter dictionary data to specific entity type.
      */
     protected function getDictionary(): void
     {
@@ -72,7 +42,6 @@ class EmployeeComponent extends Component
             'EMPLOYEE_TYPE'
         );
 
-        // Employee can have only those positions which are allowed for his type/role
         foreach ($this->dictionaries['EMPLOYEE_TYPE'] as $employeeType => $description) {
             $keys = config("ehealth.employee_type.{$employeeType}.position", []);
             $this->employeeTypePosition[$employeeType] = $this->getDictionariesFields($keys, 'POSITION');

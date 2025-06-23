@@ -1,23 +1,38 @@
 <?php
-
 namespace App\Livewire\Employee;
 
+use App\Livewire\Employee\Forms\EmployeeForm;
+use App\Livewire\Employee\Traits\ManagesEmployeeForm;
 use App\Models\LegalEntity;
-use App\Models\Employee\Employee as Employee;
+use Illuminate\View\View;
 
 class EmployeeEdit extends EmployeeComponent
 {
-    protected Employee $employee;
+    use ManagesEmployeeForm;
+    public EmployeeForm $form;
+    public string $pageTitle;
+    public string $viewMode = 'full_edit';
 
-    public function mount(LegalEntity $legalEntity, int $id = null): void
+    public function mount(LegalEntity $legalEntity, int $employeeId, string $viewMode = 'full_edit'): void
     {
-        $this->employee = Employee::findOrFail($id);
+        $this->getDictionary();
+        $this->employeeId = $employeeId;
+        $this->loadEmployee();
+        $this->viewMode = $viewMode;
 
-        parent::mount($legalEntity);
+        if ($this->viewMode === 'party_only') {
+            $this->pageTitle = __('forms.editEmployee');
+        } else {
+            $this->pageTitle = __('forms.editEmployee');
+        }
     }
 
-    public function render()
+    public function render(): View
     {
-        return view('livewire.employee.employee-edit');
+        return view('livewire.employee.employee-edit', [
+            'pageTitle' => $this->pageTitle,
+            'employee' => $this->employee,
+            'viewMode' => $this->viewMode,
+        ]);
     }
 }

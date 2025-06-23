@@ -81,6 +81,19 @@ document.addEventListener('livewire:load', () => {
     });
 });
 
+document.addEventListener('livewire:init', () => {
+    Livewire.on('employee-form-failed', (event) => {
+        // Find the first form element with an error
+        const firstError = document.querySelector('.input-error, .select-error');
+        if (firstError) {
+            // Scroll to the element smoothly
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Optionally, focus on it
+            firstError.focus();
+        }
+    });
+});
+
 // See Flowbite instruction on the dark mode switcher: https://flowbite.com/docs/customize/dark-mode/
 (function () {
     var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');

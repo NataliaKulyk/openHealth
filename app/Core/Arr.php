@@ -50,4 +50,59 @@ class Arr extends BaseArr
     {
         return self::toSnakeCase($data);
     }
+
+    /**
+     * Recursively replaces specific 'id' keys with 'uuid' or renames other specific 'Id' keys to '_uuid' suffix.
+     * This method assumes that if a key ends with 'Id' (camelCase) or '_id' (snake_case) and is to be replaced,
+     * its value is intended to be a UUID.
+     *
+     * @param array|object $data The input array or object.
+     * @return array The array with keys replaced.
+     */
+    public static function replaceIdsKeysToUuid(array|object $data): array
+    {
+        $result = [];
+        $array = is_object($data) ? (array) $data : $data;
+
+        foreach ($array as $key => $value) {
+            $newKey = $key;
+            $newValue = $value;
+
+            // Recursive call for nested arrays/objects
+            if (is_array($value) || is_object($value)) {
+                $newValue = self::replaceIdsKeysToUuid($value);
+            }
+
+            // Determine standardized key for mapping
+            $camelCaseKey = Str::camel($key);
+
+            // Apply specific key renames based on common patterns from eHealth API
+            switch ($camelCaseKey) {
+                case 'id':
+                    // If 'id' is a generic ID and its value is a UUID, rename key to 'uuid'
+                    // This handles cases like `party: { id: "some-uuid" }` -> `party: { uuid: "some-uuid" }`
+                    if (is_string($value) && Str::isUuid($value)) {
+                        $newKey = 'uuid';
+                    }
+                    break;
+                case 'legalEntityId':
+                    $newKey = 'legal_entity_uuid';
+                    break;
+                case 'divisionId':
+                    $newKey = 'division_uuid';
+                    break;
+                case 'partyId':
+                    $newKey = 'party_uuid';
+                    break;
+                // Add other specific mappings here if needed (e.g., 'requestId' to 'request_uuid')
+                default:
+                    // If not explicitly handled above, keep the key as is (it will be snake_cased by snakeKeys later if needed)
+                    break;
+            }
+
+            $result[$newKey] = $newValue;
+        }
+
+        return $result;
+    }
 }

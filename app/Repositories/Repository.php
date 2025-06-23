@@ -30,4 +30,9 @@ final class Repository
     {
         return app(ConfidantPersonRepository::class);
     }
+
+    public static function employee(): EmployeeRepository
+    {
+        return app(EmployeeRepository::class);
+    }
 }

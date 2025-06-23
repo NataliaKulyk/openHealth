@@ -20,13 +20,9 @@ class ScienceDegreeRepository
         if (empty($scienceDegreesData)) {
             return;
         }
-
-        foreach ($scienceDegreesData as $individualScienceDegreeData) {
             $scienceDegree = new ScienceDegree();
-
-            $scienceDegree->fill($individualScienceDegreeData);
+            $scienceDegree->fill($scienceDegreesData);
 
             $model->scienceDegrees()->save($scienceDegree);
         }
-    }
 }

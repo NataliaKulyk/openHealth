@@ -35,6 +35,11 @@ class Speciality extends Model
         'certificate_number'
     ];
 
+    protected $casts = [
+        'attestation_date' => 'date',
+        'valid_to_date' => 'date',
+    ];
+
     public function specialityable(): MorphTo
     {
         return $this->morphTo();

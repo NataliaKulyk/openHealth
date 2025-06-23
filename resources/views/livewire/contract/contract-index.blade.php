@@ -277,5 +277,5 @@
             </x-slot>
         </x-alert-modal>
     @endif
-    {{--    @include('livewire.employee._parts._employee_form') --}}
+    {{--    @include('livewire.employee.parts._employee_form') --}}
 </div>
