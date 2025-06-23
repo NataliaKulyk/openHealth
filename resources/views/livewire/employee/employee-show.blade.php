@@ -20,11 +20,11 @@
 
         {{-- Action Buttons --}}
         <div class="mt-6 flex justify-between items-center border-t pt-6">
-            <a href="{{ route('employee.index') }}" class="button-minor">
+            <a href="{{ route('employee.index', ['legalEntity' => legalEntity()->id]) }}" class="button-minor">
                 &larr; {{ __('forms.backToList') }}
             </a>
-            <a href="{{ route('employee.edit', ['employeeId' => $employee->id]) }}" class="button-primary">
-                {{ __('forms.go_to_edit') }}
+            <a href="{{ route('employee.edit', ['legalEntity' => legalEntity()->id, 'employeeId' => $employee->id]) }}" class="button-primary">
+                {{ __('forms.goToEdit') }}
             </a>
         </div>
     </div>

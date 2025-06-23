@@ -19,12 +19,12 @@ class EmployeeCreate extends EmployeeComponent
         $this->getDictionary();
 
         if ($partyId) {
-            $this->pageTitle = __('forms.add_position');
+            $this->pageTitle = __('forms.addPosition');
             $party = Party::findOrFail($partyId);
             $this->form->populateFromParty($party);
             $this->lockPartyFields = true;
         } else {
-            $this->pageTitle = __('forms.add_employee');
+            $this->pageTitle = __('forms.addEmployee');
             $this->lockPartyFields = false;
         }
     }

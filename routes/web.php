@@ -98,6 +98,7 @@ Route::middleware(['auth:ehealth', 'can:access,legalEntity'])->prefix('/dashboar
         Route::get('/create', EmployeeCreate::class)->name('create');
         Route::get('/{employee}', EmployeeShow::class)->name('show');
         Route::get('/{employeeId}/edit', EmployeeEdit::class)->name('edit');
+    });
 
     Route::prefix('contract')->group(function () {
         Route::get('/', ContractIndex::class)->name('contract.index');
@@ -134,5 +135,4 @@ Route::middleware(['auth:ehealth', 'can:access,legalEntity'])->prefix('/dashboar
 Route::get('/{any}', function () {
     return view('errors.404');
 })->where('any', '.*');
-});
 

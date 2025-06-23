@@ -21,9 +21,9 @@ class EmployeeEdit extends EmployeeComponent
         $this->viewMode = $viewMode;
 
         if ($this->viewMode === 'party_only') {
-            $this->pageTitle = __('forms.edit_personal_data');
+            $this->pageTitle = __('forms.editEmployee');
         } else {
-            $this->pageTitle = __('forms.edit_employee');
+            $this->pageTitle = __('forms.editEmployee');
         }
     }
 

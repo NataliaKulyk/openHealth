@@ -71,10 +71,10 @@
                     </div>
                 </div>
                 <div class="button-group">
-                        <a href="{{ route('employee.create') }}" class="button-primary">
+                    <a href="{{ route('employee.create', ['legalEntity' => legalEntity()->id]) }}" class="button-primary">
                             {{ __('forms.newEmployee') }}
                         </a>
-                    <button wire:click="callSeeder" type="button" class="button-sync">
+                    <button wire:click="syncEmployees" type="button" class="button-sync">
                         {{ __('forms.synchronise_with_eHealth') }}
                     </button>
                 </div>
@@ -107,8 +107,8 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <a href="{{ route('employee.create', ['partyId' => $party->id]) }}" class="button-secondary-outline">Додати посаду</a>
-                            <a href="{{ route('employee.edit', ['employeeId' => $party->employees->first()?->id ?? 0]) }}" class="text-gray-500 hover:text-blue-600 p-2">
+                            <a href="{{ route('employee.create', ['legalEntity' => legalEntity()->id, 'partyId' => $party->id]) }}" class="button-secondary-outline">Додати посаду</a>
+                            <a href="{{ route('employee.edit', ['legalEntity' => legalEntity()->id, 'employeeId' => $party->employees->first()?->id ?? 0]) }}" class="text-gray-500 hover:text-blue-600 p-2">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </a>
                         </div>
@@ -132,36 +132,18 @@
                                     <td class="px-4 py-3">{{ $dictionaries['EMPLOYEE_TYPE'][$position->employee_type] ?? $position->employee_type }}</td>
                                     <td class="px-4 py-3">{{ $position->division->name ?? 'N/A' }}</td>
                                     <td class="px-4 py-3 text-right">
-                                        {{-- A standard Alpine.js dropdown that is guaranteed to work with Livewire --}}
                                         <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                                             <button @click="open = !open" class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-white" type="button">
                                                 <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/></svg>
                                             </button>
-
-                                            <div x-show="open"
-                                                 x-transition:enter="transition ease-out duration-100"
-                                                 x-transition:enter-start="transform opacity-0 scale-95"
-                                                 x-transition:enter-end="transform opacity-100 scale-100"
-                                                 x-transition:leave="transition ease-in duration-75"
-                                                 x-transition:leave-start="transform opacity-100 scale-100"
-                                                 x-transition:leave-end="transform opacity-0 scale-95"
-                                                 class="absolute right-0 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600"
-                                                 style="display: none;">
-
+                                            <div x-show="open" x-transition class="absolute right-0 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600" style="display: none;">
                                                 <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" @click="open = false">
-                                                    <li>
-                                                        <a href="{{ route('employee.show', ['employee' => $position->id]) }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Переглянути</a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="{{ route('employee.edit', ['employeeId' => $position->id]) }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Редагувати посаду</a>
-                                                    </li>
+                                                    <li><a href="{{ route('employee.show', ['legalEntity' => legalEntity()->id, 'employee' => $position->id]) }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600">Переглянути</a></li>
+                                                    <li><a href="{{ route('employee.edit', ['legalEntity' => legalEntity()->id, 'employeeId' => $position->id]) }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600">Редагувати</a></li>
                                                 </ul>
-
                                                 @if($position instanceof \App\Models\Employee\Employee && $position->status === \App\Enums\Status::APPROVED)
                                                     <div class="py-1" @click="open = false">
-                                                        <button type="button" wire:click="showModalDismissed({{ $position->id }})" class="block w-full text-left py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                                                            Звільнити з посади
-                                                        </button>
+                                                        <button type="button" wire:click="showModalDismissed({{ $position->id }})" class="block w-full text-left py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600">Звільнити</button>
                                                     </div>
                                                 @endif
                                             </div>
