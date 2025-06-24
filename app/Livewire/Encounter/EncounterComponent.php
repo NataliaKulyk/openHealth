@@ -276,9 +276,9 @@ class EncounterComponent extends Component
         }
 
         $this->patientId = $patientId;
-        $this->legalEntityType = $authUser->legalEntity->type;
+        $this->legalEntityType = legalEntity()->type;
         $this->role = $authUser->roles->first()->name;
-        $this->divisions = $authUser->legalEntity->division->toArray();
+        $this->divisions = legalEntity()->division->toArray();
 
         $this->authEmployee = $authUser->getEncounterWriterEmployee();
         $this->employeeFullName = $this->authEmployee->fullName;
