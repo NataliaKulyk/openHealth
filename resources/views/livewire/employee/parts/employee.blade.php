@@ -89,56 +89,12 @@
             <input wire:model="form.party.email" type="text" id="email" class="input peer disabled:bg-gray-200 disabled:cursor-not-allowed @error('form.party.email') input-error @enderror" required @if(isset($this->employeeId) && $this->employeeId) disabled @endif />
             @error('form.party.email') <p class="text-error">{{$message}}</p> @enderror
         </div>
-        <div class="form-group">
-            <label for="division" class="label-main">{{__('forms.division')}}</label>
-            <input wire:model="form.doctor.divisionUuid" id="division" type="text" class="input peer @error('form.doctor.divisionUuid') input-error @enderror" />
-            @error('form.doctor.divisionUuid') <p class="text-error">{{$message}}</p> @enderror
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-data="{ employeeType: $wire.entangle('form.employeeType'), employeeTypePosition: @js($this->employeeTypePosition) }">
-        <div class="form-group">
-            <label for="employeeType" class="label-main">{{__('forms.role')}} *</label>
-            <select wire:model="form.employeeType" x-model="employeeType" id="employeeType" class="input-select peer @error('form.employeeType') input-error @enderror" required>
-                <option value="" disabled>{{__('forms.roleChoose')}}</option>
-                @foreach($this->dictionaries['EMPLOYEE_TYPE'] as $k=>$employeeTypeOption)
-                    <option value="{{$k}}">{{$employeeTypeOption}}</option>
-                @endforeach
-            </select>
-            @error('form.employeeType') <p class="text-error">{{$message}}</p> @enderror
-        </div>
-        <div class="form-group">
-            <label for="position" class="label-main">{{__('forms.position')}} *</label>
-            <select wire:model="form.position" id="position" class="input-select peer @error('form.position') input-error @enderror" required>
-                <option value="" disabled>{{__('forms.select_position')}}</option>
-                <template x-if="employeeType && employeeTypePosition[employeeType]">
-                    <template x-for="(positionName, positionKey) in employeeTypePosition[employeeType]" :key="positionKey">
-                        <option :value="positionKey" x-text="positionName"></option>
-                    </template>
-                </template>
-            </select>
-            @error('form.position') <p class="text-error">{{$message}}</p> @enderror
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2">
-        <div class="form-group">
-            <label for="startDate" class="label-main">{{__('forms.startDateWork')}} *</label>
-            <div class="relative">
-                <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" ...><path .../></svg>
-                </div>
-                <input wire:model="form.startDate" datepicker datepicker-format="yyyy-mm-dd" type="text" id="startDate" class="input datepicker-input peer ps-10 @error('form.startDate') input-error @enderror" placeholder="{{__('forms.select')}}" required />
-            </div>
-            @error('form.startDate') <p class="text-error">{{$message}}</p> @enderror
-        </div>
     </div>
 
     <div>
         <label for="aboutMyself" class="label-main">{{__('forms.aboutMyself')}}</label>
         <textarea wire:model="form.party.aboutMyself" id="aboutMyself" class="textarea" rows="4"></textarea>
     </div>
-
     {{-- Using Alpine to dynamically add and remove phone input fields --}}
     <div class="mb-4" x-data="{ phones: $wire.entangle('form.party.phones') }">
 
@@ -198,7 +154,6 @@
                         <span x-text="$wire.errors.get('form.party.phones.' + index + '.number')"></span>
                     </p>
                 </div>
-
                 <template x-if="index == phones.length - 1 & index != 0">
                     <button x-on:click="phones.pop(), index--"
                             class="item-remove"
@@ -206,7 +161,6 @@
                         {{__('forms.remove_phone')}}
                     </button>
                 </template>
-
                 <template x-if="index == phones.length - 1">
                     <button x-on:click="phones.push({ type: '', number: '' })"
                             class="item-add lg:justify-self-start"
@@ -217,6 +171,8 @@
                 </template>
             </div>
         </template>
-
     </div>
 </fieldset>
+
+
+
