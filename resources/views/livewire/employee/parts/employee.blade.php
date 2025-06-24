@@ -186,7 +186,6 @@
                         <span x-text="$wire.errors.get('form.party.phones.' + index + '.number')"></span>
                     </p>
                 </div>
-
                 <template x-if="index == phones.length - 1 & index != 0">
                     <button x-on:click="phones.pop(), index--"
                             class="item-remove"
@@ -194,7 +193,6 @@
                         {{__('forms.remove_phone')}}
                     </button>
                 </template>
-
                 <template x-if="index == phones.length - 1">
                     <button x-on:click="phones.push({ type: '', number: '' })"
                             class="item-add lg:justify-self-start"
@@ -205,6 +203,8 @@
                 </template>
             </div>
         </template>
-
     </div>
 </fieldset>
+
+
+
