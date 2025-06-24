@@ -2,7 +2,7 @@
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">
             {{ $pageTitle }}
-            @if(isset($employee))
+            @if(isset($employee) && $viewMode !== 'position_only')
                 : {{ $employee->fullName }}
             @endif
         </x-slot>
@@ -19,25 +19,33 @@
             }
         }"
     >
-        <form wire:submit.prevent="save" class="form">
-            {{-- Main form includes --}}
-            @include('livewire.employee.parts.employee')
-            @include('livewire.employee.parts.documents')
-            @include('livewire.employee.parts.position')
+        {{-- We add space-y-8 to the form to create consistent vertical spacing between fieldsets/blocks --}}
+        <form wire:submit.prevent="save('{{ $viewMode }}')" class="form space-y-8">
 
-            {{-- Doctor-specific fields --}}
-            <template x-if="isDoctor()">
-                <div>
-                    @include('livewire.employee.parts.education')
-                    @include('livewire.employee.parts.specialities')
-                    @include('livewire.employee.parts.science_degree')
-                    @include('livewire.employee.parts.qualifications')
-                </div>
-            </template>
+            {{-- This block with Personal Data and Documents is HIDDEN when we are only adding a new position --}}
+            @if($viewMode !== 'position_only')
+                @include('livewire.employee.parts.employee')
+                @include('livewire.employee.parts.documents')
+            @endif
+
+            {{-- This block with Positional data is HIDDEN when we are only editing personal data --}}
+            @if($viewMode !== 'party_only')
+                @include('livewire.employee.parts.position')
+
+                {{-- Doctor-specific fields are also considered part of the position --}}
+                <template x-if="isDoctor()">
+                    <div class="space-y-8">
+                        @include('livewire.employee.parts.education')
+                        @include('livewire.employee.parts.specialities')
+                        @include('livewire.employee.parts.science_degree')
+                        @include('livewire.employee.parts.qualifications')
+                    </div>
+                </template>
+            @endif
 
             {{-- Signature block container, shown conditionally --}}
             <div x-show="showSignatureBlock" x-transition.opacity.duration.500ms
-                 class="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+                 class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
                 <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{{ __('forms.sign_with_KEP') }}</h3>
                 <p class="mb-6 text-sm text-gray-600 dark:text-gray-300">{{ __('forms.complete_the_interaction_and_sign') }}</p>
 
@@ -68,7 +76,6 @@
                         <span wire:loading.remove wire:target="save">{{__('forms.save')}}</span>
                         <span wire:loading wire:target="save">Збереження...</span>
                     </button>
-
                 </div>
             </div>
         </form>

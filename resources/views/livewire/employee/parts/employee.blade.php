@@ -69,17 +69,49 @@
         </div>
     </div>
 
-    <div class="mt-8" x-data="{ noTaxId: $wire.entangle('form.party.noTaxId') }">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="flex items-center pb-2">
-                <input x-model="noTaxId" id="no-tax-id-checkbox" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                <label for="no-tax-id-checkbox" class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('forms.no_tax_id') }}</label>
+    <div class="mt-8"
+         x-data="{
+         noTaxId: $wire.entangle('form.party.noTaxId').live,
+         isLocked: @js($this->lockPartyFields || !empty($this->employeeId))
+     }"
+    >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 items-start">
+
+            <div class="form-group">
+                <label
+                    for="taxId"
+                    class="label-main"
+                    x-text="noTaxId ? '{{ __('forms.document_no_tax_id') }} *' : '{{ __('forms.tax_id') }} *'"
+                ></label>
+
+                <input
+                    wire:model="form.party.taxId"
+                    type="text"
+                    id="taxId"
+                    class="input peer disabled:bg-gray-200 disabled:cursor-not-allowed @error('form.party.taxId') input-error @enderror"
+                    :disabled="isLocked"
+                    required
+                />
+                @error('form.party.taxId')
+                <p class="text-error">{{$message}}</p>
+                @enderror
             </div>
-            <div class="form-group group">
-                <label for="taxId" class="label-main">{{ __('forms.tax_id') }}</label>
-                <input wire:model="form.party.taxId" type="text" id="taxId" class="input peer disabled:bg-gray-200 disabled:cursor-not-allowed @error('form.party.taxId') input-error @enderror" :disabled="noTaxId" required @if(isset($this->employeeId) && $this->employeeId) disabled @endif />
-                @error('form.party.taxId') <p class="text-error">{{$message}}</p> @enderror
+
+            <div class="pt-8">
+                <div class="flex items-center">
+                    <input
+                        x-model="noTaxId"
+                        id="no-tax-id-checkbox"
+                        type="checkbox"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:bg-gray-200"
+                        :disabled="isLocked"
+                    >
+                    <label for="no-tax-id-checkbox" class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+                        {{ __('forms.no_tax_id') }}
+                    </label>
+                </div>
             </div>
+
         </div>
     </div>
 
@@ -154,6 +186,7 @@
                         <span x-text="$wire.errors.get('form.party.phones.' + index + '.number')"></span>
                     </p>
                 </div>
+
                 <template x-if="index == phones.length - 1 & index != 0">
                     <button x-on:click="phones.pop(), index--"
                             class="item-remove"
@@ -161,6 +194,7 @@
                         {{__('forms.remove_phone')}}
                     </button>
                 </template>
+
                 <template x-if="index == phones.length - 1">
                     <button x-on:click="phones.push({ type: '', number: '' })"
                             class="item-add lg:justify-self-start"
@@ -171,8 +205,6 @@
                 </template>
             </div>
         </template>
+
     </div>
 </fieldset>
-
-
-

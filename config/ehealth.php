@@ -131,6 +131,9 @@ return [
             ]
         ]
     ],
+
+    'division' => ['test1, test2'],
+
     'doctors_type' => [
         'LABORANT', 'DOCTOR', 'MED_ADMIN', 'ASSISTANT', 'MED_COORDINATOR'
     ],

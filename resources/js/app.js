@@ -5,6 +5,7 @@ import './index';
 
 import Datepicker from 'flowbite-datepicker/Datepicker';
 import uk from '../../node_modules/flowbite-datepicker/js/i18n/locales/uk.js';
+import Livewire from "jsvectormap/src/js/eventHandler.js";
 
 // Selecting all elements with the 'datepicker-input' class
 document.addEventListener('DOMContentLoaded', () => {
@@ -81,15 +82,35 @@ document.addEventListener('livewire:load', () => {
     });
 });
 
+function scrollToElement(selector) {
+    const element = document.querySelector(selector);
+    if (element) {
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+        // We also try to focus on the element if it's focusable (like an input).
+        if (typeof element.focus === 'function') {
+            element.focus();
+        }
+    }
+}
+
 document.addEventListener('livewire:init', () => {
+
+    // Listener for validation errors.
     Livewire.on('employee-form-failed', (event) => {
-        // Find the first form element with an error
-        const firstError = document.querySelector('.input-error, .select-error');
-        if (firstError) {
-            // Scroll to the element smoothly
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Optionally, focus on it
-            firstError.focus();
+        // It calls the universal function with a selector for the first error class.
+        scrollToElement('.input-error, .select-error');
+    });
+
+    // Listener for specific element scrolling (e.g., for 'Add Position').
+    Livewire.on('scroll-to-element', (event) => {
+        // It calls the universal function with the selector passed from the backend.
+        // We use event.detail[0] or event.selector based on how you dispatch
+        const selector = event.selector || (event.detail && event.detail.selector) || null;
+        if (selector) {
+            scrollToElement(selector);
         }
     });
 });

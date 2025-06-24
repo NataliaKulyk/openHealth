@@ -22,7 +22,7 @@ class EmployeeComponent extends Component
     public ?array $dictionaryNames = [
         'PHONE_TYPE', 'COUNTRY', 'SETTLEMENT_TYPE', 'SPECIALITY_TYPE', 'DIVISION_TYPE',
         'SPECIALITY_LEVEL', 'GENDER', 'QUALIFICATION_TYPE', 'SCIENCE_DEGREE', 'DOCUMENT_TYPE',
-        'SPEC_QUALIFICATION_TYPE', 'EMPLOYEE_TYPE', 'POSITION', 'EDUCATION_DEGREE',
+        'SPEC_QUALIFICATION_TYPE', 'EMPLOYEE_TYPE', 'POSITION', 'EDUCATION_DEGREE', 'DIVISION'
     ];
 
     /**
@@ -38,7 +38,7 @@ class EmployeeComponent extends Component
         $this->traitGetDictionary();
 
         $this->dictionaries['EMPLOYEE_TYPE'] = $this->getDictionariesFields(
-            config('ehealth.legal_entity_type.' . legalEntity()->type .'.roles'),
+            config('ehealth.legal_entity_type.' . legalEntity()->type . '.roles'),
             'EMPLOYEE_TYPE'
         );
 

@@ -1,10 +1,23 @@
-<fieldset class="fieldset space-y-6 mt-8" x-data="{ employeeType: $wire.entangle('form.employeeType'), employeeTypePosition: @js($this->employeeTypePosition) }">
+<fieldset
+    id="position-form-section"
+    class="fieldset space-y-6 mt-8"
+    x-data="{
+        employeeType: $wire.entangle('form.employeeType'),
+        employeeTypePosition: @js($this->employeeTypePosition)
+    }"
+    {{-- This listener catches the event from the backend and resets the fields on the frontend --}}
+    @reset-position-fields.window="
+        employeeType = '';
+        $wire.set('form.position', '', false);
+        $wire.set('form.startDate', '', false);
+        $wire.set('form.divisionUuid', null, false);
+    "
+>
     <legend class="legend">
-        <h2>{{ __('forms.position') ?? 'Посада' }}</h2>
+        <h2>{{ __('forms.positional_data') }}</h2>
     </legend>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
         {{-- Employee Role --}}
         <div class="form-group">
             <label for="employeeType" class="label-main">{{__('forms.role')}} *</label>
@@ -30,7 +43,8 @@
             </select>
             @error('form.position') <p class="text-error">{{ $message }}</p> @enderror
         </div>
-
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {{-- Start Date --}}
         <div class="form-group">
             <label for="startDate" class="label-main">{{__('forms.startDateWork')}} *</label>
@@ -48,14 +62,13 @@
         {{-- Division --}}
         <div class="form-group">
             <label for="division" class="label-main">{{__('forms.division')}}</label>
-            <select wire:model="form.doctor.divisionUuid" id="division" class="input-select peer @error('form.doctor.divisionUuid') input-error @enderror">
-                <option value="">{{__('forms.select')}}</option>
-                @foreach($this->dictionaries['DIVISION'] ?? [] as $k => $v)
-                    <option value="{{ $k }}">{{ $v }}</option>
+            <select wire:model="form.divisionUuid" id="division" class="input-select peer @error('form.divisionUuid') input-error @enderror">
+                <option value="">{{__('forms.select_division')}}</option>
+                @foreach($this->dictionaries['DIVISIONS'] ?? [] as $division)
+                    <option value="{{ $division['uuid'] }}">{{ $division['name'] }}</option>
                 @endforeach
             </select>
-            @error('form.doctor.divisionUuid') <p class="text-error">{{ $message }}</p> @enderror
+            @error('form.divisionUuid') <p class="text-error">{{ $message }}</p> @enderror
         </div>
-
     </div>
 </fieldset>
