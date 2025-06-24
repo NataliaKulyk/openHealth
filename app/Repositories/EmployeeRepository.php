@@ -297,6 +297,7 @@ class EmployeeRepository
         string $employeeUuid,
         LegalEntity $legalEntity
     ): EmployeeRequest {
+        dd($inputData);
         return DB::transaction(function () use ($inputData, $employeeUuid, $legalEntity) {
             $existingEmployee = Employee::with('party')->where('uuid', $employeeUuid)->firstOrFail();
             $newRequest = new EmployeeRequest();
