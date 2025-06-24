@@ -23,6 +23,7 @@
             {{-- Main form includes --}}
             @include('livewire.employee.parts.employee')
             @include('livewire.employee.parts.documents')
+            @include('livewire.employee.parts.position')
 
             {{-- Doctor-specific fields --}}
             <template x-if="isDoctor()">
