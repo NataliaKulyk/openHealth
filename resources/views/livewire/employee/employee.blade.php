@@ -27,6 +27,7 @@
             {{-- Personal Data & Documents --}}
             @include('livewire.employee.parts.employee')
             @include('livewire.employee.parts.documents')
+            @include('livewire.employee.parts.position')
 
             {{-- Positional Data --}}
             @include('livewire.employee.parts.position')
