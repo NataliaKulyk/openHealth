@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Classes\Cipher\Api\CipherApi;
 use App\Classes\Cipher\Exceptions\ApiException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class SignatureService
@@ -19,17 +21,20 @@ class SignatureService
 
     /**
      * Sends data for signing using Cipher API.
-     * Throws a user-friendly ValidationException on failure.
+     * The file processing logic is now handled inside this service.
      */
     public function signData(
         array $dataToSign,
         string $password,
         string $knedp,
-        string $base64FileContent,
+        ?UploadedFile $keyFile, // Now accepts the file object
         string $signatoryInitiator,
         string $taxId
     ): string|array {
         try {
+            // Get base64 content using the new private method
+            $base64FileContent = $this->getBase64KepFileContent($keyFile);
+
             return $this->cipherApi->sendSession(
                 json_encode($dataToSign, JSON_THROW_ON_ERROR),
                 $password,
@@ -41,16 +46,30 @@ class SignatureService
         } catch (ApiException $e) {
             $errors = $e->getErrors();
             $errorMessage = collect($errors)->flatten()->first() ?? __('forms.invalid_kep_password_or_file');
-
-            throw ValidationException::withMessages([
-                                                        'form.password' => $errorMessage,
-                                                    ]);
+            throw ValidationException::withMessages(['form.password' => $errorMessage]);
         } catch (\Exception $e) {
             Log::error('Unexpected error in SignatureService: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            throw ValidationException::withMessages([
-                                                        'form.password' => __('api.cipher.unexpected_error_short'),
-                                                    ]);
+            throw ValidationException::withMessages(['form.password' => __('api.cipher.unexpected_error_short')]);
         }
+    }
+
+    /**
+     * ADDED: Processes the uploaded KEP file and returns its base64 content.
+     * This logic was moved from the Form Object.
+     */
+    private function getBase64KepFileContent(?UploadedFile $keyFile): string
+    {
+        if (!$keyFile || !$keyFile->exists()) {
+            throw new \RuntimeException(__('Please upload a KEP file.'));
+        }
+
+        $fileContents = file_get_contents($keyFile->getRealPath());
+
+        if ($fileContents === false) {
+            throw new \RuntimeException(__('Could not read KEP file content.'));
+        }
+
+        return base64_encode($fileContents);
     }
 
     /**

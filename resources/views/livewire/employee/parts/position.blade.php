@@ -7,7 +7,7 @@
     }"
 >
     <legend class="legend">
-        <h2>{{ __('forms.positional_data') }}</h2>
+        <h2>{{ __('forms.position') }}</h2>
     </legend>
 
     {{-- The rest of the template remains unchanged --}}
@@ -56,13 +56,19 @@
         {{-- Division --}}
         <div class="form-group">
             <label for="division" class="label-main">{{__('forms.division')}}</label>
+            {{-- We use wire:model here, not wire:model.defer, to ensure the value is available for doctor-specific logic if needed --}}
             <select wire:model="form.divisionUuid" id="division" class="input-select peer @error('form.divisionUuid') input-error @enderror">
-                <option value="">{{__('forms.select_division')}}</option>
-                @foreach($this->dictionaries['DIVISIONS'] ?? [] as $division)
+                <option value="">{{__('forms.selectDivision')}}</option>
+
+                {{-- TODO: This is a temporary hardcoded value. --}}
+                {{-- It should be replaced with a dynamic list from the dictionary once the Divisions CRUD is ready. --}}
+                <option value="b075f148-7f93-4fc2-b2ec-2d81b19a9b7b">Тестовий Підрозділ (Заглушка)</option>
+
+                {{-- The old dynamic loop is commented out for now --}}
+                {{-- @foreach($this->dictionaries['DIVISIONS'] ?? [] as $division)
                     <option value="{{ $division['uuid'] }}">{{ $division['name'] }}</option>
-                @endforeach
+                @endforeach --}}
             </select>
             @error('form.divisionUuid') <p class="text-error">{{ $message }}</p> @enderror
         </div>
-    </div>
 </fieldset>

@@ -28,13 +28,7 @@ class EmployeeEdit extends EmployeeComponent
 
         // Personal data is locked by default when editing.
         $this->lockPartyFields = true;
-
-        // Set the title dynamically after the employee is loaded.
-        if ($this->employee) {
-            $this->pageTitle = __('forms.edit_employee_position') . ': ' . $this->employee->fullName;
-        } else {
-            $this->pageTitle = __('forms.edit_employee_position');
-        }
+        $this->pageTitle = __('forms.editEmployee');
     }
 
     /**
