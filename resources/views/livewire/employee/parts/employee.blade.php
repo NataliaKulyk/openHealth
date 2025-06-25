@@ -118,7 +118,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="form-group">
             <label for="email" class="label-main">{{__('forms.email')}} *</label>
-            <input wire:model="form.party.email" type="text" id="email" class="input peer disabled:bg-gray-200 disabled:cursor-not-allowed @error('form.party.email') input-error @enderror" required @if(isset($this->employeeId) && $this->employeeId) disabled @endif />
+            <input wire:model="form.party.email" type="text" id="email" class="input peer disabled:bg-gray-200 disabled:cursor-not-allowed @error('form.party.email') input-error @enderror" required @if(isset($this->employeeId) || $this->lockPartyFields) disabled @endif />
             @error('form.party.email') <p class="text-error">{{$message}}</p> @enderror
         </div>
     </div>

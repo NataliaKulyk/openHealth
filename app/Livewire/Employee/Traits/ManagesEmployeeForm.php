@@ -33,7 +33,6 @@ trait ManagesEmployeeForm
             $employee = Employee::findOrFail($this->employeeId);
             $this->employee = $employee;
 
-            // Pass the mode down to the Form Object.
             $this->form->populateFromModel($employee, $viewMode);
         }
     }

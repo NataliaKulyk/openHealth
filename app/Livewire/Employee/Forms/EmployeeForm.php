@@ -8,6 +8,7 @@ use App\Rules\BirthDate;
 use App\Rules\Email;
 use App\Rules\Name;
 use App\Rules\UniqueEmailInLegalEntity;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Form;
 use App\Rules\PhoneNumber;
@@ -272,7 +273,6 @@ class EmployeeForm extends Form
             $this->populateFromParty($employee->party);
         }
 
-        // --- NEW LOGIC ---
         // Populate positional and doctor data ONLY if we are NOT in 'add_position' mode.
         if ($viewMode !== 'add_position') {
             $employee->loadMissing(['educations', 'specialities', 'qualifications', 'scienceDegrees']);
@@ -281,7 +281,7 @@ class EmployeeForm extends Form
             $this->employeeType = $employee->employee_type;
             $this->startDate = $employee->start_date?->format('Y-m-d');
             $this->endDate = $employee->end_date?->format('Y-m-d');
-            $this->divisionUuid = $employee->division_id;
+            $this->divisionId = $employee->division_id;
 
             // Populate doctor-specific arrays if needed
             $this->doctor['educations'] = $employee->educations->map(fn($edu) => Arr::toCamelCase($edu->toArray()))->toArray();
@@ -300,6 +300,7 @@ class EmployeeForm extends Form
     {
         $party->loadMissing(['phones', 'documents']);
         $this->existingPartyId = $party->id;
+
         $this->party = [
             'lastName' => $party->last_name, 'firstName' => $party->first_name,
             'secondName' => $party->second_name, 'gender' => $party->gender,
@@ -308,12 +309,8 @@ class EmployeeForm extends Form
             'workingExperience' => $party->working_experience, 'aboutMyself' => $party->about_myself,
             'phones' => $party->phones->map(fn($p) => ['type' => $p->type, 'number' => $p->number])->toArray(),
         ];
-        $this->documents = $party->documents->map(fn($d) => [
-            'type' => $d->type,
-            'number' => $d->number,
-            'issued_by' => $d->issued_by,
-            'issued_at' => $d->issued_at?->format('Y-m-d')
-        ])->toArray();
+
+        $this->documents = $party->documents->map(fn($d) => ['type' => $d->type, 'number' => $d->number, 'issued_by' => $d->issued_by, 'issued_at' => $d->issued_at?->format('Y-m-d')])->toArray();
     }
 
     /**
@@ -338,7 +335,7 @@ class EmployeeForm extends Form
                     try {
                         $value = Carbon::parse($value)->format('Y-m-d');
                     } catch (\Exception $e) {
-                        \Log::warning("Failed to parse date for key '$key': " . $value . ' - ' . $e->getMessage());
+                        Log::warning("Failed to parse date for key '$key': " . $value . ' - ' . $e->getMessage());
                     }
                 } else {
                     $value = null;
@@ -366,35 +363,26 @@ class EmployeeForm extends Form
     {
         parent::reset(...$properties);
 
-        $this->position        = '';
-        $this->employeeType    = '';
-        $this->startDate       = '';
-        $this->endDate         = null;
+        $this->position = '';
+        $this->employeeType = '';
+        $this->startDate = '';
+        $this->endDate = null;
         $this->existingPartyId = null;
 
-        $this->knedp              = null;
+        $this->knedp = null;
         $this->keyContainerUpload = null;
-        $this->password           = null;
+        $this->password = null;
 
         $this->documents = [];
-        $this->party     = [
-            'lastName'          => '', 'firstName' => '', 'secondName' => '', 'gender' => '',
-            'birthDate'         => '', 'phones' => [['type' => '', 'number' => '']],
-            'taxId'             => '', 'noTaxId' => false, 'email' => '',
+        $this->party = [
+            'lastName' => '', 'firstName' => '', 'secondName' => '', 'gender' => '',
+            'birthDate' => '', 'phones' => [['type' => '', 'number' => '']],
+            'taxId' => '', 'noTaxId' => false, 'email' => '',
             'workingExperience' => null, 'aboutMyself' => '',
         ];
         $this->doctor    = [
-            'divisionUuid'   => null, 'educations' => [], 'specialities' => [],
+            'divisionUuid' => null, 'educations' => [], 'specialities' => [],
             'scienceDegrees' => [], 'qualifications' => [],
         ];
-    }
-
-    public function resetPositionFields(): void
-    {
-        $this->position     = '';
-        $this->employeeType = '';
-        $this->startDate    = '';
-        $this->endDate      = null;
-        $this->divisionId = null;
     }
 }

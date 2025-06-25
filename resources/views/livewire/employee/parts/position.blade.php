@@ -5,18 +5,12 @@
         employeeType: $wire.entangle('form.employeeType'),
         employeeTypePosition: @js($this->employeeTypePosition)
     }"
-    {{-- This listener catches the event from the backend and resets the fields on the frontend --}}
-    @reset-position-fields.window="
-        employeeType = '';
-        $wire.set('form.position', '', false);
-        $wire.set('form.startDate', '', false);
-        $wire.set('form.divisionUuid', null, false);
-    "
 >
     <legend class="legend">
         <h2>{{ __('forms.positional_data') }}</h2>
     </legend>
 
+    {{-- The rest of the template remains unchanged --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {{-- Employee Role --}}
         <div class="form-group">

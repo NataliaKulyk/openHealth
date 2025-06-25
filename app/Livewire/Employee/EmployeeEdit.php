@@ -4,7 +4,6 @@ namespace App\Livewire\Employee;
 
 use App\Livewire\Employee\Forms\EmployeeForm;
 use App\Livewire\Employee\Traits\ManagesEmployeeForm;
-use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
 use Illuminate\View\View;
 
@@ -14,33 +13,39 @@ class EmployeeEdit extends EmployeeComponent
 
     public EmployeeForm $form;
     public string $pageTitle;
-    public string $viewMode = 'full_edit';
 
-    public function mount(LegalEntity $legalEntity, int $employeeId, string $viewMode = 'full_edit'): void
+    /**
+     * The mount method is now simplified. Its only job is to load
+     * the employee data for editing.
+     */
+    public function mount(LegalEntity $legalEntity, int $employeeId): void
     {
         $this->getDictionary();
         $this->employeeId = $employeeId;
-        $this->viewMode = $viewMode;
 
-        // The loadEmployee method now accepts the mode and handles the logic.
-        $this->loadEmployee($viewMode);
+        // The trait method handles finding the model and populating the form fully.
+        $this->loadEmployee();
 
-        if ($this->viewMode === 'add_position') {
-            $this->pageTitle = __('forms.add_position');
-            $this->lockPartyFields = true;
-            $this->employeeRequest = null; // Important for forcing creation on save
+        // Personal data is locked by default when editing.
+        $this->lockPartyFields = true;
+
+        // Set the title dynamically after the employee is loaded.
+        if ($this->employee) {
+            $this->pageTitle = __('forms.edit_employee_position') . ': ' . $this->employee->fullName;
         } else {
             $this->pageTitle = __('forms.edit_employee_position');
-            $this->lockPartyFields = true;
         }
     }
 
+    /**
+     * Renders the component view.
+     */
     public function render(): View
     {
-        return view('livewire.employee.employee-edit', [
+        // Now points to the new unified view
+        return view('livewire.employee.employee', [
             'pageTitle' => $this->pageTitle,
             'employee' => $this->employee,
-            'viewMode' => $this->viewMode,
         ]);
     }
 }

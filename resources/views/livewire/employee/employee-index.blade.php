@@ -107,12 +107,7 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <a href="{{ route('employee.edit', [
-                            'legalEntity' => legalEntity()->id,
-                            'employeeId' => $party->employees->first()?->id ?? $party->employeeRequests->first()?->id,
-                            'viewMode' => 'add_position'
-                        ]
-) }}" class="button-secondary-outline">
+                            <a href="{{ route('employee.add-position', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="button-secondary-outline">
                                 {{ __('forms.addPosition') }}
                             </a>
                             <a href="{{ route('employee.edit', ['legalEntity' => legalEntity()->id, 'employeeId' => $party->employees->first()?->id ?? 0]) }}" class="text-gray-500 hover:text-blue-600 p-2">

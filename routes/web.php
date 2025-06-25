@@ -8,6 +8,7 @@ use App\Livewire\Actions\Logout;
 use App\Livewire\Auth\VerifyEmail;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
+use App\Livewire\Employee\AddPosition;
 use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Employee\EmployeeShow;
@@ -96,6 +97,7 @@ Route::middleware(['auth:ehealth', 'can:access,legalEntity'])->prefix('/dashboar
     Route::prefix('employees')->name('employee.')->group(function () {
         Route::get('/', EmployeeIndex::class)->name('index');
         Route::get('/create', EmployeeCreate::class)->name('create');
+        Route::get('/party/{party}/add-position', AddPosition::class)->name('add-position'); // New route
         Route::get('/{employee}', EmployeeShow::class)->name('show');
         Route::get('/{employeeId}/edit', EmployeeEdit::class)->name('edit');
     });
