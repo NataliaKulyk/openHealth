@@ -297,7 +297,6 @@ class EmployeeRepository
         string $employeeUuid,
         LegalEntity $legalEntity
     ): EmployeeRequest {
-        dd($inputData);
         return DB::transaction(function () use ($inputData, $employeeUuid, $legalEntity) {
             $existingEmployee = Employee::with('party')->where('uuid', $employeeUuid)->firstOrFail();
             $newRequest = new EmployeeRequest();
@@ -373,11 +372,13 @@ class EmployeeRepository
             $apiEmployeeRequest['end_date'] = Carbon::parse($sourceData['end_date'])->format('Y-m-d');
         }
 
+        //TODO use when division crud will be operative
+//         if (!empty($sourceData['division_uuid'])) {
+//             $apiEmployeeRequest['division_id'] = $sourceData['division_uuid'];
+//         }
+
         if (($sourceData['employee_type'] ?? null) === 'DOCTOR') {
             $doctorPayload = [];
-            if (!empty($doctorData['division_uuid'])) {
-                $doctorPayload['division_id'] = $doctorData['division_uuid'];
-            }
             if (!empty($doctorData['educations'])) {
                 $doctorPayload['educations'] = $doctorData['educations'];
             }

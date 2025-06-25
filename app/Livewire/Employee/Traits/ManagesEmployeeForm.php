@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Employee\Traits;
 
+use App\Classes\Cipher\Api\CipherApi;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
@@ -52,14 +53,14 @@ trait ManagesEmployeeForm
 
     /**
      * Save or Update the employee data, handling different modes.
-     * @param string $currentMode The mode from the component ('add_position', 'full_edit', etc.)
+     *
+     * @throws ValidationException
      */
     public function save(): void
     {
         try {
             $this->form->validate($this->form->rulesForSave());
             $preparedDataForDb = $this->form->getPreparedData();
-            dd($preparedDataForDb);
             $preparedDataForDb['legal_entity_uuid'] = legalEntity()->uuid;
             $preparedDataForDb['legal_entity_id']   = legalEntity()->id;
 
@@ -76,7 +77,7 @@ trait ManagesEmployeeForm
                     $this->employeeRequest = Repository::employee()->store(
                         $preparedDataForDb,
                         legalEntity(),
-                        new \App\Models\Employee\EmployeeRequest(),
+                        new EmployeeRequest(),
                         $this->employee->uuid
                     );
                 } else {
@@ -96,7 +97,6 @@ trait ManagesEmployeeForm
             $this->showSignatureBlock = true;
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            dd($e->validator->errors());
             $this->dispatch('employee-form-failed');
             session()->flash('error', __('forms.validation_failed_check_form'));
             throw $e;
@@ -109,18 +109,24 @@ trait ManagesEmployeeForm
         }
     }
 
+    /**
+     * Handles the signing process.
+     */
     public function sign()
     {
         try {
             $this->save();
             $this->employeeRequest->refresh();
             $this->form->validate($this->form->rulesForKepOnly());
-            $dataForSigning = Repository::employee()->formatEHealthRequest($this->employeeRequest->revision->data);
-            $base64FileContent = $this->form->getBase64KepFileContent();
 
+            $dataForSigning = Repository::employee()->formatEHealthRequest($this->employeeRequest->revision->data);
             $signedContent = signatureService()->signData(
-                $dataForSigning, $this->form->password, $this->form->knedp,
-                $base64FileContent, 'Person', $this->form->party['taxId']
+                $dataForSigning,
+                $this->form->password,
+                $this->form->knedp,
+                $this->form->keyContainerUpload,
+                'Person',
+                $this->form->party['taxId']
             );
 
             if ($this->sendSignedContentToEhealth($signedContent)) {
@@ -129,6 +135,7 @@ trait ManagesEmployeeForm
         } catch (Exception $e) {
             $this->handleException($e);
         }
+
         return null;
     }
 
@@ -148,7 +155,7 @@ trait ManagesEmployeeForm
                 $this->employeeRequest->uuid = $ehealthResponse['id'];
                 $this->employeeRequest->inserted_at = $ehealthResponse['inserted_at'];
                 $this->employeeRequest->legal_entity_uuid = $ehealthResponse['legal_entity_id'];
-                $this->employeeRequest->updated_at        = $ehealthResponse['updated_at'];
+                $this->employeeRequest->updated_at = $ehealthResponse['updated_at'];
                 $this->employeeRequest->save();
                 session()->flash('success', __('forms.requestSignedAndSentToEHealth'));
                 $this->dispatch('signature-successful');
@@ -211,9 +218,6 @@ trait ManagesEmployeeForm
         $this->dispatch('employee-form-failed');
     }
 
-    /**
-     * Dispatches a structured error message to the session.
-     */
     protected function dispatchErrorMessage(array $errors, string $prefix = ''): void
     {
         $errorMessage = collect($errors)->flatten()->implode(', ');

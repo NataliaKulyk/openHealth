@@ -18,7 +18,7 @@ class EmployeeCreate extends EmployeeComponent
     {
         $this->getDictionary();
         $this->lockPartyFields = false;
-        $this->pageTitle = __('forms.add_position');
+        $this->pageTitle = __('forms.addEmployee');
     }
 
     public function render(): View
