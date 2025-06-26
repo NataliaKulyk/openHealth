@@ -156,6 +156,7 @@ return [
     'startDateWork' => 'Дата початку роботи',
     'division' => 'Підрозділ',
     'selectDivision' => 'Обрати підрозділ',
+    'selectDate' => 'Виберіть дату',
     'additional_info' => 'Додаткова інформація',
     'aboutMyself' => 'Про мене',
     'workingExperience' => 'Досвід роботи',

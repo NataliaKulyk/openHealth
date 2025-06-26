@@ -31,16 +31,22 @@
 
     <div class="form-row-3">
         <div class="form-group datepicker-wrapper relative w-full">
-            <input type="text" name="startDate" id="startDate" class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
-            <label for="startDate" class="wrapped-label">{{ __('forms.startDateWork') }}</label>
+            <input
+                   wire:model="form.startDate"
+                   type="text"
+                   name="startDate"
+                   id="startDate"
+                   class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400"
+                   placeholder=" "
+                   required datepicker-autohide datepicker-format="yyyy-mm-dd"
+                   datepicker-button="false"/>
+            <label for="startDate" class="label">{{ __('forms.startDateWork') }}</label>
             @error('form.startDate') <p class="text-error">{{$message}}</p> @enderror
         </div>
         <div class="form-group">
             <select name="division" id="division" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" wire:model="form.doctor.divisionUuid">
                 <option value="" disabled selected hidden>{{ __('forms.select') }}</option>
-                @foreach($this->dictionaries['DIVISION'] ?? [] as $k => $v)
-                    <option value="{{ $k }}">{{ $v }}</option>
-                @endforeach
+                <option value="b075f148-7f93-4fc2-b2ec-2d81b19a9b7b">Test division(mock)</option>
             </select>
             <label for="division" class="label">{{ __('forms.division') }}</label>
             @error('form.doctor.divisionUuid') <p class="text-error">{{ $message }}</p> @enderror
