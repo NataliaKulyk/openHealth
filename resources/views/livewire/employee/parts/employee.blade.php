@@ -110,14 +110,14 @@
 
         <div class="form-row-3">
             <div class="form-group">
-                <input wire:model="form.party.email" type="email" id="email" class="peer input disabled:bg-gray-200" placeholder=" " required @if(isset($this->employeeId) || $this->lockPartyFields) disabled @endif />
+                <input wire:model="form.party.email" type="email" id="email" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" placeholder=" " required @if(isset($this->employeeId) || $this->lockPartyFields) disabled @endif />
                 <label for="email" class="label">{{__('forms.email')}}</label>
                 @error('form.party.email') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row-2">
             <div class="form-group">
-                <label for="about" class="label text-gray-500 dark:text-gray-400">{{ __('forms.aboutMyself') }}</label>
+                <label for="about" class="peer appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400">{{ __('forms.aboutMyself') }}</label>
                 <textarea id="about" name="about" class="textarea" placeholder="{{ __('forms.comment') }}"></textarea>
                 @error('form.party.about') <p class="text-error">{{ $message }}</p> @enderror
             </div>
