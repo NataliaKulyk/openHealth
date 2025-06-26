@@ -18,7 +18,7 @@ class EmployeeForm extends Form
     public string $startDate = '';
     public ?string $endDate = null;
     public ?int $existingPartyId = null;
-    public ?string $divisionUuid = null;
+    public ?string $divisionId = null;
 
     public ?string $knedp = null;
     public $keyContainerUpload;
@@ -71,6 +71,7 @@ class EmployeeForm extends Form
             'employeeType' => ['required', 'string'],
             'startDate' => ['required', 'date'],
             'endDate' => ['nullable', 'date'],
+            'divisionId' => ['nullable', 'string'],
         ];
     }
 
@@ -100,7 +101,7 @@ class EmployeeForm extends Form
             'documents.*.type' => ['required', 'string'],
             'documents.*.number' => ['required', 'string'],
             'documents.*.issuedBy' => ['required', 'string', 'min:1'],
-            'documents.*.issuedAt' => ['required', 'date_format:Y-m-d'],
+            'documents.*.issuedAt' => ['nullable', 'date_format:Y-m-d'],
         ];
     }
 
@@ -254,7 +255,6 @@ class EmployeeForm extends Form
             'workingExperience' => null, 'aboutMyself' => '',
         ];
         $this->doctor    = [
-            'divisionUuid' => null, 'educations' => [], 'specialities' => [],
             'scienceDegrees' => [], 'qualifications' => [],
         ];
     }

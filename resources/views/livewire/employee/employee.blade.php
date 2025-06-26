@@ -3,9 +3,9 @@
         <x-slot name="title">
             {{ $pageTitle }}
             @if(isset($employee))
-                : {{ $employee->fullName }}
+                 {{ $employee->fullName }}
             @elseif(isset($this->form->party['lastName']))
-                : {{ $this->form->party['lastName'] }} {{ $this->form->party['firstName'] }}
+                 {{ $this->form->party['lastName'] }} {{ $this->form->party['firstName'] }}
             @endif
         </x-slot>
     </x-section-navigation>
