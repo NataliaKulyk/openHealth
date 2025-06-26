@@ -63,12 +63,6 @@
 
         {{-- Phones Section --}}
         <div class="space-y-2">
-            <div class="flex justify-between items-center">
-                <label class="label-main">{{__('forms.phone_number')}} *</label>
-                    <button type="button" wire:click="addPhone" class="item-add">
-                        <span>{{__('forms.add_phone')}}</span>
-                    </button>
-            </div>
             <div class="space-y-4">
                 @foreach($form->party['phones'] as $index => $phone)
                     <div wire:key="phone-{{ $index }}" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
@@ -81,6 +75,7 @@
                                     <option value="{{$key}}">{{$phoneType}}</option>
                                 @endforeach
                             </select>
+                            <label class="label">{{ __('forms.phone_type') }}</label>
                             @error('form.party.phones.'.$index.'.type') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
 
@@ -94,8 +89,13 @@
                                 placeholder="+38 (0__) ___-__-__"
                                 required
                             />
+                            <label class="label">{{ __('forms.phone_number') }}</label>
                             @error('form.party.phones.'.$index.'.number') <p class="text-error text-xs">{{ $message }}</p> @enderror
                         </div>
+
+                        <button type="button" wire:click="addPhone" class="item-add">
+                            <span>{{__('forms.add_phone')}}</span>
+                        </button>
 
                         {{-- Remove Button --}}
                         @if(count($form->party['phones']) > 1 && !$this->lockPartyFields)
@@ -119,7 +119,7 @@
 
         <div class="form-row-2">
             <div class="form-group">
-                <label for="about" class="default-label text-gray-500 dark:text-gray-400">{{ __('forms.aboutMyself') }}</label>
+                <label for="about" class="label">{{ __('forms.aboutMyself') }}</label>
                 <textarea wire:model="form.party.aboutMyself" id="about" name="about" class="textarea disabled:bg-gray-200" placeholder="{{ __('forms.comment') }}" ></textarea>
                 @error('form.party.about') <p class="text-error">{{ $message }}</p> @enderror
             </div>
