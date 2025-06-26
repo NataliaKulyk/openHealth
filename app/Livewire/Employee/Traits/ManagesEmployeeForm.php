@@ -56,52 +56,53 @@ trait ManagesEmployeeForm
      *
      * @throws ValidationException
      */
-    public function save(): void
+    public function save(string $currentMode = 'full_create'): void
     {
+        if (isset($this->form->party['phones'])) {
+            $cleanedPhones = [];
+            foreach ($this->form->party['phones'] as $phone) {
+                if (isset($phone['number']) && is_string($phone['number'])) {
+                    $digits = preg_replace('/[^0-9]/', '', $phone['number']);
+                    $phone['number'] = !empty($digits) ? '+' . $digits : '';
+                }
+                $cleanedPhones[] = $phone;
+            }
+            $this->form->party['phones'] = $cleanedPhones;
+        }
+
         try {
             $this->form->validate($this->form->rulesForSave());
-            $preparedDataForDb = $this->form->getPreparedData();
-            $preparedDataForDb['legal_entity_uuid'] = legalEntity()->uuid;
-            $preparedDataForDb['legal_entity_id']   = legalEntity()->id;
 
-            if ($this->employeeRequest) {
-                // Re-saving a pending request
+            $preparedData = $this->form->getPreparedData();
+            $preparedData['legal_entity_uuid'] = legalEntity()->uuid;
+            $preparedData['legal_entity_id']   = legalEntity()->id;
+
+            $forceCreate = ($currentMode === 'add_position');
+
+            if ($this->employeeRequest && !$forceCreate) {
                 if ($this->employeeRequest->revision) {
-                    $this->employeeRequest->revision->update(['data' => $preparedDataForDb]);
+                    $this->employeeRequest->revision->update(['data' => $preparedData]);
                 }
             } else {
-                // Creating a new request for the first time
                 if ($this->employee) {
-                    // This is an EDIT of an existing employee.
-                    // We call 'store' with the UUID of the existing employee.
-                    $this->employeeRequest = Repository::employee()->store(
-                        $preparedDataForDb,
-                        legalEntity(),
-                        new EmployeeRequest(),
-                        $this->employee->uuid
+                    $this->employeeRequest = Repository::employee()->createChangeRequestForExistingEmployee(
+                        $preparedData, $this->employee->uuid, legalEntity()
                     );
                 } else {
-                    // This is a CREATE of a brand new employee.
-                    // We call 'store' with isNewRequest = true.
                     $this->employeeRequest = Repository::employee()->store(
-                        $preparedDataForDb,
-                        legalEntity(),
-                        new EmployeeRequest(),
-                        null,
-                        true
+                        $preparedData, legalEntity(), new EmployeeRequest(), null, true
                     );
                 }
             }
-
             session()->flash('success', __('forms.employee_request_saved_successfully'));
             $this->showSignatureBlock = true;
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->dispatch('employee-form-failed');
             session()->flash('error', __('forms.validation_failed_check_form'));
             throw $e;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to save employee: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Failed to save employee: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             $this->dispatch('employee-form-failed');
             session()->flash('error', __('forms.failed_to_save_employee_unexpected_error'));
             $this->showSignatureBlock = false;

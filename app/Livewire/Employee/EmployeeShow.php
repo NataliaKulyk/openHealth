@@ -37,7 +37,7 @@ class EmployeeShow extends EmployeeComponent
         $this->getDictionary();
         $this->form->populateFromModel($this->employee);
 
-        $this->pageTitle = __('forms.view_employee');
+        $this->pageTitle = __('forms.viewEmployee');
     }
 
     /**
