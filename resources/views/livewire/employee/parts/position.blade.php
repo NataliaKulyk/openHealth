@@ -31,16 +31,8 @@
 
     <div class="form-row-3">
         <div class="form-group datepicker-wrapper relative w-full">
-            <input
-                   wire:model="form.startDate"
-                   type="text"
-                   name="startDate"
-                   id="startDate"
-                   class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400"
-                   placeholder=" "
-                   required datepicker-autohide datepicker-format="yyyy-mm-dd"
-                   datepicker-button="false"/>
-            <label for="startDate" class="label">{{ __('forms.startDateWork') }}</label>
+            <input wire:model="form.startDate" type="text" name="startDate" id="startDate" class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
+            <label for="startDate" class="wrapped-label">{{ __('forms.startDateWork') }}</label>
             @error('form.startDate') <p class="text-error">{{$message}}</p> @enderror
         </div>
         <div class="form-group">

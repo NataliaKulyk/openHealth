@@ -37,7 +37,7 @@
         <div class="form-row-3">
             <div class="form-group datepicker-wrapper relative w-full">
                 <input wire:model="form.party.birthDate" type="text" name="birthDate" id="birthDate" class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
-                <label for="birthDate" class="label">{{__('forms.birth_date')}}</label>
+                <label for="birthDate" class="wrapped-label">{{__('forms.birth_date')}}</label>
                 @error('form.party.birthDate') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group">
@@ -49,7 +49,7 @@
 
         <div class="form-row-3" x-data="{ noTaxId: $wire.entangle('form.party.noTaxId'), isLocked: @js($this->lockPartyFields || !empty($this->employeeId)) }">
             <div class="form-group group relative z-0">
-                <input wire:model="form.party.taxId" required id="taxId" type="text" maxlength="10" placeholder=" " class="input peer @error('form.party.taxId') input-error @enderror" :disabled="noTaxId || isLocked" />
+                <input wire:model="form.party.taxId" required id="taxId" type="text" maxlength="10" placeholder=" " class="input peer text-gray-500 @error('form.party.taxId') input-error @enderror" :disabled="noTaxId || isLocked" />
                 @error('form.party.taxId') <p id="partyTaxIdErrorHelp" class="text-error">{{ $message }}</p> @enderror
                 <label for="taxId" class="label z-10" x-text="noTaxId ? '{{ __('forms.document_no_tax_id') }}' : '{{ __('forms.tax_id') }}'"></label>
             </div>
@@ -80,17 +80,10 @@
                         </div>
 
                         {{-- Phone Number Input with Alpine.js Mask Plugin --}}
-                        <div class="form-group">
-                            <input
-                                wire:model.defer="form.party.phones.{{$index}}.number"
-                                x-mask="+38 (099) 999-99-99"
-                                type="tel"
-                                class="input peer @error('form.party.phones.'.$index.'.number') input-error @enderror"
-                                placeholder="+38 (0__) ___-__-__"
-                                required
-                            />
-                            <label class="label">{{ __('forms.phone_number') }}</label>
-                            @error('form.party.phones.'.$index.'.number') <p class="text-error text-xs">{{ $message }}</p> @enderror
+                        <div class="form-group phone-wrapper">
+                            <input wire:model.defer="form.party.phones.{{$index}}.number"  type="text" name="phoneNumber" id="phoneNumber" class="peer input with-leading-icon text-gray-500" placeholder=" " required />
+                            <label for="phoneNumber" class="wrapped-label">{{ __('forms.phone') }}</label>
+                            @error('form.party.phoneNumber') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
 
                         <button type="button" wire:click="addPhone" class="item-add">
@@ -118,7 +111,7 @@
         <div class="form-row-2">
             <div class="form-group">
                 <label for="about" class="peer appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400">{{ __('forms.aboutMyself') }}</label>
-                <textarea id="about" name="about" class="textarea" placeholder="{{ __('forms.comment') }}"></textarea>
+                <textarea id="about" name="about" class="textarea !text-gray-500 dark:!text-gray-400" placeholder="{{ __('forms.comment') }}"></textarea>
                 @error('form.party.about') <p class="text-error">{{ $message }}</p> @enderror
             </div>
         </div>

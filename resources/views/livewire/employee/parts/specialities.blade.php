@@ -38,7 +38,7 @@
                     <td class="td-input" x-text="speciality.specialityOfficio"></td>
                     <td class="td-input" x-text="speciality.certificateNumber"></td>
                     <td class="td-input" x-text="speciality.attestationDate"></td>
-                    <td class="td-input relative">
+                    <td class="td-input relative absolute right-0 top-full mt-2 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                         <x-dropdown-button
                             :editAction="'openModal = true; item = index; modalSpeciality = new Speciality(speciality); newSpeciality = false; close($refs.button)'"
                             :deleteAction="'specialities.splice(index, 1); close($refs.button)'"                        />

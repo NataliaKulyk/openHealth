@@ -32,7 +32,7 @@
                     <td class="td-input" x-text="document.number"></td>
                     <td class="td-input" x-text="document.issuedBy"></td>
                     <td class="td-input" x-text="document.issuedAt"></td>
-                    <td class="td-input relative">
+                    <td class="td-input relative absolute right-0 top-full mt-2 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                         <x-dropdown-button
                             :editAction="'openModal = true; item = index; modalDocument = new Doc(document); newDocument = false; close($refs.button)'"
                             :deleteAction="'documents.splice(index, 1); close($refs.button)'"

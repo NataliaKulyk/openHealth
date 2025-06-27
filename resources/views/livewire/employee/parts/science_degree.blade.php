@@ -38,7 +38,7 @@
                     <td class="td-input" x-text="scienceDegree.institutionName"></td>
                     <td class="td-input" x-text="specDict[scienceDegree.speciality]"></td>
                     <td class="td-input" x-text="scienceDegree.diplomaNumber"></td>
-                    <td class="td-input relative">
+                    <td class="td-input relative absolute right-0 top-full mt-2 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                         <x-dropdown-button
                             :editAction="'openModal = true; item = index; modalScienceDegree = new ScienceDegree(scienceDegree); newScienceDegree = false; close($refs.button)'"
                             :deleteAction="'scienceDegrees.splice(index, 1); close($refs.button)'"                        />

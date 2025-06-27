@@ -33,7 +33,7 @@
                     <td class="td-input" x-text="qualification.institutionName"></td>
                     <td class="td-input" x-text="qualSpecDict[qualification.speciality]"></td>
                     <td class="td-input" x-text="qualification.certificateNumber"></td>
-                    <td class="td-input relative">
+                    <td class="td-input relative absolute right-0 top-full mt-2 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                         <x-dropdown-button
                             :editAction="'openModal = true; item = index; modalQualification = new Qualification(qualification); newQualification = false; close($refs.button)'"
                             :deleteAction="'qualifications.splice(index, 1); close($refs.button)'"                        />
