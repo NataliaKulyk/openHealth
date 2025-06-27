@@ -131,7 +131,7 @@ return [
     'archive_date' => 'Дата архівації',
     'archive_place' => 'Адреса будівлі, де знаходяться паперові документи',
     'employeeType' => 'Тип працівника',
-    'employee_request_saved_successfully' => 'Успіншно збережено запит на створення співробітника',
+    'employee_request_saved_successfully' => 'Успішно збережено запит на створення співробітника',
     'position' => 'Посада',
     'speciality_level' => 'Рівень спеціалізації',
     'qualificationCategory' => 'Категорія кваліфікації',

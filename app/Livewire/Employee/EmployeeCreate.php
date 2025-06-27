@@ -13,6 +13,7 @@ class EmployeeCreate extends EmployeeComponent
 
     public EmployeeForm $form;
     public string $pageTitle;
+    public ?int $employeeRequestId = null;
 
     public function mount(LegalEntity $legalEntity): void
     {

@@ -141,7 +141,7 @@
                                     <button @click.prevent
                                             @click="newDocument !== false ? documents.push(modalDocument) : documents[item] = modalDocument; openModal = false"
                                             class="button-primary"
-                                            :disabled="!(modalDocument.type && modalDocument.number && modalDocument.issuedBy)"
+                                            :disabled="!(modalDocument.type && modalDocument.number && modalDocument.issuedBy && modalDocument.issuedAt)"
                                     >
                                         {{__('forms.save')}}
                                     </button>
