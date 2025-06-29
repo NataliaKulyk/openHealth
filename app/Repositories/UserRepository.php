@@ -35,7 +35,6 @@ class UserRepository
         auth()->shouldUse('ehealth'); // TODO: examine is this suitable for all user creation cases...
 
         $user->assignRole($role);
-        // $user->setLegalEntity($legalEntity);
         $user->save();
 
         return $user;
