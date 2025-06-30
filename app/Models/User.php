@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Support\Str;
 use App\Models\Person\Person;
+use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
@@ -17,6 +18,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
@@ -39,7 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'email',
         'password',
-        'secret_key'
+        'secret_key',
     ];
 
     /**
@@ -79,7 +81,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $with = ['person'];
 
-    /* This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling */
+    // This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling
     public function getProfilePhotoUrlAttribute(): string
     {
         return $this->profile_photo_path
@@ -87,7 +89,7 @@ class User extends Authenticatable implements MustVerifyEmail
             : $this->defaultProfilePhotoUrl();
     }
 
-    /* This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling */
+    // This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling
     public function defaultProfilePhotoUrl(): string
     {
         return '';
@@ -101,7 +103,13 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Person::class);
     }
 
-    /* Check if user has access to the Legal Entity with specified UUID */
+    /**
+     * Check if user has access to the Legal Entity with specified UUID
+     *
+     * @param string $legalEntityUuid
+     *
+     * @return bool
+     */
     public function hasAccessToLegalEntityByUuid(string $legalEntityUuid): bool
     {
         return $this->employees()
@@ -111,7 +119,19 @@ class User extends Authenticatable implements MustVerifyEmail
                     ->exists();
     }
 
-    /* Get ALL Legal Entites IDs available for this user */
+    /**
+     * Get the party associated with the user.
+     */
+    public function party(): HasOne
+    {
+        return $this->hasOne(Party::class);
+    }
+
+    /**
+     * Get ALL Legal Entites IDs available for this user
+     *
+     * @return Collection<int|string, mixed>
+     */
     public function accessibleLegalEntities(): Collection
     {
         return $this->employees()

@@ -34,7 +34,7 @@ use App\Models\LegalEntity as LegalEntityModel;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesForms;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesRequestApi;
 
-class LegalEntity extends Component
+abstract class LegalEntity extends Component
 {
     use FormTrait,
         Cipher,
@@ -118,8 +118,6 @@ class LegalEntity extends Component
 
     protected function mount(): void
     {
-        $this->getLegalEntity();
-
         $this->mergeAddress($this->convertArrayKeysToCamelCase($this->legalEntity->toArray())['address'] ?? []);
 
         $this->getDictionary();
@@ -146,10 +144,12 @@ class LegalEntity extends Component
         }
     }
 
-    protected function getLegalEntity(): void
+    abstract protected function getLegalEntity(): ?LegalEntityModel;
+
+    protected function setLegalEntity(): bool
     {
-        // Try to get the LegalEntity assigned for the user or from the cache
-        $this->legalEntity = $this->getLegalEntityFromAuth() ?? $this->getLegalEntityFromCache();
+        // Set $this->legalEntity property
+        $this->legalEntity = $this->getLegalEntity();
 
         // If a LegalEntity is found, fill the form with its data
         if ($this->legalEntity) {
@@ -162,12 +162,16 @@ class LegalEntity extends Component
             }
 
             $this->legalEntityForm->fill($modelData);
+
+            return true;
         } else {
             $this->legalEntity = new LegalEntityModel();
+
+            return false;
         }
     }
 
-    private function mergeAddress(array $address): void
+    protected function mergeAddress(array $address): void
     {
         if (empty($address)) {
             return;
@@ -182,7 +186,7 @@ class LegalEntity extends Component
         }
     }
 
-    private function getLegalEntityFromCache(): ?LegalEntityModel
+    protected function getLegalEntityFromCache(): ?LegalEntityModel
     {
         return Cache::get($this->entityCacheKey) ?? null;
     }
@@ -192,7 +196,7 @@ class LegalEntity extends Component
      *
      * @return LegalEntityModel|null
      */
-    private function getLegalEntityFromAuth(): ?LegalEntityModel
+    protected function getLegalEntityFromAuth(): ?LegalEntityModel
     {
         return legalEntity() ?? null;
     }
@@ -206,7 +210,6 @@ class LegalEntity extends Component
     {
         return $this->getCertificateAuthority = $this->getCertificateAuthority();
     }
-
 
     protected function saveEmployeeResponse($response, $legalEntity, ?int $userId): void
     {
@@ -273,7 +276,7 @@ class LegalEntity extends Component
         ]);
 
         // Handle errors from API request
-        if (isset($request['errors']) && is_array($response['errors'])) {
+        if (isset($response['errors']) && is_array($response['errors'])) {
             $this->dispatchErrorMessage(__('Запис не було збережено'), $response['errors']);
 
             return null;
@@ -441,6 +444,10 @@ class LegalEntity extends Component
             $data['owner']['documents'] = [$data['owner']['documents']];
         }
 
+        if (isset($data['owner']['user_id'])) {
+            unset($data['owner']['user_id']);
+        }
+
         if (isset($data['owner']['id'])) {
             unset($data['owner']['id']);
         }
@@ -472,7 +479,7 @@ class LegalEntity extends Component
         }
 
         // Converting archive to array
-        $data['archive'] = $data['archivation_show'] ? [$data['archive']] : [];
+        $data['archive'] = $data['archivation_show'] ? $data['archive'] : [];
 
         unset($data['archivation_show']);
         unset($data['accreditation_show']);
@@ -561,6 +568,8 @@ class LegalEntity extends Component
             DB::transaction(function() use($response, $requestData) {
 
                 $this->createOrUpdateLegalEntity($response);
+
+                setPermissionsTeamId($this->legalEntity->id);
 
                 $this->createLicense($response['data']['license']);
 
@@ -714,6 +723,8 @@ class LegalEntity extends Component
             $this->addressRepository->addAddresses($this->legalEntity, $addressData);
 
             $this->phoneRepository->syncPhones($this->legalEntity, $phones);
+
+            $this->legalEntity->refresh();
         } catch (Exception $err) {
             throw new Exception('LegalEntity Create Error: ' . $err->getMessage());
         }
@@ -768,10 +779,6 @@ class LegalEntity extends Component
                 'password' => Hash::make($password),
             ]);
         }
-
-        // Associate the legal entity with the user
-        // TODO: check if this comment doesn't broke something else
-        // $user->legalEntity()->associate($this->legalEntity);
 
         try{
             $user->save();

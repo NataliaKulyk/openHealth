@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Models\User;
 use App\Models\Employee\Employee;
+use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee\EmployeeRequest;
 use Eloquence\Behaviours\HasCamelCasing;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
@@ -28,6 +30,7 @@ class Party extends Model
         'email',
         'birth_date',
         'gender',
+        'user_id',
         'tax_id',
         'no_tax_id',
         'about_myself',
@@ -35,7 +38,7 @@ class Party extends Model
     ];
 
     protected $casts = [
-        'birth_date' => 'date',
+        'birth_date' => 'date:Y-m-d',
     ];
 
     public $timestamps = false;
@@ -55,6 +58,14 @@ class Party extends Model
         }
 
         return $fullName;
+    }
+
+    /**
+     * Get the user that owns the party.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function employees(): HasMany

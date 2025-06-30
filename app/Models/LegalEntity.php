@@ -6,10 +6,12 @@ use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Collection;
+use App\Casts\LegalEntityArchiveCast;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee\EmployeeRequest;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Builder;
+use App\Casts\LegalEntityAccreditationCast;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -52,8 +54,8 @@ class LegalEntity extends Model
     ];
 
     protected $casts = [
-        'accreditation' => 'array',
-        'archive' => 'array',
+        'accreditation' => LegalEntityAccreditationCast::class,
+        'archive' => LegalEntityArchiveCast::class,
         'edr' => 'array',
         'inserted_at' => 'datetime',
         'updated_at' => 'datetime',

@@ -4,13 +4,14 @@ namespace App\Livewire\LegalEntity;
 
 use Exception;
 use App\Models\License;
+use Illuminate\Support\Arr;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use App\Repositories\PhoneRepository;
 use App\Repositories\AddressRepository;
 use Illuminate\Validation\ValidationException;
+use App\Models\LegalEntity as LegalEntityModel;
 
 class CreateLegalEntity extends LegalEntity
 {
@@ -34,7 +35,7 @@ class CreateLegalEntity extends LegalEntity
     ): void {
         parent::boot($addressRepository, $phoneRepository);
 
-        $this->getLegalEntity();
+        $this->setLegalEntity();
 
         $this->getCurrentStepFromCache();
     }
@@ -42,6 +43,8 @@ class CreateLegalEntity extends LegalEntity
     public function mount(?string $legalEntityId = null): void
     {
         parent::mount();
+
+        $this->setLegalEntity();
 
         $this->getOwnerFields();
 
@@ -53,14 +56,29 @@ class CreateLegalEntity extends LegalEntity
     }
 
     /**
+     * Try to get the LegalEntity assigned for the user
+     *
+     * @return LegalEntityModel|null
+     */
+    protected function getLegalEntity(): ?LegalEntityModel
+    {
+        return $this->getLegalEntityFromCache();
+    }
+
+    protected function setLegalEntity(): bool
+    {
+        $isNotNew = parent::setLegalEntity();
+
+        return $isNotNew;
+    }
+
+    /**
      * Set the owner information from the cache if available.
      */
     private function setOwnerFromCache(): void
     {
         // Check if the owner information is available in the cache and the user is not a legal entity
-        // TODO: rework this. Need check additionally if the Auth::user() hasn't connection to the legalEntity() !!!
-        // if (Cache::has($this->ownerCacheKey) && !Auth::user()->legalEntity) { // TODO: 'Auth::user()->legalEntity' is an error. Should be fixed in next PR
-        if (Cache::has($this->ownerCacheKey) && !legalEntity()) { // TODO: 'Auth::user()->legalEntity' is an error. Should be fixed in next PR
+        if (Cache::has($this->ownerCacheKey) && !legalEntity()) {
             $this->legalEntityForm->owner = Cache::get($this->ownerCacheKey); // Set the owner information from cache
         }
     }
@@ -147,7 +165,7 @@ class CreateLegalEntity extends LegalEntity
         };
     }
 
-    // TODO: implement in the future release when EDRPOU will validate from outside also
+    // TODO: implement in the future release when EDRPOU will validate from outside
     protected function saveLegalEntityFromExistingData($data): void
     {
         $normalizedData = [];

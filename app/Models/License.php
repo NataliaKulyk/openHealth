@@ -62,7 +62,8 @@ class License extends Model
     protected static function invalidateCache($legal_entity_id)
     {
         $user = auth()->user();
-        if ($user && $user->legal_entity_id == $legal_entity_id) {
+
+        if ($user && getPermissionsTeamId() == $legal_entity_id) {
             $userId = $user->id;
             $licenseTypes = ['all']; // Include 'all' as one of the types to invalidate
             $licenseStatusOptions = ['is_primary', 'is_additional', 'all'];

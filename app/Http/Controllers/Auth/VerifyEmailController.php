@@ -26,17 +26,17 @@ class VerifyEmailController extends Controller
          */
         $user = User::findOrFail($userId);
 
-        /* Check if hash compares with its emeail */
+        // Check if hash compares with its emeail
         if (! hash_equals((string) $hash, sha1(strtolower($user->getEmailForVerification())))) {
             abort(403, 'Invalid verification link');
         }
 
-        /* If user already verified */
+        // If user already verified
         if ($user->hasVerifiedEmail()) {
             return Redirect::route('login')->with('success', __('auth.login.error.email_already_verified'));
         }
 
-        /* Do verification */
+        // Do verification
         $user->markEmailAsVerified();
 
         event(new Verified($user));

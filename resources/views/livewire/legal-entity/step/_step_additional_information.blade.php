@@ -1,6 +1,4 @@
 @php
-    $hasAdditionalInformationArchiveDateError = $errors->has('legalEntityForm.archive.date');
-    $hasAdditionalInformationArchivePlaceError = $errors->has('legalEntityForm.archive.place');
     $hasAdditionalInformationReceiverFundsCodeError = $errors->has('legalEntityForm.receiverFundsCode');
     $hasAdditionalInformationBeneficiaryError = $errors->has('legalEntityForm.beneficiary');
 @endphp
@@ -85,59 +83,85 @@
             </div>
         </div>
 
-         <template x-if="showArchivation">
-            <div class='form-row-3'>
-                <div class="form-group group">
-                    <svg class="svg-input" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
-                    </svg>
+        {{-- A R CH I V A T I O N --}}
+        <template x-if="showArchivation">
+            <div
+                class='form-row mt-6'
+                x-data="{ archives: $wire.entangle('legalEntityForm.archive') }"
+                x-init="archives = archives.length > 0 ? archives : [{ date: '', place: '' }];"
+                x-id="['archive']"
+            >
+                <template x-for="(archive, index) in archives" :key="index">
+                    <div
+                        class='form-row-3'
+                        x-data="{errors: [] }"
+                        x-init="errors =@js($errors->getMessages())"
+                        :class="{ 'mb-2': index == archives.length - 1 }"
+                    >
+                        <div class="form-group group">
+                            <svg class="svg-input" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                            </svg>
 
-                    <input
-                        required
-                        type="text"
-                        placeholder=" "
-                        id="additionalInformationArchiveDate"
-                        wire:model="legalEntityForm.archive.date"
-                        aria-describedby="{{ $hasAdditionalInformationArchiveDateError ? 'additionalInformationArchiveDateErrorHelp' : '' }}"
-                        class="input datepicker-input {{ $hasAdditionalInformationArchiveDateError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-                    />
+                            <input
+                                required
+                                type="text"
+                                placeholder=" "
+                                x-model="archives[index].date"
+                                class="input datepicker-input peer"
+                                :id="$id('archive', '_date' + index)"
+                                :class="{ 'input-error border-red-500 focus:border-red-500' : errors[`legalEntityForm.archive.${index}.date`] }"
+                            />
 
-                    @if($hasAdditionalInformationArchiveDateError)
-                        <p id="additionalInformationArchiveDateErrorHelp" class="text-error">
-                            {{ $errors->first('legalEntityForm.archive.date') }}
-                        </p>
-                    @endif
+                            <template x-if="errors[`legalEntityForm.archive.${index}.date`]">
+                                <p class="text-error" x-text="errors[`legalEntityForm.archive.${index}.date`]"></p>
+                            </template>
 
-                    <label for="additionalInformationArchiveDate" class="label z-10">
-                        {{ __("forms.archive_date") }}
-                    </label>
-                </div>
+                            <label :for="$id('archive', '_date' + index)" class="label z-10">
+                                {{ __("forms.archive_date") }}
+                            </label>
+                        </div>
 
-                <div class="form-group group">
-                    <input
-                        required
-                        type="text"
-                        placeholder=" "
-                        id="additionalInformationArchivePlace"
-                        wire:model="legalEntityForm.archive.place"
-                        aria-describedby="{{ $hasAdditionalInformationArchivePlaceError ? 'additionalInformationArchivePlaceErrorHelp' : '' }}"
-                        class="input {{ $hasAdditionalInformationArchivePlaceError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-                    />
+                        <div class="form-group group">
+                            <input
+                                required
+                                type="text"
+                                placeholder=" "
+                                x-model="archives[index].place"
+                                class="input peer"
+                                :id="$id('archive', '_place' + index)"
+                                :class="{ 'input-error border-red-500 focus:border-red-500' : errors[`legalEntityForm.archive.${index}.date`] }"
+                            />
 
-                    @if($hasAdditionalInformationArchivePlaceError)
-                        <p id="additionalInformationArchivePlaceErrorHelp" class="text-error">
-                            {{ $errors->first('legalEntityForm.archive.place') }}
-                        </p>
-                    @else
-                        <p id="additionalInformationArchivePlaceHelp" class="text-note">
-                            {{ __('forms.archive_place') }}
-                        </p>
-                    @endif
+                            <p id="additionalInformationArchivePlaceHelp" class="text-note">
+                                {{ __('forms.archive_place') }}
+                            </p>
 
-                    <label for="additionalInformationArchivePlace" class="label z-10">
-                        {{ __('forms.address') }}
-                    </label>
-                </div>
+                            <template x-if="errors[`legalEntityForm.archive.${index}.place`]">
+                                <p class="text-error" x-text="errors[`legalEntityForm.archive.${index}.place`]"></p>
+                            </template>
+
+                            <label :for="$id('archive', '_place' + index)" class="label z-10">
+                                {{ __('forms.address') }}
+                            </label>
+                        </div>
+
+                        <template x-if="archives.length > 1 && index > 0">
+                            <button x-on:click.prevent="archives.splice(index, 1)" {{-- Remove an archive data --}}
+                                class="item-remove justify-self-start text-xs"
+                            >
+                                {{__('forms.delete')}}
+                            </button>
+                        </template>
+                    </div>
+                </template>
+
+                <button x-on:click.prevent="archives.push({ date: '', place: '' })" {{-- Add new archive data --}}
+                    class="item-add"
+                    :class="{ 'lg:justify-self-start': index > 0 }" {{-- Apply this style only if it's not a first arhive data group --}}
+            >
+                {{ __('forms.archive_add') }}
+            </button>
             </div>
         </template>
     </div>

@@ -36,7 +36,7 @@ class Login extends Component
 
     public function mount()
     {
-        /* List of ALL founded Legal Entites */
+        // List of ALL founded Legal Entites
         $this->legalEntitesList = $this->getLegalEntitesList();
     }
 
@@ -77,14 +77,14 @@ class Login extends Component
 
         $credentials = $this->validate();
 
-        /* This need to avoid further user authentication for local auth */
+        // This need to avoid further user authentication for local auth
         if (!empty($this->legalEntityUUID)) {
             unset($credentials['legalEntityUUID']);
         }
 
-        /* Check if user doesn't block by attempts exceeding*/
+        // Check if user doesn't block by attempts exceeding
         if (! $this->ensureIsNotRateLimited($credentials)) {
-            /* Number of seconds before login retry */
+            // Number of seconds before login retry
             $seconds = RateLimiter::availableIn($key);
 
             return Redirect::route('login')->with('error', __('auth.throttle', [
@@ -101,14 +101,14 @@ class Login extends Component
         }
 
         if (!$user->hasVerifiedEmail()) {
-            /* Save user's id to send a verification link again (if needed) */
+            // Save user's id to send a verification link again (if needed)
             session()->put('unverified_user_id', $user->id);
             $this->redirect(route('verification.notice'), navigate: true);
         }
 
         if (!$this->isLocalAuth) {
             if (!empty($this->legalEntityUUID)) {
-                /* Temporary save the UUID of the selected Legal Entity */
+                // Temporary save the UUID of the selected Legal Entity
                 session()->put('selected_legal_entity_uuid_for_ehealth', $this->legalEntityUUID);
             } else {
                 Log::error("Legal entity hasn't been choose for email {$user->email}");
@@ -129,7 +129,7 @@ class Login extends Component
         $this->clearLoginAttempts();
         Session::regenerate();
 
-        /* Get an array of the LegalEntity id's connected to this $user */
+        // Get an array of the LegalEntity id's connected to this $user
         $accessibleLegalEntities = $user->accessibleLegalEntities()->toArray();
 
         if (!empty($accessibleLegalEntities)) {
@@ -171,7 +171,7 @@ class Login extends Component
     {
         $key = $this->throttleKey();
 
-        /* Check if already has blocking */
+        // Check if already has blocking
         if (cache()->has("login_lockout:{$key}")) {
             Log::warning(__('auth.login.error.lockout', [], 'en'), [
                 'ip' => request()->ip(),
@@ -219,7 +219,7 @@ class Login extends Component
     */
     protected function buildEHealthLoginUrl(User $user): string
     {
-        /* Base URL and client ID */
+        // Base URL and client ID
         $baseUrl = config('ehealth.api.auth_host');
         $redirectUri = config('ehealth.api.redirect_uri');
 
@@ -227,7 +227,7 @@ class Login extends Component
 
         $legalEntityId = LegalEntity::byUuid($this->legalEntityUUID)->first()->id;
 
-        /* Base query parameters */
+        // Base query parameters
         $queryParams = [
             'client_id' => $selectedLegalEntityClientId ?? '',
             'redirect_uri' => $redirectUri,
@@ -239,7 +239,7 @@ class Login extends Component
         setPermissionsTeamId($legalEntityId);
         $user->unsetRelation('roles')->unsetRelation('permissions');
 
-        /* Additional query parameters if email is provided */
+        // Additional query parameters if email is provided
         if (!empty($user->email)) {
             $queryParams['email'] = $user->email;
             $queryParams['scope'] = $user->getScopes($selectedLegalEntityClientId);
@@ -247,7 +247,7 @@ class Login extends Component
 
         session()->put(config('ehealth.api.auth_ehealth'), $user->id);
 
-        /* Build the full URL with query parameters */
+        // Build the full URL with query parameters
         return $baseUrl . '?' . http_build_query($queryParams);
     }
 

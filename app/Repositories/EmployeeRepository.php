@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Livewire\Division\Api\DivisionRequestApi;
 use Log;
 use Exception;
 use App\Core\Arr;
@@ -129,6 +130,8 @@ class EmployeeRepository
 
             unset($response['updated_at']);
 
+            $user = null;
+
             if (!empty($partyData['email'])) {
                 $this->userRepository->createIfNotExist($partyData, $response['employee_type'], $legalEntity);
             }
@@ -169,6 +172,11 @@ class EmployeeRepository
             }
 
             $party->employees()->save($employee);
+
+            // Assign party to the user if $user is a new one
+            if (!$alreadyExistParty && $user) {
+                $user->party()->save($party);
+            }
 
             if ($isEmployeeRequest) {
                 $responseData = [
@@ -377,6 +385,10 @@ class EmployeeRepository
                         ? $employeeRequest->party
                         : Party::where('uuid', $employeeData['party']['id'])->first();
 
+                    if ($user && !$user->party) {
+                       $party->user()->associate($user);
+                    }
+
                     if ($employeeData['status'] === 'DISMISSED') {
                         $party = null;
                     }
@@ -475,11 +487,11 @@ class EmployeeRepository
      * @return bool
      * TODO: test after creating an employee will works
      */
-    public function checkForEmployeeUpdate(string $legalEntityUUID, User $user, string $authUserUUID): bool
+    public function checkForEmployeeUpdate(LegalEntity $legalEntity, User $user, string $authUserUUID): bool
     {
         $employeeRoles = $user->getRoleNames()->toArray();
 
-        $employeeRequests = EmployeeRequest::employeeInstance($user->id, $legalEntityUUID, $employeeRoles, true)
+        $employeeRequests = EmployeeRequest::employeeInstance($user->id, $legalEntity->uuid, $employeeRoles, true)
             ->where('status', 'NEW')
             ->whereNotNull('uuid')
             ->get();
@@ -489,7 +501,7 @@ class EmployeeRepository
         }
 
         try {
-            DB::transaction(function() use($employeeRequests, $user, $legalEntityUUID, $authUserUUID) {
+            DB::transaction(function() use($employeeRequests, $user, $legalEntity, $authUserUUID) {
                 $updatedAt = '1970-01-01T00:00:00.000000Z';
 
                 foreach ($employeeRequests as $employeeRequest) {
@@ -530,7 +542,7 @@ class EmployeeRepository
 
                     $party = $employeeRequest->employee->party;
 
-                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntityUUID);
+                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntity->uuid);
 
                     $employeeRequest->revision->setApplied();
                 }
@@ -571,7 +583,7 @@ class EmployeeRepository
      */
     protected function getRevisionEmployeeData(EmployeeRequest $employeeRequest): array
     {
-        $revisionData = $employeeRequest->revision()->data;
+        $revisionData = $employeeRequest->revision->data;
 
         $employee = $employeeRequest->employee;
 

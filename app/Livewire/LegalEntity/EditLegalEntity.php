@@ -13,11 +13,34 @@ use App\Models\LegalEntity as LegalEntityModel;
 
 class EditLegalEntity extends LegalEntity
 {
-    public function mount(?\App\Models\LegalEntity $legalEntity = null): void
+    public function mount(?LegalEntityModel $legalEntity = null): void
     {
+        $this->legalEntity = $this->getLegalEntity();
+
         parent::mount();
 
         $this->getLegalEntityForm();
+    }
+
+    /**
+     * Try to get the LegalEntity assigned for the user
+     *
+     * @return LegalEntityModel|null
+     */
+    protected function getLegalEntity(): ?LegalEntityModel
+    {
+        return $this->getLegalEntityFromAuth();
+    }
+
+    protected function setLegalEntity(): bool
+    {
+        $isNotNew = parent::setLegalEntity();
+
+        if ($isNotNew) {
+            $this->mergeAddress($this->convertArrayKeysToCamelCase($this->legalEntity->toArray())['address'] ?? []);
+        }
+
+        return $isNotNew;
     }
 
     /**
@@ -25,7 +48,7 @@ class EditLegalEntity extends LegalEntity
      */
     protected function getLegalEntityForm(): void
     {
-        parent::getLegalEntity(); // Call the parent method to retrieve basic legal entity data
+        $this->setLegalEntity(); // Retrieve basic legal entity data
         $this->getLicenseForm(); // Get the license form data
         $this->getArchiveForm(); // Get the archive form data
         $this->getOwnerLegalEntity(); // Get the owner's legal entity data
@@ -63,13 +86,6 @@ class EditLegalEntity extends LegalEntity
         if (!empty($this->legalEntityForm->archive)) {
             // if the legal entity has an archive, the 'archivationShow' property is set to true
             $this->legalEntityForm->archivationShow = true;
-
-            $this->legalEntityForm->archive = Arr::only($this->legalEntityForm->archive[0],
-                [
-                    'date',
-                    'place',
-                ]
-            );
         }
     }
 
@@ -119,7 +135,6 @@ class EditLegalEntity extends LegalEntity
         return $this->convertArrayKeysToCamelCase($documents[0]);
     }
 
-
     public function updateLegalEntity()
     {
         $this->legalEntityForm->onEditValidate();
@@ -164,7 +179,7 @@ class EditLegalEntity extends LegalEntity
             return null;
         }
 
-        return Redirect::route('edit.legalEntities')->with('success', __('forms.update_successfull')) ?? null;
+        return Redirect::route('legal-entity.edit', [legalEntity()])->with('success', __('forms.update_successfull')) ?? null;
     }
 
     public function render()
