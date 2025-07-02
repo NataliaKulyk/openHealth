@@ -578,6 +578,26 @@ class EncounterRepository extends BaseRepository
             $procedure['performedPeriod']['end'] = convertToISO8601($procedure['performedPeriodEndDate'] . $procedure['performedPeriodEndTime']);
             unset($procedure['performedPeriodEndDate'], $procedure['performedPeriodEndTime']);
 
+            if (!empty($procedure['reasonReferences'])) {
+                foreach ($procedure['reasonReferences'] as &$reasonReference) {
+                    $code = str_contains($reasonReference['code']['coding'][0]['system'], 'condition_codes')
+                        ? 'condition'
+                        : 'observation';
+
+                    $identifier = [
+                        'type' => [
+                            'coding' => [['system' => 'eHealth/resources', 'code' => $code]]
+                        ],
+                        'value' => $reasonReference['id']
+                    ];
+
+                    // Keep only the identifier key
+                    $reasonReference = ['identifier' => $identifier];
+                }
+
+                unset($reasonReference);
+            }
+
             return $procedure;
         }, $procedures);
 

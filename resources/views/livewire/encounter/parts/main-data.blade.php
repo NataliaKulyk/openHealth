@@ -172,7 +172,7 @@
 
         {{-- Existing episode type --}}
         <template x-if="episodeType === 'existing'">
-            <div wire:init="getEpisodes" class="form-row-3" x-transition>
+            <div class="form-row-3" x-transition>
                 <div class="form-group group">
                     <select wire:model="form.encounter.episode.identifier.value"
                             id="existingEpisodeId"

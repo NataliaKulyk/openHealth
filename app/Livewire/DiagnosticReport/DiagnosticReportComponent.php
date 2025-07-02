@@ -145,7 +145,7 @@ class DiagnosticReportComponent extends Component
         $this->employeeFullName = $authUser->getEncounterWriterEmployee()->fullName;
 
         $this->setPatientData();
-        $this->divisions = legalEntity()->division->toArray(); // TODO: please, check if it works
+        $this->divisions = legalEntity()->division->toArray();
 
         $this->getDictionary();
 

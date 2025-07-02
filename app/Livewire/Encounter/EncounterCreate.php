@@ -22,6 +22,7 @@ class EncounterCreate extends EncounterComponent
         $this->initializeComponent($patientId);
         $this->setEmployeePartyData();
         $this->setDefaultDate();
+        $this->getEpisodes();
     }
 
     /**

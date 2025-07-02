@@ -1,4 +1,3 @@
-{{-- Component to input values to the table through the Modal, built with Alpine --}}
 <div class="relative"> {{-- This required for table overflow scrolling --}}
     <fieldset class="fieldset"
               {{-- Binding vaccinationProtocolCodes to Alpine, it will be re-used in the modal.
@@ -8,8 +7,7 @@
                   modalVaccinationProtocol: new VaccinationProtocol(),
                   newVaccinationProtocol: false,
                   item: 0,
-                  vaccinationTargetDiseasesDictionary: $wire.dictionaries['eHealth/vaccination_target_diseases'],
-                  vaccinationAuthoritiesDictionary: $wire.dictionaries['eHealth/vaccination_authorities']
+                  vaccinationTargetDiseasesDictionary: $wire.dictionaries['eHealth/vaccination_target_diseases']
               }"
     >
         <legend class="legend">
@@ -206,9 +204,6 @@
                                                     class="item-add lg:justify-self-start"
                                                     :class="{ 'lg:justify-self-start': index > 0 }"
                                             >
-                                                <svg>
-                                                    <use xlink:href="#svg-plus"></use>
-                                                </svg>
                                                 {{ __('forms.add') }}
                                             </button>
                                         </template>
@@ -233,9 +228,10 @@
                                                 </option>
                                             @endforeach
                                         </select>
+
                                         {{-- Check if the picked value is the one from the dictionary --}}
                                         <p class="text-error text-xs"
-                                           x-show="!Object.keys(vaccinationAuthoritiesDictionary).includes(modalVaccinationProtocol.authority.coding[0].code)"
+                                           x-show="!Object.keys($wire.dictionaries['eHealth/vaccination_authorities']).includes(modalVaccinationProtocol.authority.coding[0].code)"
                                         >
                                             {{ __('forms.field_empty') }}
                                         </p>
@@ -317,8 +313,8 @@
                                     <button @click.prevent
                                             @click="
                                                 newVaccinationProtocol !== false
-                                                ? modalImmunization.vaccinationProtocols.push(modalVaccinationProtocol)
-                                                : modalImmunization.vaccinationProtocols[item] = modalVaccinationProtocol;
+                                                    ? modalImmunization.vaccinationProtocols.push(modalVaccinationProtocol)
+                                                    : modalImmunization.vaccinationProtocols[item] = modalVaccinationProtocol;
 
                                                 openModal = false;
                                             "

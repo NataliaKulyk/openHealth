@@ -195,6 +195,24 @@ class PatientApi
     }
 
     /**
+     * Get conditions in episode context.
+     *
+     * @param  string  $patientUuid
+     * @param  string  $episodeUuid
+     * @param  array  $params
+     * @return array
+     * @throws ApiException
+     */
+    public static function getConditionsInEpisodeContext(string $patientUuid, string $episodeUuid, array $params): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientUuid/episodes/$episodeUuid/conditions",
+            $params
+        )->sendRequest();
+    }
+
+    /**
      * Get the current diagnoses related only to active episodes.
      *
      * @param  string  $patientId
@@ -207,6 +225,24 @@ class PatientApi
         return new Request(
             HttpRequest::METHOD_GET,
             self::ENDPOINT_PATIENT . "/$patientId/summary/observations",
+            $params
+        )->sendRequest();
+    }
+
+    /**
+     * Get observations in episode context.
+     *
+     * @param  string  $patientUuid
+     * @param  string  $episodeUuid
+     * @param  array  $params
+     * @return array
+     * @throws ApiException
+     */
+    public static function getObservationsInEpisodeContext(string $patientUuid, string $episodeUuid, array $params): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientUuid/episodes/$episodeUuid/observations",
             $params
         )->sendRequest();
     }

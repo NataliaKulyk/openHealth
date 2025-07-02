@@ -16,6 +16,7 @@ use App\Traits\FormTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use App\Livewire\Encounter\Forms\EncounterForm as Form;
@@ -132,6 +133,12 @@ class EncounterComponent extends Component
      * @var array
      */
     public array $codeableConceptValues;
+
+    /**
+     * List of founded procedure reasons.
+     * @var array
+     */
+    public array $procedureReasons = [];
 
     /**
      * List of dictionary names.
@@ -327,9 +334,51 @@ class EncounterComponent extends Component
     public function getEpisodes(): void
     {
         try {
-            $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: Auth::user()->legalEntity->uuid);
+            $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: legalEntity()->uuid);
             $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params);
         } catch (eHealthApiException) {
+            $this->flashGeneralError();
+        }
+    }
+
+    /**
+     * Search for procedure reasons in conditions and observations.
+     *
+     * @param  string  $episodeId
+     * @return void
+     */
+    public function searchReasons(string $episodeId): void
+    {
+        // Validate that an episode ID is provided
+        if (empty($episodeId)) {
+            $this->addError('episode', 'Please select an episode first.');
+
+            return;
+        }
+
+        $buildGetConditions = EncounterRequestApi::buildGetConditionsInEpisodeContext($this->patientUuid, $episodeId);
+        $buildGetObservations = EncounterRequestApi::buildGetObservationsInEpisodeContext(
+            $this->patientUuid,
+            $episodeId
+        );
+
+        try {
+            $conditions = PatientApi::getConditionsInEpisodeContext(
+                $this->patientUuid,
+                $episodeId,
+                $buildGetConditions
+            );
+            $observations = PatientApi::getObservationsInEpisodeContext(
+                $this->patientUuid,
+                $episodeId,
+                $buildGetObservations
+            );
+
+            $this->procedureReasons = array_merge($conditions, $observations);
+        } catch (eHealthApiException) {
+            Log::channel('e_health_errors')
+                ->error('Error while searching for procedure reasons in Encounter Component');
+
             $this->flashGeneralError();
         }
     }

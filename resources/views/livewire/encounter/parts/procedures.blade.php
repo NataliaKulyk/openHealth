@@ -23,8 +23,13 @@
             <tbody>
             <template x-for="(procedure, index) in procedures">
                 <tr>
-                    <td class="td-input"></td>
-                    <td class="td-input"></td>
+                    <td class="td-input"
+                        x-text="(() => {
+                            const service = Object.values($wire.dictionaries['custom/services']).find(s => s.id === procedure.code.identifier.value);
+                            return service ? `${service.code} / ${service.name}` : '';
+                        })()"
+                    ></td>
+                    <td class="td-input" x-text="procedure.performedPeriodStartDate"></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
                         <div x-data="{
@@ -150,6 +155,7 @@
                             <form>
                                 @include('livewire.encounter.procedure-parts.main-information')
                                 @include('livewire.encounter.procedure-parts.additional-information')
+                                @include('livewire.encounter.procedure-parts.reason-references')
 
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
@@ -161,8 +167,8 @@
 
                                     <button @click.prevent="
                                                 newProcedure !== false
-                                                ? procedures.push(modalProcedure)
-                                                : procedures[item] = modalProcedure;
+                                                    ? procedures.push(modalProcedure)
+                                                    : procedures[item] = modalProcedure;
 
                                                 openModal = false;
                                             "
@@ -231,6 +237,7 @@
             coding: [{ system: 'eHealth/report_origins', code: '' }],
             text: ''
         };
+        reasonReferences = [];
 
         // Create date
         #now = new Date();
