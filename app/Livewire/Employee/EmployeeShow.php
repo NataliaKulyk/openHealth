@@ -3,39 +3,41 @@
 namespace App\Livewire\Employee;
 
 use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\View\View;
 
 class EmployeeShow extends EmployeeComponent
 {
-    public Employee $employee;
+    public Employee|EmployeeRequest $employee;
     public string $pageTitle;
-
-    /**
-     * This property is added to satisfy the shared Blade partial (_employee.blade.php),
-     * which checks for this property to conditionally disable fields.
-     * For a "show" page, fields are always considered "locked".
-     */
     public bool $lockPartyFields = true;
 
     /**
-     * The mount method for the Show component.
-     * It uses Route-Model binding to get the Employee model.
+     * FIX: The mount method is now a "smart loader".
+     * It can handle both finalized Employee models and pending EmployeeRequest models.
      */
-    public function mount(LegalEntity $legalEntity, Employee $employee): void
+    public function mount(LegalEntity $legalEntity, int $id): void
     {
-        $this->employee = $employee->load([
-                                              'party.phones',
-                                              'party.documents',
-                                              'educations',
-                                              'specialities',
-                                              'qualifications',
-                                              'scienceDegrees',
-                                              'division'
-                                          ]);
+        $record = Employee::find($id);
+
+        if (!$record) {
+            $record = EmployeeRequest::with('revision')->find($id);
+            if (!$record) {
+                throw new ModelNotFoundException('No Employee or EmployeeRequest found for the given ID.');
+            }
+        }
+
+        $this->employee = $record;
 
         $this->getDictionary();
-        $this->form->populateFromModel($this->employee);
+
+        if ($this->employee instanceof EmployeeRequest) {
+            $this->form->populateFromRequest($this->employee);
+        } else {
+            $this->form->populateFromModel($this->employee);
+        }
 
         $this->pageTitle = __('forms.viewEmployee');
     }
