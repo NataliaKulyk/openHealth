@@ -1,52 +1,54 @@
-<div class="relative" id="procedures-section">
+<div class="relative"> {{-- This required for table overflow scrolling --}}
     <fieldset class="fieldset"
+              {{-- Binding vaccinationProtocolCodes to Alpine, it will be re-used in the modal.
+                Note that it's necessary for modal to work properly --}}
               x-data="{
-                  procedures: $wire.entangle('form.procedures'),
                   openModal: false,
-                  modalProcedure: new Procedure(),
-                  newProcedure: false,
-                  item: 0
+                  modalUsedCode: new UsedCode(),
+                  newUsedCode: false,
+                  item: 0,
+                  dictionary: $wire.dictionaries['eHealth/assistive_products']
               }"
     >
         <legend class="legend">
-            <h2>{{ __('patients.procedures') }}</h2>
+            <h2>{{ __('patients.rehabilitation_aids') }}</h2>
         </legend>
 
         <table class="table-input w-inherit">
             <thead class="thead-input">
             <tr>
-                <th scope="col" class="th-input">{{ __('patients.code_and_name') }}</th>
-                <th scope="col" class="th-input">{{ __('patients.date') }}</th>
+                <th scope="col" class="th-input">{{ __('patients.code') }}</th>
+                <th scope="col" class="th-input">{{ __('forms.name') }}</th>
                 <th scope="col" class="th-input">{{ __('forms.action') }}</th>
             </tr>
             </thead>
             <tbody>
-            <template x-for="(procedure, index) in procedures">
+            <template x-for="(usedCode, index) in modalProcedure.usedCodes">
                 <tr>
-                    <td class="td-input"
-                        x-text="(() => {
-                            const service = Object.values($wire.dictionaries['custom/services']).find(s => s.id === procedure.code.identifier.value);
-                            return service ? `${service.code} / ${service.name}` : '';
-                        })()"
+                    <td class="td-input" x-text="usedCode.coding[0].code"></td>
+                    <td class="td-input" x-text="dictionary[usedCode.coding[0].code]"
                     ></td>
-                    <td class="td-input" x-text="procedure.performedPeriodStartDate"></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
                         <div x-data="{
                                  openDropdown: false,
+
                                  toggle() {
                                      if (this.openDropdown) {
                                          return this.close();
                                      }
 
                                      this.$refs.button.focus();
+
                                      this.openDropdown = true;
                                  },
+
                                  close(focusAfter) {
                                      if (!this.openDropdown) return;
 
                                      this.openDropdown = false;
-                                     focusAfter && focusAfter.focus();
+
+                                     focusAfter && focusAfter.focus()
                                  }
                              }"
                              @keydown.escape.prevent.stop="close($refs.button)"
@@ -60,16 +62,13 @@
                                     :aria-expanded="openDropdown"
                                     :aria-controls="$id('dropdown-button')"
                                     type="button"
-                                    class="cursor-pointer"
                             >
-                                <svg class="w-6 h-6 text-gray-800 dark:text-gray-200" aria-hidden="true"
+                                <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 cursor-pointer" aria-hidden="true"
                                      xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
-                                     viewBox="0 0 24 24"
-                                >
+                                     viewBox="0 0 24 24">
                                     <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round"
                                           stroke-width="2"
-                                          d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"
-                                    />
+                                          d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"/>
                                 </svg>
                             </button>
 
@@ -85,19 +84,20 @@
                                      style="left: -50%" {{-- Center a dropdown panel --}}
                                 >
 
-                                    <button @click.prevent="
+                                    <button @click="
                                                 openModal = true; {{-- Open the modal --}}
                                                 item = index; {{-- Identify the item we are corrently editing --}}
-                                                {{-- Replace the previous procedure with the current, don't assign object directly (modalProcedure = procedure) to avoid reactiveness --}}
-                                                modalProcedure = JSON.parse(JSON.stringify(procedures[index]));
-                                                newProcedure = false; {{-- This procedure is already created --}}
+                                                {{-- Replace the previous usedCode with the current, don't assign object directly (modalUsedCode = usedCode) to avoid reactiveness --}}
+                                                modalUsedCode = new UsedCode(usedCode);
+                                                newUsedCode = false; {{-- This usedCode is already created --}}
                                             "
+                                            @click.prevent
                                             class="dropdown-button"
                                     >
                                         {{ __('forms.edit') }}
                                     </button>
 
-                                    <button @click.prevent="procedures.splice(index, 1); close($refs.button)"
+                                    <button @click.prevent="usedCodes.splice(index, 1); close($refs.button)"
                                             class="dropdown-button dropdown-delete"
                                     >
                                         {{ __('forms.delete') }}
@@ -115,8 +115,8 @@
             {{-- Button to trigger the modal --}}
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
-                        newProcedure = true; {{-- We are adding a new procedure --}}
-                        modalProcedure = new Procedure(); {{-- Replace the data of the previous procedure with a new one--}}
+                        newUsedCode = true; {{-- We are adding a new usedCode --}}
+                        modalUsedCode = new UsedCode(); {{-- Replace the data of the previous usedCode with a new one--}}
                     "
                     class="item-add my-5"
             >
@@ -146,34 +146,52 @@
                     >
                         <div @click.stop
                              x-trap.noscroll.inert="openModal"
-                             class="modal-content h-fit w-full lg:max-w-7xl"
+                             class="modal-content h-fit w-full lg:max-w-4xl"
                         >
                             {{-- Title --}}
-                            <h3 class="modal-header" :id="$id('modal-title')">{{ __('patients.procedure') }}</h3>
+                            <h3 class="modal-header" :id="$id('modal-title')">{{ __('forms.add') }}</h3>
 
                             {{-- Content --}}
                             <form>
-                                @include('livewire.encounter.procedure-parts.main-information')
-                                @include('livewire.encounter.procedure-parts.additional-information')
-                                @include('livewire.encounter.procedure-parts.reason-references')
-                                @include('livewire.encounter.procedure-parts.used-codes')
+                                <div class="form-row-modal">
+                                    <div class="form-group group">
+                                        <label for="usedCode" class="label-modal">
+                                            {{ __('patients.code_and_name') }}
+                                        </label>
+                                        <x-select2 modelPath="modalUsedCode.coding[0].code"
+                                                   dictionaryName="eHealth/assistive_products"
+                                                   id="usedCode"
+                                                   class="input-modal"
+                                        />
 
+                                        <p class="text-error text-xs"
+                                           x-show="!Object.keys(dictionary).includes(modalUsedCode.coding[0].code)"
+                                        >
+                                            {{ __('forms.field_empty') }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {{-- Actions button --}}
                                 <div class="mt-6 flex justify-between space-x-2">
-                                    <button type="button"
+                                    <button @click.prevent
+                                            type="button"
                                             @click="openModal = false"
                                             class="button-minor"
                                     >
                                         {{ __('forms.cancel') }}
                                     </button>
 
-                                    <button @click.prevent="
-                                                newProcedure !== false
-                                                    ? procedures.push(modalProcedure)
-                                                    : procedures[item] = modalProcedure;
+                                    <button @click.prevent
+                                            @click="
+                                                newUsedCode !== false
+                                                    ? modalProcedure.usedCodes.push(modalUsedCode)
+                                                    : modalProcedure.usedCodes[item] = modalUsedCode;
 
                                                 openModal = false;
                                             "
                                             class="button-primary"
+                                            :disabled="!modalUsedCode.coding[0].code.trim()"
                                     >
                                         {{ __('forms.save') }}
                                     </button>
@@ -189,78 +207,14 @@
 
 <script>
     /**
-     * Representation of the user's personal procedure
+     * Representation of the user's personal UsedCode
      */
-    class Procedure {
-        isReferralAvailable = false;
-        referralType = '';
-        paperReferral = {
-            requesterLegalEntityEdrpou: '',
-            requesterLegalEntityName: '',
-            serviceRequestDate: ''
-        };
-        category = {
-            coding: [{ system: 'eHealth/procedure_categories', code: '' }],
-            text: ''
-        };
-        code = {
-            identifier: {
-                type: {
-                    coding: [{ system: 'eHealth/resources', code: 'service' }],
-                    text: ''
-                },
-                value: ''
-            }
-        };
-        division = {
-            identifier: {
-                type: {
-                    coding: [{ system: 'eHealth/resources', code: 'division' }],
-                    text: ''
-                },
-                value: ''
-            }
-        };
-        outcome = {
-            coding: [{ system: 'eHealth/procedure_outcomes', code: '' }],
-            text: ''
-        };
-        primarySource = true;
-        performer = {
-            identifier: {
-                type: {
-                    coding: [{ system: 'eHealth/resources', code: 'employee' }],
-                    text: ''
-                }
-            }
-        };
-        reportOrigin = {
-            coding: [{ system: 'eHealth/report_origins', code: '' }],
-            text: ''
-        };
-        reasonReferences = [];
-        usedCodes = [];
-
-        // Create date
-        #now = new Date();
-        #endTime = new Date(this.#now.getTime() + 15 * 60 * 1000); // add 15 minutes
-
-        performedPeriodStartDate = this.#now.toISOString().split('T')[0];
-        performedPeriodStartTime = this.#now.toLocaleTimeString('uk-UA', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-        performedPeriodEndDate = this.#endTime.toISOString().split('T')[0];
-        performedPeriodEndTime = this.#endTime.toLocaleTimeString('uk-UA', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
+    class UsedCode {
+        coding = [{ system: 'eHealth/assistive_products', code: '' }];
 
         constructor(obj = null) {
             if (obj) {
-                this.procedures = JSON.parse(JSON.stringify(obj.procedures || obj));
+                Object.assign(this, JSON.parse(JSON.stringify(obj)));
             }
         }
     }

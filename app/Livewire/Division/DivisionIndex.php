@@ -61,7 +61,7 @@ class DivisionIndex extends Component
     {
         $this->tableHeaders = [
             __('ID E-health '),
-            __('Назва'),
+            __('forms.name'),
             __('forms.type'),
             __('Телефон'),
             __('Email'),

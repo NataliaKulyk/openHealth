@@ -299,6 +299,9 @@ class EncounterComponent extends Component
             $this->dictionaries['eHealth/ICF/classifiers'] = dictionary()
                 ->getLargeDictionary('eHealth/ICF/classifiers', false)
                 ->getFlattenedChildValues();
+            $this->dictionaries['eHealth/assistive_products'] = dictionary()
+                ->getLargeDictionary('eHealth/assistive_products', false)
+                ->getFlattenedChildValues();
         } catch (eHealthApiException) {
             $this->flashGeneralError();
         }

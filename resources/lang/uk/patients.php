@@ -227,5 +227,6 @@ return [
     'reason_for_performing' => 'Причина проведення',
     'episode' => 'Епізод',
     'active' => 'діючий',
-    'added' => 'Додано'
+    'added' => 'Додано',
+    'rehabilitation_aids' => 'Допоміжні засоби реабілітації'
 ];
