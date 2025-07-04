@@ -97,7 +97,7 @@ class EmployeeIndex extends Component
             });
         }
 
-        // --- Applying new filters ---
+        // Advanced filters
         if (!empty($this->status)) {
             $query->whereHas('employees', fn($q) => $q->where('status', $this->status));
         }
@@ -113,10 +113,9 @@ class EmployeeIndex extends Component
         if (!empty($this->filter['position'])) {
             $query->whereHas('employees', fn($q) => $q->where('position', $this->filter['position']));
         }
-//        if (!empty($this->filter['division_id'])) {
-//            $query->whereHas('employees', fn($q) => $q->where('division_id', $this->filter['division_id']));
-//        }
-        // --- End of new filters ---
+        // if (!empty($this->filter['division_id'])) {
+        //     $query->whereHas('employees', fn($q) => $q->where('division_id', $this->filter['division_id']));
+        // }
 
         $paginator = $query->paginate(10);
 
@@ -148,7 +147,9 @@ class EmployeeIndex extends Component
     public function showModalDismissed(int $id): void
     {
         $employee = Employee::find($id);
-        if (!$employee) return;
+        if (!$employee) {
+            return;
+        }
 
         $this->dismissal_employee_name = $employee->fullName;
         $this->dismiss_text =  __('employees.dismissalWarning');
@@ -159,7 +160,7 @@ class EmployeeIndex extends Component
     }
 
     #[On('refreshPage')]
-    public function refreshPage()
+    public function refreshPage(): void
     {
         $this->dispatch('$refresh');
     }
@@ -284,10 +285,8 @@ class EmployeeIndex extends Component
      */
     public function confirmRequestDeletion(int $id): void
     {
-        // We need to load the party relation to get the name
         $request = EmployeeRequest::with('party')->find($id);
 
-        // Security check: ensure we only delete drafts without a UUID
         if ($request && !$request->uuid) {
             $this->requestToDeleteId = $id;
 
@@ -307,7 +306,6 @@ class EmployeeIndex extends Component
     {
         $request = EmployeeRequest::find($this->requestToDeleteId);
 
-        // Final security check
         if ($request && !$request->uuid) {
             $request->delete();
             $this->dispatchErrorMessage(__('Чернетку успішно видалено.'), 'success');
