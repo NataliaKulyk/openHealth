@@ -31,6 +31,7 @@ class EmployeeIndex extends Component
     public Collection $employees;
 //    public Collection $divisions;
 
+
     public string $status = '';
     public array $filter = [
         'phone' => '',
@@ -49,6 +50,7 @@ class EmployeeIndex extends Component
     public string $deleteRequestText = '';
     public bool $showDeleteModal   = false;
     public ?int $requestToDeleteId = null;
+    public ?string $employeeCacheKey = null;
 
 
     private LegalEntity $legalEntity;
@@ -67,6 +69,7 @@ class EmployeeIndex extends Component
         $this->getDictionary();
 //        $this->divisions = $this->legalEntity->divisions()->get();
         $this->employees = new Collection();
+        $this->employeeCacheKey = 'employees_cache_' . $this->legalEntity->id;
     }
 
     #[Computed]
@@ -161,40 +164,6 @@ class EmployeeIndex extends Component
         $this->dispatch('$refresh');
     }
 
-    public function getLastStoreId()
-    {
-        if (Cache::has($this->employeeCacheKey) && !empty(Cache::get($this->employeeCacheKey)) && is_array(Cache::get($this->employeeCacheKey))) {
-            $this->storeId = array_key_last(Cache::get($this->employeeCacheKey));
-        }
-        $this->storeId++;
-    }
-
-    public function getEmployeesCache(): \Illuminate\Support\Collection
-    {
-        if (Cache::has($this->employeeCacheKey)) {
-            return collect(Cache::get($this->employeeCacheKey))->map(function ($data) {
-                $employee = new BaseEmployee()->forceFill($data['party']);
-                $employee->party = new Party()->forceFill($data['party'] ?? []);
-                $employee->party->phones = new Phone()->forceFill($data['party']['phones'] ?? []);
-                return $employee;
-            });
-        }
-        return collect();
-    }
-
-    public function getEmployees(): void
-    {
-        if ($this->status === 'APPROVED') {
-            $this->employees = $this->legalEntity->employees()->get();
-        } elseif ($this->status === 'NEW') {
-            $this->employees = $this->legalEntity->employeesRequest()->get();
-        } else {
-            $this->employees = $this->getEmployeesCache();
-
-        }
-
-    }
-
     public function tableHeaders(): void
     {
         $this->tableHeaders = [
@@ -257,6 +226,38 @@ class EmployeeIndex extends Component
      *
      * @throws \Exception
      */
+    public function getLastStoreId(): void
+    {
+        if (Cache::has($this->employeeCacheKey) && !empty(Cache::get($this->employeeCacheKey)) && is_array(Cache::get($this->employeeCacheKey))) {
+            $this->storeId = array_key_last(Cache::get($this->employeeCacheKey));
+        }
+        $this->storeId++;
+    }
+
+    public function getEmployeesCache(): Collection
+    {
+        if (Cache::has($this->employeeCacheKey)) {
+            return collect(Cache::get($this->employeeCacheKey))->map(function ($data) {
+                $employee = new BaseEmployee()->forceFill($data['party']);
+                $employee->party = new Party()->forceFill($data['party'] ?? []);
+                $employee->party->phones = new Phone()->forceFill($data['party']['phones'] ?? []);
+                return $employee;
+            });
+        }
+        return collect();
+    }
+
+    public function getEmployees(): void
+    {
+        if ($this->status === 'APPROVED') {
+            $this->employees = $this->legalEntity->employees()->get();
+        } elseif ($this->status === 'NEW') {
+            $this->employees = $this->legalEntity->employeesRequest()->get();
+        } else {
+            $this->employees = $this->getEmployeesCache();
+        }
+    }
+
     public function syncEmployees(): void
     {
         $requests = EmployeeRequestApi::getEmployees($this->legalEntity->uuid);
@@ -269,14 +270,14 @@ class EmployeeIndex extends Component
                 ->getNormalizedData();
             app(EmployeeRepository::class)
                 ->store($employeeResponse,
-                       legalEntity(),
+                        legalEntity(),
                         new Employee());
         }
 
         $this->dispatchErrorMessage(__('Співробітники успішно синхронізовано'));
 
+        // This call now works without an error
         $this->getEmployees();
-        // $this->dispatch('refreshPage');
     }
 
     /**
