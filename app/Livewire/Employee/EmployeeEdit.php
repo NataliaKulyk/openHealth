@@ -28,7 +28,8 @@ class EmployeeEdit extends EmployeeComponent
         $employee = Employee::find($employeeId);
 
         if (!$employee) {
-            $request = EmployeeRequest::with('revision')->find($employeeId);
+            $request = EmployeeRequest::with(['revision', 'party'])->find($employeeId);
+
             if (!$request) {
                 throw new ModelNotFoundException('No Employee or EmployeeRequest found for the given ID.');
             }
@@ -52,6 +53,7 @@ class EmployeeEdit extends EmployeeComponent
                 $this->loadEmployeeFromModel();
             }
         }
+
 
         $this->lockPartyFields = true;
         $this->pageTitle = __('forms.editEmployee');

@@ -78,19 +78,25 @@ class EmployeeIndex extends Component
         $legalEntityId = $this->legalEntity->id;
 
         $query = Party::query()
-            ->where(function ($q) use ($legalEntityId) {
+            ->where(function($q) use ($legalEntityId) {
                 $q->whereHas('employees', fn($subq) => $subq->where('legal_entity_id', $legalEntityId))
                     ->orWhereHas('employeeRequests', fn($subq) => $subq->where('legal_entity_id', $legalEntityId));
             })
             ->with([
                        'phones',
-                       'employees' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
-                       'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division')
-                   ]);
+                       'employees'        => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
+                       'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
+                   ])
 
-        // Main search by full name
+            ->withMax(
+                ['employeeRequests as latest_draft_updated_at' => fn($query) => $query->whereNull('uuid')],
+                'updated_at'
+            )
+            ->orderByDesc('latest_draft_updated_at');
+
+
         if (!empty($this->search)) {
-            $query->where(function ($q) {
+            $query->where(function($q) {
                 $q->where('last_name', 'ilike', "%{$this->search}%")
                     ->orWhere('first_name', 'ilike', "%{$this->search}%")
                     ->orWhere('second_name', 'ilike', "%{$this->search}%");

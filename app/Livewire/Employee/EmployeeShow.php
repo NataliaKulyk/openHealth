@@ -20,17 +20,17 @@ class EmployeeShow extends EmployeeComponent
      */
     public function mount(LegalEntity $legalEntity, int $id): void
     {
-        $record = Employee::find($id);
+        $record = Employee::with('party')->find($id);
 
         if (!$record) {
-            $record = EmployeeRequest::with('revision')->find($id);
+            $record = EmployeeRequest::with(['revision', 'party'])->find($id);
+
             if (!$record) {
                 throw new ModelNotFoundException('No Employee or EmployeeRequest found for the given ID.');
             }
         }
 
         $this->employee = $record;
-
         $this->getDictionary();
 
         if ($this->employee instanceof EmployeeRequest) {

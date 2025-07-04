@@ -150,6 +150,7 @@
                                 <th class="px-4 py-3">{{ __('forms.position') }}</th>
                                 <th class="px-4 py-3">{{ __('forms.role') }}</th>
                                 <th class="px-4 py-3">{{ __('forms.division') }}</th>
+                                <th class="px-4 py-3">{{ __('forms.status') }}</th>
                                 <th class="px-4 py-3 text-right">{{ __('forms.actions') }}</th>
                             </tr>
                             </thead>
@@ -160,6 +161,23 @@
                                     <td class="px-4 py-3 font-medium">{{ $dictionaries['POSITION'][$position->position] ?? $position->position }}</td>
                                     <td class="px-4 py-3">{{ $dictionaries['EMPLOYEE_TYPE'][$position->employee_type] ?? $position->employee_type }}</td>
                                     <td class="px-4 py-3">{{ $position->division->name ?? 'N/A' }}</td>
+
+                                    <td class="px-4 py-3">
+                                        @switch($position->status)
+                                            @case(Status::APPROVED)
+                                                <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Активний</span>
+                                                @break
+                                            @case(Status::DISMISSED)
+                                                <span class="bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">Звільнений</span>
+                                                @break
+                                            @case(Status::NEW)
+                                                <span class="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">Чернетка</span>
+                                                @break
+                                            @default
+                                                <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">{{ $position->status }}</span>
+                                        @endswitch
+                                    </td>
+
                                     <td class="px-4 py-3 text-right">
                                         <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                                             <button @click="open = !open" class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-white" type="button">

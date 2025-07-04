@@ -1,4 +1,4 @@
-<fieldset class="fieldset">
+<fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
     <legend class="legend">
         <h2>{{__('forms.personalData')}}</h2>
     </legend>
@@ -79,11 +79,18 @@
                             @error('form.party.phones.'.$index.'.type') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
 
-                        {{-- Phone Number Input with Alpine.js Mask Plugin --}}
                         <div class="form-group phone-wrapper">
-                            <input wire:model.defer="form.party.phones.{{$index}}.number"  required type="tel" placeholder=" " class="peer input pl-10 with-leading-icon text-gray-500" x-model="phones[index].number" x-mask="+380999999999" :id="$id('phone', '_number' + index)" :class="{ 'input-error border-red-500': errors[legalEntityForm.phones.${index}.number] }" />
+                            <input
+                                required
+                                type="tel"
+                                placeholder=" "
+                                class="peer input pl-10 with-leading-icon text-gray-500"
+                                x-model="party.phones[{{$index}}].number"
+                                x-mask="+380999999999"
+                                :id="$id('phone', '_number' + index)"
+                            />
                             <label for="phoneNumber" class="wrapped-label">{{ __('forms.phone') }}</label>
-                            @error('form.party.phoneNumber') <p class="text-error">{{ $message }}</p> @enderror
+                            @error('form.party.phones.'.$index.'.number') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
 
                         <button type="button" wire:click="addPhone" class="item-add">

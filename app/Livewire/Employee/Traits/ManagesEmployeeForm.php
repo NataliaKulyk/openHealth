@@ -9,6 +9,7 @@ use App\Models\Employee\EmployeeRequest;
 use App\Models\Revision;
 use App\Rules\TwoLettersSixDigits;
 use Exception;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -92,6 +93,14 @@ trait ManagesEmployeeForm
                 $cleanedPhones[] = $phone;
             }
             $this->form->party['phones'] = $cleanedPhones;
+        }
+
+        if (isset($this->form->documents) && is_array($this->form->documents)) {
+            foreach ($this->form->documents as $key => $document) {
+                if (!empty($document['issuedAt'])) {
+                    $this->form->documents[$key]['issuedAt'] = Carbon::parse($document['issuedAt'])->format('Y-m-d');
+                }
+            }
         }
 
         try {
@@ -185,26 +194,21 @@ trait ManagesEmployeeForm
     public function sign()
     {
         try {
-            // STATE RESTORATION: Ensure we are working with the correct request.
             if ($this->employeeRequestId && !$this->employeeRequest) {
                 $this->employeeRequest = EmployeeRequest::find($this->employeeRequestId);
             }
 
-            // Step 1: Validate KEP fields first.
             $this->form->validate($this->form->rulesForKepOnly());
 
-            // Step 2: Call the robust save() method to persist latest changes.
             $this->save();
 
             if (!$this->employeeRequest) {
-                throw new Exception('Employee request could not be saved or found before signing.');
+                throw new \RuntimeException('Employee request could not be saved or found before signing.');
             }
 
             $this->employeeRequest->refresh();
 
-            // Step 3: Prepare data for eHealth.
             $dataForSigning = Repository::employee()->formatEHealthRequest($this->employeeRequest->revision->data);
-            // Step 4: Sign the data.
             $signedContent = signatureService()->signData(
                 $dataForSigning,
                 $this->form->password,
@@ -214,15 +218,13 @@ trait ManagesEmployeeForm
                 $this->form->party['taxId']
             );
 
-            // Step 5: Send to eHealth and redirect on success.
             if ($this->sendSignedContentToEhealth($signedContent)) {
                 return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
             }
 
         } catch (Exception $e) {
-            // Use the modal flash for user-friendly errors.
             session()->flash('error-modal', $e->getMessage());
-            $this->handleException($e); // This will log the full error for developers.
+            $this->handleException($e);
         }
     }
 
@@ -320,7 +322,6 @@ trait ManagesEmployeeForm
 
     private function handleException(Exception $e): void
     {
-        dd($e->getMessage());
         Log::error('Process failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         $message = $e instanceof ValidationException
             ? __('forms.validation_failed_check_form')

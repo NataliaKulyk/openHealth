@@ -232,7 +232,6 @@ class EmployeeForm extends Form
             $this->endDate = $employeeData['end_date'] ?? null;
             $this->divisionId = $employeeData['division_id'] ?? null;
 
-            // Populate party fields
             $this->party['lastName'] = $partyData['last_name'] ?? '';
             $this->party['firstName'] = $partyData['first_name'] ?? '';
             $this->party['secondName'] = $partyData['second_name'] ?? '';
@@ -245,9 +244,15 @@ class EmployeeForm extends Form
             $this->party['aboutMyself'] = $partyData['about_myself'] ?? '';
             $this->party['phones'] = Arr::toCamelCase($phonesData);
 
-            // Populate documents and doctor data
             $this->documents = Arr::toCamelCase($documentsData);
             $this->doctor = Arr::toCamelCase($doctorData);
+        }
+
+        if (empty($this->party['email'])) {
+            $request->loadMissing('party');
+            if ($request->party) {
+                $this->party['email'] = $request->party->email;
+            }
         }
 
         if ($request->party_id) {
@@ -275,8 +280,33 @@ class EmployeeForm extends Form
         $this->party['workingExperience'] = $party->working_experience;
         $this->party['aboutMyself'] = $party->about_myself;
 
-        $this->party['phones'] = $party->phones->map(fn($p) => Arr::toCamelCase($p->only(['type', 'number'])))->toArray();
-        $this->documents = $party->documents->map(fn($d) => Arr::toCamelCase($d->only(['type', 'number', 'issued_by', 'issued_at'])))->toArray();
+        $phones = $party->phones;
+
+        if ($phones->isNotEmpty()) {
+            $this->party['phones'] = $phones->map(function ($phone) {
+                return [
+                    'type' => $phone->type,
+                    'number' => $phone->number,
+                ];
+            })->toArray();
+        } else {
+
+            $this->party['phones'] = [['type' => 'MOBILE', 'number' => '']];
+        }
+
+        $documents = $party->documents;
+        if ($documents->isNotEmpty()) {
+            $this->documents = $documents->map(function ($doc) {
+                return [
+                    'type' => $doc->type,
+                    'number' => $doc->number,
+                    'issuedBy' => $doc->issued_by,
+                    'issuedAt' => $doc->issued_at,
+                ];
+            })->toArray();
+        } else {
+            $this->documents = [];
+        }
     }
 
     /**

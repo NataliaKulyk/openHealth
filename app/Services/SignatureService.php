@@ -7,7 +7,6 @@ use App\Classes\Cipher\Exceptions\ApiException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class SignatureService
@@ -27,12 +26,11 @@ class SignatureService
         array $dataToSign,
         string $password,
         string $knedp,
-        ?UploadedFile $keyFile, // Now accepts the file object
+        ?UploadedFile $keyFile,
         string $signatoryInitiator,
         string $taxId
     ): string|array {
         try {
-            // Get base64 content using the new private method
             $base64FileContent = $this->getBase64KepFileContent($keyFile);
 
             return $this->cipherApi->sendSession(
