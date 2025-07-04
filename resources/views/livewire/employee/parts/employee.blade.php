@@ -81,7 +81,7 @@
 
                         {{-- Phone Number Input with Alpine.js Mask Plugin --}}
                         <div class="form-group phone-wrapper">
-                            <input wire:model.defer="form.party.phones.{{$index}}.number"  type="text" name="phoneNumber" id="phoneNumber" class="peer input with-leading-icon text-gray-500" placeholder=" " required />
+                            <input wire:model.defer="form.party.phones.{{$index}}.number"  required type="tel" placeholder=" " class="peer input pl-10 with-leading-icon text-gray-500" x-model="phones[index].number" x-mask="+380999999999" :id="$id('phone', '_number' + index)" :class="{ 'input-error border-red-500': errors[legalEntityForm.phones.${index}.number] }" />
                             <label for="phoneNumber" class="wrapped-label">{{ __('forms.phone') }}</label>
                             @error('form.party.phoneNumber') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
