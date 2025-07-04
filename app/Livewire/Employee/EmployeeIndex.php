@@ -276,7 +276,6 @@ class EmployeeIndex extends Component
 
         $this->dispatchErrorMessage(__('Співробітники успішно синхронізовано'));
 
-        // This call now works without an error
         $this->getEmployees();
     }
 
@@ -292,7 +291,6 @@ class EmployeeIndex extends Component
         if ($request && !$request->uuid) {
             $this->requestToDeleteId = $id;
 
-            // ✅ Prepare dynamic data for the modal
             $this->deleteRequestName = $request->party->fullName ?? 'співробітника';
             $this->deleteRequestText = 'Ви впевнені, що хочете видалити чернетку для цього співробітника? Цю дію неможливо буде скасувати.';
 
@@ -331,7 +329,6 @@ class EmployeeIndex extends Component
 
     public function render(): object
     {
-        // Pass the computed 'parties' property to the view.
         return view('livewire.employee.employee-index', [
             'parties' => $this->parties,
         ]);
