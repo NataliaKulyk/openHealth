@@ -91,11 +91,6 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
         Route::get('/edit', EditLegalEntity::class)->name('legal-entity.edit');
 
-        // TODO: Should determine if this need to be implemented!
-        Route::get('/create', CreateLegalEntity::class)
-            ->middleware(['can:create,' . LegalEntity::class])
-            ->name('legal-entity.create');
-
         Route::prefix('division')->group(function () {
             Route::get('/', DivisionIndex::class)->name('division.index');
             Route::get('/form/{id?}', DivisionForm::class)->name('division.form');

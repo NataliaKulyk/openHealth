@@ -4,35 +4,52 @@ namespace App\Livewire\Employee;
 
 use AllowDynamicProperties;
 use App\Classes\eHealth\Api\EmployeeApi;
+use App\Enums\Status;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Repositories\EmployeeRepository;
 use App\Traits\FormTrait;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 #[AllowDynamicProperties]
 class EmployeeIndex extends Component
 {
     use FormTrait;
+    use WithPagination;
 
-    public Collection $parties;
-
-    // This property is kept for backwards compatibility with the Blade template's @php block.
     public Collection $employees;
+//    public Collection $divisions;
 
-    // Properties for filtering.
-    public string $status = 'APPROVED';
+    public string $status = '';
+    public array $filter = [
+        'phone' => '',
+        'email' => '',
+        'role' => '',
+        'position' => '',
+        'division_id' => '',
+    ];
+
     public string $search = '';
 
-    // Properties for the dismissal modal, likely managed by FormTrait.
     public string $dismiss_text = '';
     public int $dismissed_id = 0;
+    public ?string $dismissal_employee_name = null;
+    public ?string $deleteRequestName = null;
+    public string $deleteRequestText = '';
+    public bool $showDeleteModal   = false;
+    public ?int $requestToDeleteId = null;
+
 
     private LegalEntity $legalEntity;
 
@@ -40,41 +57,20 @@ class EmployeeIndex extends Component
         'POSITION', 'EMPLOYEE_TYPE', 'GENDER'
     ];
 
-    /**
-     * The boot method is called on every request.
-     * It's the perfect place to initialize properties that are always needed.
-     */
     public function boot(): void
     {
         $this->legalEntity = legalEntity();
     }
 
-    /**
-     * The mount method is called only on the initial page load.
-     * We use it to set up the initial state.
-     */
     public function mount(LegalEntity $legalEntity): void
     {
         $this->getDictionary();
-        $this->parties = new Collection();
+//        $this->divisions = $this->legalEntity->divisions()->get();
         $this->employees = new Collection();
-        $this->loadParties();
     }
 
-    /**
-     * Re-fetch data when a filter changes.
-     */
-    public function updated($property): void
-    {
-        if (in_array($property, ['status', 'search'])) {
-            $this->loadParties();
-        }
-    }
-
-    /**
-     * The main method to fetch and structure data for the view.
-     */
-    public function loadParties(): void
+    #[Computed]
+    public function parties(): LengthAwarePaginator
     {
         $legalEntityId = $this->legalEntity->id;
 
@@ -89,6 +85,7 @@ class EmployeeIndex extends Component
                        'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division')
                    ]);
 
+        // Main search by full name
         if (!empty($this->search)) {
             $query->where(function ($q) {
                 $q->where('last_name', 'ilike', "%{$this->search}%")
@@ -97,14 +94,49 @@ class EmployeeIndex extends Component
             });
         }
 
-        if ($this->status === 'APPROVED') {
-            $query->whereHas('employees', fn($q) => $q->where('status', 'APPROVED'));
-        } elseif ($this->status === 'NEW') {
-            $query->whereHas('employeeRequests', fn($q) => $q->where('status', 'NEW'));
+        // --- Applying new filters ---
+        if (!empty($this->status)) {
+            $query->whereHas('employees', fn($q) => $q->where('status', $this->status));
         }
+        if (!empty($this->filter['phone'])) {
+            $query->whereHas('phones', fn($q) => $q->where('number', 'like', '%' . $this->filter['phone'] . '%'));
+        }
+        if (!empty($this->filter['email'])) {
+            $query->where('email', 'ilike', '%' . $this->filter['email'] . '%');
+        }
+        if (!empty($this->filter['role'])) {
+            $query->whereHas('employees', fn($q) => $q->where('employee_type', $this->filter['role']));
+        }
+        if (!empty($this->filter['position'])) {
+            $query->whereHas('employees', fn($q) => $q->where('position', $this->filter['position']));
+        }
+//        if (!empty($this->filter['division_id'])) {
+//            $query->whereHas('employees', fn($q) => $q->where('division_id', $this->filter['division_id']));
+//        }
+        // --- End of new filters ---
 
-        $this->parties = $query->get();
-        $this->employees = $this->parties->flatMap(fn($party) => $party->employees->concat($party->employeeRequests));
+        $paginator = $query->paginate(10);
+
+        $paginator->getCollection()->transform(function ($party) {
+            $party->employees->each(fn($p) => $p->type = 'employee');
+            $party->employeeRequests->each(fn($p) => $p->type = 'request');
+            return $party;
+        });
+
+        return $paginator;
+    }
+
+    public function updated($property): void
+    {
+        if (in_array($property, ['search', 'status']) || str_starts_with($property, 'filter.')) {
+            $this->resetPage();
+        }
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset(['filter', 'status', 'search']);
+        $this->resetPage();
     }
 
     /**
@@ -115,12 +147,12 @@ class EmployeeIndex extends Component
         $employee = Employee::find($id);
         if (!$employee) return;
 
-        $this->dismiss_text = ($employee->employee_type === 'DOCTOR')
-            ? __('forms.dismissed_text_doctor')
-            : __('forms.dismissed_text');
+        $this->dismissal_employee_name = $employee->fullName;
+        $this->dismiss_text =  __('employees.dismissalWarning');
 
         $this->dismissed_id = $employee->id;
-        $this->openModal(); // Method from FormTrait
+
+        $this->openModal();
     }
 
     #[On('refreshPage')]
@@ -190,18 +222,28 @@ class EmployeeIndex extends Component
             return;
         }
 
-        // Your API call logic for dismissal
-        // $dismissed = EmployeeRequestApi::dismissedEmployeeRequest($employee->uuid);
+        try {
+            $response = EmployeeRequestApi::dismissedEmployeeRequest($employee->uuid);
 
-        // if (!empty($dismissed)) {
-        //     $employee->update([
-        //         'status'   => 'DISMISSED',
-        //         'end_date' => \Carbon\Carbon::now()->format('Y-m-d'),
-        //     ]);
-        // }
+            if (!empty($response)) {
+                $employee->update(
+                    [
+                        'status'   => Status::DISMISSED->value,
+                        'end_date' => Carbon::now()->format('Y-m-d'),
+                    ]
+                );
 
-        $this->closeModal(); // This method comes from your FormTrait
-        $this->loadParties(); // FIX: Call the correct data loading method to refresh the list
+                $this->dispatchErrorMessage(__('employees.dismissalSuccess'), 'success');
+            } else {
+                $this->dispatchErrorMessage(__('employees.dismissalEhealthError'));
+            }
+        } catch (\Exception $e) {
+            $this->dispatchErrorMessage(
+                __('employees.requestError', ['error' => $e->getMessage()])
+            );
+        }
+
+        $this->closeModal();
     }
 
     //TODO: Створити багато співробітників в статусі не підтверджено, створювати таблицю EmployeeRequest? перевірити Rate Limit
@@ -234,9 +276,48 @@ class EmployeeIndex extends Component
         $this->dispatchErrorMessage(__('Співробітники успішно синхронізовано'));
 
         $this->getEmployees();
-        $this->loadParties();
         // $this->dispatch('refreshPage');
     }
+
+    /**
+     * Shows a confirmation modal before deleting an employee request.
+     */
+    public function confirmRequestDeletion(int $id): void
+    {
+        // We need to load the party relation to get the name
+        $request = EmployeeRequest::with('party')->find($id);
+
+        // Security check: ensure we only delete drafts without a UUID
+        if ($request && !$request->uuid) {
+            $this->requestToDeleteId = $id;
+
+            // ✅ Prepare dynamic data for the modal
+            $this->deleteRequestName = $request->party->fullName ?? 'співробітника';
+            $this->deleteRequestText = 'Ви впевнені, що хочете видалити чернетку для цього співробітника? Цю дію неможливо буде скасувати.';
+
+            $this->showDeleteModal = true;
+        } else {
+            $this->dispatchErrorMessage(__('Цей запит не є чернеткою і не може бути видалений.'), 'error');
+        }
+    }
+
+    /**
+     * Deletes the employee request from the database.
+     */
+    public function deleteRequest(): void
+    {
+        $request = EmployeeRequest::find($this->requestToDeleteId);
+
+        // Final security check
+        if ($request && !$request->uuid) {
+            $request->delete();
+            $this->dispatchErrorMessage(__('Чернетку успішно видалено.'), 'success');
+        }
+
+        $this->showDeleteModal = false;
+        $this->requestToDeleteId = null;
+    }
+
 
     private function dispatchErrorMessage(string $message, string $type = 'success', array $errors = []): void
     {
@@ -247,12 +328,11 @@ class EmployeeIndex extends Component
         ]);
     }
 
-    public function render()
+    public function render(): object
     {
-        // $perPage = config('pagination.per_page');
-        // $employees = Auth::user()->legalEntity->employees()->paginate($perPage);
-
-        // return view('livewire.employee.employee-index', compact('employees'));
-        return view('livewire.employee.employee-index');
+        // Pass the computed 'parties' property to the view.
+        return view('livewire.employee.employee-index', [
+            'parties' => $this->parties,
+        ]);
     }
 }

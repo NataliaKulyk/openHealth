@@ -29,7 +29,7 @@ class EmployeeApi
 
     public static function _dismissed($id): array
     {
-        return new Request('POST', self::URL.'/'.$id.'/actions/deactivate', [])->sendRequest();
+        return new Request('PATCH', self::URL.'/'.$id.'/actions/deactivate', [])->sendRequest();
     }
 
     public static function _getById($id)
