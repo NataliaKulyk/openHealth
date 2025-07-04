@@ -50,4 +50,9 @@ final class Repository
     {
         return app(ObservationRepository::class);
     }
+
+    public static function procedure(): ProcedureRepository
+    {
+        return app(ProcedureRepository::class);
+    }
 }

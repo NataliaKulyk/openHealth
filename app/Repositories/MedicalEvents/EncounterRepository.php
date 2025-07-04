@@ -564,6 +564,8 @@ class EncounterRepository extends BaseRepository
                 ],
             ];
 
+            $procedure['recordedBy']['identifier']['value'] = $this->employeeUuid;
+
             if ($procedure['primarySource']) {
                 unset($procedure['reportOrigin']);
 
@@ -577,6 +579,16 @@ class EncounterRepository extends BaseRepository
 
             $procedure['performedPeriod']['end'] = convertToISO8601($procedure['performedPeriodEndDate'] . $procedure['performedPeriodEndTime']);
             unset($procedure['performedPeriodEndDate'], $procedure['performedPeriodEndTime']);
+
+            $procedure['managingOrganization'] = [
+                'identifier' => [
+                    'type' => [
+                        'coding' => [['system' => 'eHealth/resources', 'code' => 'legal_entity']],
+                        'text' => ''
+                    ],
+                    'value' => legalEntity()->uuid
+                ],
+            ];
 
             if (!empty($procedure['reasonReferences'])) {
                 foreach ($procedure['reasonReferences'] as &$reasonReference) {

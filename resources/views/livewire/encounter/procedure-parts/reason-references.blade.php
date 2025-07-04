@@ -192,7 +192,7 @@
                                 </div>
 
                                 {{-- A table that shows the results of the found data --}}
-                                @if(!empty($procedureReasons))
+                                <template x-if="$wire.procedureReasons.length > 0">
                                     <div class="table-container">
                                         <div class="overflow-visible">
                                             <table class="table-base">
@@ -245,7 +245,7 @@
                                             </table>
                                         </div>
                                     </div>
-                                @endif
+                                </template>
 
                                 {{-- Action buttons --}}
                                 <div class="mt-6 flex justify-between space-x-2">

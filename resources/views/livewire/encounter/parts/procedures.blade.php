@@ -216,6 +216,14 @@
                 value: ''
             }
         };
+        recordedBy = {
+            identifier: {
+                type: {
+                    coding: [{ system: 'eHealth/resources', code: 'employee' }],
+                    text: ''
+                }
+            }
+        };
         division = {
             identifier: {
                 type: {

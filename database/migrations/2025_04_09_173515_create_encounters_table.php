@@ -18,13 +18,13 @@ return new class extends Migration
             $table->foreignId('person_id')->constrained('persons');
             $table->uuid()->unique();
             $table->enum('status', ['entered_in_error', 'finished']);
-            $table->foreignId('visit_id')->constrained('identifiers')->cascadeOnDelete();
-            $table->foreignId('episode_id')->constrained('identifiers')->cascadeOnDelete();
-            $table->foreignId('class_id')->constrained('codings')->cascadeOnDelete();
-            $table->foreignId('type_id')->constrained('codeable_concepts')->cascadeOnDelete();
-            $table->foreignId('priority_id')->nullable()->constrained('codeable_concepts')->cascadeOnDelete();
-            $table->foreignId('performer_id')->constrained('identifiers')->cascadeOnDelete();
-            $table->foreignId('division_id')->constrained('identifiers')->cascadeOnDelete();
+            $table->foreignId('visit_id')->constrained('identifiers');
+            $table->foreignId('episode_id')->constrained('identifiers');
+            $table->foreignId('class_id')->constrained('codings');
+            $table->foreignId('type_id')->constrained('codeable_concepts');
+            $table->foreignId('priority_id')->nullable()->constrained('codeable_concepts');
+            $table->foreignId('performer_id')->constrained('identifiers');
+            $table->foreignId('division_id')->constrained('identifiers');
             $table->timestamps();
         });
 
@@ -58,8 +58,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('encounter_actions');
+
         Schema::dropIfExists('encounter_diagnoses');
+
         Schema::dropIfExists('encounter_reasons');
+
         Schema::dropIfExists('encounters');
     }
 };
