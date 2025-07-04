@@ -75,6 +75,7 @@
                                 </x-forms.select>
                             </x-slot>
                         </x-forms.form-group>
+                        {{--TODO divisions}}
                         {{-- Division Filter - Commented out --}}
                         {{--
                         <x-forms.form-group>
@@ -202,16 +203,16 @@
                                                         <li><a href="{{ route('employee.show', ['legalEntity' => legalEntity()->id, 'id' => $position->id]) }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600">Переглянути</a></li>
                                                         <li><a href="{{ route('employee.edit', ['legalEntity' => legalEntity()->id, 'employeeId' => $position->id]) }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600">Редагувати</a></li>
                                                     </ul>
-                                                    @if($position->type === 'employee' && $position->status === \App\Enums\Status::APPROVED)
+                                                    @if($position->type === 'employee' && $position->status === Status::APPROVED)
                                                         <div class="py-1" @click="open = false">
-                                                            <button type="button" wire:click="showModalDismissed({{ $position->id }})" class="block w-full text-left py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                                            <button type="button" wire:click="showModalDismissed({{ $position->id }})" class="block w-full text-right py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600">
                                                                 Звільнити
                                                             </button>
                                                         </div>
                                                     @endif
                                                     @if($position->type === 'request' && !$position->uuid)
                                                         <div class="py-1" @click="open = false">
-                                                            <button type="button" wire:click="confirmRequestDeletion({{ $position->id }})" class="block w-full text-left py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
+                                                            <button type="button" wire:click="confirmRequestDeletion({{ $position->id }})" class="block w-full text-right py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
                                                                 Видалити чернетку
                                                             </button>
                                                         </div>
@@ -238,10 +239,8 @@
     <div x-data="{ showDismissModal: @entangle('showModal') }">
         <template x-teleport="body">
             <div x-show="showDismissModal" style="display: none" @keydown.escape.prevent.stop="showDismissModal = false" role="dialog" aria-modal="true" class="fixed inset-0 z-50 overflow-y-auto">
-                {{-- Overlay --}}
                 <div x-show="showDismissModal" x-transition.opacity class="fixed inset-0 bg-black/30"></div>
 
-                {{-- Panel with outer border --}}
                 <div x-show="showDismissModal" x-transition @click="showDismissModal = false" class="relative flex min-h-screen items-center justify-center p-4">
                     <div @click.stop x-trap.noscroll.inert="showDismissModal" class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-6 text-center shadow-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
 
@@ -251,23 +250,20 @@
 
                         <p class="mt-4 text-sm text-gray-600 whitespace-pre-line dark:text-gray-300" x-text="$wire.dismiss_text"></p>
 
-                        {{-- Buttons aligned to match the design --}}
                         <div class="mt-6 flex justify-center gap-4">
-                            {{-- Blue "Cancel" button on the left --}}
                             <button
                                 type="button"
                                 @click="showDismissModal = false"
                                 wire:click="closeModal"
-                                class="button-primary">  {{-- Changed to primary for blue color --}}
-                                Скасувати
+                                class="button-primary">
+                                {{ __('forms.cancel') }}
                             </button>
-                            {{-- Red "Dismiss" button on the right --}}
                             <button
                                 type="button"
                                 wire:click="deleteRequest"
                                 wire:loading.attr="disabled"
-                                class="button-danger">
-                                Звільнити
+                                class="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                {{ __('forms.dismissed') }}
                             </button>
                         </div>
                     </div>
@@ -280,10 +276,8 @@
     <div x-data="{ show: @entangle('showDeleteModal') }">
         <template x-teleport="body">
             <div x-show="show" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" style="display: none;">
-                {{-- Overlay --}}
                 <div x-show="show" x-transition.opacity class="fixed inset-0 bg-black/30"></div>
 
-                {{-- Panel with outer border --}}
                 <div x-show="show" x-transition @click="show = false" class="relative flex min-h-screen items-center justify-center p-4">
                     <div @click.stop x-trap.noscroll.inert="show" class="relative w-full max-w-md overflow-hidden rounded-lg bg-white p-6 text-center shadow-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
 
@@ -293,22 +287,19 @@
 
                         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400" x-text="$wire.deleteRequestText"></p>
 
-                        {{-- Buttons aligned to match the design --}}
                         <div class="mt-6 flex justify-center gap-4">
-                            {{-- Blue "Cancel" button on the left --}}
                             <button
                                 type="button"
                                 @click="show = false"
-                                class="button-primary"> {{-- Changed to primary for blue color --}}
-                                Скасувати
+                                class="button-primary">
+                                {{ __('forms.cancel') }}
                             </button>
-                            {{-- Red "Delete" button on the right --}}
                             <button
                                 type="button"
                                 wire:click="deleteRequest"
                                 wire:loading.attr="disabled"
                                 class="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                                Видалити
+                                {{ __('forms.delete') }}
                             </button>
                         </div>
                     </div>
