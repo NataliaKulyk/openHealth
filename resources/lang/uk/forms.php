@@ -205,6 +205,7 @@ return [
     'mfo' => 'МФО',
     'payerAccount' => 'IBAN',
     'statuteMd5' => 'Статут',
+    'additional_search_parameters' => 'Додаткові параметри пошуку',
     'additionalDocumentMd5' => 'Додатковий документ',
     'startDateContract' => 'Дата початку дії договору',
     'endDateContract' => 'Дата закінчення дії договору',
