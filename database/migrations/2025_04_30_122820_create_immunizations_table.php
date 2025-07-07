@@ -16,20 +16,20 @@ return new class extends Migration
         Schema::create('immunizations', static function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
-            $table->foreignId('encounter_id')->constrained('encounters')->cascadeOnDelete();
+            $table->foreignId('encounter_id')->constrained('encounters');
             $table->enum('status', ['completed', 'entered_in_error']);
             $table->boolean('not_given');
-            $table->foreignId('vaccine_code_id')->constrained('codeable_concepts')->cascadeOnDelete();
-            $table->foreignId('context_id')->constrained('identifiers')->cascadeOnDelete();
+            $table->foreignId('vaccine_code_id')->constrained('codeable_concepts');
+            $table->foreignId('context_id')->constrained('identifiers');
             $table->timestamp('date');
             $table->boolean('primary_source');
-            $table->foreignId('performer_id')->nullable()->constrained('identifiers')->cascadeOnDelete();
-            $table->foreignId('report_origin_id')->nullable()->constrained('codeable_concepts')->cascadeOnDelete();
+            $table->foreignId('performer_id')->nullable()->constrained('identifiers');
+            $table->foreignId('report_origin_id')->nullable()->constrained('codeable_concepts');
             $table->string('manufacturer')->nullable();
             $table->string('lot_number')->nullable();
             $table->date('expiration_date')->nullable();
-            $table->foreignId('site_id')->nullable()->constrained('codeable_concepts')->cascadeOnDelete();
-            $table->foreignId('route_id')->nullable()->constrained('codeable_concepts')->cascadeOnDelete();
+            $table->foreignId('site_id')->nullable()->constrained('codeable_concepts');
+            $table->foreignId('route_id')->nullable()->constrained('codeable_concepts');
             $table->timestamps();
         });
 
@@ -77,9 +77,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('immunization_vaccination_protocol_target_diseases');
+
         Schema::dropIfExists('immunization_vaccination_protocols');
+
         Schema::dropIfExists('immunization_explanations');
+
         Schema::dropIfExists('immunization_dose_quantities');
+
         Schema::dropIfExists('immunizations');
     }
 };

@@ -16,12 +16,12 @@ return new class extends Migration
         Schema::create('episodes', static function (Blueprint $table) {
             $table->id();
             $table->uuid();
-            $table->foreignId('encounter_id')->constrained('encounters')->cascadeOnDelete();
-            $table->foreignId('episode_type_id')->constrained('codings')->cascadeOnDelete();
+            $table->foreignId('encounter_id')->constrained('encounters');
+            $table->foreignId('episode_type_id')->constrained('codings');
             $table->enum('status', ['active', 'closed', 'entered_in_error']);
             $table->string('name');
-            $table->foreignId('managing_organization_id')->constrained('identifiers')->cascadeOnDelete();
-            $table->foreignId('care_manager_id')->constrained('identifiers')->cascadeOnDelete();
+            $table->foreignId('managing_organization_id')->constrained('identifiers');
+            $table->foreignId('care_manager_id')->constrained('identifiers');
             $table->timestamps();
         });
     }

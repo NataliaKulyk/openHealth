@@ -166,7 +166,7 @@
                                 <x-forms.loading/>
 
                                 {{-- A table that shows the results of the found data --}}
-                                @if(!empty($complicationDetails))
+                                <template x-if="$wire.complicationDetails.length > 0">
                                     <div class="table-container">
                                         <div class="overflow-visible">
                                             <table class="table-base">
@@ -219,11 +219,11 @@
                                             </table>
                                         </div>
                                     </div>
-                                @endif
+                                </template>
 
-                                @empty($complicationDetails)
+                                <template x-if="$wire.complicationDetails.length <= 0">
                                     <p class="default-p">Нічого не знайдено</p>
-                                @endempty
+                                </template>
 
                                 {{-- Action buttons --}}
                                 <div class="mt-6 flex justify-between space-x-2">
