@@ -42,6 +42,7 @@ return [
     'legalEntityOwner' => 'Представник організації',
     'legalEntityInfo' => 'Інформація про заклад',
     'save' => 'Зберегти',
+    'saving' => 'Збереження...',
     'agree' => 'Я погоджуюсь',
     'accept' => 'Я приймаю',
     'decline' => 'Відхилити',
@@ -279,7 +280,7 @@ return [
     'update_successfull' => 'Дані оновлено успішно',
     'backToList' => 'Назад до списку',
     'goToEdit' => 'Перейти до редагування',
-    'requestSignedAndSentToEHealth' => 'Запит іспішно підписано та надіслоно до ЕСОЗ',
+    'requestSignedAndSentToEHealth' => 'Запит успішно підписано та надіслано до ЕСОЗ',
     'viewEmployee' => 'Перегляд співробітника',
     'errors' => [
         'update_data' => 'Сталася помилка під час оновлення даних'

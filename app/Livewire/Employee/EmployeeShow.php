@@ -12,7 +12,7 @@ class EmployeeShow extends EmployeeComponent
 {
     public Employee|EmployeeRequest $employee;
     public string $pageTitle;
-    public bool $lockPartyFields = true;
+    public bool $lockEmailAndTaxId = true;
 
     public function mount(LegalEntity $legalEntity, int $id, string $type = 'employee'): void
     {

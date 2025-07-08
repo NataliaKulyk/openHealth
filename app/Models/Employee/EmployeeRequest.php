@@ -15,6 +15,9 @@ class EmployeeRequest extends BaseEmployee
 
         $this->with = array_merge($this->with, ['revision', 'employee']);
         $this->fillable = array_merge($this->fillable, ['applied_at']);
+        $this->casts = array_merge($this->casts, [
+            'applied_at' => 'datetime',
+        ]);
     }
 
     public function employee(): BelongsTo

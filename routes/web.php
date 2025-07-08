@@ -9,7 +9,7 @@ use App\Livewire\Auth\VerifyEmail;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\EHealthLoginController;
-use App\Livewire\Employee\AddPosition;
+use App\Livewire\Employee\EmployeePositionAdd;
 use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Employee\EmployeeShow;
@@ -102,7 +102,7 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         Route::prefix('employees')->name('employee.')->group(function () {
             Route::get('/', EmployeeIndex::class)->name('index');
             Route::get('/create', EmployeeCreate::class)->name('create');
-            Route::get('/party/{party}/add-position', AddPosition::class)->name('add-position');
+            Route::get('/party/{party}/add-position', EmployeePositionAdd::class)->name('add-position');
             Route::get('/{id}/{type?}', EmployeeShow::class)->name('show');
             Route::get('/{id}/{type?}/edit', EmployeeEdit::class)->name('edit');
         });

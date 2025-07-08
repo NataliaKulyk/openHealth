@@ -18,7 +18,6 @@ class EmployeeCreate extends EmployeeComponent
     public function mount(LegalEntity $legalEntity): void
     {
         $this->getDictionary();
-        $this->lockPartyFields = false;
         $this->pageTitle = __('forms.addEmployee');
     }
 

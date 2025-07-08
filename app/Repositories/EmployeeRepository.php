@@ -214,6 +214,7 @@ class EmployeeRepository
             $employeeRequest = new EmployeeRequest();
             $employeeRequest->fill($filteredEmployeeRequestData);
             $employeeRequest->uuid = null;
+            $employeeRequest->legal_entity_uuid = legalEntity()?->getUuid();
             $employeeRequest->status = 'NEW';
             $employeeRequest->legalEntity()->associate($legalEntity);
             $employeeRequest->party()->associate($party);

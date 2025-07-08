@@ -26,63 +26,12 @@ trait ManagesEmployeeForm
 
     #[Locked]
     public ?int $employeeId = null;
-
     public ?EmployeeRequest $employeeRequest = null;
-    public bool $showSignatureBlock = false;
-    public bool $lockPartyFields = false;
-    public bool $showSignatureModal = false;
+    public bool $lockEmailAndTaxId = false;
 
-    /**
-     * REFACTORED: Loads form data from a finalized Employee model.
-     * This is used when editing an existing, signed employee.
-     *
-     * @return void
-     */
-    public function loadEmployeeFromModel(): void
-    {
-        if ($this->employeeId) {
-            // If the employee object isn't already loaded, find it.
-            if (!$this->employee) {
-                $this->employee = Employee::findOrFail($this->employeeId);
-            }
-            $this->form->populateFromModel($this->employee);
-        }
-    }
-
-    /**
-     * REFACTORED: Loads form data from a pending EmployeeRequest (a draft).
-     * This is used when editing a draft that has not been signed yet.
-     *
-     * @return void
-     */
-    public function loadEmployeeFromRequest(): void
-    {
-        if ($this->employeeRequest) {
-            // Set the state anchor so we don't lose the draft ID on re-renders
-            $this->employeeRequestId = $this->employeeRequest->id;
-            $this->form->populateFromRequest($this->employeeRequest);
-        }
-    }
-
-    public function addPhone(): void
-    {
-        $this->form->party['phones'][] = ['type' => 'MOBILE', 'number' => ''];
-    }
-
-    public function removePhone(int $index): void
-    {
-        if (isset($this->form->party['phones'][$index])) {
-            unset($this->form->party['phones'][$index]);
-            $this->form->party['phones'] = array_values($this->form->party['phones']);
-        }
-    }
-
-
-    /**
-     * It correctly handles creating a new request or updating an existing draft.
-     */
     public function save(): void
     {
+        // Section for data cleaning remains the same.
         if (isset($this->form->party['phones'])) {
             $cleanedPhones = [];
             foreach ($this->form->party['phones'] as $phone) {
@@ -107,34 +56,43 @@ trait ManagesEmployeeForm
             $this->form->validate($this->form->rulesForSave());
             $preparedDataForDb = $this->form->getPreparedData();
 
-            if ($this->employeeRequest) {
-                // SCENARIO: Re-saving a PENDING request.
-                DB::transaction(function () use ($preparedDataForDb) {
+            if (!$this->employeeRequest || $this->employeeRequest->uuid) {
 
-                    $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
-                    $this->employeeRequest->fill($requestAttributes)->save();
-                    if ($this->employeeRequest->party) {
-                        $partyAttributes = Arr::only($preparedDataForDb, ['last_name', 'first_name', 'second_name', 'gender', 'birth_date', 'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself']);
-                        $this->employeeRequest->party->update($partyAttributes);
-                    }
-                    $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-                    if ($this->employeeRequest->revision) {
-                        $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
-                    }
-                });
-            } else {
-                // SCENARIO: Creating a NEW request for the first time.
-                // This logic correctly uses the repository's store method.
-                $this->employeeRequest = Repository::employee()->store(
+                // --- Case 1: CREATE a new EmployeeRequest ---
+                // This happens when creating from scratch or re-saving a signed request.
+                $newRequest = Repository::employee()->store(
                     $preparedDataForDb,
                     legalEntity(),
                     new EmployeeRequest(),
                     null,
                     true
                 );
+
                 $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-                $this->saveRevisionForRequest($nestedDataForRevision);
+                $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
+                $this->employeeRequest = $newRequest;
+
+            } else {
+                // --- Case 2: UPDATE an existing draft (which has no UUID) ---
+                DB::transaction(function () use ($preparedDataForDb) {
+                    $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
+                    $this->employeeRequest->fill($requestAttributes)->save();
+
+                    if ($this->employeeRequest->party) {
+                        $partyAttributes = Arr::only($preparedDataForDb, ['last_name', 'first_name', 'second_name', 'gender', 'birth_date', 'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself']);
+                        $this->employeeRequest->party->update($partyAttributes);
+                    }
+
+                    $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
+
+                    if ($this->employeeRequest->revision) {
+                        $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
+                    } else {
+                        $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
+                    }
+                });
             }
+
             if ($this->employeeRequest) {
                 $this->employeeRequestId = $this->employeeRequest->id;
             }
@@ -176,15 +134,15 @@ trait ManagesEmployeeForm
 
     /**
      * Helper to encapsulate saving the revision.
+     * Now accepts the EmployeeRequest model to be more explicit.
      */
-    private function saveRevisionForRequest(array $nestedData): void
+    private function saveRevisionForRequest(EmployeeRequest $request, array $nestedData): void
     {
-        if ($this->employeeRequest) {
-            $revision = new Revision();
-            $revision->data = $nestedData;
-            $revision->status = Revision::STATUS_PENDING;
-            $this->employeeRequest->revision()->save($revision);
-        }
+        $revision = new Revision();
+        $revision->data = $nestedData;
+        $revision->status = Revision::STATUS_PENDING;
+        // Save the revision specifically for the provided request.
+        $request->revision()->save($revision);
     }
 
     /**
@@ -193,14 +151,13 @@ trait ManagesEmployeeForm
      */
     public function sign()
     {
+        $this->save();
         try {
             if ($this->employeeRequestId && !$this->employeeRequest) {
                 $this->employeeRequest = EmployeeRequest::find($this->employeeRequestId);
             }
 
             $this->form->validate($this->form->rulesForKepOnly());
-
-            $this->save();
 
             if (!$this->employeeRequest) {
                 throw new \RuntimeException('Employee request could not be saved or found before signing.');
@@ -217,6 +174,8 @@ trait ManagesEmployeeForm
             );
 
             if ($this->sendSignedContentToEhealth($signedContent)) {
+                session()->flash('success', __('forms.requestSignedAndSentToEHealth'));
+
                 return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
             }
 
@@ -226,37 +185,11 @@ trait ManagesEmployeeForm
         }
     }
 
-    public function openSignatureModal(): void
-    {
-        try {
-            $this->save();
-            if ($this->employeeRequest) {
-                $this->showSignatureModal = true;
-            }
-        } catch (Exception $e) {
-            $this->handleException($e);
-        }
-    }
-
-    public function closeSignatureModal()
-    {
-        $this->showSignatureModal = false;
-
-
-        if ($this->employeeRequest && $this->employeeRequest->id) {
-            return redirect()->route('employee.edit',
-                                     ['employeeId' => $this->employeeRequest->id, 'legalEntity' => legalEntity()->id]);
-        }
-    }
-
     /**
      * REFACTORED: Now uses the form's unpackRevisionData helper.
      */
     private function formatEHealthRequest(array $revisionData): array
     {
-
-        $revisionData = $this->form->unpackRevisionData($revisionData);
-
         $employeeData = $revisionData['employee_request_data'];
         $partyData = $revisionData['party'];
         $documentsData = $revisionData['documents'];
@@ -328,13 +261,14 @@ trait ManagesEmployeeForm
                     'signed_content_encoding' => 'base64',
                 ]
             );
+
             if (isset($ehealthResponse['id'])) {
                 $this->employeeRequest->uuid = $ehealthResponse['id'];
                 $this->employeeRequest->inserted_at = $ehealthResponse['inserted_at'];
                 $this->employeeRequest->legal_entity_uuid = $ehealthResponse['legal_entity_id'];
                 $this->employeeRequest->updated_at = $ehealthResponse['updated_at'];
                 $this->employeeRequest->save();
-                session()->flash('success', __('forms.requestSignedAndSentToEHealth'));
+
                 $this->dispatch('signature-successful');
                 return true;
             } else {
@@ -353,38 +287,6 @@ trait ManagesEmployeeForm
         }
     }
 
-    /**
-     * A new helper method to run complex, cross-field validation.
-     *
-     * @throws ValidationException
-     */
-    protected function runCustomValidation(): void
-    {
-        $formData = $this->form->all();
-
-        $validator = Validator::make($formData, [
-            'documents.*.number' => [
-                function($attribute, $value, $fail) use ($formData) {
-                    if (data_get($formData, 'party.noTaxId', false)) {
-                        $passportIndex = collect($formData['documents'])->search(fn($doc) => $doc['type'] === 'PASSPORT'
-                        );
-
-                        if ($passportIndex === false) {
-                            $fail(__('validation.custom.passport_required_if_no_tax_id'));
-                            return;
-                        }
-
-                        if ("documents.{$passportIndex}.number" === $attribute) {
-                            $rule = new TwoLettersSixDigits();
-                            $rule->validate($attribute, $value, $fail);
-                        }
-                    }
-                }
-            ],
-        ]);
-        $validator->validate();
-    }
-
     private function handleException(Exception $e): void
     {
         Log::error('Process failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -392,13 +294,6 @@ trait ManagesEmployeeForm
             ? __('forms.validation_failed_check_form')
             : __('forms.failed_to_save_employee_unexpected_error');
         session()->flash('error', $message);
-        $this->dispatch('employee-form-failed');
-    }
-
-    protected function dispatchErrorMessage(array $errors, string $prefix = ''): void
-    {
-        $errorMessage = collect($errors)->flatten()->implode(', ');
-        session()->flash('error', $prefix . $errorMessage);
         $this->dispatch('employee-form-failed');
     }
 }

@@ -9,7 +9,7 @@ use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use Illuminate\View\View;
 
-class AddPosition extends EmployeeComponent
+class EmployeePositionAdd extends EmployeeComponent
 {
     use ManagesEmployeeForm;
 

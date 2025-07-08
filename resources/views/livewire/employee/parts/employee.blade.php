@@ -47,7 +47,7 @@
             </div>
         </div>
 
-        <div class="form-row-3" x-data="{ noTaxId: $wire.entangle('form.party.noTaxId'), isLocked: @js($this->lockPartyFields || !empty($this->employeeId)) }">
+        <div class="form-row-3" x-data="{ noTaxId: $wire.entangle('form.party.noTaxId'), isLocked: @js($this->lockEmailAndTaxId  || !empty($this->employeeId)) }">
             <div class="form-group group relative z-0">
                 <input wire:model="form.party.taxId" required id="taxId" type="text" maxlength="10" placeholder=" " class="input peer text-gray-500 @error('form.party.taxId') input-error @enderror" :disabled="noTaxId || isLocked" />
                 @error('form.party.taxId') <p id="partyTaxIdErrorHelp" class="text-error">{{ $message }}</p> @enderror
@@ -98,7 +98,7 @@
                         </button>
 
                         {{-- Remove Button --}}
-                        @if(count($form->party['phones']) > 1 && !$this->lockPartyFields)
+                        @if(count($form->party['phones']) > 1 && !$this->lockEmailAndTaxId )
                             <button type="button" wire:click="removePhone({{ $index }})" class="item-remove text-red-600 hover:text-red-800 justify-self-start">
                                 <span>{{__('forms.remove_phone')}}</span>
                             </button>
@@ -110,16 +110,22 @@
 
         <div class="form-row-3">
             <div class="form-group">
-                <input wire:model="form.party.email" type="email" id="email" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" placeholder=" " required @if(isset($this->employeeId) || $this->lockPartyFields) disabled @endif />
+                <input wire:model="form.party.email" type="email" id="email" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" placeholder=" " required @if(isset($this->employeeId) || $this->lockEmailAndTaxId ) disabled @endif />
                 <label for="email" class="label">{{__('forms.email')}}</label>
                 @error('form.party.email') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row-2">
             <div class="form-group">
-                <label for="about" class="peer appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400">{{ __('forms.aboutMyself') }}</label>
-                <textarea id="about" name="about" class="textarea !text-gray-500 dark:!text-gray-400" placeholder="{{ __('forms.comment') }}"></textarea>
-                @error('form.party.about') <p class="text-error">{{ $message }}</p> @enderror
+                <label for="aboutMyself"
+                       class="peer appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400">{{ __('forms.aboutMyself') }}</label>
+                <textarea
+                    id="aboutMyself"
+                    wire:model="form.party.aboutMyself"
+                    class="textarea !text-gray-500 dark:!text-gray-400"
+                    placeholder="{{ __('forms.comment') }}">
+                </textarea>
+                @error('form.party.aboutMyself') <p class="text-error">{{ $message }}</p> @enderror
             </div>
         </div>
     </div>

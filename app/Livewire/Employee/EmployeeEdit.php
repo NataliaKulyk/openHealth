@@ -37,7 +37,7 @@ class EmployeeEdit extends EmployeeComponent
         }
 
         $this->form->hydrate($source);
-        $this->lockPartyFields = true;
+        $this->lockEmailAndTaxId  = true;
         $this->pageTitle = __('forms.editEmployee');
     }
 

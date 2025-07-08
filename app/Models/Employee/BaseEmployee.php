@@ -48,10 +48,16 @@ class BaseEmployee extends Model
         'inserted_at',
     ];
 
+    /**
+     * The attributes that should be cast to native types.
+     * We are changing the format for start_date and end_date to 'Y-m-d'.
+     *
+     * @var array
+     */
     protected $casts = [
         'status' => Status::class,
-        'start_date' => 'datetime',
-        'end_date' => 'datetime'
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
     ];
 
     protected array $prettyAttributes = [

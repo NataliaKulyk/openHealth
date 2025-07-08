@@ -3,7 +3,7 @@
         <x-slot name="title">
             {{ $pageTitle }}
             {{-- We can show the name of the person we're adding a position to --}}
-            : {{ $this->form->party['lastName'] }} {{ $this->form->party['firstName'] }}
+            <x-slot name="title">{{ $pageTitle }} {{ $employee->fullName }}</x-slot>
         </x-slot>
     </x-section-navigation>
 
@@ -45,7 +45,7 @@
                 <div class="flex items-center space-x-4">
                     <button type="submit" class="button-primary" wire:loading.attr="disabled" wire:target="save">
                         <span wire:loading.remove wire:target="save">{{__('forms.save')}}</span>
-                        <span wire:loading wire:target="save">Збереження...</span>
+                        <span wire:loading wire:target="save">{{__('forms.saving')}}</span>
                     </button>
                 </div>
             </div>
