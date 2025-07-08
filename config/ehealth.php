@@ -132,8 +132,6 @@ return [
         ]
     ],
 
-    'division' => ['test1, test2'],
-
     'doctors_type' => [
         'LABORANT', 'DOCTOR', 'MED_ADMIN', 'ASSISTANT', 'MED_COORDINATOR'
     ],
@@ -603,14 +601,6 @@ return [
             'device_dispense:read',
             'device_association:read',
             'detected_issue:read',
-            // Only preprod
-            'composition:write',
-            'composition:mark_in_error',
-            'composition:resend_sms',
-            'composition_configuration:read',
-            'person_verification:read',
-            'confidant_person_relationship_request:write',
-            'confidant_person_relationship:read'
         ],
         'HR' => [
             'division:activate',

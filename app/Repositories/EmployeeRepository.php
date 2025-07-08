@@ -84,9 +84,16 @@ class EmployeeRepository
     }
 
     /**
-     * Saves or updates employee-related data.
-     * This method is now simplified to work with flat data arrays again,
-     * as the data preparation logic is moved to the Livewire Trait.
+     * Saves or updates employee-related data, including EmployeeRequest, Party, and associated details.
+     *
+     * @param array                         $response
+     * @param LegalEntity                   $legalEntity
+     * @param Employee|EmployeeRequest|null $employeeModel The model class to create/update (can be null for a new request).
+     * @param string|null                   $employeeUUID  UUID of an existing Employee, if this is an EmployeeRequest that updates.
+     * @param bool                          $isNewRequest  Indicates a new unique EmployeeRequest creation scenario.
+     *
+     * @return Employee|EmployeeRequest
+     * @throws Exception
      */
     public function store(
         array $response,
@@ -188,9 +195,14 @@ class EmployeeRepository
     }
 
     /**
-     * Handles the specific logic for creating a brand new EmployeeRequest.
-     * FIX: This method is now simplified to work with a flat data array,
-     * which prevents the "Not null violation" error for the Party model.
+     * Handles the specific logic for creating a brand new EmployeeRequest and its Party,
+     * bypassing existing general update/create logic when no UUID is provided.
+     * This is the dedicated method for the "new request" scenario.
+     *
+     * @param array       $requestData The full request data from the form.
+     * @param LegalEntity $legalEntity The legal entity associated with the request.
+     *
+     * @return Employee|EmployeeRequest The newly created EmployeeRequest.
      */
     private function handleInitialEmployeeRequestCreation(
         array $requestData,

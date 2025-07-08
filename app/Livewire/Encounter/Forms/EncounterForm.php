@@ -286,17 +286,17 @@ class EncounterForm extends Form
             'procedures.paperReferral.requisition' => ['nullable', 'string', 'max:255'],
             'procedures.paperReferral.requesterEmployeeName' => ['nullable', 'string', 'max:255'],
             'procedures.paperReferral.requesterLegalEntityEdrpou' => [
-                Rule::requiredIf(data_get($this->procedures, 'referralType') === 'paper'),
+                Rule::requiredIf($this->procedures['referralType'] === 'paper'),
                 'string',
                 'max:255'
             ],
             'procedures.paperReferral.requesterLegalEntityName' => [
-                Rule::requiredIf(data_get($this->procedures, 'referralType') === 'paper'),
+                Rule::requiredIf($this->procedures['referralType'] === 'paper'),
                 'string',
                 'max:255'
             ],
             'procedures.paperReferral.serviceRequestDate' => [
-                Rule::requiredIf(data_get($this->procedures, 'referralType') === 'paper'),
+                Rule::requiredIf($this->procedures['referralType'] === 'paper'),
                 'date'
             ],
             'procedures.paperReferral.note' => ['nullable', 'string', 'max:255'],

@@ -6,7 +6,6 @@ use App\Core\Arr;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\Relations\Party;
-use App\Rules\AgeCheck;
 use App\Rules\BirthDate;
 use App\Rules\Name;
 use App\Rules\PhoneNumber;
@@ -85,7 +84,7 @@ class EmployeeForm extends Form
             'party.firstName' => ['required', new Name()],
             'party.secondName' => ['nullable', new Name()],
             'party.gender' => ['required', 'string'],
-            'party.birthDate' => ['required', 'date', new AgeCheck()],
+            'party.birthDate' => ['required', 'date', new BirthDate()],
             'party.phones' => ['required', 'array', 'min:1'],
             'party.phones.*.number' => ['required', new PhoneNumber()],
             'party.phones.*.type' => ['required', 'string'],

@@ -41,6 +41,19 @@
                 </div>
             </template>
 
+            {{-- Flash Messages --}}
+            @if (session()->has('success'))
+                <div class="p-4 my-4 text-sm text-green-800 rounded-lg bg-green-50" role="alert">
+                    <span class="font-medium">{{ session('success') }}</span>
+                </div>
+            @endif
+            {{-- Main page error is hidden if modal is open --}}
+            @if (session()->has('error') && !$showSignatureModal)
+                <div class="p-4 my-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                    <span class="font-medium">{{ __('forms.error') }}!</span> {{ session('error') }}
+                </div>
+            @endif
+
             <div class="form-button-group mt-6 flex justify-between items-center border-t border-gray-200 pt-6">
                 <div class="flex items-center space-x-4">
                     <a href="{{ route('employee.index', ['legalEntity' => legalEntity()->id]) }}" class="button-minor">
