@@ -92,6 +92,11 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
         Route::get('/edit', EditLegalEntity::class)->name('legal-entity.edit');
 
+        // TODO: Should determine if this need to be implemented!
+        Route::get('/create', CreateLegalEntity::class)
+            ->middleware(['can:create,' . LegalEntity::class])
+            ->name('legal-entity.create');
+
         Route::prefix('division')->group(function () {
             Route::get('/', DivisionIndex::class)->name('division.index');
             Route::get('/form/{id?}', DivisionForm::class)->name('division.form');
@@ -131,8 +136,8 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/{patientId}/summary', PatientSummary::class)->name('patient.summary');
                 Route::get('/{patientId}/episodes', PatientEpisodes::class)->name('patient.episodes');
 
-                    Route::get('/{patientId}/encounter/create', EncounterCreate::class)->name('encounter.create');
-                    Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
+                Route::get('/{patientId}/encounter/create', EncounterCreate::class)->name('encounter.create');
+                Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
 
                 Route::get('/{patientId}/diagnostic-report/create', DiagnosticReportCreate::class)->name('diagnostic-report.create');
             });

@@ -105,7 +105,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasAccessToLegalEntityByUuid(string $legalEntityUuid): bool
     {
         return $this->employees()
-                    ->whereHas('legalEntity', function($query) use($legalEntityUuid) {
+                    ->whereHas('legalEntity', function ($query) use ($legalEntityUuid) {
                         $query->where('uuid', $legalEntityUuid);
                     })
                     ->exists();
