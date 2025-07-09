@@ -102,7 +102,7 @@
                                         {{ __('forms.edit') }}
                                     </button>
 
-                                    <button @click.prevent="vaccinationProtocols.splice(index, 1); close($refs.button)"
+                                    <button @click.prevent="modalImmunization.vaccinationProtocols.splice(index, 1); close($refs.button)"
                                             class="dropdown-button dropdown-delete"
                                     >
                                         {{ __('forms.delete') }}

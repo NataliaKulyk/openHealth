@@ -76,6 +76,21 @@ class PatientApi
     }
 
     /**
+     * @param  string  $patientId
+     * @param  string  $encounterId
+     * @return array
+     * @throws ApiException
+     */
+    public static function getEncounterById(string $patientId, string $encounterId): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientId/encounters/$encounterId",
+            []
+        )->sendRequest();
+    }
+
+    /**
      * Get short encounter data by provided parameters.
      *
      * @param  string  $patientId
@@ -195,6 +210,23 @@ class PatientApi
     }
 
     /**
+     * Get condition data by ID.
+     *
+     * @param  string  $patientId
+     * @param  string  $conditionId
+     * @return array
+     * @throws ApiException
+     */
+    public static function getConditionById(string $patientId, string $conditionId): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientId/conditions/$conditionId",
+            []
+        )->sendRequest();
+    }
+
+    /**
      * Get conditions in episode context.
      *
      * @param  string  $patientUuid
@@ -230,6 +262,23 @@ class PatientApi
     }
 
     /**
+     * Get observation data by ID.
+     *
+     * @param  string  $patientId
+     * @param  string  $observationId
+     * @return array
+     * @throws ApiException
+     */
+    public static function getObservationById(string $patientId, string $observationId): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientId/observations/$observationId",
+            []
+        )->sendRequest();
+    }
+
+    /**
      * Get observations in episode context.
      *
      * @param  string  $patientUuid
@@ -238,8 +287,11 @@ class PatientApi
      * @return array
      * @throws ApiException
      */
-    public static function getObservationsInEpisodeContext(string $patientUuid, string $episodeUuid, array $params): array
-    {
+    public static function getObservationsInEpisodeContext(
+        string $patientUuid,
+        string $episodeUuid,
+        array $params
+    ): array {
         return new Request(
             HttpRequest::METHOD_GET,
             self::ENDPOINT_PATIENT . "/$patientUuid/episodes/$episodeUuid/observations",

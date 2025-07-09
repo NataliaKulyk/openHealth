@@ -6,12 +6,17 @@ namespace App\Livewire\Encounter;
 
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
+use App\Core\Arr as CoreArr;
 use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
 use App\Models\LegalEntity;
+use App\Models\MedicalEvents\Sql\Condition;
+use App\Models\MedicalEvents\Sql\Encounter;
+use App\Models\MedicalEvents\Sql\Observation;
 use App\Repositories\MedicalEvents\Repository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -22,7 +27,6 @@ class EncounterCreate extends EncounterComponent
         $this->initializeComponent($patientId);
         $this->setEmployeePartyData();
         $this->setDefaultDate();
-        $this->getEpisodes();
     }
 
     /**
@@ -43,9 +47,9 @@ class EncounterCreate extends EncounterComponent
      * Submit encrypted data about person encounter.
      *
      * @return void
-     * @throws ApiException|Throwable
+     * @throws Throwable
      */
-    public function signPerson(): void
+    public function sign(): void
     {
         $formattedData = $this->prepareFormattedData();
 
@@ -61,7 +65,10 @@ class EncounterCreate extends EncounterComponent
             Auth::user()->tax_id
         );
 
-        $signedSubmitEncounter = EncounterRequestApi::buildSubmitEncounterPackage($formattedData, $base64EncryptedData);
+        $signedSubmitEncounter = EncounterRequestApi::buildSubmitEncounterPackage(
+            $formattedData['encounter'],
+            $base64EncryptedData
+        );
         PatientApi::submitEncounter($this->patientUuid, $signedSubmitEncounter);
     }
 
@@ -217,6 +224,12 @@ class EncounterCreate extends EncounterComponent
 
             if (isset($formattedData['procedures'])) {
                 Repository::procedure()->store($formattedData['procedures'], $createdEncounterId);
+
+                // Save the selected condition and observation locally if they don't exist in our database.
+                foreach ($formattedData['procedures'] as $procedure) {
+                    $this->processReasonReferences($procedure);
+                    $this->processComplicationDetails($procedure);
+                }
             }
         });
     }
@@ -237,5 +250,134 @@ class EncounterCreate extends EncounterComponent
                 'type' => 'error'
             ]);
         }
+    }
+
+    /**
+     * Handles details of procedure reason references.
+     *
+     * @param  array  $procedure
+     * @return void
+     */
+    private function processReasonReferences(array $procedure): void
+    {
+        if (!isset($procedure['reasonReferences'])) {
+            return;
+        }
+
+        foreach ($procedure['reasonReferences'] as $reasonReference) {
+            if ($reasonReference['identifier']['type']['coding'][0]['code'] === 'condition') {
+                $this->ensureConditionExists($reasonReference['identifier']['value']);
+            } else {
+                $this->ensureObservationExists($reasonReference['identifier']['value']);
+            }
+        }
+    }
+
+    /**
+     * Handles details of procedure complications
+     *
+     * @param  array  $procedure
+     * @return void
+     */
+    private function processComplicationDetails(array $procedure): void
+    {
+        if (!isset($procedure['complicationDetails'])) {
+            return;
+        }
+
+        foreach ($procedure['complicationDetails'] as $complicationDetail) {
+            $this->ensureConditionExists($complicationDetail['identifier']['value']);
+        }
+    }
+
+    /**
+     * Checks if a condition exists and creates it if necessary
+     *
+     * @param  string  $uuid
+     * @return void
+     */
+    private function ensureConditionExists(string $uuid): void
+    {
+        if (Condition::whereUuid($uuid)->exists()) {
+            return;
+        }
+
+        try {
+            $conditionData = PatientApi::getConditionById($this->patientUuid, $uuid);
+            $encounterId = $this->ensureEncounterExist($conditionData['context']['identifier']['value']);
+
+            if ($encounterId) {
+                Repository::condition()->store([CoreArr::toCamelCase($conditionData)], $encounterId);
+            }
+        } catch (ApiException|Throwable $e) {
+            $this->flashGeneralError();
+
+            Log::error('Failed while ensuring condition existence', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    /**
+     * Checks for the existence of an observation and creates it if necessary.
+     *
+     * @param  string  $uuid
+     * @return void
+     */
+    private function ensureObservationExists(string $uuid): void
+    {
+        if (Observation::whereUuid($uuid)->exists()) {
+            return;
+        }
+
+        try {
+            $observationData = PatientApi::getObservationById($this->patientUuid, $uuid);
+            $encounterId = $this->ensureEncounterExist($observationData['context']['identifier']['value']);
+
+            if ($encounterId) {
+                Repository::observation()->store([CoreArr::toCamelCase($observationData)], $encounterId);
+            }
+        } catch (ApiException|Throwable $e) {
+            $this->flashGeneralError();
+
+            Log::error('Failed while ensuring observation existence', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    /**
+     * Check is encounter exist, if not create it. Return created or existed ID of encounter.
+     *
+     * @param  string  $encounterUuid
+     * @return int|null
+     */
+    private function ensureEncounterExist(string $encounterUuid): ?int
+    {
+        $encounterId = Encounter::whereUuid($encounterUuid)->value('id');
+
+        if ($encounterId) {
+            return $encounterId;
+        }
+
+        try {
+            $encounterData = PatientApi::getEncounterById($this->patientUuid, $encounterUuid);
+
+            return Repository::encounter()->store($encounterData, $this->patientId);
+        } catch (ApiException|Throwable $e) {
+            $this->flashGeneralError();
+
+            Log::error('Failed while ensuring encounter existence', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
+
+        return null;
     }
 }

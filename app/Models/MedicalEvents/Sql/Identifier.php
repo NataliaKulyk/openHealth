@@ -21,6 +21,7 @@ class Identifier extends Model
         'id',
         'type',
         'value',
+        'pivot',
         'created_at',
         'updated_at'
     ];

@@ -103,7 +103,7 @@
                                         {{ __('forms.edit') }}
                                     </button>
 
-                                    <button @click.prevent="reasonReferences.splice(index, 1); close($refs.button);"
+                                    <button @click.prevent="modalProcedure.reasonReferences.splice(index, 1); close($refs.button);"
                                             class="dropdown-button dropdown-delete"
                                     >
                                         {{ __('forms.delete') }}
@@ -245,6 +245,10 @@
                                             </table>
                                         </div>
                                     </div>
+                                </template>
+
+                                <template x-if="$wire.procedureReasons.length <= 0">
+                                    <p class="default-p">{{ __('forms.nothing_found') }}</p>
                                 </template>
 
                                 {{-- Action buttons --}}

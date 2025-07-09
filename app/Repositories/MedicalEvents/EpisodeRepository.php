@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\MedicalEvents;
 
+use App\Models\MedicalEvents\Sql\Episode;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,12 +26,14 @@ class EpisodeRepository extends BaseRepository
             try {
                 $type = Repository::coding()->store($data['type']);
 
-                $managingOrganization = Repository::identifier()->store($data['managingOrganization']['identifier']['value']);
+                $managingOrganization = Repository::identifier()
+                    ->store($data['managingOrganization']['identifier']['value']);
                 Repository::codeableConcept()->attach($managingOrganization, $data['managingOrganization']);
 
                 $careManager = Repository::identifier()->store($data['careManager']['identifier']['value']);
                 Repository::codeableConcept()->attach($careManager, $data['careManager']);
 
+                /** @var Episode $episode */
                 $episode = $this->model::create([
                     'uuid' => $data['id'],
                     'encounter_id' => $encounterId,

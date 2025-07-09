@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\MedicalEvents;
 
+use App\Models\MedicalEvents\Sql\Condition;
 use App\Models\MedicalEvents\Sql\ConditionEvidence;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,7 @@ class ConditionRepository extends BaseRepository
                         $severity = Repository::codeableConcept()->store($datum['severity']);
                     }
 
+                    /** @var Condition $condition */
                     $condition = $this->model::create([
                         'uuid' => $datum['id'],
                         'encounter_id' => $encounterId,
@@ -102,6 +104,21 @@ class ConditionRepository extends BaseRepository
         ])
             ->where('encounter_id', $encounterId)
             ->get()
+            ?->toArray();
+    }
+
+    /**
+     * Get the condition for the procedure based on the provided UUID to display the selected reason reference and complication detail.
+     *
+     * @param  string  $uuid
+     * @return array|null
+     */
+    public function getForProcedure(string $uuid): ?array
+    {
+        return Condition::whereUuid($uuid)
+            ->select(['id', 'onset_date', 'code_id'])
+            ->with('code.coding')
+            ->first()
             ?->toArray();
     }
 

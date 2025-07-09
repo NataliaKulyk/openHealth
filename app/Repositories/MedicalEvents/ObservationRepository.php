@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\MedicalEvents;
 
 use App\Classes\eHealth\Api\PatientApi;
+use App\Models\MedicalEvents\Sql\Observation;
 use App\Models\MedicalEvents\Sql\ObservationComponent;
 use App\Models\MedicalEvents\Sql\Quantity;
 use Exception;
@@ -144,7 +145,8 @@ class ObservationRepository extends BaseRepository
             try {
                 foreach ($data as $datum) {
                     if ($diagnosticReportId) {
-                        $diagnosticReport = Repository::identifier()->store($datum['diagnosticReport']['identifier']['value']);
+                        $diagnosticReport = Repository::identifier()
+                            ->store($datum['diagnosticReport']['identifier']['value']);
                         Repository::codeableConcept()->attach($diagnosticReport, $datum['diagnosticReport']);
                     }
 
@@ -190,6 +192,7 @@ class ObservationRepository extends BaseRepository
                         Repository::codeableConcept()->attach($context, $datum['context']);
                     }
 
+                    /** @var Observation $observation */
                     $observation = $this->model::create([
                         'uuid' => $datum['uuid'] ?? $datum['id'],
                         'encounter_id' => $encounterId,
@@ -225,7 +228,8 @@ class ObservationRepository extends BaseRepository
 
                     if (isset($datum['components'])) {
                         foreach ($datum['components'] as $componentData) {
-                            $valueCodeableConcept = Repository::codeableConcept()->store($componentData['valueCodeableConcept']);
+                            $valueCodeableConcept = Repository::codeableConcept()
+                                ->store($componentData['valueCodeableConcept']);
                             $interpretation = Repository::codeableConcept()->store($componentData['interpretation']);
 
                             ObservationComponent::create([
@@ -272,6 +276,21 @@ class ObservationRepository extends BaseRepository
         ])
             ->where('encounter_id', $encounterId)
             ->get()
+            ?->toArray();
+    }
+
+    /**
+     * Get the observation for the procedure based on the provided UUID to display the selected complication detail.
+     *
+     * @param  string  $uuid
+     * @return array|null
+     */
+    public function getForProcedure(string $uuid): ?array
+    {
+        return Observation::whereUuid($uuid)
+            ->select(['id', 'onset_date', 'code_id'])
+            ->with('code.coding')
+            ->first()
             ?->toArray();
     }
 

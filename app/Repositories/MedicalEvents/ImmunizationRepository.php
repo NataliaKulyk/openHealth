@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\MedicalEvents;
 
+use App\Models\MedicalEvents\Sql\Immunization;
 use App\Models\MedicalEvents\Sql\ImmunizationDoseQuantity;
 use App\Models\MedicalEvents\Sql\ImmunizationExplanation;
 use App\Models\MedicalEvents\Sql\ImmunizationVaccinationProtocol;
@@ -49,6 +50,7 @@ class ImmunizationRepository extends BaseRepository
                         $route = Repository::codeableConcept()->store($datum['route']);
                     }
 
+                    /** @var Immunization $immunization */
                     $immunization = $this->model::create([
                         'uuid' => $datum['uuid'] ?? $datum['id'],
                         'encounter_id' => $encounterId,

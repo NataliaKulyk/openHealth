@@ -48,6 +48,9 @@ class EncounterEdit extends EncounterComponent
         $this->form->observations = Repository::observation()->get($this->encounterId);
         $this->form->observations = Repository::observation()->formatForView($this->form->observations);
 
+        $this->form->procedures = Repository::procedure()->get($this->encounterId);
+        $this->form->procedures = Repository::procedure()->formatForView($this->form->procedures);
+
         $this->setDefaultDate();
     }
 

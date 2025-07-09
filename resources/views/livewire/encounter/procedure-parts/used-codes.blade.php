@@ -97,7 +97,7 @@
                                         {{ __('forms.edit') }}
                                     </button>
 
-                                    <button @click.prevent="usedCodes.splice(index, 1); close($refs.button)"
+                                    <button @click.prevent="modalProcedure.usedCodes.splice(index, 1); close($refs.button)"
                                             class="dropdown-button dropdown-delete"
                                     >
                                         {{ __('forms.delete') }}

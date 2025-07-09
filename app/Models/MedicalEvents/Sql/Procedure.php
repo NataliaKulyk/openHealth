@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models\MedicalEvents\Sql;
 
+use Carbon\CarbonImmutable;
 use Eloquence\Behaviours\HasCamelCasing;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -22,10 +24,62 @@ class Procedure extends Model
     protected $hidden = [
         'id',
         'encounter_internal_id',
+        'based_on_id',
+        'code_id',
+        'recorded_by_id',
+        'performer_id',
+        'report_origin_id',
+        'division_id',
+        'managing_organization_id',
+        'outcome_id',
+        'category_id',
         'encounter_id',
         'created_at',
         'updated_at'
     ];
+
+    protected $appends = [
+        'performed_period_start_date',
+        'performed_period_start_time',
+        'performed_period_end_date',
+        'performed_period_end_time'
+    ];
+
+    protected function performedPeriodStartDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => isset($this->performedPeriod['start'])
+                ? CarbonImmutable::parse($this->performedPeriod['start'])->toDateString()
+                : null
+        );
+    }
+
+    protected function performedPeriodStartTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => isset($this->performedPeriod['start'])
+                ? CarbonImmutable::parse($this->performedPeriod['start'])->toTimeString()
+                : null
+        );
+    }
+
+    protected function performedPeriodEndDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => isset($this->performedPeriod['end'])
+                ? CarbonImmutable::parse($this->performedPeriod['end'])->toDateString()
+                : null
+        );
+    }
+
+    protected function performedPeriodEndTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => isset($this->performedPeriod['end'])
+                ? CarbonImmutable::parse($this->performedPeriod['end'])->toTimeString()
+                : null
+        );
+    }
 
     public function basedOn(): BelongsTo
     {
@@ -72,9 +126,19 @@ class Procedure extends Model
         return $this->belongsTo(Identifier::class, 'managing_organization_id');
     }
 
+    public function reasonReferences(): BelongsToMany
+    {
+        return $this->belongsToMany(Identifier::class, 'procedure_reason_references');
+    }
+
     public function outcome(): BelongsTo
     {
         return $this->belongsTo(CodeableConcept::class, 'outcome_id');
+    }
+
+    public function complicationDetails(): BelongsToMany
+    {
+        return $this->belongsToMany(Identifier::class, 'procedure_complication_details');
     }
 
     public function category(): BelongsTo

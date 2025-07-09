@@ -41,6 +41,11 @@ final class Repository
         return app(ImmunizationRepository::class);
     }
 
+    public static function paperReferral(): PaperReferralRepository
+    {
+        return app(PaperReferralRepository::class);
+    }
+
     public static function diagnosticReport(): DiagnosticReportRepository
     {
         return app(DiagnosticReportRepository::class);

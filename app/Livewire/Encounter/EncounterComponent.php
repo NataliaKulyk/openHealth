@@ -327,6 +327,7 @@ class EncounterComponent extends Component
 
         $this->setPatientData();
         $this->getDivisionData();
+        $this->getEpisodes();
 
         try {
             $this->setCertificateAuthority();

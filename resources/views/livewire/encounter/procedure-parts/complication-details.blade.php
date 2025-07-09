@@ -24,16 +24,16 @@
             </tr>
             </thead>
             <tbody>
-            <template x-for="(reasonReference, index) in modalProcedure.complicationDetails">
+            <template x-for="(complicationDetail, index) in modalProcedure.complicationDetails">
                 <tr>
                     <td class="td-input"
-                        x-text="new Date(reasonReference.inserted_at).toLocaleDateString('uk-UA')"
+                        x-text="new Date(complicationDetail.inserted_at).toLocaleDateString('uk-UA')"
                     ></td>
                     <td class="td-input"
-                        x-text="`${ reasonReference.code.coding[0].code } - ${
-                            $wire.dictionaries['eHealth/LOINC/observation_codes'][reasonReference.code.coding[0].code] ||
-                            $wire.dictionaries['eHealth/ICF/classifiers'][reasonReference.code.coding[0].code] ||
-                            $wire.dictionaries['eHealth/ICPC2/condition_codes'][reasonReference.code.coding[0].code]
+                        x-text="`${ complicationDetail.code.coding[0].code } - ${
+                            $wire.dictionaries['eHealth/LOINC/observation_codes'][complicationDetail.code.coding[0].code] ||
+                            $wire.dictionaries['eHealth/ICF/classifiers'][complicationDetail.code.coding[0].code] ||
+                            $wire.dictionaries['eHealth/ICPC2/condition_codes'][complicationDetail.code.coding[0].code]
                         }`"
                     ></td>
                     <td class="td-input">
@@ -93,9 +93,9 @@
                                     <button @click="
                                                 openModal = true; {{-- Open the modal --}}
                                                 item = index; {{-- Identify the item we are corrently editing --}}
-                                                {{-- Replace the previous reasonReference with the current, don't assign object directly (modalComplicationDetail = reasonReference) to avoid reactiveness --}}
-                                                modalComplicationDetail = new ComplicationDetail(reasonReference);
-                                                newComplicationDetail = false; {{-- This reasonReference is already created --}}
+                                                {{-- Replace the previous complicationDetail with the current, don't assign object directly (modalComplicationDetail = complicationDetail) to avoid reactiveness --}}
+                                                modalComplicationDetail = new ComplicationDetail(complicationDetail);
+                                                newComplicationDetail = false; {{-- This complicationDetail is already created --}}
                                             "
                                             @click.prevent
                                             class="dropdown-button"
@@ -103,7 +103,7 @@
                                         {{ __('forms.edit') }}
                                     </button>
 
-                                    <button @click.prevent="complicationDetails.splice(index, 1); close($refs.button);"
+                                    <button @click.prevent="modalProcedure.complicationDetails.splice(index, 1); close($refs.button);"
                                             class="dropdown-button dropdown-delete"
                                     >
                                         {{ __('forms.delete') }}
@@ -121,8 +121,8 @@
             {{-- Button to trigger the modal --}}
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
-                        newComplicationDetail = true; {{-- We are adding a new reasonReference --}}
-                        modalComplicationDetail = new ComplicationDetail(); {{-- Replace the data of the previous reasonReference with a new one--}}
+                        newComplicationDetail = true; {{-- We are adding a new complicationDetail --}}
+                        modalComplicationDetail = new ComplicationDetail(); {{-- Replace the data of the previous complicationDetail with a new one--}}
 
                         $nextTick(() => {
                             $wire.searchComplicationDetails();
@@ -222,7 +222,7 @@
                                 </template>
 
                                 <template x-if="$wire.complicationDetails.length <= 0">
-                                    <p class="default-p">Нічого не знайдено</p>
+                                    <p class="default-p">{{ __('forms.nothing_found') }}</p>
                                 </template>
 
                                 {{-- Action buttons --}}

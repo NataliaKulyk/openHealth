@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\MedicalEvents;
 
 use App\Classes\eHealth\Api\PatientApi;
+use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\DiagnosticReportPerformer;
 use App\Models\MedicalEvents\Sql\DiagnosticReportResultsInterpreter;
 use Exception;
@@ -140,6 +141,7 @@ class DiagnosticReportRepository extends BaseRepository
                         $reportOrigin = Repository::codeableConcept()->store($datum['reportOrigin']);
                     }
 
+                    /** @var DiagnosticReport $diagnosticReport */
                     $diagnosticReport = $this->model::create([
                         'uuid' => $datum['uuid'] ?? $datum['id'],
                         'encounter_internal_id' => $createdEncounterId,
@@ -157,14 +159,7 @@ class DiagnosticReportRepository extends BaseRepository
                     ]);
 
                     if (isset($datum['paperReferral'])) {
-                        $diagnosticReport->paperReferral()->create([
-                            'requisition' => $datum['paperReferral']['requisition'] ?? null,
-                            'requester_legal_entity_name' => $datum['paperReferral']['requesterLegalEntityName'] ?? null,
-                            'requester_legal_entity_edrpou' => $datum['paperReferral']['requesterLegalEntityEdrpou'],
-                            'requester_employee_name' => $datum['paperReferral']['requesterEmployeeName'],
-                            'service_request_date' => $datum['paperReferral']['serviceRequestDate'],
-                            'note' => $datum['paperReferral']['note'] ?? null
-                        ]);
+                        Repository::paperReferral()->store($datum['paperReferral'], $diagnosticReport);
                     }
 
                     $categoryIds = [];
@@ -232,7 +227,7 @@ class DiagnosticReportRepository extends BaseRepository
     }
 
     /**
-     * Get condition data that is related to the encounter.
+     * Get data that is related to the encounter.
      *
      * @param  int  $encounterId
      * @return array|null
@@ -244,7 +239,6 @@ class DiagnosticReportRepository extends BaseRepository
             'paperReferral',
             'code.type.coding',
             'category.coding',
-            'effectivePeriod',
             'conclusionCode.coding',
             'recordedBy.type.coding',
             'encounter.type.coding',

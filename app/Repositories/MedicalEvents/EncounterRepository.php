@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories\MedicalEvents;
 
 use App\Classes\eHealth\Api\PatientApi;
+use App\Models\MedicalEvents\Mongo\Encounter as EncounterMongo;
+use App\Models\MedicalEvents\Sql\Encounter as EncounterSql;
 use App\Models\MedicalEvents\Sql\EncounterDiagnose;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +66,7 @@ class EncounterRepository extends BaseRepository
                 $division = Repository::identifier()->store($encounterData['division']['identifier']['value']);
                 Repository::codeableConcept()->attach($division, $encounterData['division']);
 
+                /** @var EncounterSql|EncounterMongo $encounter */
                 $encounter = $this->model::create([
                     'person_id' => $personId,
                     'uuid' => $encounterData['uuid'] ?? $encounterData['id'],
@@ -248,10 +251,12 @@ class EncounterRepository extends BaseRepository
                 $condition['context']['identifier']['value'] = $this->encounterUuid;
 
                 // Remove coding with empty code
-                $condition['code']['coding'] = array_values(array_filter(
-                    $condition['code']['coding'],
-                    static fn (array $coding) => !empty($coding['code']) && trim($coding['code']) !== ''
-                ));
+                $condition['code']['coding'] = array_values(
+                    array_filter(
+                        $condition['code']['coding'],
+                        static fn (array $coding) => !empty($coding['code']) && trim($coding['code']) !== ''
+                    )
+                );
 
                 // unset if code not provided
                 if ($condition['severity']['coding'][0]['code'] === '') {
@@ -627,7 +632,7 @@ class EncounterRepository extends BaseRepository
             }
 
             // Remove elements where the key is equal empty array
-            return array_filter($procedure);
+            return array_filter($procedure, static fn ($value) => !is_array($value) || !empty($value));
         }, $procedures);
 
         return schemaService()

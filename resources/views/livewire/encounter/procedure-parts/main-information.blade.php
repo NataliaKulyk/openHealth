@@ -189,7 +189,7 @@
                            class="input peer"
                 />
                 <label for="serviceCode" class="label">
-                    {{ __('forms.services')}} {{ mb_strtolower(__('forms.services')) }} *
+                    {{ __('forms.select')}} {{ mb_strtolower(__('forms.services')) }} *
                 </label>
             </div>
         </div>
