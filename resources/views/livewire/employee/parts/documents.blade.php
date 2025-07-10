@@ -15,29 +15,94 @@
             <h2>{{__('forms.document')}}</h2>
         </legend>
 
-        <table class="table-input w-inherit">
-            <thead class="thead-input">
+        <table class="min-w-full table-fixed text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-                <th scope="col" class="th-input">{{ __('forms.document_type') }}</th>
-                <th scope="col" class="th-input">{{ __('forms.number') }} </th>
-                <th scope="col" class="th-input">{{ __('forms.issued_by') }}</th>
-                <th scope="col" class="th-input">{{ __('forms.issued_at') }}</th>
-                <th scope="col" class="th-input">{{ __('forms.actions') }}</th>
+                <th scope="col" class="px-4 py-3 whitespace-nowrap">{{ __('forms.document_type') }}</th>
+                <th scope="col" class="px-4 py-3 whitespace-nowrap">{{ __('forms.number') }} </th>
+                <th scope="col" class="px-4 py-3 whitespace-nowrap">{{ __('forms.issued_by') }}</th>
+                <th scope="col" class="px-4 py-3 whitespace-nowrap">{{ __('forms.issued_at') }}</th>
+                <th scope="col" class="px-4 py-3 whitespace-nowrap">{{ __('forms.actions') }}</th>
             </tr>
             </thead>
             <tbody>
             <template x-for="(document, index) in documents" :key="index">
                 <tr>
-                    <td class="td-input" x-text="dictionary[document.type]"></td>
-                    <td class="td-input" x-text="document.number"></td>
-                    <td class="td-input" x-text="document.issuedBy"></td>
-                    <td class="td-input" x-text="document.issuedAt"></td>
-                    <td class="td-input relative absolute right-0 top-full mt-2 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                        <x-dropdown-button
-                            :editAction="'openModal = true; item = index; modalDocument = new Doc(document); newDocument = false; close($refs.button)'"
-                            :deleteAction="'documents.splice(index, 1); close($refs.button)'"
-                        />
+                    <td class="px-4 py-3 break-words max-w-[180px]" x-text="dictionary[document.type]"></td>
+                    <td class="px-4 py-3" x-text="document.number"></td>
+                    <td class="px-4 py-3" x-text="document.issuedBy"></td>
+                    <td class="px-4 py-3" x-text="document.issuedAt"></td>
+                    <td class="px-4 py-3 text-right">
+                        <div x-data="{
+             openDropdown: false,
+             toggle() {
+                 if (this.openDropdown) {
+                     return this.close()
+                 }
+                 this.$refs.button.focus()
+                 this.openDropdown = true
+             },
+             close(focusAfter) {
+                 if (!this.openDropdown) return
+                 this.openDropdown = false
+                 focusAfter && focusAfter.focus()
+             }
+         }"
+                             @keydown.escape.prevent.stop="close($refs.button)"
+                             @focusin.window="! $refs.panel.contains($event.target) && close()"
+                             x-id="['dropdown-button']"
+                             class="relative inline-block"
+                        >
+                            {{-- Dropdown Button --}}
+                            <button x-ref="button"
+                                    @click="toggle()"
+                                    :aria-expanded="openDropdown"
+                                    :aria-controls="$id('dropdown-button')"
+                                    type="button"
+                                    class="cursor-pointer"
+                            >
+                                <svg class="w-6 h-6 text-gray-800 dark:text-gray-200" aria-hidden="true"
+                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                     viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"/>
+                                </svg>
+                            </button>
+
+                            {{-- Dropdown Panel --}}
+                            <div class="absolute z-50 right-0 mt-2 w-40 bg-white rounded shadow-lg dark:bg-gray-700"
+                                 x-show="openDropdown"
+                                 x-transition
+                                 @click.outside="close($refs.button)"
+                                 :id="$id('dropdown-button')"
+                                 x-cloak
+                                 x-ref="panel"
+                            >
+                                <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                                    <li>
+                                        <button @click.prevent="
+                        openModal = true;
+                        item = index;
+                        modalDocument = new Doc(document);
+                        newDocument = false;
+                        close($refs.button);
+                    "
+                                                class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                            {{ __('forms.edit') }}
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button @click.prevent="documents.splice(index, 1); close($refs.button)"
+                                                class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                            {{ __('forms.delete') }}
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </td>
+
                 </tr>
             </template>
             </tbody>
