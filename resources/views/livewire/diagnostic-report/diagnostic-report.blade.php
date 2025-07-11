@@ -35,7 +35,7 @@
                 {{ __('forms.save') }}
             </button>
 
-            <button wire:click.prevent="create('signedContent')"
+            <button wire:click.prevent="openModal('signedContent')"
                     type="button"
                     class="button-sync flex items-center gap-2"
             >

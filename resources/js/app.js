@@ -5,7 +5,6 @@ import './index';
 
 import Datepicker from 'flowbite-datepicker/Datepicker';
 import uk from '../../node_modules/flowbite-datepicker/js/i18n/locales/uk.js';
-import Livewire from "jsvectormap/src/js/eventHandler.js";
 
 // Selecting all elements with the 'datepicker-input' class
 document.addEventListener('DOMContentLoaded', () => {

@@ -13,8 +13,8 @@ use App\Livewire\Employee\EmployeePositionAdd;
 use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Employee\EmployeeShow;
-use App\Livewire\Patient\PatientForm;
 use App\Livewire\License\LicenseShow;
+use App\Livewire\Procedure\ProcedureCreate;
 use App\Models\LegalEntity;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\License\LicenseIndex;
@@ -103,7 +103,6 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/{division}/healthcare-service', HealthcareServiceForm::class)->name('healthcare_service.index');
         });
 
-
         Route::prefix('employees')->name('employee.')->group(function () {
             Route::get('/', EmployeeIndex::class)->name('index');
             Route::get('/create', EmployeeCreate::class)->name('create');
@@ -140,6 +139,8 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
 
                 Route::get('/{patientId}/diagnostic-report/create', DiagnosticReportCreate::class)->name('diagnostic-report.create');
+
+                Route::get('/{patientId}/procedure/create', ProcedureCreate::class)->name('procedure.create');
             });
         });
     });

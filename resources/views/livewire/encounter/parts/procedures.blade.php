@@ -151,8 +151,8 @@
 
                     {{-- Content --}}
                     <form>
-                        @include('livewire.encounter.procedure-parts.main-information')
-                        @include('livewire.encounter.procedure-parts.additional-information')
+                        @include('livewire.encounter.procedure-parts.main-information', ['context' => 'encounter'])
+                        @include('livewire.encounter.procedure-parts.additional-information', ['context' => 'encounter'])
                         @include('livewire.encounter.procedure-parts.reason-references')
                         @include('livewire.encounter.procedure-parts.used-codes')
                         @include('livewire.encounter.procedure-parts.complication-details')

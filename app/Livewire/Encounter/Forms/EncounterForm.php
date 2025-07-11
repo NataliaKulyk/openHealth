@@ -312,7 +312,12 @@ class EncounterForm extends Form
                 'nullable' ,'string', new InDictionary('eHealth/report_origins')
             ],
             'procedures.performedPeriod.start' => ['required', 'date', 'before_or_equal:now'],
-            'procedures.performedPeriod.end' => ['required', 'date', 'after:procedures.performedPeriod.start']
+            'procedures.performedPeriod.end' => [
+                'required',
+                'date',
+                'before_or_equal:now',
+                'after:procedures.performedPeriod.start'
+            ]
         ];
     }
 

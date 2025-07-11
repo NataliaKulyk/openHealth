@@ -16,6 +16,7 @@ use App\Traits\FormTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use App\Livewire\Encounter\Forms\EncounterForm as Form;
@@ -132,6 +133,18 @@ class EncounterComponent extends Component
      * @var array
      */
     public array $codeableConceptValues;
+
+    /**
+     * List of founded procedure reasons.
+     * @var array
+     */
+    public array $procedureReasons = [];
+
+    /**
+     * List of founded complication details for current episode.
+     * @var array
+     */
+    public array $complicationDetails;
 
     /**
      * List of dictionary names.
@@ -292,6 +305,9 @@ class EncounterComponent extends Component
             $this->dictionaries['eHealth/ICF/classifiers'] = dictionary()
                 ->getLargeDictionary('eHealth/ICF/classifiers', false)
                 ->getFlattenedChildValues();
+            $this->dictionaries['eHealth/assistive_products'] = dictionary()
+                ->getLargeDictionary('eHealth/assistive_products', false)
+                ->getFlattenedChildValues();
         } catch (eHealthApiException) {
             $this->flashGeneralError();
         }
@@ -321,16 +337,73 @@ class EncounterComponent extends Component
     }
 
     /**
-     * Get all episodes for current patient.
+     * Search for procedure reasons in conditions and observations.
+     *
+     * @param  string  $episodeId
+     * @return void
+     */
+    public function searchReasons(string $episodeId): void
+    {
+        // Validate that an episode ID is provided
+        if (empty($episodeId)) {
+            $this->addError('episode', 'Please select an episode first.');
+
+            return;
+        }
+
+        $buildGetConditions = EncounterRequestApi::buildGetConditionsInEpisodeContext($this->patientUuid, $episodeId);
+        $buildGetObservations = EncounterRequestApi::buildGetObservationsInEpisodeContext(
+            $this->patientUuid,
+            $episodeId
+        );
+
+        try {
+            $conditions = PatientApi::getConditionsInEpisodeContext(
+                $this->patientUuid,
+                $episodeId,
+                $buildGetConditions
+            );
+            $observations = PatientApi::getObservationsInEpisodeContext(
+                $this->patientUuid,
+                $episodeId,
+                $buildGetObservations
+            );
+
+            $this->procedureReasons = array_merge($conditions, $observations);
+        } catch (eHealthApiException) {
+            Log::channel('e_health_errors')
+                ->error('Error while searching for procedure reasons in Encounter Component');
+
+            $this->flashGeneralError();
+        }
+    }
+
+    /**
+     * Search for complication details in conditions for selected episode.
      *
      * @return void
      */
-    public function getEpisodes(): void
+    public function searchComplicationDetails(): void
     {
+        $episodeId = $this->form->encounter['episode']['identifier']['value'] ?? null;
+
+        // If the episode is not selected, don't perform a search.
+        if (!isset($episodeId)) {
+            return;
+        }
+
+        $buildGetConditions = EncounterRequestApi::buildGetConditionsInEpisodeContext($this->patientUuid, $episodeId);
+
         try {
-            $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: Auth::user()->legalEntity->uuid);
-            $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params);
+            $this->complicationDetails = PatientApi::getConditionsInEpisodeContext(
+                $this->patientUuid,
+                $episodeId,
+                $buildGetConditions
+            );
         } catch (eHealthApiException) {
+            Log::channel('e_health_errors')
+                ->error('Error while searching for complication details in Encounter Component');
+
             $this->flashGeneralError();
         }
     }
@@ -411,6 +484,21 @@ class EncounterComponent extends Component
         // set division if only one exist
         if (count($this->divisions) === 1) {
             $this->form->encounter['division']['identifier']['value'] = $this->divisions[0]['uuid'];
+        }
+    }
+
+    /**
+     * Get all episodes for current patient.
+     *
+     * @return void
+     */
+    protected function getEpisodes(): void
+    {
+        try {
+            $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: legalEntity()->uuid);
+            $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params);
+        } catch (eHealthApiException) {
+            $this->flashGeneralError();
         }
     }
 

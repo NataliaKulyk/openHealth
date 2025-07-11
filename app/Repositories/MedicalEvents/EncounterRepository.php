@@ -615,6 +615,14 @@ class EncounterRepository extends BaseRepository
                 unset($reasonReference);
             }
 
+            if ($procedure['outcome']['coding'][0]['code'] === '') {
+                unset($procedure['outcome']);
+            }
+
+            if ($procedure['usedCodes']['coding'][0]['code'] === '') {
+                unset($procedure['outcome']);
+            }
+
             if (!empty($procedure['complicationDetails'])) {
                 foreach ($procedure['complicationDetails'] as &$complicationDetail) {
                     $identifier = [

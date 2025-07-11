@@ -6,6 +6,7 @@ namespace App\Livewire\DiagnosticReport\Forms;
 
 use App\Rules\InDictionary;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Form;
 
@@ -17,8 +18,6 @@ class DiagnosticReportForm extends Form
 
     protected function rules(): array
     {
-        $requiredOrSometimes = $this->diagnosticReports['referralType'] === 'paper' ? 'required' : 'sometimes';
-
         return [
             'diagnosticReport.category.*.coding.*.code' => [
                 'required',
@@ -26,17 +25,24 @@ class DiagnosticReportForm extends Form
                 new InDictionary('eHealth/diagnostic_report_categories')
             ],
             'diagnosticReport.code.identifier.value' => ['required'],
-            "diagnosticReport.paperReferral.requisition" => ['nullable', 'string', 'max:255'],
-            "diagnosticReport.paperReferral.requesterEmployeeName" => ['nullable', 'string', 'max:255'],
-            "diagnosticReport.paperReferral.requesterLegalEntityEdrpou" => [
-                $requiredOrSometimes,
+            'diagnosticReport.paperReferral.requisition' => ['nullable', 'string', 'max:255'],
+            'diagnosticReport.paperReferral.requesterEmployeeName' => ['nullable', 'string', 'max:255'],
+            'diagnosticReport.paperReferral.requesterLegalEntityEdrpou' => [
+                Rule::requiredIf(data_get($this->diagnosticReports, 'referralType') === 'paper'),
                 'regex:/^[0-9]{8,10}$/',
                 'string',
                 'max:255'
             ],
-            "diagnosticReport.paperReferral.requesterLegalEntityName" => [$requiredOrSometimes, 'string', 'max:255'],
-            "diagnosticReport.paperReferral.serviceRequestDate" => [$requiredOrSometimes, 'date'],
-            "diagnosticReport.paperReferral.note" => ['nullable', 'string', 'max:255'],
+            'diagnosticReport.paperReferral.requesterLegalEntityName' => [
+                Rule::requiredIf(data_get($this->diagnosticReports, 'referralType') === 'paper'),
+                'string',
+                'max:255'
+            ],
+            'diagnosticReport.paperReferral.serviceRequestDate' => [
+                Rule::requiredIf(data_get($this->diagnosticReports, 'referralType') === 'paper'),
+                'date'
+            ],
+            'diagnosticReport.paperReferral.note' => ['nullable', 'string', 'max:255'],
             'diagnosticReport.effectiveDateTime' => [
                 'nullable',
                 'date',
@@ -65,18 +71,26 @@ class DiagnosticReportForm extends Form
 
             'observations.primarySource' => ['required', 'boolean'],
             'observations.performer' => [
-                'required_if:observations.primarySource,true', 'prohibited_if:observations.primarySource,false', 'array'
+                'required_if:observations.primarySource,true',
+                'prohibited_if:observations.primarySource,false',
+                'array'
             ],
             'observations.reportOrigin' => [
-                'required_if:observations.primarySource,false', 'prohibited_if:observations.primarySource,true', 'array'
+                'required_if:observations.primarySource,false',
+                'prohibited_if:observations.primarySource,true',
+                'array'
             ],
             'observations.categories' => ['required', 'array'],
             'observations.categories.coding.*.code' => [
-                'required', 'string', new InDictionary(['eHealth/observation_categories', 'eHealth/ICF/observation_categories'])
+                'required',
+                'string',
+                new InDictionary(['eHealth/observation_categories', 'eHealth/ICF/observation_categories'])
             ],
             'observations.code' => ['required', 'array'],
             'observations.code.coding.*.code' => [
-                'required', 'string', new InDictionary(['eHealth/LOINC/observation_codes', 'eHealth/ICF/classifiers'])
+                'required',
+                'string',
+                new InDictionary(['eHealth/LOINC/observation_codes', 'eHealth/ICF/classifiers'])
             ],
             'observations.valueQuantity' => ['sometimes', 'array'],
             'observations.valueQuantity.value' => ['sometimes', 'numeric'],
@@ -89,10 +103,14 @@ class DiagnosticReportForm extends Form
             'observations.valueBoolean' => ['sometimes', 'boolean'],
             'observations.valueDateTime' => ['sometimes', 'date'],
             'observations.method.coding.*.code' => [
-                'nullable', 'string', new InDictionary('eHealth/observation_methods')
+                'nullable',
+                'string',
+                new InDictionary('eHealth/observation_methods')
             ],
             'observations.interpretation.coding.*.code' => [
-                'nullable', 'string', new InDictionary('eHealth/observation_interpretations')
+                'nullable',
+                'string',
+                new InDictionary('eHealth/observation_interpretations')
             ],
             'observations.issued' => ['required', 'date', 'before_or_equal:now'],
             'observations.effectiveDateTime' => ['nullable', 'date', 'before_or_equal:now']
