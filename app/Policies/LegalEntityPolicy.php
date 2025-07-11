@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\LegalEntity;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\Auth;
 
 class LegalEntityPolicy
 {
@@ -52,7 +53,7 @@ class LegalEntityPolicy
 
    public function edit(User $user)
    {
-        if ($user->hasRole(['OWNER'])) {
+        if ($user->hasRole(['OWNER']) && Auth::guard('ehealth')->check()) {
             return Response::allow();
         }
 

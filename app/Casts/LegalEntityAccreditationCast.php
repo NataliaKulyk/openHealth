@@ -9,7 +9,7 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 
 class LegalEntityAccreditationCast implements CastsAttributes
 {
-    public const array ARCHIVE_KEYS = [
+    public const array KEYS_CAST_MAP = [
         'category' => 'setCategory',
         'issued_date' => 'setIssuedDate',
         'expiry_date' => 'setExpiryDate',
@@ -21,8 +21,10 @@ class LegalEntityAccreditationCast implements CastsAttributes
      * Cast the given value.
      *
      * @param  array<string, mixed>  $attributes
+     *
+     * @return array
      */
-    public function get(Model $model, string $key, mixed $value, array $attributes): mixed
+    public function get(Model $model, string $key, mixed $value, array $attributes): array
     {
         return $this->proceedValueData($value);
     }
@@ -31,8 +33,10 @@ class LegalEntityAccreditationCast implements CastsAttributes
      * Prepare the given value for storage.
      *
      * @param  array<string, mixed>  $attributes
+     *
+     * @return array
      */
-    public function set(Model $model, string $key, mixed $value, array $attributes): mixed
+    public function set(Model $model, string $key, mixed $value, array $attributes): string
     {
         return json_encode($this->proceedValueData($value));
     }
@@ -48,7 +52,7 @@ class LegalEntityAccreditationCast implements CastsAttributes
     {
         $arrayData = is_array($value) ? $value: json_decode($value, true) ?? [];
 
-        foreach (self::ARCHIVE_KEYS as $key => $methodName) {
+        foreach (self::KEYS_CAST_MAP as $key => $methodName) {
             if (! isset($arrayData[$key])) {
                 continue;
             }

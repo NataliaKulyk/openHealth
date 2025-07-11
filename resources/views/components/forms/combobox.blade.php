@@ -93,7 +93,7 @@
         @focus="open=true"
         @mousedown="open=(!open ? true : false)"
         @keydown.escape.window="open = false;"
-        @focusout.window="setTimeout(() => open = false, 150)"
+        @blur="setTimeout(() => open = false, 100)"
         x-init="if (search) $el.classList.add('not-empty')"
         x-effect="$el.classList.toggle('not-empty', !!search)"
     />
@@ -107,7 +107,7 @@
         <template x-if="filtered.length > 0">
             <template x-for="(option, index) in filtered" :key="index">
                 <li
-                    @click="select(option)"
+                    @mousedown.prevent="select(option)"
                     x-text="option"
                     tabindex=0
                     :id="`option-${index}`"

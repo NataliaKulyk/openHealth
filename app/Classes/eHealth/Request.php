@@ -102,6 +102,10 @@ class Request
                 return $data ?? [];
             }
 
+            if (isset($data['paging']) && !empty($data['paging'])) {
+                return $data ?? [];
+            }
+
             return $data['data'] ?? [];
         }
 

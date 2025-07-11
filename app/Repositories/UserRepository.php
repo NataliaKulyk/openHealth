@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Events\ApplyUserTeamId;
 use App\Models\LegalEntity;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -30,13 +31,14 @@ class UserRepository
             ]
         );
 
-        // Set Role
-        auth()->shouldUse('ehealth'); // TODO: examine is this suitable for all user creation cases...
-
-        setPermissionsTeamId($legalEntity->id); // TODO: this need to additional checking
-        $user->unsetRelation('roles');
+        // Set Role     //TODO: need more examine is this need for all user creation cases...
+        auth()->shouldUse('web');
 
         $user->assignRole($role);
+
+        auth()->shouldUse('ehealth');
+        $user->assignRole($role);
+
         $user->save();
 
         return $user;

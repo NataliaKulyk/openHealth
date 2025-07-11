@@ -9,8 +9,7 @@
 
     <div class="overflow-y-auto py-5 px-3 h-full bg-white dark:bg-gray-800">
         <ul class="space-y-2">
-            {{-- @if(Auth::user()->can('create', \App\Models\LegalEntity::class)) --}}
-            @if(!$currentLegalEntity)
+            @if(Auth::user()->can('create', \App\Models\LegalEntity::class))
                 <li>
                     <a href="{{ $currentLegalEntity
                         ? route('legal-entity.create', [$currentLegalEntity->id])

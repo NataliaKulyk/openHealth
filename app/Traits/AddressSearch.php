@@ -157,7 +157,7 @@ trait AddressSearch
             return;
         }
 
-        $this->districts = AdressesApi::_districts($this->address['area'], $this->address['region']);
+        $this->districts = AdressesApi::_districts($this->address['area'], $this->address['region'])['data'] ?? [];
     }
 
     public function getSettlements(): void
@@ -169,7 +169,7 @@ trait AddressSearch
         $this->settlements = AdressesApi::_settlements(
             $this->address['area'],
             $this->address['region'],
-            $this->address['settlement']);
+            $this->address['settlement'])['data'] ?? [];
     }
 
     public function getStreets(): void
@@ -182,6 +182,6 @@ trait AddressSearch
             $this->address['settlementId'],
             $this->address['streetType'],
             $this->address['street']
-        );
+        )['data'] ?? [];
     }
 }

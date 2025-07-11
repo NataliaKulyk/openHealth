@@ -110,27 +110,40 @@ class EmployeeApi
     {
         $baseUrl = config('ehealth.api.domain');
 
-        // Base query parameters
-        $queryParams = [
-            'legal_entity_id' => $legalEntityUuid,
-            'page'          => 1,
-            'per_page'      => 100
-        ];
+        $page = 1;
+        $perPage = 150;
+        $employees = [];
+        $total_pages = 1;
 
-        // Build the full URL with query parameters
-        $url = $baseUrl . '/api/employees?' . http_build_query($queryParams);
+        while ($total_pages - $page >= 0) {
+            // Base query parameters
+            $queryParams = [
+                'legal_entity_id' => $legalEntityUuid,
+                'page'          => $page,
+                'page_size'      => $perPage
+            ];
 
-        $request = new Request('GET', $url, [])->sendRequest();
+            // Build the full URL with query parameters
+            $url = $baseUrl . '/api/employees?' . http_build_query($queryParams);
 
-        // Here is moving the OWNER data to the top of the array. This need for properly creating Legal Entity employees workflow.
-        if (count($request) > 1) {
-            $ownerIndex = array_search('OWNER', array_column($request, 'employee_type'));
-            $tmp = $request[$ownerIndex];
-            $request[$ownerIndex] = $request[0];
-            $request[0] = $tmp;
+            $response = new Request('GET', $url, [])->sendRequest();
+
+            $employees = array_merge($employees, $response['data']);
+
+            $total_pages = $response['paging']['total_pages'];
+
+            $page++;
         }
 
-        return $request;
+        // Here is moving the OWNER data to the top of the array. This need for properly creating Legal Entity employees workflow.
+        if (count($employees) > 1) {
+            $ownerIndex = array_search('OWNER', array_column($employees, 'employee_type'));
+            $tmp = $employees[$ownerIndex];
+            $employees[$ownerIndex] = $employees[0];
+            $employees[0] = $tmp;
+        }
+
+        return $employees;
     }
 
     /**

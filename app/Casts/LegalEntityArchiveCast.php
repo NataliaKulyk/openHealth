@@ -9,7 +9,7 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 
 class LegalEntityArchiveCast implements CastsAttributes
 {
-    public const array ARCHIVE_KEYS = [
+    public const array KEYS_CAST_MAP = [
         'date' => 'setDate',
         'place' => 'setPlace'
     ];
@@ -18,8 +18,10 @@ class LegalEntityArchiveCast implements CastsAttributes
      * Cast the given value.
      *
      * @param  array<string, mixed>  $attributes
+     *
+     * @return array
      */
-    public function get(Model $model, string $key, mixed $value, array $attributes): mixed
+    public function get(Model $model, string $key, mixed $value, array $attributes): array
     {
         return $this->proceedValueData($value);
     }
@@ -28,8 +30,10 @@ class LegalEntityArchiveCast implements CastsAttributes
      * Prepare the given value for storage.
      *
      * @param  array<string, mixed>  $attributes
+     *
+     * @return array
      */
-    public function set(Model $model, string $key, mixed $value, array $attributes): mixed
+    public function set(Model $model, string $key, mixed $value, array $attributes): string
     {
         if (empty($value)) {
             return json_encode([]);
@@ -70,7 +74,7 @@ class LegalEntityArchiveCast implements CastsAttributes
         $arr = [];
 
         foreach ($arrayData as $subArray) {
-            foreach (self::ARCHIVE_KEYS as $key => $methodName) {
+            foreach (self::KEYS_CAST_MAP as $key => $methodName) {
                 if (! isset($subArray[$key])) {
                     continue;
                 }

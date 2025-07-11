@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\ApplyUserTeamId;
+use App\Listeners\ApplyUserTeamIdListener;
 use App\Listeners\LogLockout;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Registered;

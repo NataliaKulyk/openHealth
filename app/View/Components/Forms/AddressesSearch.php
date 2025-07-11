@@ -31,7 +31,7 @@ class AddressesSearch extends Component
     {
         $this->address = $address;
 
-        $this->regions = AdressesApi::_regions();
+        $this->regions = AdressesApi::_regions()['data'] ?? [];
 
         $this->districts = $districts;
 
