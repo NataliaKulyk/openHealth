@@ -33,8 +33,8 @@ class Document extends Model
 
 
     protected $casts = [
-        'issued_at' => 'date',
-        'expiration_date' => 'date',
+        'issued_at' => 'date:Y-m-d',
+        'expiration_date' => 'date:Y-m-d',
     ];
 
     public function documentable(): MorphTo

@@ -8,15 +8,16 @@
             activeStep: 0,
             isEdit: @json($isEdit),
             openModal: false,
-            isSendDisabled : true,
-            isTermDisabled: true,
+            isTermDisabled: @entangle('legalEntityForm.publicOffer.consent').defer,
             init() {
                 Livewire.hook('commit', ({ succeed }) => {
                     succeed(() => {
                         this.$nextTick(() => {
                             const firstErrorMessage = document.querySelector('.error-message')
+
                             if (firstErrorMessage !== null) {
-                                firstErrorMessage.scrollIntoView({ block: 'center', inline: 'center' })
+                                firstErrorMessage.scrollIntoView({ block: 'center', inline: 'center' });
+                                this.isTermDisabled = false;
                             }
                         })
                     })
@@ -49,10 +50,9 @@
                                 value="isTermDisabled"
                                 id="public_offer_consent"
                                 class="steps-agreement_checkbox"
-                                @click="isSendDisabled = !isSendDisabled"
-                                wire:model="legalEntityForm.public_offer.consent"
-                                :disabled="isTermDisabled"
-                                :checked="!isTermDisabled"
+                                x-model="isTermDisabled"
+                                wire:model="legalEntityForm.publicOffer.consent"
+                                :checked="isTermDisabled"
                             />
                             <label
                                 for="public_offer_consent"
@@ -62,7 +62,11 @@
                                 <button
                                     type="button"
                                     class="steps-agreement_button cursor-pointer"
-                                    @click="openModal = !openModal"
+                                    x-ref="openModalBtn"
+                                     @click="
+                                        $el.blur(); // Remove focus before Modal opening or else aria werning shows in console
+                                        openModal = true;
+                                    "
                                 >
                                     {{ __('forms.withTerms') }}
                                 </button>
@@ -76,7 +80,7 @@
                             type="button"
                             class="button-primary cursor-pointer"
                             wire:click="updateLegalEntity"
-                            :disabled="isSendDisabled"
+                            :disabled="!isTermDisabled"
                         >
                             {{ __('forms.sendRequest') }}
                         </button>
@@ -107,6 +111,10 @@
                 <div
                     x-on:click.stop
                     x-trap.noscroll.inert="openModal"
+                    tabindex="-1"
+                    x-ref="modalContent"
+                    x-show="openModal"
+                    x-init="$watch('openModal', value => { if(value) { $nextTick(() => { $refs.modalContent.focus() }) } })"
                     class="relative w-[70%] h-[75vh] rounded-xl bg-white shadow-lg mx-auto mt-[15vh] flex flex-col dark:bg-gray-800 z-22"
                 >
                     <!-- Modal header -->
@@ -121,7 +129,7 @@
                             @click="openModal = false"
                             class="absolute top-4 right-4 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
                         >
-                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
                             </svg>
                             <span class="sr-only">Close modal</span>
@@ -137,18 +145,10 @@
                     <div class="flex gap-4 flex-wrap justify-center p-4 border-t mt-2 mx-auto">
                         <button
                             type="button"
-                            class="default-button cursor-pointer"
-                            @click="isTermDisabled = false; isSendDisabled = false; openModal = false;"
-                        >
-                            {{ __('forms.agree') }}
-                        </button>
-
-                        <button
-                            type="button"
                             class="alternative-button cursor-pointer"
-                            @click="isTermDisabled = true; isSendDisabled = true; openModal = false;"
+                            @click="openModal = false;"
                         >
-                            {{ __('forms.decline') }}
+                            {{ __('forms.close') }}
                         </button>
                     </div>
                 </div>

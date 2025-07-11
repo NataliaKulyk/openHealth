@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Support\Str;
 use App\Models\Person\Person;
+use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
@@ -17,6 +18,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
@@ -39,7 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'email',
         'password',
-        'secret_key'
+        'secret_key',
     ];
 
     /**
@@ -112,7 +114,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user has access to the Legal Entity with specified UUID.
      *
-     * @param  string  $legalEntityUuid
+     * @param string $legalEntityUuid
      * @return bool
      */
     public function hasAccessToLegalEntityByUuid(string $legalEntityUuid): bool
@@ -128,6 +130,17 @@ class User extends Authenticatable implements MustVerifyEmail
      * Get ALL Legal Entities IDs available for this user
      *
      * @return Collection
+     * Get the party associated with the user.
+     */
+    public function party(): HasOne
+    {
+        return $this->hasOne(Party::class);
+    }
+
+    /**
+     * Get ALL Legal Entites IDs available for this user
+     *
+     * @return Collection<int|string, mixed>
      */
     public function accessibleLegalEntities(): Collection
     {

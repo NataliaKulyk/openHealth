@@ -17,6 +17,7 @@ use App\Rules\UniqueEdrpou;
 use App\Rules\DocumentNumber;
 use App\Rules\PhoneDublicates;
 use App\Exceptions\CustomValidationException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class LegalEntitiesForms extends Form
@@ -94,8 +95,9 @@ class LegalEntitiesForms extends Form
             'license.licenseNumber' => ['nullable', 'string', 'regex:/^(?!.*[ЫЪЭЁыъэё@$^#])[a-zA-ZА-ЯҐЇІЄа-яґїіє0-9№\"!\^\*)\]\[(&._-].*$/'],
             'receiverFundsCode' => 'nullable|string|regex:/^[0-9]+$/',
             'beneficiary' => ['min:3', new Cyrillic()],
-            'archive.date'  => 'required|date',
-            'archive.place' => 'required|string'
+            'archive' => 'sometimes|array',
+            'archive.*.date'  => 'required_with:archive|string',
+            'archive.*.place' => 'required_with:archive|string'
         ];
     }
 
@@ -146,8 +148,8 @@ class LegalEntitiesForms extends Form
             'receiverFundsCode' => __('Поле має хибний формат. (Дозволено лише цифри)'),
             'beneficiary.min' => __('Поле має хибний формат. (Мінімальна довжина - 3 символи)'),
             'beneficiary' => __('Поле має хибний формат. (Дозволено лише кирилічні символи)'),
-            'archive.date' => __('Це поле є обов\'язковим до заповнення'),
-            'archive.place' => __('Це поле є обов\'язковим до заповнення'),
+            'archive.*.date.required_with' => __('Це поле є обов\'язковим до заповнення'),
+            'archive.*.place.required_with' => __('Це поле є обов\'язковим до заповнення'),
         ];
     }
 
@@ -203,11 +205,15 @@ class LegalEntitiesForms extends Form
     {
         $this->validate($this->rulesForModel('owner')->toArray());
 
-        $userQuery = User::where('email', $this->owner['email'])->first();
+        $user = User::where('email', $this->owner['email'])->first();
 
-        if ($userQuery && $userQuery->legalEntity()->exists()) {
+        $userTaxId = $user?->party?->taxId;
+
+        if ($user && !empty($userTaxId) && $userTaxId !== $this->owner['taxId']) {
+            Log::error("rulesForOwner: user with specified email exists and has different tax ID");
+
             throw ValidationException::withMessages([
-                'legalEntityForm.owner.email' => 'Цей користувач вже зареєстрований як співробітник в іншому закладі',
+                'legalEntityForm.owner.email' => __('forms.email_restriction'),
             ]);
         }
     }

@@ -8,7 +8,7 @@
     x-data="{
         title: '{{ __('forms.edrpou') }}',
         index: 1,
-        isDisabled: @json(!empty(auth()->user()->legal_entity_id))
+        isDisabled: @json(!empty(legalEntity()->id))
     }"
     x-init="typeof addHeader !== 'undefined' && addHeader(title, index)"
     x-show="activeStep === index || isEdit"
@@ -29,7 +29,6 @@
                 placeholder=" "
                 autocomplete="off"
                 name="edrpou"
-                {{-- value="{{ $legalEntityForm->edrpou ?? '' }}" --}}
                 wire:model="legalEntityForm.edrpou"
                 aria-describedby="{{ $hasEdrpouError ? 'edrpouErrorHelp' : '' }}"
                 class="input {{ $hasEdrpouError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"

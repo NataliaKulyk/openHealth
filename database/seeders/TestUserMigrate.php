@@ -226,6 +226,7 @@ class TestUserMigrate extends Seeder
                     'email' => 'vitaliybezsh@gmail.com',
                     'birth_date' => new Carbon('1987-10-02'),
                     'gender' => 'MALE',
+                    'user_id' => $ownerUser->id,
                     'tax_id' => '3139821559',
                     'no_tax_id' => false,
                     'about_myself' => null,
@@ -236,7 +237,7 @@ class TestUserMigrate extends Seeder
 
                 DB::table('documents')->insertGetId([
                     'type' => 'PASSPORT',
-                    'number' => 'РО8927422',
+                    'number' => 'РО892742',
                     'issued_by' => 'Рокитнянський РОВД',
                     'issued_at' => new Carbon('2025-03-27'),
                     'expiration_date' => null,
