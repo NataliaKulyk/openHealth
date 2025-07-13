@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  */
 class License extends Model
 {
-    use HasFactory;
+    use HasCamelCasing;
 
     protected $fillable = [
         'uuid',
@@ -26,56 +27,29 @@ class License extends Model
         'expiry_date',
         'what_licensed',
         'is_primary',
+        'ehealth_inserted_at',
+        'ehealth_inserted_by',
+        'ehealth_updated_at',
+        'ehealth_updated_by',
     ];
 
     protected $casts = [
+        'uuid' => 'string',
+        'legal_entity_id',
+        'type' => 'string',
+        'issued_by' => 'string',
+        'issued_date' => 'datetime:Y-m-d',
+        'active_from_date' => 'datetime:Y-m-d',
+        'order_no' => 'string',
+        'license_number' => 'string',
+        'expiry_date' => 'datetime:Y-m-d',
+        'what_licensed' => 'string',
         'is_primary' => 'boolean',
+        'ehealth_inserted_at' => 'datetime',
+        'ehealth_inserted_by' => 'string',
+        'ehealth_updated_at' => 'datetime',
+        'ehealth_updated_by' => 'string',
     ];
-
-    public static function boot()
-    {
-        parent::boot();
-
-        static::created(function ($license) {
-            self::invalidateCache($license->legal_entity_id);
-        });
-
-        static::updated(function ($license) {
-            self::invalidateCache($license->legal_entity_id);
-        });
-
-        static::deleted(function ($license) {
-            self::invalidateCache($license->legal_entity_id);
-        });
-
-        static::updated(function ($license) {
-            $cacheKey = "license_{$license->id}";
-            Cache::forget($cacheKey);
-        });
-
-        static::deleted(function ($license) {
-            $cacheKey = "license_{$license->id}";
-            Cache::forget($cacheKey);
-        });
-    }
-
-    protected static function invalidateCache($legal_entity_id)
-    {
-        $user = auth()->user();
-
-        if ($user && getPermissionsTeamId() == $legal_entity_id) {
-            $userId = $user->id;
-            $licenseTypes = ['all']; // Include 'all' as one of the types to invalidate
-            $licenseStatusOptions = ['is_primary', 'is_additional', 'all'];
-
-            foreach ($licenseTypes as $type) {
-                foreach ($licenseStatusOptions as $status) {
-                    $cacheKey = "licenses_user_id-{$userId}-{$type}-{$status}";
-                    Cache::forget($cacheKey);
-                }
-            }
-        }
-    }
 
     public function user(): BelongsTo
     {
