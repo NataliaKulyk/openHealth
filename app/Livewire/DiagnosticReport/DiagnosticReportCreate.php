@@ -8,7 +8,6 @@ use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
 use App\Repositories\MedicalEvents\Repository;
 use Exception;
-use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,11 +16,6 @@ use Throwable;
 
 class DiagnosticReportCreate extends DiagnosticReportComponent
 {
-    public function render(): View
-    {
-        return view('livewire.diagnostic-report.create');
-    }
-
     /**
      * Validate and save data.
      *
@@ -74,7 +68,6 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
             $this->convertArrayKeysToSnakeCase($formattedData),
             Auth::user()->tax_id
         );
-
         PatientApi::submitDiagnosticReportPackage($this->patientUuid, ['signed_data' => $base64EncryptedData]);
 
         to_route('patient.index', [legalEntity()])->with('flashMessage', [

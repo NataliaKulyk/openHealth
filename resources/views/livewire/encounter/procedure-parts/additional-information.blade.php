@@ -3,39 +3,42 @@
         {{ __('forms.additional_info') }}
     </legend>
 
-    {{-- Information source (performer of other source) --}}
-    <div class="flex gap-20 md:mb-5 mb-4">
-        <h2 class="default-p font-bold">{{ __('patients.information_source') }}</h2>
-        <div class="flex items-center">
-            <input @change="modalProcedure.primarySource = true"
-                   x-model.boolean="modalProcedure.primarySource"
-                   id="performer"
-                   type="radio"
-                   value="true"
-                   name="primarySource"
-                   class="default-radio"
-                   :checked="modalProcedure.primarySource === true"
-            >
-            <label for="performer" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                {{ __('patients.performer') }}
-            </label>
-        </div>
+    {{-- Procedure with primary_source=false could be send only with encounter package --}}
+    @if($context === 'encounter')
+        {{-- Information source (performer of other source) --}}
+        <div class="flex gap-20 md:mb-5 mb-4">
+            <h2 class="default-p font-bold">{{ __('patients.information_source') }}</h2>
+            <div class="flex items-center">
+                <input @change="modalProcedure.primarySource = true"
+                       x-model.boolean="modalProcedure.primarySource"
+                       id="performer"
+                       type="radio"
+                       value="true"
+                       name="primarySource"
+                       class="default-radio"
+                       :checked="modalProcedure.primarySource === true"
+                >
+                <label for="performer" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                    {{ __('patients.performer') }}
+                </label>
+            </div>
 
-        <div class="flex items-center">
-            <input @change="modalProcedure.primarySource = false"
-                   x-model.boolean="modalProcedure.primarySource"
-                   id="patient"
-                   type="radio"
-                   value="false"
-                   name="primarySource"
-                   class="default-radio"
-                   :checked="modalProcedure.primarySource === false"
-            >
-            <label for="patient" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                {{ __('patients.other_source') }}
-            </label>
+            <div class="flex items-center">
+                <input @change="modalProcedure.primarySource = false"
+                       x-model.boolean="modalProcedure.primarySource"
+                       id="patient"
+                       type="radio"
+                       value="false"
+                       name="primarySource"
+                       class="default-radio"
+                       :checked="modalProcedure.primarySource === false"
+                >
+                <label for="patient" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                    {{ __('patients.other_source') }}
+                </label>
+            </div>
         </div>
-    </div>
+    @endif
 
     {{-- When the performer is chosen --}}
     <div x-show="modalProcedure.primarySource === true" class="form-row-2">

@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('email')->nullable()->index();
             $table->date('birth_date')->nullable();
             $table->string('gender')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('tax_id')->nullable()->index();
             $table->boolean('no_tax_id')->nullable()->default(false);
             $table->text('about_myself')->nullable();

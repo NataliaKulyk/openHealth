@@ -33,6 +33,7 @@ class BirthDate implements ValidationRule
             $fail(__('validation.employee.party.birth_date_value'));
         }
 
+        // This pattern has used eHealth in his own validation of the Birth Date
         if (!preg_match('/^(\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))?)?$/u', $value)) {
             $fail(__('validation.employee.birth_date_iso'));
         }

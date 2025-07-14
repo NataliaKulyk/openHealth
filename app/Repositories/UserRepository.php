@@ -26,13 +26,15 @@ class UserRepository
                 'email' => $party['email']
             ],
             [
-                'tax_id'   => $party['tax_id'] ?? '',
                 'password' => Hash::make(\Illuminate\Support\Str::random(8))
             ]
         );
 
         // Set Role
         auth()->shouldUse('ehealth'); // TODO: examine is this suitable for all user creation cases...
+
+        setPermissionsTeamId($legalEntity->id); // TODO: this need to additional checking
+        $user->unsetRelation('roles');
 
         $user->assignRole($role);
         $user->save();

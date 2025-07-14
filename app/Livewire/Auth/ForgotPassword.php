@@ -32,7 +32,7 @@ class ForgotPassword extends Component
                 return $this->redirectRoute('login', navigate: true);
             }
 
-            /* Password has 60 seconds timeout between sending another email */
+            // Password has 60 seconds timeout between sending another email
             if ($status === Password::RESET_THROTTLED) {
                 Log::warning('Reset attempt throttled', ['time' => now(), 'email' => $this->email]);
 
@@ -41,7 +41,7 @@ class ForgotPassword extends Component
                 return null;
             }
 
-            /* If user trying get password reset link at unregistered email */
+            // If user trying get password reset link at unregistered email
             if ($status === Password::INVALID_USER) {
                 Log::warning('Password reset. Wrong email', ['time' => now(), 'email' => $this->email]);
 

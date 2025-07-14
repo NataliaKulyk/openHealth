@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,6 +15,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        Artisan::call('cache:clear');
+
         $this->call([
             /*
              * populates permissions and roles tables, see spaties laravel-permissions docs
@@ -26,6 +29,7 @@ class DatabaseSeeder extends Seeder
             // Populates following tables legal_entities, users and model has roles with test data
             $this->call(TestUserMigrate::class);
         }
+
         $this->fixPostgresSequence('employees');
     }
 

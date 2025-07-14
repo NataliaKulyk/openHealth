@@ -181,17 +181,6 @@ class DiagnosticReportComponent extends Component
             ->toArray();
     }
 
-    /**
-     * Open modal by provided model name.
-     *
-     * @param  string  $model
-     * @return void
-     */
-    public function create(string $model): void
-    {
-        $this->openModal($model);
-    }
-
     public function updatedFile(): void
     {
         $this->keyContainerUpload = $this->file;

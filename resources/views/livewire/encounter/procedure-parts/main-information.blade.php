@@ -3,23 +3,25 @@
         {{ __('patients.main_information') }}
     </legend>
 
-    {{-- Is referral available --}}
     <div>
-        <div class="form-row-2">
-            <div class="form-group group">
-                <input x-model="modalProcedure.isReferralAvailable"
-                       @click="modalProcedure.isReferralAvailable = !modalProcedure.isReferralAvailable"
-                       type="checkbox"
-                       name="isDiagnosticReferralAvailable"
-                       id="isDiagnosticReferralAvailable"
-                       class="default-checkbox mb-1"
-                       tabindex="-1"
-                />
-                <label class="default-p" for="isDiagnosticReferralAvailable">
-                    {{ __('patients.referral_available') }}
-                </label>
+        {{-- Is referral available, show only in encounter. For single procedure referral is neccessary. --}}
+        @if($context === 'encounter')
+            <div class="form-row-2">
+                <div class="form-group group">
+                    <input x-model="modalProcedure.isReferralAvailable"
+                           @click="modalProcedure.isReferralAvailable = !modalProcedure.isReferralAvailable"
+                           type="checkbox"
+                           name="isDiagnosticReferralAvailable"
+                           id="isDiagnosticReferralAvailable"
+                           class="default-checkbox mb-1"
+                           tabindex="-1"
+                    />
+                    <label class="default-p" for="isDiagnosticReferralAvailable">
+                        {{ __('patients.referral_available') }}
+                    </label>
+                </div>
             </div>
-        </div>
+        @endif
 
         {{-- When referral available --}}
         <template x-if="modalProcedure.isReferralAvailable">

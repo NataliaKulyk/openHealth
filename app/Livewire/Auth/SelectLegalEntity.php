@@ -68,35 +68,35 @@ class SelectLegalEntity extends Component
             return null;
         }
 
-        /* This shouldn't happen never but who knows... */
+        // This shouldn't happen never but who knows...
         if (!$this->user) {
             Log::error(__("Accidentally lost user authentication on redirect to 'select-legal-entity' page"));
 
             return Redirect::route('login');
         }
 
-        /* Get array of the all LegalEntity ids available to the User */
+        // Get array of the all LegalEntity ids available to the User
         $this->accessibleLegalEntities = session()->has('user_accessible_legal_entities')
             ? session()->get('user_accessible_legal_entities')
             : $this->user->accessibleLegalEntities()->toArray();
 
-        /* This shouldn't happen never but who knows... */
+        // This shouldn't happen never but who knows...
         if (empty($this->accessibleLegalEntities)) {
             Log::error(__("Cannot find any suitable LegalEntities for user {$this->user->id} for 'select-legal-entity' page"));
 
             return redirect( route('create.legalEntities'));
         }
 
-        /* If user has access to only one Legal Entity */
+        // If user has access to only one Legal Entity
         if (count($this->accessibleLegalEntities) === 1) {
-            /* Get first ID (here it is only one) from array */
+            // Get first ID (here it is only one) from array
             $this->selectedLegalEntityId = $this->accessibleLegalEntities[0];
 
             $legalEntity = LegalEntity::find($this->selectedLegalEntityId);
 
             return Redirect::route('dashboard', [$legalEntity]);
         } else {
-            /* Get array with the id and names of the all LegalEntittes available to the User */
+            // Get array with the id and names of the all LegalEntittes available to the User
             $this->accessibleLegalEntities = $this->getLegalEntitesList($this->accessibleLegalEntities);
         }
 

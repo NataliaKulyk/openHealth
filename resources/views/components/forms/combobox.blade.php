@@ -93,7 +93,7 @@
         @focus="open=true"
         @mousedown="open=(!open ? true : false)"
         @keydown.escape.window="open = false;"
-        @blur="setTimeout(() => open = false, 150)"
+        @focusout.window="setTimeout(() => open = false, 150)"
         x-init="if (search) $el.classList.add('not-empty')"
         x-effect="$el.classList.toggle('not-empty', !!search)"
     />

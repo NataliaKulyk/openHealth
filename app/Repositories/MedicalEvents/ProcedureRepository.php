@@ -12,14 +12,114 @@ use App\Models\MedicalEvents\Sql\Procedure;
 use App\Models\MedicalEvents\Sql\ProcedureComplicationDetail;
 use App\Models\MedicalEvents\Sql\ProcedureReasonReference;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use App\Core\Arr as CoreArr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class ProcedureRepository extends BaseRepository
 {
+    protected string $employeeUuid;
+
+    public function __construct(Model $model)
+    {
+        parent::__construct($model);
+
+        $this->employeeUuid = Auth::user()?->getProcedureWriterEmployee()->uuid;
+    }
+
+    /**
+     * Format data before request.
+     *
+     * @param  array  $procedure
+     * @return array
+     */
+    public function formatEHealthRequest(array $procedure): array
+    {
+        if ($procedure['referralType'] === 'electronic' || $procedure['referralType'] === '') {
+            unset($procedure['paperReferral']);
+        }
+
+        if ($procedure['referralType'] === 'paper' || $procedure['referralType'] === '') {
+            unset($procedure['basedOn']);
+        }
+
+        // delete frontend properties
+        unset($procedure['isReferralAvailable'], $procedure['referralType']);
+
+        $procedure['id'] = Str::uuid()->toString();
+        $procedure['status'] = 'completed';
+
+        $procedure['recordedBy']['identifier']['value'] = $this->employeeUuid;
+
+        $procedure['managingOrganization'] = [
+            'identifier' => [
+                'type' => [
+                    'coding' => [['system' => 'eHealth/resources', 'code' => 'legal_entity']],
+                    'text' => ''
+                ],
+                'value' => legalEntity()->uuid
+            ],
+        ];
+
+        if (!empty($procedure['reasonReferences'])) {
+            foreach ($procedure['reasonReferences'] as &$reasonReference) {
+                $code = str_contains($reasonReference['code']['coding'][0]['system'], 'condition_codes')
+                    ? 'condition'
+                    : 'observation';
+
+                $identifier = [
+                    'type' => [
+                        'coding' => [['system' => 'eHealth/resources', 'code' => $code]]
+                    ],
+                    'value' => $reasonReference['id']
+                ];
+
+                // Keep only the identifier key
+                $reasonReference = ['identifier' => $identifier];
+            }
+
+            unset($reasonReference);
+        }
+
+        if ($procedure['outcome']['coding'][0]['code'] === '') {
+            unset($procedure['outcome']);
+        }
+
+        if ($procedure['usedCodes'][0]['coding'][0]['code'] === '') {
+            unset($procedure['outcome']);
+        }
+
+        $normalizedData = schemaService()
+            ->setDataSchema($procedure, app(PatientApi::class))
+            ->requestSchemaNormalize('schemaProcedurePackageRequest')
+            ->camelCaseKeys()
+            ->getNormalizedData();
+
+        // schema service delete effectivePeriod, performer and reportOrigin, because of 'One Of', so manually add it
+        if ($normalizedData['primarySource']) {
+            $normalizedData['performer'] = $procedure['performer'];
+            $normalizedData['performer']['identifier']['value'] = $this->employeeUuid;
+        } else {
+            $normalizedData['reportOrigin'] = $procedure['reportOrigin'];
+        }
+
+        $normalizedData['performedPeriod'] = [
+            'start' => convertToISO8601(
+                $procedure['performedPeriodStartDate'] . $procedure['performedPeriodStartTime']
+            ),
+            'end' => convertToISO8601(
+                $procedure['performedPeriodEndDate'] . $procedure['performedPeriodEndTime']
+            ),
+        ];
+
+        return $normalizedData;
+    }
+
     /**
      * Store procedure in DB.
      *
@@ -140,6 +240,8 @@ class ProcedureRepository extends BaseRepository
                     }
 
                     $procedure->usedCodes()->attach($usedCodeIds);
+
+                    $procedureId = $procedure->id;
                 }
 
                 // Return the ID when creating separately

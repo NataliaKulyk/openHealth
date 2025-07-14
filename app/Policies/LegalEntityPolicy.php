@@ -38,7 +38,7 @@ class LegalEntityPolicy
     */
    public function create(User $user)
    {
-        /* Temporarily. Available for all unconnected users (to the LegalEntity). Until change for real logic */
+        // Temporarily. Available for all unconnected users (to the LegalEntity). Until change for real logic
         if ($user->roles->isEmpty()) {
             return true;
         }

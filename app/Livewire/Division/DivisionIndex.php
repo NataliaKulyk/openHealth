@@ -12,15 +12,13 @@ use App\Models\Division;
 use Livewire\Attributes\On;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
-use App\Repositories\AddressRepository;
+use App\Repositories\Repository;
 use App\Livewire\Division\Api\DivisionRequestApi;
 
 class DivisionIndex extends Component
 {
     use WithPagination;
     use FormTrait;
-
-    protected ?AddressRepository $addressRepository;
 
     public ?array $working_hours = [
         'mon' => 'Понеділок',
@@ -39,11 +37,6 @@ class DivisionIndex extends Component
     public array $dictionaryNames = [
         'DIVISION_TYPE'
     ];
-
-    public function boot(AddressRepository $addressRepository): void
-    {
-        $this->addressRepository = $addressRepository;
-    }
 
     public function mount(LegalEntity $legalEntity): void
     {
@@ -80,9 +73,11 @@ class DivisionIndex extends Component
         $this->dispatch('flashMessage', ['message' => __('Інформацію успішно оновлено'), 'type' => 'success']);
     }
 
-    public function syncDivisionsSave($responses): void
+    public function syncDivisionsSave($responses, ?LegalEntity $legalEntity = null): void
     {
-        DB::transaction(function () use ($responses) {
+        $legalEntity ??= legalEntity();
+
+        DB::transaction(function () use ($responses, $legalEntity) {
             foreach ($responses as $response) {
                 $addressData = $response['addresses'];
 
@@ -101,9 +96,9 @@ class DivisionIndex extends Component
                 $division->setAttribute('external_id', $response['external_id']);
                 $division->setAttribute('status', $response['status']);
 
-                $savedDivision = legalEntity()?->division()->save($division);
+                $savedDivision = $legalEntity?->division()->save($division);
 
-                $this->addressRepository->addAddresses($savedDivision, $addressData);
+                Repository::address()->addAddresses($savedDivision, $addressData);
             }
         });
     }

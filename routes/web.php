@@ -10,14 +10,15 @@ use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\EHealthLoginController;
 use App\Livewire\Employee\EmployeePositionAdd;
+use App\Livewire\License\LicenseEdit;
+use App\Livewire\License\LicenseView;
 use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Employee\EmployeeShow;
-use App\Livewire\Patient\PatientForm;
-use App\Livewire\License\LicenseShow;
+use App\Livewire\Procedure\ProcedureCreate;
 use App\Models\LegalEntity;
+use App\Models\License;
 use Illuminate\Support\Facades\Route;
-use App\Livewire\License\LicenseIndex;
 use App\Livewire\Patient\PatientIndex;
 use App\Livewire\Contract\ContractForm;
 use App\Livewire\Division\DivisionForm;
@@ -31,14 +32,14 @@ use App\Http\Controllers\EmailController;
 use App\Livewire\Employee\EmployeeCreate;
 use App\Livewire\Encounter\EncounterEdit;
 use App\Livewire\Encounter\EncounterCreate;
-use App\Livewire\License\Forms\LicenseForms;
 use App\Livewire\LegalEntity\EditLegalEntity;
+use App\Livewire\License\LicenseCreate;
+use App\Livewire\License\LicenseIndex;
 use App\Livewire\Patient\Records\PatientData;
 use App\Livewire\Declaration\DeclarationIndex;
 use App\Livewire\LegalEntity\CreateLegalEntity;
 use App\Livewire\Patient\Records\PatientSummary;
 use App\Livewire\Division\HealthcareServiceForm;
-use App\Livewire\License\Forms\CreateNewLicense;
 use App\Livewire\Patient\Records\PatientEpisodes;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Livewire\Dashboard;
@@ -98,7 +99,6 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/{division}/healthcare-service', HealthcareServiceForm::class)->name('healthcare_service.index');
         });
 
-
         Route::prefix('employees')->name('employee.')->group(function () {
             Route::get('/', EmployeeIndex::class)->name('index');
             Route::get('/create', EmployeeCreate::class)->name('create');
@@ -112,12 +112,24 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/form/{id?}', ContractForm::class)->name('contract.form');
         });
 
-        Route::prefix('license')->group(function () {
-            Route::get('/', LicenseIndex::class)->name('license.index');
-            Route::get('/update/{id}', LicenseForms::class)->name('license.form');
-            Route::get('/create', CreateNewLicense::class)->name('license.create');
-            Route::get('/show/{id}', LicenseShow::class)->name('license.show');
+
+        // Routes related to legal entity licenses; primary license can't be edited
+        Route::prefix('license')->middleware(['permission:license:read|license:write'])->group(function () {
+
+            Route::get('/', LicenseIndex::class)->name('license.index')->middleware('permission:license:read');
+            Route::get('/create', LicenseCreate::class)->name('license.create')->middleware('permission:license:write');
+
+            Route::middleware(['can:access,license'])->prefix('{license}')->whereNumber('license')->group(function () {
+                Route::get('/', function (LegalEntity $legalEntity, License $license) {
+                    if (Gate::allows('write', [$license, $legalEntity]) && !$license->isPrimary) {
+                        return App::call(LicenseEdit::class, [$legalEntity, $license]);
+                    } else if (Gate::allows('access', [$license, $legalEntity])) {
+                        return App::call(LicenseView::class, [$legalEntity, $license]);
+                    }
+                })->name('license.view');
+            });
         });
+
 
         Route::prefix('declaration')->group(function () {
             Route::get('/', DeclarationIndex::class)->name('declaration.index');
@@ -135,6 +147,8 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
 
                 Route::get('/{patientId}/diagnostic-report/create', DiagnosticReportCreate::class)->name('diagnostic-report.create');
+
+                Route::get('/{patientId}/procedure/create', ProcedureCreate::class)->name('procedure.create');
             });
         });
     });

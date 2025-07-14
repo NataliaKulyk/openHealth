@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Support\Str;
 use App\Models\Person\Person;
+use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
@@ -17,6 +18,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
@@ -39,7 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'email',
         'password',
-        'secret_key'
+        'secret_key',
     ];
 
     /**
@@ -79,7 +81,11 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $with = ['person'];
 
-    /* This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling */
+    /**
+     * This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling.
+     *
+     * @return string
+     */
     public function getProfilePhotoUrlAttribute(): string
     {
         return $this->profile_photo_path
@@ -87,7 +93,11 @@ class User extends Authenticatable implements MustVerifyEmail
             : $this->defaultProfilePhotoUrl();
     }
 
-    /* This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling */
+    /**
+     * This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling.
+     *
+     * @return string
+     */
     public function defaultProfilePhotoUrl(): string
     {
         return '';
@@ -101,24 +111,44 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Person::class);
     }
 
-    /* Check if user has access to the Legal Entity with specified UUID */
+    /**
+     * Check if user has access to the Legal Entity with specified UUID.
+     *
+     * @param string $legalEntityUuid
+     * @return bool
+     */
     public function hasAccessToLegalEntityByUuid(string $legalEntityUuid): bool
     {
         return $this->employees()
-                    ->whereHas('legalEntity', function ($query) use ($legalEntityUuid) {
-                        $query->where('uuid', $legalEntityUuid);
-                    })
-                    ->exists();
+            ->whereHas('legalEntity', function ($query) use ($legalEntityUuid) {
+                $query->where('uuid', $legalEntityUuid);
+            })
+            ->exists();
     }
 
-    /* Get ALL Legal Entites IDs available for this user */
+    /**
+     * Get ALL Legal Entities IDs available for this user
+     *
+     * @return Collection
+     * Get the party associated with the user.
+     */
+    public function party(): HasOne
+    {
+        return $this->hasOne(Party::class);
+    }
+
+    /**
+     * Get ALL Legal Entites IDs available for this user
+     *
+     * @return Collection<int|string, mixed>
+     */
     public function accessibleLegalEntities(): Collection
     {
         return $this->employees()
-                    ->with('legalEntity')
-                    ->get()
-                    ->unique('legal_entity_id')
-                    ->pluck('legal_entity_id');
+            ->with('legalEntity')
+            ->get()
+            ->unique('legal_entity_id')
+            ->pluck('legal_entity_id');
     }
 
     // TODO: Check why need it for??????
@@ -138,7 +168,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Overides trait's method to exclude unused scopes
+     * Overrides trait's method to exclude unused scopes
      * @return Collection<Permission> a list of scopes associated with the user and entity type
      */
     public function getAllPermissions(string $legalEntityClientId): Collection
@@ -157,15 +187,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return $scopes->filter(
             fn (Permission $permission) =>
-            !collect($exclude)->some(fn($excluded) => Str::startsWith($permission->name, $excluded))
+            !collect($exclude)->some(fn ($excluded) => Str::startsWith($permission->name, $excluded))
         );
     }
 
     /**
      * Retrieves the scopes assigned to a specific user.
      *
-     * @param User $user The user instance for which to retrieve scopes
-     *
+     * @param  string  $legalEntityClientId
      * @return string The concatenated string of user's scopes
      */
     public function getScopes(string $legalEntityClientId): string
@@ -180,13 +209,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getEncounterWriterEmployee(): ?Employee
     {
-        // Ordered role from most valuable to least with permission encounter:write
-        $priorityRoles = ['DOCTOR', 'SPECIALIST', 'ASSISTANT', 'MED_COORDINATOR'];
-
-        // Get first by roles priority
-        return collect($priorityRoles)
-            ->map(fn (string $type) => $this->employees->firstWhere('employee_type', $type))
-            ->first();
+        return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT', 'MED_COORDINATOR']);
     }
 
     /**
@@ -196,13 +219,17 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getDiagnosticReportWriterEmployee(): ?Employee
     {
-        // Ordered role from most valuable to least with permission diagnostic_report:write
-        $priorityRoles = ['DOCTOR', 'SPECIALIST', 'ASSISTANT', 'LABORANT'];
+        return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT', 'LABORANT']);
+    }
 
-        // Get first by roles priority
-        return collect($priorityRoles)
-            ->map(fn (string $type) => $this->employees->firstWhere('employee_type', $type))
-            ->first();
+    /**
+     * Get employee by priority with procedure:write permission.
+     *
+     * @return Employee|null
+     */
+    public function getProcedureWriterEmployee(): ?Employee
+    {
+        return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT']);
     }
 
     /**
@@ -213,5 +240,18 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getEmailVerifiedAtAttribute()
     {
         return $this->attributes['email_verified_at'];
+    }
+
+    /**
+     * Get employee by priority with specific write permission. Example: procedure:write.
+     *
+     * @param  array  $priorityRoles Ordered role from most valuable to least
+     * @return Employee|null
+     */
+    protected function getWriterEmployeeByRolePriority(array $priorityRoles): ?Employee
+    {
+        return collect($priorityRoles)
+            ->map(fn (string $type) => $this->employees->firstWhere('employee_type', $type))
+            ->first();
     }
 }

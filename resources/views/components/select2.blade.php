@@ -107,7 +107,7 @@
                             this.options = Object.entries(rawData)
                                 // Based on category value show relevant codes or when category is not defined
                                 .filter(([_, service]) => {
-                                    return service.category === newCode || service.category === null;
+                                    return service.category === newCode;
                                 })
                                 .map(([_, service]) => ({
                                     value: service.id,
