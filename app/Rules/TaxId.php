@@ -6,6 +6,7 @@
 
 namespace App\Rules;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Translation\PotentiallyTranslatedString;
@@ -14,6 +15,8 @@ class TaxId implements ValidationRule
 {
     protected bool $noTaxId;
 
+    protected string $email;
+
     /**
      * Check taxId value (IPN).
      * You can pass the noTaxId value.
@@ -21,8 +24,9 @@ class TaxId implements ValidationRule
      *
      * @param array $dates // 'startDate' - the date of start
      */
-    public function __construct(bool $noTaxId = false)
+    public function __construct(string $email, bool $noTaxId = false)
     {
+        $this->email = $email;
         $this->noTaxId = $noTaxId;
     }
 
@@ -44,6 +48,24 @@ class TaxId implements ValidationRule
         } else {
             if (!preg_match('/^[0-9]{10}$/', $value)) {
                 $fail(__('validation.attributes.errors.invalidTaxId'));
+            }
+
+            $user = User::where('email', $this->email)->first();
+
+            /*
+             * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
+             * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
+             */
+            if ($user?->party && $value !== $user->party->taxId) {
+                $fail(__('validation.employee.wrong_tax_id'));
+            }
+
+            /*
+             * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
+             * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
+             */
+            if ($user?->party && $user->party->taxId && !$value) {
+                $fail(__('validation.employee.missed_tax_id'));
             }
         }
     }

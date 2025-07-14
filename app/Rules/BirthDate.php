@@ -6,14 +6,23 @@
 
 namespace App\Rules;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Translation\PotentiallyTranslatedString;
 
 class BirthDate implements ValidationRule
 {
-    const string MIN_DATE = '1900-01-01';
+    protected string $email;
+
+    public function __construct(string $email = '')
+    {
+        $this->email = $email;
+    }
+
+    protected const string MIN_DATE = '1900-01-01';
 
     /**
      * Run the validation rule.
@@ -36,6 +45,16 @@ class BirthDate implements ValidationRule
         // This pattern has used eHealth in his own validation of the Birth Date
         if (!preg_match('/^(\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))?)?$/u', $value)) {
             $fail(__('validation.employee.birth_date_iso'));
+        }
+
+        $user = User::where('email', $this->email)->first();
+
+        /**
+         *  Check OWNER's birth_date from request is equal to birth_date from it's party of OWNER's employee_id
+         *  see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
+         */
+        if ($user?->party && ! $birthDate->eq($user->party->birthDate)) {
+            $fail(__('validation.employee.owner_date_mismatch'));
         }
     }
 }

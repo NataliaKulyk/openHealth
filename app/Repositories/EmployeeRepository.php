@@ -373,6 +373,12 @@ class EmployeeRepository
                         $employeeData['party']['email'] = $user->email;
 
                         if ($employeeData['employee_type'] !== 'OWNER') {
+                            Log::info('assignRole:', ['user' => $employeeData['employee_type']]); // TODO: remove it after testing
+
+                            auth()->shouldUse('web');
+                            $user->assignRole($employeeData['employee_type']);
+
+                            auth()->shouldUse('ehealths');
                             $user->assignRole($employeeData['employee_type']);
                         }
                     }
@@ -408,7 +414,7 @@ class EmployeeRepository
                 }
             });
         } catch (Exception $err) {
-            Log::error('New Owner: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
+            Log::error('[authenticateNewOwner]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
 
             return false;
         }
@@ -469,7 +475,7 @@ class EmployeeRepository
                 }
             });
         } catch (Exception $err) {
-            Log::error('New Owner: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
+            Log::error('[authenticateNewEmployees]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
 
             return false;
         }
@@ -548,7 +554,7 @@ class EmployeeRepository
                 }
             });
         } catch (Exception $err) {
-            Log::error('New Owner: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
+            Log::error('[checkForEmployeeUpdate]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
 
             return false;
         }

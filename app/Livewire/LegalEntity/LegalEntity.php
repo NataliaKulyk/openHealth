@@ -24,6 +24,7 @@ use App\Classes\Cipher\Traits\Cipher;
 use App\Classes\Cipher\Api\CipherApi;
 use Illuminate\Support\Facades\Cache;
 use App\Repositories\PhoneRepository;
+use Illuminate\Auth\Events\Registered;
 use App\Repositories\AddressRepository;
 use App\Classes\eHealth\Api\EmployeeApi;
 use App\Models\Employee\EmployeeRequest;
@@ -33,7 +34,6 @@ use Illuminate\Validation\ValidationException;
 use App\Models\LegalEntity as LegalEntityModel;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesForms;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesRequestApi;
-
 abstract class LegalEntity extends Component
 {
     use FormTrait,
@@ -41,12 +41,12 @@ abstract class LegalEntity extends Component
         WithFileUploads,
         AddressSearch;
 
-    protected const string STEP_PATH='views/livewire/legal-entity/step';
+    protected const STEP_PATH='views/livewire/legal-entity/step';
 
     /**
      * @var string
      */
-    protected const string CACHE_PREFIX = 'register_legal_entity_form';
+    protected const CACHE_PREFIX = 'register_legal_entity_form';
 
     /**
      * @var string The Cache ID to store Legal Entity being filled by the current user
@@ -579,6 +579,8 @@ abstract class LegalEntity extends Component
                     throw new Exception('Error: create User: ' . $err->getMessage(), 2);
                 }
 
+                $user->unsetRelation('roles');
+
                 try {
                     $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id'], $user?->id ?? null);
                 } catch (Exception $err) {
@@ -790,12 +792,19 @@ abstract class LegalEntity extends Component
             return null;
         }
 
+        auth()->shouldUse('web');
+
+        // Assign the 'OWNER' role to the user authenticated via web guad
+        $user->assignRole('OWNER');
+
         auth()->shouldUse('ehealth');
 
-        // Assign the 'OWNER' role to the user
+        // Assign the 'OWNER' role to the user authenticaed via ehealth guard
         $user->assignRole('OWNER');
 
         if (!$isOwner) {
+            event(new Registered($user));
+
             // Send an email with the owner credentials to the user
             Mail::to($user->email)->send(new OwnerCredentialsMail($user->email, $password));
             Mail::to($authenticatedUser->email)->send(new OwnerCredentialsMail( '', '', __('Нового користувача зареєстровано в системі. На вказану адресу ' . $user->email . ' надіслано дані для входу в систему')));
