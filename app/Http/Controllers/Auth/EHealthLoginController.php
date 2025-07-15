@@ -18,7 +18,7 @@ use App\Classes\eHealth\Api\EmployeeApi;
 use App\Models\Employee\EmployeeRequest;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
-use App\Classes\eHealth\Request as eHealthRequest;
+use App\Classes\eHealth\Request as EHealthRequest;
 use Illuminate\Contracts\Validation\Validator as ResponseValidator;
 use Illuminate\Validation\Rule;
 
@@ -236,7 +236,7 @@ class EHealthLoginController extends Controller
 
         // Logout user from the system
         if (session()->has($authEhealth) || session()->has(config('ehealth.api.oauth.bearer_token'))) {
-            new eHealthRequest('POST', config('ehealth.api.oauth.logout'), [])->sendRequest();
+            new EHealthRequest('POST', config('ehealth.api.oauth.logout'), [])->sendRequest();
 
             // Forget bearer token and other token's data
             app(TokenStorage::class)->clear();
