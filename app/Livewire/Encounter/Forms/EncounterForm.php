@@ -76,6 +76,8 @@ class EncounterForm extends Form
 
     public array $procedures;
 
+    public array $clinicalImpressions;
+
     protected function rules(): array
     {
         return [
@@ -317,7 +319,15 @@ class EncounterForm extends Form
                 'date',
                 'before_or_equal:now',
                 'after:procedures.performedPeriod.start'
-            ]
+            ],
+
+            'clinicalImpressions.code.coding.*.code' => [
+                'required',
+                'string',
+                'max:255',
+                new InDictionary('eHealth/clinical_impression_patient_categories')
+            ],
+            'clinicalImpressions.description' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

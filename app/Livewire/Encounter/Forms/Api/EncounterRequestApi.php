@@ -206,6 +206,44 @@ class EncounterRequestApi extends PersonApi
     }
 
     /**
+     * Build an array of parameters for getting clinical impressions using a search parameters list.
+     *
+     * @param  string  $patientUuid  MPI identifier of the patient. Example: 7c3da506-804d-4550-8993-bf17f9ee0402
+     * @param  string|null  $encounterUuid  Identifier of the encounter in clinical impression. Example: 7c3da506-804d-4550-8993-bf17f9ee0400
+     * @param  string|null  $episodeUuid  Example: f48d1b6c-a021-4d6a-a5a4-aee93e152ecc
+     * @param  string|null  $code  Clinical impression's code. Example: insulin_1
+     * @param  string|null  $status  Clinical impression's status. Example: completed
+     * @param  string|null  $effectiveDateTo  Date of clinical impression. Example: 2017-09-01
+     * @param  string|null  $effectiveDateFrom  Date of clinical impression. Example: 2017-09-02
+     * @param  int  $page  Page number. Default: 1
+     * @param  int  $pageSize  A limit on the number of objects to be returned, between 1 and 100. Default: 50.
+     * @return array
+     */
+    public static function buildGetClinicalImpressionBySearchParams(
+        string $patientUuid,
+        ?string $encounterUuid = null,
+        ?string $episodeUuid = null,
+        ?string $code = null,
+        ?string $status = null,
+        ?string $effectiveDateTo = null,
+        ?string $effectiveDateFrom = null,
+        int $page = 1,
+        int $pageSize = 50
+    ): array {
+        return [
+            'patient_id' => $patientUuid,
+            'encounter_id' => $encounterUuid,
+            'episode_id' => $episodeUuid,
+            'code' => $code,
+            'status' => $status,
+            'effective_date_to' => $effectiveDateTo,
+            'effective_date_from' => $effectiveDateFrom,
+            'page' => $page,
+            'page_size' => $pageSize
+        ];
+    }
+
+    /**
      * Build an array of parameters for getting services dictionary.
      *
      * @param  string|null  $code  Service code. Example: JF2 01.

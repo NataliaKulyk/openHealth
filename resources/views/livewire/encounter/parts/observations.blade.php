@@ -66,19 +66,19 @@
                                  openDropdown: false,
                                  toggle() {
                                      if (this.openDropdown) {
-                                         return this.close()
+                                         return this.close();
                                      }
 
-                                     this.$refs.button.focus()
+                                     this.$refs.button.focus();
 
-                                     this.openDropdown = true
+                                     this.openDropdown = true;
                                  },
                                  close(focusAfter) {
-                                     if (!this.openDropdown) return
+                                     if (!this.openDropdown) return;
 
-                                     this.openDropdown = false
+                                     this.openDropdown = false;
 
-                                     focusAfter && focusAfter.focus()
+                                     focusAfter && focusAfter.focus();
                                  }
                              }"
                              @keydown.escape.prevent.stop="close($refs.button)"

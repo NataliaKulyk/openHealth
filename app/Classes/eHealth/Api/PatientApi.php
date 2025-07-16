@@ -316,6 +316,23 @@ class PatientApi
         )->sendRequest();
     }
 
+    /**
+     * Get Clinical impression list for a specified patient filtered by search params.
+     *
+     * @param  string  $patientId
+     * @param  array  $params
+     * @return array
+     * @throws ApiException
+     */
+    public static function getClinicalImpressionBySearchParams(string $patientId, array $params): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientId/clinical_impressions",
+            $params
+        )->sendRequest();
+    }
+
     public function schemaRequest(): array
     {
         return [

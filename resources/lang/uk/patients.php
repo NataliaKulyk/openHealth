@@ -39,6 +39,7 @@ return [
     'notes' => 'Нотатки',
     'author' => 'Автор',
     'division_name' => 'Місце надання послуг',
+    'conclusion' => 'Заключення',
 
     'relation_type' => [
         'primary' => 'Основний',
@@ -124,7 +125,7 @@ return [
     'medical_reports' => 'Медичні висновки',
     'procedures' => 'Процедури',
     'treatment_plans' => 'Плани лікування',
-    'clinical_assessments' => 'Клінічні оцінки',
+    'clinical_impressions' => 'Клінічні оцінки',
 
     // Main data
     'referral_available' => 'Є направлення',
@@ -186,7 +187,6 @@ return [
 
     // Diagnostic reports
     'diagnostic_report' => 'Діагностичний звіт',
-    'conclusion' => 'Заключення',
     'conclusion_code' => 'Код заключення(за МКХ-10АМ)',
     'requisition_type' => 'Тип направлення',
     'electronic' => 'Електронне',
@@ -229,5 +229,10 @@ return [
     'active' => 'діючий',
     'added' => 'Додано',
     'rehabilitation_aids' => 'Допоміжні засоби реабілітації',
-    'complications_arising_during_the_procedure' => 'Ускладнення, що виникли під час процедури'
+    'complications_arising_during_the_procedure' => 'Ускладнення, що виникли під час процедури',
+
+    // Clinical impressions
+    'clinical_impression' => 'Клінічна оцінка',
+    'set_of_rule_engines' => 'Набір механізмів правил',
+    'previous_clinical_impression' => 'Попередня клінічна оцінка'
 ];

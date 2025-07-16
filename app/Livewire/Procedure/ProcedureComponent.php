@@ -29,7 +29,7 @@ class ProcedureComponent extends Component
     public Form $form;
 
     /**
-     * ID of the patient for which create an encounter.
+     * ID of the patient for whom the procedure is created.
      * @var int
      */
     #[Locked]

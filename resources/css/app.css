@@ -163,12 +163,7 @@ input:-webkit-autofill ~ .label {
     @apply ms-2 text-gray-900 dark:text-white;
 }
 
-.default-svg {
-    @apply text-gray-900 dark:text-white;
-}
-
 /* Dropdown panel */
-
 .dropdown-panel {
     @apply absolute left-0 rounded-lg shadow-sm mt-2 z-10 origin-top-left bg-white dark:bg-gray-700 outline-none border border-gray-200 dark:border-gray-700 text-sm text-gray-700
 }

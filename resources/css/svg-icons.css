@@ -58,4 +58,15 @@ button.item-remove {
     background-color: var(--color-gray-400);
 }
 
+.rule-engine-rules {
+    @apply relative pl-8 font-bold underline cursor-pointer;
 
+    &:before {
+        mask: url("../icons/info-circle.svg") no-repeat;
+        @apply content-[''] absolute top-1/2 left-0 -translate-y-1/2 w-6 h-6 bg-gray-900;
+    }
+}
+
+.dark .rule-engine-rules:before {
+    background-color: var(--color-gray-400);
+}

@@ -104,7 +104,7 @@
                     <svg width="24" height="24" class="dark:text-white">
                         <use xlink:href="#svg-check"></use>
                     </svg>
-                    <p class="default-p">{{ __('patients.clinical_assessments') }}</p>
+                    <p class="default-p">{{ __('patients.clinical_impressions') }}</p>
                 </a>
             </li>
         </ul>
