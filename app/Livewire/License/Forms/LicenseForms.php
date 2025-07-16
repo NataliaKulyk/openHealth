@@ -160,10 +160,10 @@ class LicenseForms extends Component
     public function sendApiRequest($data): array
     {
         if ($this->license_uuid) {
-            return LicenseRequestApi::update($this->license_uuid, $data);
+            return LicenseRequest::update($this->license_uuid, $data);
         }
 
-        return LicenseRequestApi::create($data);
+        return LicenseRequest::create($data);
     }
 
     public function back()

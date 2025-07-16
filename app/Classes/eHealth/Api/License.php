@@ -2,31 +2,44 @@
 
 namespace App\Classes\eHealth\Api;
 
-use App\Classes\eHealth\Request;
-use App\Core\Arr;
+use App\Classes\eHealth\EHealthRequest as Request;
+use App\Classes\eHealth\EHealthResponse;
 use App\Rules\InDictionary;
+use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class LicenseApi extends Request
+class License extends Request
 {
     public const URL = '/api/licenses';
 
-    public static function _get(array $params = []): array
+    public function get(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
     {
-        $result = (new Request('GET', self::URL, $params))->sendRequest();
-        return self::validateAll($result);
+        return parent::get($url, $query);
     }
 
-    public static function _create(array $params = []): array
+    /**
+     * @param string $url
+     * @param array $data
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException
+     */
+    public function post(string $url = self::URL, $data = []): PromiseInterface|EHealthResponse
     {
-        return (new Request('POST', self::URL, $params))->sendRequest();
+        return parent::post($url, $data);
     }
 
-    public static function _update(string $id, array $params = []): array
+    /**
+     * @param string $uuid unique eHealth identifier of the license
+     * @param array $data
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException
+     */
+    public function patch(string $uuid, $data = []): PromiseInterface|EHealthResponse
     {
-        return (new Request('PATCH', self::URL . '/' . $id, $params))->sendRequest();
+        return parent::patch(self::URL . '/' . $uuid, $data);
     }
 
     /**

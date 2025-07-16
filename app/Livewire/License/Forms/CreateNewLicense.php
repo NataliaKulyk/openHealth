@@ -4,7 +4,7 @@ namespace App\Livewire\License\Forms;
 
 use Livewire\Component;
 use App\Models\License;
-use App\Livewire\License\Forms\LicenseRequestApi;
+use App\Livewire\License\Forms\LicenseRequest;
 use App\Livewire\License\Forms\LicenseForms;
 
 class CreateNewLicense extends LicenseForms
@@ -72,6 +72,6 @@ class CreateNewLicense extends LicenseForms
     public function sendApiRequest($data): array
     {
         unset($data['legal_entity_id']);
-        return LicenseRequestApi::create($data);
+        return LicenseRequest::create($data);
     }
 }

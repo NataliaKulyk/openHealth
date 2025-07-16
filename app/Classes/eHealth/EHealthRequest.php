@@ -20,11 +20,30 @@ abstract class EHealthRequest extends PendingRequest
             'API-key' => config('ehealth.api.api_key'),
         ]);
 
+        if (eHealthToken()->hasBearerToken()) {
+            $this->withToken(eHealthToken()->getBearerToken());
+        }
+
+        $this->baseUrl(
+            config('ehealth.api.domain')
+        );
     }
 
-    protected function newResponse($response): HigherOrderTapProxy|Response|EHealthResponse
+    /**
+     * Override this method from the parent class to get validated data from the response.
+     * @return array validated data
+     */
+    public function validate(): array
     {
-        return tap(new EHealthResponse($response), function (Response $laravelResponse) {
+        return [];
+    }
+
+    /**
+     * Overrides the HTTP Client Request method to get a custom response.
+     */
+    protected function newResponse($response): HigherOrderTapProxy|EHealthResponse
+    {
+        return tap(new EHealthResponse($response), function (EHealthResponse $laravelResponse) {
             if ($this->truncateExceptionsAt === null) {
                 return;
             }

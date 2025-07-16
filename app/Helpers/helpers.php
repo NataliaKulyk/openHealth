@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Auth\EHealth\Services\TokenStorage;
 use App\Classes\eHealth\Services\SchemaService;
 use App\Services\DictionaryService;
 use App\Services\SignatureService;
@@ -250,5 +251,12 @@ if (!function_exists('signatureService')) {
     function signatureService(): SignatureService
     {
         return app(SignatureService::class);
+    }
+}
+
+if (!function_exists('eHealthToken')) {
+    function eHealthToken(): TokenStorage
+    {
+        return app(TokenStorage::class);
     }
 }

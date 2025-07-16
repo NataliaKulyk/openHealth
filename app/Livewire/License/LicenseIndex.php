@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\License;
 
-use App\Classes\eHealth\Api\LicenseApi;
+use App\Classes\eHealth\EHealth;
 use App\Models\LegalEntity;
-use App\Models\License;
 use App\Traits\FormTrait;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -170,14 +169,10 @@ class LicenseIndex extends Component
      */
     public function sync()
     {
-        try {
-            $licences = LicenseApi::_get([
-                'page' => 1,
-            ]);
-        } catch (\Exception $e) {
-            $this->flashGeneralError();
-            return;
-        }
+
+        $licences = EHealth::license()->get();
+        dd($licences);
+        $this->flashGeneralError();
 
         foreach ($licences as $number => $license) {
             unset($licences[$number]['legal_entity_uuid']);
@@ -185,7 +180,7 @@ class LicenseIndex extends Component
         }
 
         try {
-            License::upsert($licences, uniqueBy: ['uuid'], update: new License()->getFillable());
+            //License::upsert($licences, uniqueBy: ['uuid'], update: new License()->getFillable());
         } catch (\Exception $e) {
             $this->flashGeneralError();
             Log::error('Error while synchronizing licenses with eHealth: ' . $e->getMessage());
