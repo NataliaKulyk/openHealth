@@ -439,6 +439,11 @@ abstract class LegalEntity extends Component
 
         $data = $this->convertArrayKeysToSnakeCase($data);
 
+        // If no_tax_id=true its means that taxID should store related document's number
+        if ($data['owner']['no_tax_id']) {
+            $data['owner']['tax_id'] = $data['owner']['documents']['number'];
+        }
+
         // Converting documents to array
         if (isset($data['owner']['documents'])) {
             $data['owner']['documents'] = [$data['owner']['documents']];
