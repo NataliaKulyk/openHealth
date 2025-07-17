@@ -257,11 +257,11 @@
                                             @click="
                                                 {{-- Return only the needed data --}}
                                                 modalClinicalImpression.problems = $wire.problems
-                                                    .filter(reason => selectedProblemIds.includes(reason.id))
-                                                    .map(reason => ({
-                                                        id: reason.id,
-                                                        inserted_at: reason.inserted_at,
-                                                        code: reason.code
+                                                    .filter(problem => selectedProblemIds.includes(problem.id))
+                                                    .map(problem => ({
+                                                        id: problem.id,
+                                                        inserted_at: problem.inserted_at,
+                                                        code: problem.code
                                                     }));
 
                                                 openModal = false;

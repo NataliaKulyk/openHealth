@@ -143,10 +143,10 @@ class EncounterComponent extends Component
     public array $codeableConceptValues;
 
     /**
-     * List of founded procedure reasons.
+     * List of founded conditions and observations.
      * @var array
      */
-    public array $procedureReasons = [];
+    public array $conditionsAndObservations = [];
 
     /**
      * List of founded complication details for current episode.
@@ -334,7 +334,7 @@ class EncounterComponent extends Component
      * @param  string  $episodeId
      * @return void
      */
-    public function searchReasons(string $episodeId): void
+    public function searchConditionsAndObservations(string $episodeId): void
     {
         // Validate that an episode ID is provided
         if (empty($episodeId)) {
@@ -361,7 +361,7 @@ class EncounterComponent extends Component
                 $buildGetObservations
             )['data'];
 
-            $this->procedureReasons = array_merge($conditions, $observations);
+            $this->conditionsAndObservations = array_merge($conditions, $observations);
         } catch (eHealthApiException) {
             Log::channel('e_health_errors')
                 ->error('Error while searching for procedure reasons in Encounter Component');

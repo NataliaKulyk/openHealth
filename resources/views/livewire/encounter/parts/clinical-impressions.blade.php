@@ -161,6 +161,7 @@
                             <form>
                                 @include('livewire.encounter.clinical-impression-parts.main-information')
                                 @include('livewire.encounter.clinical-impression-parts.problems')
+                                @include('livewire.encounter.clinical-impression-parts.findings')
 
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
@@ -202,6 +203,7 @@
             text: ''
         };
         problems = [];
+        findings = [];
 
         constructor(obj = null) {
             if (obj) {
