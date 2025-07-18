@@ -330,6 +330,12 @@ class CreateLegalEntity extends LegalEntity
         // Check if the owner information is available in the cache
         $personData = $this->legalEntityForm->owner;
 
+        // If no_tax_id=true set related fields to empty
+        if ($personData['noTaxId']) {
+            $personData['taxId'] = '';
+            $this->legalEntityForm->owner['taxId'] = '';
+        }
+
         // Store the owner information in the cache
         if ($this->checkOwnerChanges()) {
             Cache::put($this->ownerCacheKey, $personData, now()->days(90));

@@ -327,7 +327,23 @@
     {{-- Owner IPN --}}
     <div
         class='form-row-3'
-        x-data="{ showNoTaxId: $wire.entangle('legalEntityForm.owner.noTaxId') }"
+        x-data="{
+            showNoTaxId: $wire.entangle('legalEntityForm.owner.noTaxId'),
+            taxId: $wire.entangle('legalEntityForm.owner.taxId'),
+            initialShowNoTaxId: null,
+
+            updateTaxIdInput() {
+                if (this.showNoTaxId) {
+                    this.$refs.taxIdInput.value = '';
+                } else {
+                    this.$refs.taxIdInput.value = this.showNoTaxId && this.initialShowNoTaxId ? '' : this.taxId;
+                }
+            }
+        }"
+        x-init="
+            initialShowNoTaxId = showNoTaxId;
+            updateTaxIdInput();
+        "
     >
         <div class="form-group group relative z-0">
             <input
@@ -337,9 +353,13 @@
                 name="taxId"
                 maxlength="10"
                 placeholder=" "
-                wire:model="legalEntityForm.owner.taxId"
+                x-model="taxId"
                 aria-describedby="{{ $hasOwnerTaxId ? 'ownerTaxIdErrorHelp' : '' }}"
                 class="input {{ $hasOwnerTaxId ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+                :class="{ 'border-gray-200 dark:border-gray-700': showNoTaxId }"
+                :disabled="showNoTaxId"
+                x-ref="taxIdInput"
+                x-effect="updateTaxIdInput()"
             />
 
             @if($hasOwnerTaxId)
@@ -351,7 +371,8 @@
             <label
                 for="taxId"
                 class="label z-10"
-                x-text="showNoTaxId ? '{{ __('forms.document_no_tax_id') }}' : '{{ __('forms.number') . ' ' . __('forms.ipn') . ' / ' . __('forms.rnokpp') }}'"
+                :class="{ 'text-gray-200 dark:text-gray-700': showNoTaxId }"
+                x-text="'{{ __('forms.number') . ' ' . __('forms.ipn') . ' / ' . __('forms.rnokpp') }}'"
             ></label>
         </div>
 
@@ -361,7 +382,6 @@
                     type="checkbox"
                     id="noTaxId"
                     class="default-checkbox text-blue-500 focus:ring-blue-300"
-                    {{-- wire:model="legalEntityForm.owner.noTaxId" --}}
                     x-model="showNoTaxId"
                     :checked="showNoTaxId"
                 >

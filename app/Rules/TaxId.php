@@ -42,7 +42,7 @@ class TaxId implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->noTaxId) {
-            if (!preg_match('/^([0-9]{9}|[А-ЯЁЇIЄҐ]{2}\\d{6})$/u', $value)) {
+            if (!preg_match('/^([0-9]{10}|[А-ЯЁЇIЄҐ]{2}\\d{6})$/u', $value)) {
                 $fail(__('validation.attributes.errors.invalidNationalId'));
             }
         } else {
