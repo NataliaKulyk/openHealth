@@ -15,7 +15,7 @@
                     type="text"
                     required
             >
-                <option selected>{{ __('forms.select') }}</option>
+                <option selected value="">{{ __('forms.select') }}</option>
                 @foreach($this->dictionaries['eHealth/clinical_impression_patient_categories'] as $key => $clinicalImpressionPatientCategory)
                     <option value="{{ $key }}" wire:key="{{ $key }}">
                         {{ $clinicalImpressionPatientCategory }}
@@ -25,7 +25,7 @@
 
             {{-- Check if the picked value is the one from the dictionary --}}
             <p class="text-error text-xs"
-               x-show="!Object.keys($wire.dictionaries['eHealth/clinical_impression_patient_categories']).includes(modalClinicalImpression.code.coding[0].code)"
+               x-show="!Object.keys(dictionary).includes(modalClinicalImpression.code.coding[0].code)"
             >
                 {{ __('forms.field_empty') }}
             </p>
@@ -33,7 +33,9 @@
 
         {{-- Rule engine rules --}}
         <div class="flex items-start pt-[37px]">
-            <a @click.prevent="openModal = true" class="rule-engine-rules default-p">
+            <a @click.prevent="modalClinicalImpression.code.coding[0].code && (openModal = true)"
+               class="rule-engine-rules default-p"
+            >
                 {{ __('patients.set_of_rule_engines') }}
             </a>
         </div>

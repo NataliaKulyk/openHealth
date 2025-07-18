@@ -30,7 +30,7 @@
                         x-text="new Date(previous.inserted_at).toLocaleDateString('uk-UA')"
                     ></td>
                     <td class="td-input"
-                        x-text="`${ previous.code.coding[0].code } - ${ $wire.dictionaries['eHealth/clinical_impression_patient_categories'][previous.code.coding[0].code] }`"
+                        x-text="`${ previous.code.coding[0].code } - ${ dictionary[previous.code.coding[0].code] }`"
                     ></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
@@ -210,7 +210,7 @@
                                                             ></div>
                                                         </th>
                                                         <td class="td-input"
-                                                            x-text="`${ previous.code.coding[0].code } - ${ $wire.dictionaries['eHealth/clinical_impression_patient_categories'][previous.code.coding[0].code] }`"
+                                                            x-text="`${ previous.code.coding[0].code } - ${ dictionary[previous.code.coding[0].code] }`"
                                                         ></td>
                                                         <td class="td-input">
                                                             <button @click.prevent="

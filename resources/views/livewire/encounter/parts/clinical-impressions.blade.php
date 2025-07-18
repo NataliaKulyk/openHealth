@@ -10,6 +10,7 @@
                   modalClinicalImpression: new ClinicalImpression(),
                   newClinicalImpression: false,
                   item: 0,
+                  dictionary: $wire.dictionaries['eHealth/clinical_impression_patient_categories']
               }"
     >
         <legend class="legend">
@@ -27,7 +28,9 @@
             <tbody>
             <template x-for="(clinicalImpression, index) in clinicalImpressions">
                 <tr>
-                    <td class="td-input"></td>
+                    <td class="td-input"
+                        x-text="`${ clinicalImpression.code.coding[0].code } - ${ dictionary[clinicalImpression.code.coding[0].code] }`"
+                    ></td>
                     <td class="td-input"></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
@@ -90,7 +93,8 @@
                                                 openModal = true; {{-- Open the modal --}}
                                                 item = index; {{-- Identify the item we are corrently editing --}}
                                                 {{-- Replace the previous clinicalImpression with the current, don't assign object directly (modalClinicalImpression = clinicalImpression) to avoid reactiveness --}}
-                                                modalClinicalImpression = new ClinicalImpression(clinicalImpression);
+                                                modalClinicalImpression = JSON.parse(JSON.stringify(clinicalImpressions[index]));
+                                                newClinicalImpression = false; {{-- This clinical impression is already created --}}
                                             "
                                             class="dropdown-button"
                                     >
@@ -156,6 +160,8 @@
                             {{-- Content --}}
                             <form>
                                 @include('livewire.encounter.clinical-impression-parts.main-information')
+                                @include('livewire.encounter.clinical-impression-parts.problems')
+                                @include('livewire.encounter.clinical-impression-parts.findings')
 
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
@@ -196,6 +202,8 @@
             coding: [{ system: 'eHealth/clinical_impression_patient_categories', code: '' }],
             text: ''
         };
+        problems = [];
+        findings = [];
 
         constructor(obj = null) {
             if (obj) {

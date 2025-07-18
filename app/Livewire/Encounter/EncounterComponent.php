@@ -143,16 +143,22 @@ class EncounterComponent extends Component
     public array $codeableConceptValues;
 
     /**
-     * List of founded procedure reasons.
+     * List of founded conditions and observations.
      * @var array
      */
-    public array $procedureReasons = [];
+    public array $conditionsAndObservations = [];
 
     /**
      * List of founded complication details for current episode.
      * @var array
      */
     public array $complicationDetails;
+
+    /**
+     * List of founded problems for current episode.
+     * @var array
+     */
+    public array $problems;
 
     /**
      * List of dictionary names.
@@ -328,7 +334,7 @@ class EncounterComponent extends Component
      * @param  string  $episodeId
      * @return void
      */
-    public function searchReasons(string $episodeId): void
+    public function searchConditionsAndObservations(string $episodeId): void
     {
         // Validate that an episode ID is provided
         if (empty($episodeId)) {
@@ -348,14 +354,14 @@ class EncounterComponent extends Component
                 $this->patientUuid,
                 $episodeId,
                 $buildGetConditions
-            );
+            )['data'];
             $observations = PatientApi::getObservationsInEpisodeContext(
                 $this->patientUuid,
                 $episodeId,
                 $buildGetObservations
-            );
+            )['data'];
 
-            $this->procedureReasons = array_merge($conditions, $observations);
+            $this->conditionsAndObservations = array_merge($conditions, $observations);
         } catch (eHealthApiException) {
             Log::channel('e_health_errors')
                 ->error('Error while searching for procedure reasons in Encounter Component');
@@ -384,7 +390,10 @@ class EncounterComponent extends Component
                 $this->patientUuid,
                 episodeUuid: $episodeId
             );
-            $this->clinicalImpressions = PatientApi::getClinicalImpressionBySearchParams($this->patientUuid, $params);
+            $this->clinicalImpressions = PatientApi::getClinicalImpressionBySearchParams(
+                $this->patientUuid,
+                $params
+            )['data'];
         } catch (eHealthApiException) {
             Log::channel('e_health_errors')
                 ->error('Error while searching for clinical impressions in Encounter Component');
@@ -414,10 +423,39 @@ class EncounterComponent extends Component
                 $this->patientUuid,
                 $episodeId,
                 $buildGetConditions
-            );
+            )['data'];
         } catch (eHealthApiException) {
             Log::channel('e_health_errors')
                 ->error('Error while searching for complication details in Encounter Component');
+
+            $this->flashGeneralError();
+        }
+    }
+
+    /**
+     * Search for complication details in conditions for selected episode.
+     *
+     * @param  string  $episodeId
+     * @return void
+     */
+    public function searchProblems(string $episodeId): void
+    {
+        // If the episode is not selected, don't perform a search.
+        if (!isset($episodeId)) {
+            return;
+        }
+
+        $buildGetConditions = EncounterRequestApi::buildGetConditionsInEpisodeContext($this->patientUuid, $episodeId);
+
+        try {
+            $this->problems = PatientApi::getConditionsInEpisodeContext(
+                $this->patientUuid,
+                $episodeId,
+                $buildGetConditions
+            )['data'];
+        } catch (eHealthApiException) {
+            Log::channel('e_health_errors')
+                ->error('Error while searching for problems in Encounter Component');
 
             $this->flashGeneralError();
         }
