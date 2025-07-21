@@ -6,12 +6,14 @@
     <form class="form">
         <div class="form-row-2">
             <div class="form-group">
-                <input type="text" name="licenseKind" id="licenseKind" class="peer input dark:text-gray-400" value="Додаткова" placeholder=" " required />
-                <label for="licenseKind" class="label">Вид ліцензії</label>
+                <input wire:model="form.party.kind" type="text" name="kind" id="kind" class="peer input dark:text-gray-400" value="Додаткова" placeholder=" " required />
+                <label for="kind" class="label">{{__('forms.license.kind')}}</label>
+                @error('form.party.kind') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group">
-                <input type="text" name="OrderNumber" id="OrderNumber" class="peer input" placeholder=" " required />
-                <label for="OrderNumber" class="label">Номер наказу</label>
+                <input wire:model="form.party.order_no" type="text" name="order_no" id="order_no" class="peer input" placeholder=" " required />
+                <label for="order_no" class="label">{{__('forms.license.order_no')}}</label>
+                @error('form.party.order_no') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row" x-data="{
@@ -45,38 +47,45 @@
                         </li>
                     @endforeach
                 </ul>
-                <label class="label">Тип ліцензії</label>
-                <input type="hidden" name="licenseType" :value="selected">
+                <label class="label">{{__('forms.license.type')}}</label>
+                <input wire:model="form.party.type" type="hidden" name="type" :value="selected">
+                @error('form.party.type') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row-2">
             <div class="form-group">
-                <input type="text" name="IssuedTheLicense" id="IssuedTheLicense" class="peer input" placeholder=" " required />
-                <label for="IssuedTheLicense" class="label">Ким видано</label>
+                <input wire:model="form.party.issued_by" type="text" name="issued_by" id="issued_by" class="peer input" placeholder=" " required />
+                <label for="issued_by" class="label">{{__('forms.license.issued_by')}}</label>
+                @error('form.party.issued_by') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group">
-                <input type="text" name="licensedActivity" id="licensedActivity" class="peer input" placeholder=" " required />
-                <label for="licensedActivity" class="label">Напрям діяльності, що ліцензовано</label>
+                <input wire:model="form.party.what_licensed" type="text" name="what_licensed" id="what_licensed" class="peer input" placeholder=" " required />
+                <label for="what_licensed" class="label">{{__('forms.license.what_licensed')}}</label>
+                @error('form.party.what_licensed') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row-2">
             <div class="form-group">
-                <input type="text" name="licenseSeriesNumber" id="licenseSeriesNumber" class="peer input" placeholder=" " required />
-                <label for="LicenseSeriesNumber" class="label">Серія та/або номер ліцензії</label>
+                <input wire:model="form.party.number" type="text" name="number" id="number" class="peer input" placeholder=" " required />
+                <label for="number" class="label">{{__('forms.license.number')}}</label>
+                @error('form.party.number') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group datepicker-wrapper relative w-full">
-                <input type="text" name="dateOfLicenseIssuance" id="dateOfLicenseIssuance" class="peer input pl-10 appearance-none datepicker-input" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
-                <label for="dateOfLicenseIssuance" class="wrapped-label">Дата видачі ліцензії</label>
+                <input wire:model="form.party.issued_date" type="text" name="issued_date" id="issued_date" class="peer input pl-10 appearance-none datepicker-input" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
+                <label for="issued_date" class="wrapped-label">{{__('forms.license.issued_date')}}</label>
+                @error('form.party.issued_date') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row-2">
             <div class="form-group datepicker-wrapper relative w-full">
-                <input type="text" name="dateOfLicenseStartDate" id="dateOfLicenseStartDate" class="peer input pl-10 appearance-none datepicker-input" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
-                <label for="dateOfLicenseStartDate" class="wrapped-label">Дата початку дії ліцензії</label>
+                <input wire:model="form.party.active_from_date" type="text" name="active_from_date" id="active_from_date" class="peer input pl-10 appearance-none datepicker-input" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
+                <label for="active_from_date" class="wrapped-label">{{__('forms.license.active_from_date')}}</label>
+                @error('form.party.active_from_date') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group datepicker-wrapper relative w-full">
-                <input type="text" name="dateOfLicenseExpiry" id="dateOfLicenseExpiry" class="peer input pl-10 appearance-none datepicker-input" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
-                <label for="dateOfLicenseExpiry" class="wrapped-label">Дата завершення дії ліцензії</label>
+                <input wire:model="form.party.expiry_date" type="text" name="expiry_date" id="expiry_date" class="peer input pl-10 appearance-none datepicker-input" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
+                <label for="expiry_date" class="wrapped-label">{{__('forms.license.expiry_date')}}</label>
+                @error('form.party.expiry_date') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="flex justify-start gap-4 mt-10">
@@ -88,6 +97,5 @@
             </button>
         </div>
     </form>
-</div>
 </div>
 </body>
