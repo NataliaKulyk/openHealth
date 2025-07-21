@@ -4,8 +4,12 @@ namespace App\Providers;
 
 use App\Auth\EHealth\Guards\EHealthGuard;
 use App\Auth\EHealth\Providers\EHealthUserProvider;
+use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\Person\Person;
 use App\Models\Person\PersonRequest;
+use App\Policies\EmployeePolicy;
+use App\Policies\EmployeeRequestPolicy;
 use App\Policies\PatientPolicy;
 use App\Auth\EHealth\Services\TokenStorage;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -20,8 +24,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        PersonRequest::class => PatientPolicy::class,
-        Person::class => PatientPolicy::class
+
     ];
 
     /**

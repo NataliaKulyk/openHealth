@@ -6,95 +6,113 @@ use AllowDynamicProperties;
 use App\Classes\eHealth\Api\EmployeeApi;
 use App\Enums\Status;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
-use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Repositories\EmployeeRepository;
-use App\Traits\FormTrait;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
-use Livewire\Component;
 use Livewire\WithPagination;
 
 #[AllowDynamicProperties]
-class EmployeeIndex extends Component
+class EmployeeIndex extends EmployeeComponent
 {
-    use FormTrait;
     use WithPagination;
 
-    public Collection $employees;
-//    public Collection $divisions;
+    // --- Component State for Filters ---
+    public string $search = '';
 
+    // Status filter is now an array for multi-select, pre-filled with defaults.
+    public array $status = ['APPROVED', 'NEW', 'DISMISSED'];
 
-    public string $status = '';
     public array $filter = [
         'phone' => '',
         'email' => '',
         'role' => '',
         'position' => '',
-        'division_id' => '',
     ];
 
-    public string $search = '';
+    // --- State for Modals ---
+    public bool $showDismissModal = false;
+    public ?int $employeeToDismissId = null;
+    public ?string $employeeToDismissName = null;
 
-    public string $dismiss_text = '';
-    public int $dismissed_id = 0;
-    public ?string $dismissal_employee_name = null;
+    public bool $showDeleteModal = false;
+    public ?int $requestToDeleteId = null;
     public ?string $deleteRequestName = null;
     public string $deleteRequestText = '';
-    public bool $showDeleteModal   = false;
-    public ?int $requestToDeleteId = null;
-    public ?string $employeeCacheKey = null;
 
+    public bool $canViewEmployeeDetails, $canUpdateEmployee, $canDismissEmployee;
+    public bool $canViewEmployeeRequest, $canUpdateEmployeeRequest, $canDeleteEmployeeRequest, $canCreateRequest;
 
     private LegalEntity $legalEntity;
 
-    public array $dictionaryNames = [
-        'POSITION', 'EMPLOYEE_TYPE', 'GENDER'
-    ];
-
+    /**
+     * Boot the component, load dictionaries, and EAGER LOAD permissions.
+     * This is the most efficient way to handle permissions for the list.
+     */
     public function boot(): void
     {
         $this->legalEntity = legalEntity();
+        $this->loadDictionaries();
+
+        $user = auth()->user();
+        $userPermissions = $user?->getPermissionsViaRoles()->pluck('name');
+
+        $this->canViewEmployeeDetails = $userPermissions->contains('employee:details');
+        $this->canUpdateEmployee = $userPermissions->contains('employee:write');
+        $this->canDismissEmployee = $userPermissions->contains('employee:deactivate');
+        $this->canViewEmployeeRequest = $userPermissions->contains('employee_request:read');
+        $this->canUpdateEmployeeRequest = $userPermissions->contains('employee_request:write');
+        $this->canDeleteEmployeeRequest = $userPermissions->contains('employee_request:write');
+        $this->canCreateRequest = $userPermissions->contains('employee_request:write');
     }
 
-    public function mount(LegalEntity $legalEntity): void
+
+    /**
+     * Reset pagination when filters or search are updated.
+     */
+    public function updated($property): void
     {
-        $this->getDictionary();
-//        $this->divisions = $this->legalEntity->divisions()->get();
-        $this->employees = new Collection();
-        $this->employeeCacheKey = 'employees_cache_' . $this->legalEntity->id;
+        if (in_array($property, ['search', 'status']) || str_starts_with($property, 'filter.')) {
+            $this->resetPage();
+        }
     }
 
+    /**
+     * Main computed property to fetch and filter parties.
+     */
     #[Computed]
     public function parties(): LengthAwarePaginator
     {
         $legalEntityId = $this->legalEntity->id;
 
+        // --- Step 1: Build the base query with all filters to get only the IDs ---
         $query = Party::query()
-            ->where(function($q) use ($legalEntityId) {
-                $q->whereHas('employees', fn($subq) => $subq->where('legal_entity_id', $legalEntityId))
-                    ->orWhereHas('employeeRequests', fn($subq) => $subq->where('legal_entity_id', $legalEntityId));
-            })
-            ->with([
-                       'phones',
-                       'employees'        => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
-                       'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
-                   ])
+            ->where(function ($q) use ($legalEntityId) {
+                $q->whereHas('employees', fn($sub) => $sub->where('legal_entity_id', $legalEntityId))
+                    ->orWhereHas('employeeRequests', fn($sub) => $sub->where('legal_entity_id', $legalEntityId));
+            });
 
-            ->withMax(
-                ['employeeRequests as latest_draft_updated_at' => fn($query) => $query->whereNull('uuid')],
-                'updated_at'
-            )
-            ->orderByDesc('latest_draft_updated_at');
+        // Apply Status Filter
+        if (!empty($this->status)) {
+            $query->where(function ($q) {
+                $employeeStatuses = array_intersect($this->status, ['APPROVED', 'DISMISSED']);
+                if (!empty($employeeStatuses)) {
+                    $q->orWhereHas('employees', fn($sub) => $sub->whereIn('status', $employeeStatuses));
+                }
+                if (in_array('NEW', $this->status, true)) {
+                    $q->orWhereHas('employeeRequests');
+                }
+            });
+        } else {
+            $query->whereRaw('1=0');
+        }
 
-
+        // Apply Name Search
         if (!empty($this->search)) {
             $query->where(function($q) {
                 $q->where('last_name', 'ilike', "%{$this->search}%")
@@ -103,10 +121,7 @@ class EmployeeIndex extends Component
             });
         }
 
-        // Advanced filters
-        if (!empty($this->status)) {
-            $query->whereHas('employees', fn($q) => $q->where('status', $this->status));
-        }
+        // Apply Advanced Filters
         if (!empty($this->filter['phone'])) {
             $query->whereHas('phones', fn($q) => $q->where('number', 'like', '%' . $this->filter['phone'] . '%'));
         }
@@ -114,40 +129,46 @@ class EmployeeIndex extends Component
             $query->where('email', 'ilike', '%' . $this->filter['email'] . '%');
         }
         if (!empty($this->filter['role'])) {
-            $query->where(function ($q) {
+            $query->where(function($q) {
                 $q->whereHas('employees', fn($sub) => $sub->where('employee_type', $this->filter['role']))
-                    ->orWhereHas('employeeRequests', fn($sub) => $sub->where('employee_type', $this->filter['role']));
+                    ->orWhereHas('employeeRequests', fn($sub) => $sub->where('employee_type', 'like', $this->filter['role']));
             });
         }
         if (!empty($this->filter['position'])) {
-            $query->whereHas('employees', fn($q) => $q->where('position', $this->filter['position']));
+            $query->where(function($q) {
+                $q->whereHas('employees', fn($sub) => $sub->where('position', $this->filter['position']))
+                    ->orWhereHas('employeeRequests', fn($sub) => $sub->where('position', 'like', $this->filter['position']));
+            });
         }
-        // if (!empty($this->filter['division_id'])) {
-        //     $query->whereHas('employees', fn($q) => $q->where('division_id', $this->filter['division_id']));
-        // }
 
+        // --- Step 2: Get the paginated result of IDs. This is fast. ---
         $paginator = $query->paginate(10);
 
-        $paginator->getCollection()->transform(function ($party) {
-            $party->employees->each(fn($p) => $p->type = 'employee');
-            $party->employeeRequests->each(fn($p) => $p->type = 'request');
-            return $party;
-        });
+        // --- Step 3: Now, get the full models for the current page with all relationships. ---
+        $partiesOnPage = Party::whereIn('id', $paginator->pluck('id')->all())
+            ->with([
+                       'phones',
+                       'employees' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
+                       'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
+                   ])
+            ->get()
+            ->sortBy(function ($party) use ($legalEntityId) {
+                $hasRequests = $party->employeeRequests->isNotEmpty();
+                $hasActiveEmployees = $party->employees->where('status', 'APPROVED')->isNotEmpty();
 
-        return $paginator;
-    }
+                if ($hasRequests) return 1; // Drafts first
+                if ($hasActiveEmployees) return 2; // Active employees second
+                return 3; // Dismissed employees last
+            });
 
-    public function updated($property): void
-    {
-        if (in_array($property, ['search', 'status']) || str_starts_with($property, 'filter.')) {
-            $this->resetPage();
-        }
-    }
-
-    public function resetFilters(): void
-    {
-        $this->reset(['filter', 'status', 'search']);
-        $this->resetPage();
+        // --- Step 4: Return a new paginator instance with the sorted items. ---
+        return new LengthAwarePaginator(
+            $partiesOnPage,
+            $paginator->total(),
+            $paginator->perPage(),
+            $paginator->currentPage(),
+            ['path' => $paginator->path()]
+        );
     }
 
     /**
@@ -155,47 +176,36 @@ class EmployeeIndex extends Component
      */
     public function showModalDismissed(int $id): void
     {
-        $employee = Employee::find($id);
-        if (!$employee) {
-            return;
-        }
+        $employee = Employee::with('party')->find($id);
+        if (!$employee) return;
 
-        $this->dismissal_employee_name = $employee->fullName;
-        $this->dismiss_text =  __('employees.dismissalWarning');
-
-        $this->dismissed_id = $employee->id;
-
-        $this->openModal();
+        $this->employeeToDismissName = $employee->party->fullName ?? 'співробітника';
+        $this->employeeToDismissId = $id;
+        $this->showDismissModal = true;
     }
 
-    #[On('refreshPage')]
-    public function refreshPage(): void
+    /**
+     * Closes the dismissal modal and resets its state.
+     */
+    public function closeModal(): void
     {
-        $this->dispatch('$refresh');
+        $this->showDismissModal = false;
+        $this->reset(['employeeToDismissId', 'employeeToDismissName']);
     }
 
-    public function tableHeaders(): void
+    public function resetFilters(): void
     {
-        $this->tableHeaders = [
-            __('ID E-health '),
-            __('ПІБ'),
-            __('Телефон'),
-            __('Email'),
-            __('Посада'),
-            __('Статус'),
-            __('forms.action'),
-        ];
+        $this->reset(['filter', 'status', 'search']);
+        $this->status = ['APPROVED', 'NEW', 'DISMISSED'];
+        $this->resetPage();
     }
 
-    public function sortEmployees($status): void
+    /**
+     * Performs the dismissal action.
+     */
+    public function dismissed(): void
     {
-        $this->status = $status;
-        $this->getEmployees();
-    }
-
-    public function dismissed(int $employeeId): void
-    {
-        $employee = Employee::find($employeeId);
+        $employee = Employee::find($this->employeeToDismissId);
         if (!$employee) {
             $this->closeModal();
             return;
@@ -211,133 +221,95 @@ class EmployeeIndex extends Component
                         'end_date' => Carbon::now()->format('Y-m-d'),
                     ]
                 );
-
-                $this->dispatchErrorMessage(__('employees.dismissalSuccess'), 'success');
+                $this->dispatch('flashMessage', ['message' => __('employees.dismissalSuccess'), 'type' => 'success']);
             } else {
-                $this->dispatchErrorMessage(__('employees.dismissalEhealthError'));
+                $this->dispatch('flashMessage', ['message' => __('employees.dismissalEhealthError'), 'type' => 'error']);
             }
         } catch (\Exception $e) {
-            $this->dispatchErrorMessage(
-                __('employees.requestError', ['error' => $e->getMessage()])
-            );
+            $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => $e->getMessage()]), 'type' => 'error']);
         }
 
         $this->closeModal();
     }
 
-    //TODO: Створити багато співробітників в статусі не підтверджено, створювати таблицю EmployeeRequest? перевірити Rate Limit
-    public function getEmployeeRequestsList()
-    {
-        return EmployeeRequestApi::getEmployeeRequestsList();
-    }
-
-    /**
-     * Syncs employees by fetching data from the EmployeeRequestApi and saving it using the employeeSyncService.
-     *
-     * @throws \Exception
-     */
-    public function getLastStoreId(): void
-    {
-        if (Cache::has($this->employeeCacheKey) && !empty(Cache::get($this->employeeCacheKey)) && is_array(Cache::get($this->employeeCacheKey))) {
-            $this->storeId = array_key_last(Cache::get($this->employeeCacheKey));
-        }
-        $this->storeId++;
-    }
-
-    public function getEmployeesCache(): Collection
-    {
-        if (Cache::has($this->employeeCacheKey)) {
-            return collect(Cache::get($this->employeeCacheKey))->map(function ($data) {
-                $employee = new BaseEmployee()->forceFill($data['party']);
-                $employee->party = new Party()->forceFill($data['party'] ?? []);
-                $employee->party->phones = new Phone()->forceFill($data['party']['phones'] ?? []);
-                return $employee;
-            });
-        }
-        return collect();
-    }
-
-    public function getEmployees(): void
-    {
-        if ($this->status === 'APPROVED') {
-            $this->employees = $this->legalEntity->employees()->get();
-        } elseif ($this->status === 'NEW') {
-            $this->employees = $this->legalEntity->employeesRequest()->get();
-        } else {
-            $this->employees = $this->getEmployeesCache();
-        }
-    }
-
     public function syncEmployees(): void
     {
-        $requests = EmployeeRequestApi::getEmployees($this->legalEntity->uuid);
-        foreach ($requests as $request) {
-            $response = EmployeeRequestApi::getEmployeeById($request['id']);
-            $employeeResponse = schemaService()->setDataSchema($response, app(EmployeeApi::class))
-                ->responseSchemaNormalize()
-                ->replaceIdsKeysToUuid(['id', 'legalEntityId', 'divisionId', 'partyId'])
-                ->snakeCaseKeys(true)
-                ->getNormalizedData();
-            app(EmployeeRepository::class)
-                ->store($employeeResponse,
-                        legalEntity(),
-                        new Employee());
+        try {
+            $apiResponse = EmployeeRequestApi::getEmployees($this->legalEntity->uuid);
+
+            if (!isset($apiResponse['data']) || !is_array($apiResponse['data'])) {
+                $this->dispatch('flashMessage', ['message' => 'Не вдалося отримати список співробітників з E-Health.', 'type' => 'error']);
+                return;
+            }
+
+            $requests = $apiResponse['data'];
+
+            foreach ($requests as $request) {
+                if (!isset($request['id'])) {
+                    continue;
+                }
+
+                $response = EmployeeRequestApi::getEmployeeById($request['id']);
+
+                $employeeResponse = schemaService()->setDataSchema($response, app(EmployeeApi::class))
+                    ->responseSchemaNormalize()
+                    ->replaceIdsKeysToUuid(['id', 'legalEntityId', 'divisionId', 'partyId'])
+                    ->snakeCaseKeys(true)
+                    ->getNormalizedData();
+
+                app(EmployeeRepository::class)
+                    ->store($employeeResponse,
+                            legalEntity(),
+                            new Employee());
+            }
+
+            $this->dispatch('flashMessage', ['message' => __('employees.sync_success'), 'type' => 'success']);
+
+        } catch (\Exception $e) {
+
+            Log::error('Employee sync failed: ' . $e->getMessage());
+            $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => 'Помилка синхронізації']), 'type' => 'error']);
         }
-
-        $this->dispatchErrorMessage(__('Співробітники успішно синхронізовано'));
-
-        $this->getEmployees();
     }
 
-    /**
-     * Shows a confirmation modal before deleting an employee request.
-     */
+    private function dispatchErrorMessage(string $message, string $type = 'success', array $errors = []): void
+    {
+        $this->dispatch('show-notification', [
+            'message' => $message, 'type' => $type, 'errors' => $errors
+        ]);
+    }
+
     public function confirmRequestDeletion(int $id): void
     {
         $request = EmployeeRequest::with('party')->find($id);
-
-        if ($request && !$request->uuid) {
-            $this->requestToDeleteId = $id;
-
-            $this->deleteRequestName = $request->party->fullName ?? 'співробітника';
-            $this->deleteRequestText = 'Ви впевнені, що хочете видалити чернетку для цього співробітника? Цю дію неможливо буде скасувати.';
-
-            $this->showDeleteModal = true;
-        } else {
-            $this->dispatchErrorMessage(__('Цей запит не є чернеткою і не може бути видалений.'), 'error');
+        if (!$request || $request->uuid) {
+            return;
         }
+        $this->requestToDeleteId = $id;
+        $this->deleteRequestName = $request->party->fullName ?? 'співробітника';
+        $this->deleteRequestText = 'Ви впевнені, що хочете видалити чернетку?';
+        $this->showDeleteModal = true;
     }
 
-    /**
-     * Deletes the employee request from the database.
-     */
     public function deleteRequest(): void
     {
         $request = EmployeeRequest::find($this->requestToDeleteId);
-
         if ($request && !$request->uuid) {
             $request->delete();
-            $this->dispatchErrorMessage(__('Чернетку успішно видалено.'), 'success');
+            $this->dispatch('flashMessage', ['message' => 'Чернетку успішно видалено.', 'type' => 'success']);
         }
-
         $this->showDeleteModal = false;
         $this->requestToDeleteId = null;
     }
 
-
-    private function dispatchErrorMessage(string $message, string $type = 'success', array $errors = []): void
-    {
-        $this->dispatch('flashMessage', [
-            'message' => $message,
-            'type'    => $type,
-            'errors'  => $errors
-        ]);
-    }
-
+    /**
+     * Renders the component view.
+     */
     public function render(): object
     {
         return view('livewire.employee.employee-index', [
             'parties' => $this->parties,
+            'dictionaries' => $this->dictionaries,
         ]);
     }
 }

@@ -15,7 +15,7 @@ use App\Rules\PhoneNumber;
 use App\Rules\InDictionary;
 use App\Rules\UniqueEdrpou;
 use App\Rules\DocumentNumber;
-use App\Rules\PhoneDublicates;
+use App\Rules\PhoneDuplicates;
 use Illuminate\Support\Facades\Log;
 use App\Exceptions\CustomValidationException;
 use Illuminate\Validation\ValidationException;
@@ -78,7 +78,7 @@ class LegalEntitiesForms extends Form
                 'required',
                 'string',
                 new InDictionary('PHONE_TYPE'),
-                new PhoneDublicates($this->owner['phones'])
+                new PhoneDuplicates($this->owner['phones'])
             ],
             'owner.email' => ['required','email',new Email()],
             'owner.position' => ['required','string', new InDictionary('POSITION')],
@@ -90,7 +90,7 @@ class LegalEntitiesForms extends Form
                 'required',
                 'string',
                 new InDictionary('PHONE_TYPE'),
-                new PhoneDublicates($this->phones)
+                new PhoneDuplicates($this->phones)
             ],
             'accreditation' => 'sometimes|array',
             'accreditation.category' => 'required_if:accreditationShow,true|string',

@@ -33,10 +33,62 @@
                     <td class="td-input" x-text="qualification.institutionName"></td>
                     <td class="td-input" x-text="qualSpecDict[qualification.speciality]"></td>
                     <td class="td-input" x-text="qualification.certificateNumber"></td>
-                    <td class="td-input relative absolute right-0 top-full mt-2 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                        <x-dropdown-button
-                            :editAction="'openModal = true; item = index; modalQualification = new Qualification(qualification); newQualification = false; close($refs.button)'"
-                            :deleteAction="'qualifications.splice(index, 1); close($refs.button)'"                        />
+                    <td class="td-input">
+                        <div
+                            x-data="{ openDropdown: false }"
+                            @keydown.escape.prevent.stop="openDropdown = false"
+                            @focusin.window="!$refs.panel.contains($event.target) && (openDropdown = false)"
+                            x-id="['dropdown-button']"
+                            class="relative"
+                        >
+                            {{-- Main button to toggle the dropdown --}}
+                            <button
+                                x-ref="button"
+                                @click="openDropdown = !openDropdown"
+                                :aria-expanded="openDropdown"
+                                :aria-controls="$id('dropdown-button')"
+                                type="button"
+                                class="cursor-pointer"
+                            >
+                                <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 svg-hover-action" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2" d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"></path>
+                                </svg>
+                            </button>
+
+                            {{-- Dropdown Panel --}}
+                            <div
+                                x-ref="panel"
+                                x-show="openDropdown"
+                                x-transition.origin.top.left
+                                @click.outside="openDropdown = false"
+                                :id="$id('dropdown-button')"
+                                class="dropdown-panel absolute"
+                                style="left: -120%; display: none;"
+                            >
+                                <button
+                                    @click.prevent="
+                                        openModal = true;
+                                        item = index;
+                                        modalQualification = new Qualification(qualification);
+                                        newQualification = false;
+                                        openDropdown = false;
+                                    "
+                                    class="dropdown-button"
+                                >
+                                    {{ __('forms.edit') }}
+                                </button>
+
+                                <button
+                                    @click.prevent="
+                                        qualifications.splice(index, 1);
+                                        openDropdown = false;
+                                    "
+                                    class="dropdown-button dropdown-delete"
+                                >
+                                    {{ __('forms.delete') }}
+                                </button>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             </template>
@@ -76,7 +128,7 @@
                     >
                         <div @click.stop
                              x-trap.noscroll.inert="openModal"
-                             class="modal-content h-fit w-full max-w-2xl rounded-2xl shadow-lg bg-white"
+                             class="modal-content h-fit w-full max-w-4xl rounded-2xl shadow-lg bg-white"
                         >
 
                             <h3 class="modal-header" :id="$id('modal-title')">
@@ -86,11 +138,10 @@
                             <form>
                                 <div class="form-row-modal">
                                     <div>
-                                        <label for="qualificationType"
-                                               class="label-modal">{{ __('forms.qualificationType') }}</label>
+                                        <label for="qualificationType" class="label-modal">{{ __('forms.qualificationType') }} *</label>
                                         <select x-model="modalQualification.type" id="qualificationType"
                                                 class="input-modal" required>
-                                            <option value="">{{__('forms.selectQualificationType')}}</option>
+                                            <option value="">{{__('forms.select_qualification_type')}}</option>
                                             @foreach($this->dictionaries['QUALIFICATION_TYPE'] as $typeValue => $typeDescription)
                                                 <option value="{{ $typeValue }}">{{ $typeDescription }}</option>
                                             @endforeach
@@ -98,37 +149,33 @@
                                     </div>
 
                                     <div>
-                                        <label for="qualificationInstitutionName"
-                                               class="label-modal">{{ __('forms.institutionName') }}</label>
+                                        <label for="qualificationInstitutionName" class="label-modal">{{ __('forms.institutionName') }} *</label>
                                         <input x-model="modalQualification.institutionName" type="text"
                                                id="qualificationInstitutionName" class="input-modal" required>
                                     </div>
                                     <div>
-                                        <label for="qualificationSpeciality"
-                                               class="label-modal">{{ __('forms.speciality') }}</label>
+                                        <label for="qualificationSpeciality" class="label-modal">{{ __('forms.speciality') }} *</label>
                                         <select x-model="modalQualification.speciality" id="qualificationSpeciality"
                                                 class="input-modal" required>
-                                            <option value="">{{__('forms.selectSpeciality')}}</option> {{-- ДОДАНО --}}
+                                            <option value="">{{__('forms.select_speciality')}}</option>
                                             @foreach($this->dictionaries['SPECIALITY_TYPE'] as $specValue => $specDescription)
                                                 <option value="{{ $specValue }}">{{ $specDescription }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div>
-                                        <label for="qualificationCertificateNumber"
-                                               class="label-modal">{{ __('forms.certificateNumber') }}</label>
+                                        <label for="qualificationCertificateNumber" class="label-modal">{{ __('forms.certificateNumber') }} *</label>
                                         <input x-model="modalQualification.certificateNumber" type="text"
                                                id="qualificationCertificateNumber" class="input-modal">
                                     </div>
                                     <div>
-                                        <label for="qualificationIssuedDate"
-                                               class="label-modal">{{ __('forms.issuedDate') }}</label>
+                                        <label for="qualificationIssuedDate" class="label-modal">{{ __('forms.issuedDate') }} *</label>
                                         <input x-model="modalQualification.issuedDate" type="date"
                                                id="qualificationIssuedDate" class="input-modal datepicker-input"
                                                autocomplete="off" required>
                                     </div>
                                 </div>
-
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
                                             @click="openModal = false"
