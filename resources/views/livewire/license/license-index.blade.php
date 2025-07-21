@@ -42,7 +42,7 @@
                             <a href="{{ route('license.view', [legalEntity(), $license->id]) }}"
                                class="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white"
                                title="Переглянути">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                <svg class="w-5 h-5 svg-hover-action" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                      viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12z"/>
                                     <circle cx="12" cy="12" r="3"/>
@@ -97,7 +97,7 @@
                     <a href="{{ route('license.view', [legalEntity(), 999]) }}"
                        class="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white"
                        title="Редагувати">
-                        <svg class="w-6 h-6 text-gray-800 dark:text-gray-200" aria-hidden="true"
+                        <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 svg-hover-action" aria-hidden="true"
                              xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                              fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2"
