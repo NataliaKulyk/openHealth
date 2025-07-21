@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Employee;
 
-use App\Livewire\Employee\Forms\EmployeeForm;
 use App\Livewire\Employee\Traits\ManagesEmployeeForm;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use Illuminate\View\View;
 
@@ -11,21 +11,20 @@ class EmployeeCreate extends EmployeeComponent
 {
     use ManagesEmployeeForm;
 
-    public EmployeeForm $form;
     public string $pageTitle;
+
+    public ?EmployeeRequest $employeeRequest = null;
     public ?int $employeeRequestId = null;
 
     public function mount(LegalEntity $legalEntity): void
     {
-        $this->getDictionary();
-        $this->pageTitle = __('forms.addEmployee');
+        $this->loadDictionaries();
+        $this->pageTitle = __('forms.add_employee');
+        $this->isPersonalDataLocked = false;
     }
 
     public function render(): View
     {
-        return view('livewire.employee.employee', [
-            'pageTitle' => $this->pageTitle,
-            'employee' => $this->employee,
-        ]);
+        return view('livewire.employee.employee-create');
     }
 }

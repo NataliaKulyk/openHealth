@@ -3,7 +3,6 @@
 namespace App\Livewire\Employee\Traits;
 
 use App\Core\Arr;
-use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\Revision;
@@ -11,10 +10,11 @@ use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\WithFileUploads;
 use App\Repositories\Repository;
+use Illuminate\Validation\ValidationException;
+use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 
 trait ManagesEmployeeForm
 {
@@ -23,87 +23,106 @@ trait ManagesEmployeeForm
     protected ?Employee $employee = null;
 
     #[Locked]
-    public ?int $employeeId = null;
-    public ?EmployeeRequest $employeeRequest = null;
-    public bool $lockEmailAndTaxId = false;
+    public ?int $employeeRequestId = null;
 
+    /**
+     * This is the main save method with corrected logic.
+     *
+     * @throws ValidationException
+     */
     public function save(): void
     {
-        // Section for data cleaning remains the same.
-        if (isset($this->form->party['phones'])) {
-            $cleanedPhones = [];
-            foreach ($this->form->party['phones'] as $phone) {
-                if (isset($phone['number']) && is_string($phone['number'])) {
-                    $digits = preg_replace('/[^0-9]/', '', $phone['number']);
-                    $phone['number'] = !empty($digits) ? '+' . $digits : '';
-                }
-                $cleanedPhones[] = $phone;
-            }
-            $this->form->party['phones'] = $cleanedPhones;
-        }
-
-        if (isset($this->form->documents) && is_array($this->form->documents)) {
-            foreach ($this->form->documents as $key => $document) {
-                if (!empty($document['issuedAt'])) {
-                    $this->form->documents[$key]['issuedAt'] = Carbon::parse($document['issuedAt'])->format('Y-m-d');
-                }
-            }
-        }
-
         try {
+            if (isset($this->form->documents) && is_array($this->form->documents)) {
+                foreach ($this->form->documents as $key => $document) {
+                    if (!empty($document['issuedAt'])) {
+                        $this->form->documents[$key]['issuedAt'] = Carbon::parse($document['issuedAt'])->format('Y-m-d');
+                    }
+                }
+            }
+
             $this->form->validate($this->form->rulesForSave());
             $preparedDataForDb = $this->form->getPreparedData();
 
-            if (!$this->employeeRequest || $this->employeeRequest->uuid) {
+            // First, try to find the request we might be editing, if the ID is present.
+            if (property_exists($this, 'employeeRequestId') && $this->employeeRequestId) {
+                $this->employeeRequest = EmployeeRequest::find($this->employeeRequestId);
+            }
 
-                // --- Case 1: CREATE a new EmployeeRequest ---
-                // This happens when creating from scratch or re-saving a signed request.
-                $newRequest = Repository::employee()->store(
-                    $preparedDataForDb,
-                    legalEntity(),
-                    new EmployeeRequest(),
-                    null,
-                    true
-                );
+            // We UPDATE only if we have a request model AND it's still a draft (no UUID).
+            if ($this->employeeRequest && is_null($this->employeeRequest->uuid)) {
 
-                $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-                $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
-                $this->employeeRequest = $newRequest;
+                // --- UPDATE THE EXISTING DRAFT ---
+                DB::transaction(function () use ($preparedDataForDb) {
+                    $this->updateExistingDraft($preparedDataForDb);
+                });
 
             } else {
-                // --- Case 2: UPDATE an existing draft (which has no UUID) ---
+                // --- CREATE A NEW DRAFT ---
+                // This will run if:
+                // 1. We are on the EmployeeCreate component (no $employeeRequestId).
+                // 2. The record we were editing was already signed (has a UUID).
                 DB::transaction(function () use ($preparedDataForDb) {
-                    $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
-                    $this->employeeRequest->fill($requestAttributes)->save();
-
-                    if ($this->employeeRequest->party) {
-                        $partyAttributes = Arr::only($preparedDataForDb, ['last_name', 'first_name', 'second_name', 'gender', 'birth_date', 'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself']);
-                        $this->employeeRequest->party->update($partyAttributes);
-                    }
-
-                    $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-
-                    if ($this->employeeRequest->revision) {
-                        $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
-                    } else {
-                        $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
-                    }
+                    $this->createNewDraft($preparedDataForDb);
                 });
             }
 
-            if ($this->employeeRequest) {
-                $this->employeeRequestId = $this->employeeRequest->id;
-            }
-
-            session()->flash('success', __('forms.employee_request_saved_successfully'));
+            $this->dispatchFlashMessage(__('forms.employee_request_saved_successfully'), 'success');
 
         } catch (ValidationException $e) {
-            $this->dispatch('employee-form-failed');
-            session()->flash('error-modal', __('forms.validation_failed_check_form'));
+            $errorMessages = collect($e->errors())->flatten()->implode(' ');
+            $this->dispatchFlashMessage(__('forms.validation_failed_check_form') . ': ' . $errorMessages, 'error');
+
             throw $e;
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             $this->handleException($e);
             throw $e;
+        }
+    }
+
+    /**
+     * Helper method to update an existing draft and its relations.
+     */
+    protected function updateExistingDraft(array $preparedDataForDb): void
+    {
+        $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
+        $this->employeeRequest->fill($requestAttributes)->save();
+
+        if ($this->employeeRequest->party) {
+            $partyAttributes = Arr::only($preparedDataForDb, ['last_name', 'first_name', 'second_name', 'gender', 'birth_date', 'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself']);
+            $this->employeeRequest->party->update($partyAttributes);
+        }
+
+        $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
+        if ($this->employeeRequest->revision) {
+            $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
+        } else {
+            $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
+        }
+    }
+
+    /**
+     * Helper method to create a new draft and its relations.
+     */
+    protected function createNewDraft(array $preparedDataForDb): void
+    {
+        $newRequest = Repository::employee()->store(
+            $preparedDataForDb,
+            legalEntity(),
+            new EmployeeRequest(),
+            null,
+            true
+        );
+
+        $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
+        $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
+
+        // Update component's state to work with the NEW request.
+        $this->employeeRequest = $newRequest;
+        // Also update the ID, if the property exists on the component.
+        if (property_exists($this, 'employeeRequestId')) {
+            $this->employeeRequestId = $newRequest->id;
         }
     }
 
@@ -144,12 +163,29 @@ trait ManagesEmployeeForm
     }
 
     /**
+     * Resets only the fields related to the digital signature.
+     * This should be called after a signing attempt (successful or not).
+     */
+    public function resetSignatureFields(): void
+    {
+        $this->form->reset('keyContainerUpload', 'password', 'knedp');
+    }
+
+    /**
      * NEW METHOD: This is the single entry point for the final "Sign" button in the modal.
      * It validates everything, saves, signs, and sends.
      */
     public function sign()
     {
-        $this->save();
+        try {
+            $this->save();
+        } catch (Exception $e) {
+            // If even saving the draft fails, we stop here.
+            // The handleException method will show the error.
+            return;
+        }
+
+        // Now, we attempt to sign and send.
         try {
             if ($this->employeeRequestId && !$this->employeeRequest) {
                 $this->employeeRequest = EmployeeRequest::find($this->employeeRequestId);
@@ -162,6 +198,7 @@ trait ManagesEmployeeForm
             }
 
             $dataForSigning = $this->formatEHealthRequest($this->employeeRequest->revision->data);
+
             $signedContent = signatureService()->signData(
                 $dataForSigning,
                 $this->form->password,
@@ -172,11 +209,22 @@ trait ManagesEmployeeForm
             );
 
             if ($this->sendSignedContentToEhealth($signedContent)) {
-                session()->flash('success', __('forms.requestSignedAndSentToEHealth'));
+                session()->flash('success', __('forms.request_signed_and_sent_to_eHealth'));
 
+                // On full success, we clear the signature fields and redirect.
+                $this->resetSignatureFields();
                 return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
             }
+            // If sendSignedContentToEhealth returns false, it means it already set a flash error.
+            // We do NOT reset fields here, allowing the user to try again.
 
+        } catch (ValidationException $e) {
+            // This handles validation errors for the signature fields.
+            // We do NOT reset fields, so the user can correct their input.
+            $this->dispatch('employee-form-failed');
+            session()->flash('error-modal', __('forms.validation_failed_check_form'));
+            // We re-throw to let Livewire handle the validation feedback.
+            throw $e;
         } catch (Exception $e) {
             session()->flash('error-modal', $e->getMessage());
             $this->handleException($e);
@@ -285,13 +333,30 @@ trait ManagesEmployeeForm
         }
     }
 
+    /**
+     * Helper method for dispatching flash messages.
+     * I've renamed it for clarity.
+     */
+    private function dispatchFlashMessage(string $message, string $type = 'success', array $errors = []): void
+    {
+        $this->dispatch('flashMessage', [
+            'message' => $message,
+            'type'    => $type,
+            'errors'  => $errors
+        ]);
+    }
+
+    /**
+     * Centralized exception handler.
+     */
     private function handleException(Exception $e): void
     {
         Log::error('Process failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
         $message = $e instanceof ValidationException
             ? __('forms.validation_failed_check_form')
             : __('forms.failed_to_save_employee_unexpected_error');
-        session()->flash('error', $message);
-        $this->dispatch('employee-form-failed');
+
+        $this->dispatchFlashMessage($message, 'error');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Livewire\Employee;
 use App\Core\Arr;
 use App\Livewire\Employee\Forms\EmployeeForm;
 use App\Livewire\Employee\Traits\ManagesEmployeeForm;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use Illuminate\View\View;
@@ -15,7 +16,7 @@ class EmployeePositionAdd extends EmployeeComponent
 
     public EmployeeForm $form;
     public string $pageTitle;
-    public ?int $employeeRequestId = null;
+    public ?EmployeeRequest $employeeRequest = null;
 
     /**
      * The mount method now uses a hybrid approach to populate form data.
@@ -24,7 +25,8 @@ class EmployeePositionAdd extends EmployeeComponent
      */
     public function mount(LegalEntity $legalEntity, Party $party): void
     {
-        $this->getDictionary();
+        $this->loadDictionaries();
+        $this->isPersonalDataLocked = true;
         $this->form->populateFromParty($party);
 
         $needsRevisionCheck = empty($this->form->documents) || empty($this->form->party['phones']) || empty($this->form->party['phones'][0]['number']);
@@ -53,7 +55,7 @@ class EmployeePositionAdd extends EmployeeComponent
 
         $this->form->resetPositionFields();
 
-        $this->pageTitle = __('forms.addPosition');
+        $this->pageTitle = __('forms.add_position');
     }
 
     public function render(): View
