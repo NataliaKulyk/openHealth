@@ -3,12 +3,12 @@
         <x-slot name="title">
             {{ $pageTitle }}
             {{-- We can show the name of the person we're adding a position to --}}
-            <x-slot name="title">{{ $pageTitle }} {{ $employee->fullName }}</x-slot>
+            : {{ $this->form->party['lastName'] }} {{ $this->form->party['firstName'] }}
         </x-slot>
     </x-section-navigation>
 
     <section class="section-form" x-data="{ isDoctor: @js($this->form->employeeType === 'DOCTOR'), showSignatureBlock: $wire.entangle('showSignatureBlock') }">
-            <form wire:submit.prevent="save" class="form space-y-8 max-w-4xl mx-auto w-full">
+        <form wire:submit.prevent="save" class="form space-y-8">
 
             {{-- 1. Personal data is included but will be disabled by the component's logic --}}
             @include('livewire.employee.parts.employee')
@@ -45,7 +45,7 @@
                 <div class="flex items-center space-x-4">
                     <button type="submit" class="button-primary" wire:loading.attr="disabled" wire:target="save">
                         <span wire:loading.remove wire:target="save">{{__('forms.save')}}</span>
-                        <span wire:loading wire:target="save">{{__('forms.saving')}}</span>
+                        <span wire:loading wire:target="save">Збереження...</span>
                     </button>
                 </div>
             </div>

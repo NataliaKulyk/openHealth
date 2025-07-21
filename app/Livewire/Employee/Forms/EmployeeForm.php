@@ -3,15 +3,19 @@
 namespace App\Livewire\Employee\Forms;
 
 use App\Core\Arr;
-use App\Models\Employee\Employee;
-use App\Models\Employee\EmployeeRequest;
-use App\Models\Relations\Party;
-use App\Rules\BirthDate;
+use Livewire\Form;
 use App\Rules\Name;
+use App\Rules\TaxId;
+use App\Rules\BirthDate;
 use App\Rules\PhoneNumber;
+use App\Rules\PhoneDuplicates;
+use App\Models\Relations\Party;
+use Illuminate\Validation\Rule;
+use App\Models\Employee\Employee;
 use App\Rules\UniqueEmailInLegalEntity;
 use Illuminate\Database\Eloquent\Model;
-use Livewire\Form;
+use App\Models\Employee\EmployeeRequest;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EmployeeForm extends Form
 {
@@ -23,7 +27,7 @@ class EmployeeForm extends Form
     public ?string $divisionId = null;
 
     public ?string $knedp = null;
-    public $keyContainerUpload;
+    public ?TemporaryUploadedFile $keyContainerUpload = null;
     public ?string $password = null;
 
     public array $documents = [];
@@ -69,10 +73,10 @@ class EmployeeForm extends Form
     protected function rootFieldsRules(): array
     {
         return [
-            'position' => ['required', 'string'],
-            'employeeType' => ['required', 'string'],
-            'startDate' => ['required', 'date'],
-            'endDate' => ['nullable', 'date'],
+            'position' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['POSITION'] ?? []))],
+            'employeeType' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['EMPLOYEE_TYPE'] ?? []))],
+            'startDate' => ['required', 'date_format:Y-m-d'],
+            'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
             'divisionId' => ['nullable', 'string'],
         ];
     }
@@ -82,17 +86,17 @@ class EmployeeForm extends Form
         return [
             'party.lastName' => ['required', new Name()],
             'party.firstName' => ['required', new Name()],
-            'party.secondName' => ['nullable', new Name()],
-            'party.gender' => ['required', 'string'],
-            'party.birthDate' => ['required', 'date', new BirthDate()],
-            'party.phones' => ['required', 'array', 'min:1'],
+            'party.secondName' => ['nullable', 'present', new Name()],
+            'party.gender' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['GENDER'] ?? []))],
+            'party.birthDate' => ['required', 'date_format:Y-m-d', new BirthDate()],
+            'party.phones' => ['required', 'array', 'min:1', new PhoneDuplicates()],
             'party.phones.*.number' => ['required', new PhoneNumber()],
-            'party.phones.*.type' => ['required', 'string'],
-            'party.taxId' => ['required_if:party.noTaxId,false', 'string'],
+            'party.phones.*.type' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['PHONE_TYPE'] ?? []))],
+            'party.taxId' => ['required', 'string', new TaxId($this->party['noTaxId'] ?? false)],
             'party.noTaxId' => ['boolean'],
-            'party.email' => ['nullable', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
-            'party.workingExperience' => ['required', 'numeric', 'min:1'],
-            'party.aboutMyself' => ['nullable', 'string'],
+            'party.email' => ['nullable', 'present', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
+            'party.workingExperience' => ['nullable', 'present', 'integer', 'min:0'],
+            'party.aboutMyself' => ['nullable', 'present', 'string'],
         ];
     }
 
@@ -100,9 +104,9 @@ class EmployeeForm extends Form
     {
         return [
             'documents' => ['required', 'array', 'min:1'],
-            'documents.*.type' => ['required', 'string'],
+            'documents.*.type' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['DOCUMENT_TYPE'] ?? []))],
             'documents.*.number' => ['required', 'string'],
-            'documents.*.issuedBy' => ['required', 'string', 'min:1'],
+            'documents.*.issuedBy' => ['nullable', 'present', 'string', 'min:1'],
             'documents.*.issuedAt' => ['required', 'date_format:Y-m-d'],
         ];
     }
@@ -274,15 +278,15 @@ class EmployeeForm extends Form
 
         $revisionData = $request->revision->data ?? [];
 
-        // Populate form with revision data as the base
         $this->position = $revisionData['employee_request_data']['position'] ?? '';
         $this->employeeType = $revisionData['employee_request_data']['employee_type'] ?? '';
         $this->startDate = $revisionData['employee_request_data']['start_date'] ?? '';
-        $this->documents = Arr::toCamelCase($revisionData['documents']);
-        $this->doctor = Arr::toCamelCase($revisionData['doctor']);
-        $this->party = array_merge($this->party, Arr::toCamelCase($revisionData['party']));
-        $this->party['phones'] = !empty($revisionData['phones']) ? Arr::toCamelCase($revisionData['phones']) : [['type' => 'MOBILE', 'number' => '']];
 
+        $this->documents = Arr::toCamelCase($revisionData['documents'] ?? []);
+        $this->doctor = Arr::toCamelCase($revisionData['doctor'] ?? []);
+
+        $this->party = array_merge($this->party, Arr::toCamelCase($revisionData['party'] ?? []));
+        $this->party['phones'] = !empty($revisionData['phones']) ? Arr::toCamelCase($revisionData['phones']) : [['type' => 'MOBILE', 'number' => '']];
 
         // Now, overwrite with live data from Party to ensure it's current
         if ($request->party) {

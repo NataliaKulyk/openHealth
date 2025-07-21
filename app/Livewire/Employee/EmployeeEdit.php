@@ -1,9 +1,6 @@
 <?php
-
 namespace App\Livewire\Employee;
 
-use App\Livewire\Employee\Forms\EmployeeForm;
-use App\Livewire\Employee\Traits\ManagesEmployeeForm;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
@@ -12,40 +9,38 @@ use Illuminate\View\View;
 
 class EmployeeEdit extends EmployeeComponent
 {
-    use ManagesEmployeeForm;
+    use Traits\ManagesEmployeeForm;
 
-    public EmployeeForm $form;
     public string $pageTitle;
+    public ?EmployeeRequest $employeeRequest = null;
     public ?int $employeeRequestId = null;
 
     public function mount(LegalEntity $legalEntity, int $id, string $type = 'employee'): void
     {
-        $this->getDictionary();
+        $this->loadDictionaries();
 
         $source = match ($type) {
-            'request' => EmployeeRequest::with(['revision', 'party'])->find($id),
-            default => Employee::find($id),
+            'request' => EmployeeRequest::findOrFail($id),
+            default => Employee::findOrFail($id),
         };
 
-        if (!$source) { throw new ModelNotFoundException('Source model not found.'); }
+        $this->authorize('update', $source);
+
+        $this->isPersonalDataLocked = true;
 
         if ($source instanceof Employee) {
             $this->employee = $source;
-            $this->employeeId = $source->id;
         } else {
             $this->employeeRequest = $source;
+            $this->employeeRequestId = $source->id;
         }
 
         $this->form->hydrate($source);
-        $this->lockEmailAndTaxId  = true;
-        $this->pageTitle = __('forms.editEmployee');
+        $this->pageTitle = __('forms.edit_employee');
     }
 
     public function render(): View
     {
-        return view('livewire.employee.employee', [
-            'pageTitle' => $this->pageTitle,
-            'employee' => $this->employee ?? $this->employeeRequest,
-        ]);
+        return view('livewire.employee.employee');
     }
 }
