@@ -195,6 +195,7 @@
                                 <th scope="col" class="th-input">{{ __('forms.role') }}</th>
                                 <th scope="col" class="th-input">{{ __('forms.division') }}</th>
                                 <th scope="col" class="th-input">{{ __('forms.status') }}</th>
+                                <th scope="col" class="th-input"></th>
                             </tr>
                             </thead>
                             <tbody>
