@@ -3,12 +3,14 @@
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="table-nav">
             <h1 class="text-xl font-bold text-gray-900 dark:text-white mt-6">{{ __('Ліцензії') }}</h1>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('license.create', [legalEntity()]) }}" class="button bg-blue-700 hover:bg-blue-800 text-white leading-tight align-middle">
-                    Нова ліцензія
-                </a>
-                <button wire:click="sync" class="button bg-green-700 hover:bg-green-800 text-white leading-tight align-middle">
-                    Синхронізувати
+            <div class="button-group">
+                <button type="button" class="button-primary">
+                    <a href="{{ route('license.create', [legalEntity()]) }}">
+                        Нова ліцензія
+                    </a>
+                </button>
+                <button wire:click="sync" class="button-sync">
+                    Синхронізувати з ЕСОЗ
                 </button>
             </div>
         </div>
@@ -25,7 +27,7 @@
             </thead>
             <tbody>
             @foreach($licensesPagination as $license)
-                <tr class="border-b-4 border-gray-200 dark:border-gray-700">
+                <tr>
                 <td class="td-input">{{ $dictionaries['LICENSE_TYPE'][$license->type] ?? $license->type }}</td>
                     <td class="td-input">{{ $license->start_date ?? '—' }}</td>
                     <td class="td-input">{{ $license->end_date ?? '—' }}</td>
