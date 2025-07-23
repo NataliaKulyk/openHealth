@@ -13,7 +13,7 @@
                     </p>
                     <div class="mt-6 flex justify-center gap-4">
                         <button type="button" @click="showDismissModal = false" class="button-primary">{{ __('forms.cancel') }}</button>
-                        <button type="button" wire:click="dismissed" wire:loading.attr="disabled" class="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        <button type="button" wire:click="deactivate" wire:loading.attr="disabled" class="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                             {{ __('forms.dismiss') }}
                         </button>
                     </div>

@@ -203,7 +203,7 @@ class EmployeeIndex extends EmployeeComponent
     /**
      * Performs the dismissal action.
      */
-    public function dismissed(): void
+    public function deactivate(): void
     {
         $employee = Employee::find($this->employeeToDismissId);
         if (!$employee) {
@@ -232,7 +232,7 @@ class EmployeeIndex extends EmployeeComponent
         $this->closeModal();
     }
 
-    public function syncEmployees(): void
+    public function sync(): void
     {
         try {
             $apiResponse = EmployeeRequestApi::getEmployees($this->legalEntity->uuid);

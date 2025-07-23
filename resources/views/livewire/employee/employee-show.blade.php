@@ -1,7 +1,12 @@
 <div>
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">
-            {{ $pageTitle }} {{ $employee->party->fullName ?? '' }}
+            @if($employee instanceof \App\Models\Employee\EmployeeRequest)
+                {{ __('forms.view_employee_request') }}
+            @else
+                {{ __('forms.view_employee') }}
+            @endif
+            {{ $employee->party->fullName ?? '' }}
         </x-slot>
     </x-section-navigation>
 
@@ -29,17 +34,23 @@
                 &larr; {{ __('forms.back_to_list') }}
             </a>
 
-            {{-- THE FIX: We now generate the link for the single polymorphic 'employee.edit' route --}}
-            {{-- We pass the required 'id' and 'type' parameters --}}
-            @can('update', $employee)
-                <a href="{{ route('employee.edit', [
-                        'legalEntity' => legalEntity()->id,
-                        'id' => $employee->id,
-                        'type' => $employee instanceof \App\Models\Employee\EmployeeRequest ? 'request' : 'employee'
-                    ]) }}" class="button-secondary">
-                    {{__('forms.edit')}}
-                </a>
-            @endcan
+            @if ($employee instanceof \App\Models\Employee\Employee)
+                {{-- Посилання для редагування звичайного Employee --}}
+                @can('update', $employee)
+                    <a href="{{ route('employee.edit', ['legalEntity' => $employee->legal_entity_id, 'id' => $employee->id]) }}"
+                       class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Редагувати
+                    </a>
+                @endcan
+            @else
+                {{-- Посилання для редагування EmployeeRequest --}}
+                @can('update', $employee)
+                    <a href="{{ route('employee-request.edit', ['legalEntity' => $employee->legal_entity_id, 'id' => $employee->id]) }}"
+                       class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Редагувати
+                    </a>
+                @endcan
+            @endif
         </div>
     </div>
 </div>

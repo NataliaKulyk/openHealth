@@ -1,12 +1,14 @@
 <?php
 namespace App\Livewire\Employee;
 
+use AllowDynamicProperties;
+use App\Livewire\Employee\Traits\ManagesEmployeeForm;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\View\View;
 
+#[AllowDynamicProperties]
 class EmployeeEdit extends EmployeeComponent
 {
     use Traits\ManagesEmployeeForm;
@@ -15,32 +17,33 @@ class EmployeeEdit extends EmployeeComponent
     public ?EmployeeRequest $employeeRequest = null;
     public ?int $employeeRequestId = null;
 
-    public function mount(LegalEntity $legalEntity, int $id, string $type = 'employee'): void
+    public function mount(LegalEntity $legalEntity, $id): void
     {
         $this->loadDictionaries();
-
-        $source = match ($type) {
-            'request' => EmployeeRequest::findOrFail($id),
-            default => Employee::findOrFail($id),
-        };
-
-        $this->authorize('update', $source);
-
         $this->isPersonalDataLocked = true;
 
-        if ($source instanceof Employee) {
+        // Спочатку знаходимо потрібну модель
+        if (request()->routeIs('employee.*')) {
+            $source = $legalEntity->employees()->findOrFail($id);
             $this->employee = $source;
-        } else {
+        } else { // 'employee-request.*'
+            $source = $legalEntity->employeeRequests()->findOrFail($id);
             $this->employeeRequest = $source;
-            $this->employeeRequestId = $source->id;
         }
 
+        // Тепер виконуємо спільні дії
+        $this->authorize('update', $source);
+
+        // Встановлюємо ID в обох випадках для консистентності
+        $this->employeeRequestId = $source->id;
+
         $this->form->hydrate($source);
-        $this->pageTitle = __('forms.edit_employee');
     }
 
     public function render(): View
     {
-        return view('livewire.employee.employee');
+        return view('livewire.employee.employee-edit', [
+            'employee' => $this->employee ?? $this->employeeRequest
+        ]);
     }
 }

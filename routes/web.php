@@ -109,31 +109,38 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         });
 
 
-        Route::prefix('employees')->name('employee.')->middleware('auth')->group(function () {
+        Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {
 
             // The main unified list for both employees and requests
             Route::get('/', EmployeeIndex::class)
                 ->name('index')
                 ->middleware('can:viewAny,' . Employee::class);
 
+            // Route to add a new position (creates an EmployeeRequest)
+            Route::get('/party/{party}/position-add', EmployeePositionAdd::class)
+                ->name('position-add')
+                ->middleware('can:create,' . EmployeeRequest::class);
+
+            // Polymorphic route for viewing either an Employee or an EmployeeRequest
+            // Authorization will be handled inside the component's mount method.
+            Route::get('/{id}', EmployeeShow::class)
+                ->name('show');
+
+            Route::get('/{id}/edit', EmployeeEdit::class)
+                ->name('edit');
+        });
+
+        Route::prefix('employee-request')->name('employee-request.')->middleware('auth')->group(function () {
+
             // Route to create a new EmployeeRequest from scratch
             Route::get('/create', EmployeeCreate::class)
                 ->name('create')
                 ->middleware('can:create,' . EmployeeRequest::class);
 
-            // Route to add a new position (creates an EmployeeRequest)
-            Route::get('/party/{party}/add-position', EmployeePositionAdd::class)
-                ->name('add-position')
-                ->middleware('can:create,' . EmployeeRequest::class);
-
-            // Polymorphic route for viewing either an Employee or an EmployeeRequest
-            // Authorization will be handled inside the component's mount method.
-            Route::get('/{id}/{type?}', EmployeeShow::class)
+            Route::get('/{id}', EmployeeShow::class)
                 ->name('show');
 
-            // Polymorphic route for editing either an Employee or an EmployeeRequest
-            // Authorization will be handled inside the component's mount method.
-            Route::get('/{id}/{type?}/edit', EmployeeEdit::class)
+            Route::get('/{id}/edit', EmployeeEdit::class)
                 ->name('edit');
         });
 
