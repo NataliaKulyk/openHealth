@@ -98,6 +98,7 @@
                 <input
                     type="text"
                     placeholder=" "
+                    x-mask="9999-99-99"
                     id="accreditationIssuedDate"
                     wire:model="legalEntityForm.accreditation.issuedDate"
                     class="input datepicker-input peer"
@@ -116,6 +117,7 @@
                 <input
                     type="text"
                     placeholder=" "
+                    x-mask="9999-99-99"
                     id="accreditationExpiryDate"
                     wire:model="legalEntityForm.accreditation.expiryDate"
                     class="input datepicker-input peer"

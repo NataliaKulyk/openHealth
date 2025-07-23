@@ -3,6 +3,7 @@
 namespace App\Livewire\LegalEntity;
 
 use Log;
+use Arr;
 use Exception;
 use Validator;
 use Carbon\Carbon;
@@ -34,6 +35,7 @@ use Illuminate\Validation\ValidationException;
 use App\Models\LegalEntity as LegalEntityModel;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesForms;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesRequestApi;
+
 abstract class LegalEntity extends Component
 {
     use FormTrait,
@@ -244,6 +246,7 @@ abstract class LegalEntity extends Component
      */
     protected function signLegalEntity(): array|null
     {
+        // TODO: remove this after MVP (if not needed)
         if (! $this->legalEntityForm->customRulesValidation()) {
             return null;
         }
@@ -440,34 +443,22 @@ abstract class LegalEntity extends Component
         $data = $this->convertArrayKeysToSnakeCase($data);
 
         // If no_tax_id=true its means that taxID should store related document's number
-        if ($data['owner']['no_tax_id']) {
-            $data['owner']['tax_id'] = $data['owner']['documents']['number'];
+        if (Arr::boolean($data, 'owner.no_tax_id')) {
+            Arr::set($data, 'owner.tax_id',  Arr::get($data, 'owner.documents.number'));
         }
 
         // Converting documents to array
-        if (isset($data['owner']['documents'])) {
-            $data['owner']['documents'] = [$data['owner']['documents']];
+        if (Arr::has($data, 'owner.documents')) {
+            Arr::set($data, 'owner.documents', [Arr::get($data, 'owner.documents')]);
         }
 
-        if (isset($data['owner']['user_id'])) {
-            unset($data['owner']['user_id']);
-        }
-
-        if (isset($data['owner']['id'])) {
-            unset($data['owner']['id']);
-        }
-
-        if (isset($data['owner']['uuid'])) {
-            unset($data['owner']['uuid']);
-        }
-
-        if (isset($data['owner']['about_myself'])) {
-            unset($data['owner']['about_myself']);
-        }
-
-        if (isset($data['owner']['working_experience'])) {
-            unset($data['owner']['working_experience']);
-        }
+        Arr::forget($data, [
+            'owner.user_id',
+            'owner.id',
+            'owner.uuid',
+            'owner.about_myself',
+            'owner.working_experience'
+        ]);
 
         $data['residence_address'] = $this->convertArrayKeysToSnakeCase($this->address);
 
@@ -475,19 +466,16 @@ abstract class LegalEntity extends Component
         $data['accreditation'] = $data['accreditation_show'] ? $data['accreditation'] : [];
 
         // Check if 'category' === 'NO_ACCREDITATION' and only required fields are filled, also update following fields: 'issued_date', 'expiry_date', 'order_date'
-         if(isset($data['accreditation']['category']) && $data['accreditation']['category'] === 'NO_ACCREDITATION') {
-            if (!isset($data['accreditation']['issued_date']) && !isset($data['accreditation']['expiry_date'])) {
-                $data['accreditation']['issued_date'] = null;
-                $data['accreditation']['expiry_date'] = null;
-                $data['accreditation']['order_date'] = null;
-            }
+         if(Arr::get($data, 'accreditation.category') === 'NO_ACCREDITATION') {
+            Arr::set($data, 'accreditation.issued_date', null);
+            Arr::set($data, 'accreditation.expiry_date', null);
+            Arr::set($data, 'accreditation.order_date', null);
         }
 
         // Converting archive to array
         $data['archive'] = $data['archivation_show'] ? $data['archive'] : [];
 
-        unset($data['archivation_show']);
-        unset($data['accreditation_show']);
+        Arr::forget($data, ['archivation_show', 'accreditation_show']);
 
         return removeEmptyKeys($data);
     }
@@ -714,6 +702,14 @@ abstract class LegalEntity extends Component
         try {
             // Find or create a new LegalEntity object by UUID
             $this->legalEntity = LegalEntityModel::firstOrNew(['uuid' => $uuid]);
+
+            if (empty($data['data']['accreditation'])) {
+                $this->legalEntity->accreditation = [];
+            }
+
+            if (empty($data['data']['archive'])) {
+                $this->legalEntity->archive = null;
+            }
 
             // Fill the object with data
             $this->legalEntity->fill($data['data']);

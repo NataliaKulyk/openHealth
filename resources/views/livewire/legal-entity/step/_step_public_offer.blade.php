@@ -46,7 +46,6 @@
 
         <div wire:igonre class="form-group group py-4">
             <x-forms.file
-                required
                 wire:model="keyContainerUpload"
                 file="{{ $keyContainerUpload?->getClientOriginalName() }}"
                 aria-describedby="{{ $hasPublicOfferFileError ? 'publicOfferFileErrorHelp' : '' }}"

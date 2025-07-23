@@ -23,6 +23,10 @@ class LegalEntityArchiveCast implements CastsAttributes
      */
     public function get(Model $model, string $key, mixed $value, array $attributes): array
     {
+        if (empty($value)) {
+            return [];
+        }
+
         return $this->proceedValueData($value);
     }
 
@@ -83,7 +87,7 @@ class LegalEntityArchiveCast implements CastsAttributes
                     throw new Exception("LegalEntityArchiveCast: method {$methodName} not found");
                 }
 
-                $subArray[$key] = $this->{$methodName}($subArray[$key]);
+                $subArray[$key] = !empty($subArray[$key]) ? $this->{$methodName}($subArray[$key]) : "";
             }
 
             $arr[] = $subArray;

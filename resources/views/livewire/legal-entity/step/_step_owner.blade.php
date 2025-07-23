@@ -115,6 +115,7 @@
                 required
                 type="text"
                 placeholder=" "
+                x-mask="9999-99-99"
                 id="ownerBirthDate"
                 wire:model="legalEntityForm.owner.birthDate"
                 aria-describedby="{{ $hasOwnerBirthDate ? 'ownerBirthDateErrorHelp' : '' }}"
@@ -342,6 +343,7 @@
         }"
         x-init="
             initialShowNoTaxId = showNoTaxId;
+            taxId = taxId ?? null;
             updateTaxIdInput();
         "
     >
@@ -475,6 +477,7 @@
             <input
                 type="text"
                 placeholder=" "
+                x-mask="9999-99-99"
                 id="documentsIssuedAt"
                 wire:model="legalEntityForm.owner.documents.issuedAt"
                 aria-describedby="{{ $hasOwnerDocumentIssuedAt ? 'ownerDocumentIssuedAtErrorHelp' : '' }}"

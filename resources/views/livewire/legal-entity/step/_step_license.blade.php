@@ -104,6 +104,7 @@
                 required
                 type="text"
                 placeholder=" "
+                x-mask="9999-99-99"
                 id="licenseIssuedDate"
                 wire:model="legalEntityForm.license.issuedDate"
                 aria-describedby="{{ $hasLicenseIssuedDateError ? 'licenseIssuedDateErrorHelp' : '' }}"
@@ -132,6 +133,7 @@
                 required
                 type="text"
                 placeholder=" "
+                x-mask="9999-99-99"
                 id="licenseActiveFromDate"
                 wire:model="legalEntityForm.license.activeFromDate"
                 aria-describedby="{{ $hasLicenseActiveFromDateError ? 'licenseActiveFromDateErrorHelp' : '' }}"
@@ -159,6 +161,7 @@
             <input
                 type="text"
                 placeholder=" "
+                x-mask="9999-99-99"
                 id="licenseExpiryDate"
                 wire:model="legalEntityForm.license.expiryDate"
                 class="input datepicker-input peer"

@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use App\Casts\NullableDateCast;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * @mixin IdeHelperLicense
@@ -38,11 +37,11 @@ class License extends Model
         'legal_entity_id',
         'type' => 'string',
         'issued_by' => 'string',
-        'issued_date' => 'datetime:Y-m-d',
-        'active_from_date' => 'datetime:Y-m-d',
+        'issued_date' => NullableDateCast::class,
+        'active_from_date' => NullableDateCast::class,
         'order_no' => 'string',
         'license_number' => 'string',
-        'expiry_date' => 'datetime:Y-m-d',
+        'expiry_date' => NullableDateCast::class,
         'what_licensed' => 'string',
         'is_primary' => 'boolean',
         'ehealth_inserted_at' => 'datetime',

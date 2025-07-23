@@ -147,6 +147,24 @@ class EditLegalEntity extends LegalEntity
 
         $response = $result['response'];
         $data = $result['request'];
+        
+        /**
+         * This need to check beacuse it's not always present.
+         * Only way to determine if it's present is to check if it's not empty.
+         * This mainly concerns the editing of the legal entity.
+         */
+        if(!isset($data['accreditation'])) {
+            unset($response['data']['accreditation']);
+        }
+
+        /**
+         * This need to check beacuse it's not always present.
+         * Only way to determine if it's present is to check if it's not empty.
+         * This mainly concerns the editing of the legal entity.
+         */
+        if(!isset($data['archive'])) {
+            unset($response['data']['archive']);
+        }
 
         try {
             /**

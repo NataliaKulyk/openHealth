@@ -26,6 +26,10 @@ class LegalEntityAccreditationCast implements CastsAttributes
      */
     public function get(Model $model, string $key, mixed $value, array $attributes): array
     {
+        if (empty($value)) {
+            return [];
+        }
+
         return $this->proceedValueData($value);
     }
 
@@ -62,7 +66,7 @@ class LegalEntityAccreditationCast implements CastsAttributes
             }
 
             // Proceess value stored in array depend on its key and method
-            $arrayData[$key] = $this->{$methodName}($arrayData[$key]);
+            $arrayData[$key] = ! empty($arrayData[$key]) ? $this->{$methodName}($arrayData[$key]) : "";
         }
 
         return $arrayData;

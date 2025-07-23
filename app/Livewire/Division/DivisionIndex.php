@@ -78,7 +78,7 @@ class DivisionIndex extends Component
         $legalEntity ??= legalEntity();
 
         DB::transaction(function () use ($responses, $legalEntity) {
-            foreach ($responses as $response) {
+            foreach ($responses['data'] as $response) {
                 $addressData = $response['addresses'];
 
                 unset($response['addresses']);

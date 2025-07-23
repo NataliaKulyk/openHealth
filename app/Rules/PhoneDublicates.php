@@ -23,15 +23,15 @@ class PhoneDublicates implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        foreach ($this->phones as $key => $value) {
-            $type = $value['type'];
+        foreach ($this->phones as $phoneValue) {
+            $type = $phoneValue['type'];
 
-            $typeCount = count(array_filter($this->phones, fn($value) => $value['type'] === $type));
+            $typeCount = array_reduce($this->phones, fn($sum, $item) => $sum = $item['type'] === $phoneValue['type'] ? $sum + 1 : $sum, 0);
 
             if ($typeCount > 1) {
                 $typeName = dictionary()->getDictionary('PHONE_TYPE')[$type];
 
-                throw new CustomValidationException(__('validation.phone.dublicates') .': [' . $typeName . ']: ' . $value['number'], 'custom');
+                $fail(__('validation.phone.dublicates', ['type' => $typeName]));
             }
         }
     }

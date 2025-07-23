@@ -40,6 +40,21 @@ class CreateLegalEntity extends LegalEntity
         $this->getCurrentStepFromCache();
     }
 
+    /**
+     * For newly created LegalEntity some fields of the owner array must be setted
+     * even if it wil be used in further steps.
+     *
+     * @param array $initials // Array should contains key(s) and its initial value(s)
+     *
+     * @return void
+     */
+    private function setInitialOwnerValues(array $initials): void
+    {
+        foreach ($initials as $key => $value) {
+            $this->legalEntityForm->owner[$key] ??= $value;
+        }
+    }
+
     public function mount(?string $legalEntityId = null): void
     {
         parent::mount();
@@ -48,9 +63,11 @@ class CreateLegalEntity extends LegalEntity
 
         $this->getOwnerFields();
 
-        $this->legalEntityForm->owner['phones'] ??= [];
-
-        $this->legalEntityForm->owner['noTaxId'] ??= false;
+        $this->setInitialOwnerValues([
+            'taxId' => '',
+            'phones' => [],
+            'noTaxId' => false
+        ]);
 
         $this->setOwnerFromCache();
     }
@@ -109,6 +126,17 @@ class CreateLegalEntity extends LegalEntity
         Cache::put($this->stepCacheKey, $this->steps, now()->days(90));
     }
 
+    private function saveFormRawData(): void
+    {
+        if ($this->checkOwnerChanges()) {
+            Cache::put($this->ownerCacheKey, $this->legalEntityForm->owner, now()->days(90));
+        }
+
+        $this->putLegalEntityInCache();
+
+        $this->putCurrentStepToCache();
+    }
+
     /**
      * Increases the current step of the process.
      * Resets the error bag, validates the data, increments the current step, puts the legal entity in cache,
@@ -119,12 +147,13 @@ class CreateLegalEntity extends LegalEntity
      */
     public function nextStep($activeStep): bool
     {
+        $this->saveFormRawData();
+
         $this->resetErrorBag();
 
         $this->validateData($activeStep);
 
-        $this->putLegalEntityInCache();
-
+        // If we're on the last uncompleted step but not on the previous (already filled with data)
         if ($activeStep === $this->steps['index']) {
             $this->increaseStep();
         }
@@ -292,6 +321,11 @@ class CreateLegalEntity extends LegalEntity
      */
     private function checkOwnerChanges(): bool
     {
+        // If no_tax_id=true set related fields to empty
+        if (Arr::boolean($this->legalEntityForm->owner, 'noTaxId')) {
+            Arr::set($this->legalEntityForm->owner, 'taxId', '');
+        }
+
         // Check if the owner information is cached
         if (Cache::has($this->ownerCacheKey)) {
             $cachedOwner = Cache::get($this->ownerCacheKey);
@@ -326,20 +360,6 @@ class CreateLegalEntity extends LegalEntity
     private function stepOwner(): void
     {
         $this->legalEntityForm->rulesForOwner();
-
-        // Check if the owner information is available in the cache
-        $personData = $this->legalEntityForm->owner;
-
-        // If no_tax_id=true set related fields to empty
-        if ($personData['noTaxId']) {
-            $personData['taxId'] = '';
-            $this->legalEntityForm->owner['taxId'] = '';
-        }
-
-        // Store the owner information in the cache
-        if ($this->checkOwnerChanges()) {
-            Cache::put($this->ownerCacheKey, $personData, now()->days(90));
-        }
     }
 
     // Step #3 Create/Update Contact[Phones, Email,beneficiary,receiver_funds_code]
@@ -360,8 +380,6 @@ class CreateLegalEntity extends LegalEntity
         if ($this->legalEntityForm->accreditationShow) {
             $this->legalEntityForm->rulesForAccreditation();
         }
-
-        $this->putCurrentStepToCache(); // Only for save $this->legalEntityForm->accreditationShow state
     }
 
     // Step #6 Create/Update License
@@ -378,8 +396,6 @@ class CreateLegalEntity extends LegalEntity
         if($this->legalEntityForm->archivationShow) {
             $this->legalEntityForm->rulesForAdditionalInformation();
         }
-
-        $this->putCurrentStepToCache(); // Only for save $this->legalEntityForm->archivationShow state
     }
 
     // Step #8 KEP Significancy (called on creating new Legal Entity only)

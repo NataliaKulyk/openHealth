@@ -66,87 +66,105 @@ class LegalEntitiesForms extends Form
             'owner.firstName' => ['required', 'min:3', new Name()],
             'owner.secondName' => ['nullable', new Name()],
             'owner.gender' => 'required|string',
-            'owner.birthDate' => ['required', 'date', new BirthDate($this->owner['email'] ?? ''), new AgeCheck()],
+            'owner.birthDate' => ['required', 'date', 'before_or_equal:today', new BirthDate($this->owner['email'] ?? ''), new AgeCheck()],
             'owner.noTaxId' => 'boolean|nullable',
             'owner.taxId' => ['required_unless:owner.noTaxId,true', 'string', new TaxId($this->owner['email'] ?? '')],
             'owner.documents.type' => ['required','string', new InDictionary('DOCUMENT_TYPE')],
             'owner.documents.number' => ['required', 'string', new DocumentNumber($this->owner['documents']['type'] ?? '')],
+            'owner.documents.issuedAt' => 'sometimes|date|before_or_equal:today',
             'owner.phones' => 'required|array',
             'owner.phones.*.number' => ['required', 'string', new PhoneNumber()],
-            'owner.phones.*.type' => ['required', 'string', new InDictionary('PHONE_TYPE')],
+            'owner.phones.*.type' => [
+                'required',
+                'string',
+                new InDictionary('PHONE_TYPE'),
+                new PhoneDublicates($this->owner['phones'])
+            ],
             'owner.email' => ['required','email',new Email()],
             'owner.position' => ['required','string', new InDictionary('POSITION')],
             'email' => ['required','email',new Email()],
             'website' => ['required', 'regex:/^(https?:\/\/)?(www\.)?([a-z0-9\-]+\.)+[a-z]{2,}$/i'],
             'phones' => 'required|array',
             'phones.*.number' => ['required', 'string', new PhoneNumber()],
-            'phones.*.type' => ['required', 'string', new InDictionary('PHONE_TYPE')],
-            'accreditation.category' => ['required', 'string'],
-            'accreditation.orderNo' => ['required', 'string', 'min:2'],
-            'accreditation.orderDate' => ['required', 'date'],
-            'accreditation.issuedDate' => ['nullable', 'date'],
+            'phones.*.type' => [
+                'required',
+                'string',
+                new InDictionary('PHONE_TYPE'),
+                new PhoneDublicates($this->phones)
+            ],
+            'accreditation' => 'sometimes|array',
+            'accreditation.category' => 'required_if:accreditationShow,true|string',
+            'accreditation.orderNo' =>  $this->accreditationShow ? 'required|string|min:2' : 'nullable|string',
+            'accreditation.orderDate' => 'required_if:accreditationShow,true|date|before_or_equal:today',
+            'accreditation.issuedDate' => ['nullable', 'date', 'before_or_equal:today'],
             'accreditation.expiryDate' => ['nullable', 'date', new ExpiryDate($this->accreditation['issuedDate'] ?? '')],
             'license.type' => 'required|string',
             'license.issuedBy' => ['required', 'string','min:3',new Cyrillic()],
-            'license.issuedDate' => 'required|date|min:3',
-            'license.activeFromDate' => 'required|date|min:3',
+            'license.issuedDate' => 'required|date|before_or_equal:today',
+            'license.activeFromDate' => 'required|date',
             'license.expiryDate' => ['nullable', 'date', new ExpiryDate($this->license['activeFromDate'] ?? '')],
             'license.orderNo' => 'required|string',
             'license.licenseNumber' => ['nullable', 'string', 'regex:/^(?!.*[ЫЪЭЁыъэё@$^#])[a-zA-ZА-ЯҐЇІЄа-яґїіє0-9№\"!\^\*)\]\[(&._-].*$/'],
             'receiverFundsCode' => 'nullable|string|regex:/^[0-9]+$/',
             'beneficiary' => ['min:3', new Cyrillic()],
             'archive' => 'sometimes|array',
-            'archive.*.date'  => 'required_with:archive|string',
-            'archive.*.place' => 'required_with:archive|string'
+            'archive.*.date'  => 'required_if:archivationShow,true|date|before_or_equal:today',
+            'archive.*.place' => 'required_if:archivationShow,true|string',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'edrpou.required' => __('Це поле є обов\'язковим до заповнення'),
-            'edrpou.regex' => __('Поле має хибний формат'),
-            'edrpou.unique_edrpou' => __('Такий номер вже існує'),
-            'owner.firstName.required' => __('Iм\'я є обов\'язковим до заповнення'),
-            'owner.lastName.required' => __('Прізвище є обов\'язковим до заповнення'),
-            'owner.birthDate.required' => __('Дата народження є обов\'язковою до заповнення'),
-            'owner.age_check' => 'Вік власника має бути не менше 18 років',
-            'owner.gender' => __('Це поле є обов\'язковим до заповнення'),
-            'owner.phones' => __('Контактний телефон є обов\'язковим до заповнення'),
-            'owner.taxId.required_unless' => __('Номер ІПН чи РНОКПП є обов\'язковим до заповнення'),
-            'owner.documents.type.required' => __('Тип документа є обов\'язковим до заповнення'),
-            'owner.position.required' => __('Посада є обов\'язковою до заповнення'),
-            'owner.email.unique' => 'Поле :attribute вже зареєстровано в системі',
-            'owner.phones.required' => 'Поле з номерами телефонів є обов\'язковим',
-            'owner.phones.array' => 'Поле з номерами телефонів повинно бути масивом',
-            'owner.phones.*.number.required' => 'Номер телефону є обов\'язковим',
-            'owner.phones.*.number.regex' => 'Номер телефону повинен містити 12 цифр',
-            'owner.phones.*.type.required' => 'Тип телефону є обов\'язковим',
-            'owner.phones.*.type' => 'Тип телефону повинен бути "МОБІЛЬНИЙ" або "СТАЦІОНАРНИЙ"',
-            'website.required' => __('Це поле є обов\'язковим до заповнення'),
-            'website' => __('Поле має хибний формат'),
-            'phones.required' => 'Поле з номерами телефонів є обов\'язковим',
-            'phones.array' => 'Поле з номерами телефонів повинно бути масивом',
-            'phones.*.number.required' => 'Номер телефону є обов\'язковим',
-            'phones.*.number.regex' => 'Номер телефону повинен містити 12 цифр',
-            'phones.*.type.required' => 'Тип телефону є обов\'язковим',
-            'phones.*.type' => 'Тип телефону повинен бути "МОБІЛЬНИЙ" або "СТАЦІОНАРНИЙ"',
-            'accreditation.category.required' => __('Категорія є обов\'язковою до заповнення'),
-            'accreditation.orderNo.required' => __('Номер наказу є обов\'язковим до заповнення'),
-            'accreditation.orderDate.required' => __('Дата наказу є обов\'язковою до заповнення'),
-            'accreditation.orderNo.min' => __('Поле має хибний формат. (Мінімальна довжина - 2 символи)'),
-            'accreditation.category' => __('Поле має хибний формат'),
-            'accreditation.orderNo' => __('Поле має хибний формат'),
-            'license.issuedDate' => __('Дата видачі є обов\'язковою до заповнення'),
-            'license.activeFromDate' => __('Дата початку дії є обов\'язковою до заповнення'),
-            'license.issuedBy.min' => __('Поле має хибний формат. (Мінімальна довжина - 3 символи)'),
-            'license.issuedBy' => __('Потрібно вказати орган, який видав документ'),
-            'license.orderNo' => __('Номер наказу є обов\'язковим до заповнення'),
-            'receiverFundsCode' => __('Поле має хибний формат. (Дозволено лише цифри)'),
-            'beneficiary.min' => __('Поле має хибний формат. (Мінімальна довжина - 3 символи)'),
-            'beneficiary' => __('Поле має хибний формат. (Дозволено лише кирилічні символи)'),
-            'archive.*.date.required_with' => __('Це поле є обов\'язковим до заповнення'),
-            'archive.*.place.required_with' => __('Це поле є обов\'язковим до заповнення'),
+            'edrpou.required' => __('validation.attributes.errors.requiredField'),
+            'edrpou.regex' => __('validation.attributes.errors.wrongFieldFormat'),
+            'edrpou.unique_edrpou' => __('validation.attributes.errors.numberExist'),
+            'owner.firstName.required' => __('validation.attributes.errors.requiredFirstName'),
+            'owner.lastName.required' => __('validation.attributes.errors.requiredLastName'),
+            'owner.birthDate.required' => __('validation.attributes.errors.requiredBirthDate'),
+            'owner.birthDate.before_or_equal' => __('validation.attributes.errors.ownerAge'),
+            'owner.age_check' => __('validation.attributes.errors.requiredField'),
+            'owner.gender' => __('validation.attributes.errors.requiredField'),
+            'owner.phones' => __('validation.attributes.errors.requiredContactPhone'),
+            'owner.taxId.required_unless' => __('validation.attributes.errors.requiredTaxId'),
+            'owner.documents.type.required' => __('validation.attributes.errors.requiredDocumentType'),
+            'owner.documents.issuedAt.before_or_equal' => __('validation.attributes.errors.expiryDateGreat'),
+            'owner.position.required' => __('validation.attributes.errors.requiredPostion'),
+            'owner.email.unique' => __('validation.attributes.errors.requiredEmail'),
+            'owner.phones.required' => __('validation.attributes.errors.requiredPhone'),
+            'owner.phones.array' => __('validation.attributes.errors.requiredPhoneArray'),
+            'owner.phones.*.number.required' => __('validation.attributes.errors.requiredPhoneNumber'),
+            'owner.phones.*.number.regex' => __('validation.attributes.errors.requiredPhoneNumberMax'),
+            'owner.phones.*.type.required' => __('validation.attributes.errors.requiredPhoneType'),
+            'owner.phones.*.type.' . InDictionary::class => __('validation.attributes.errors.requiredPhoneTypeSpeciality'),
+            'website.required' => __('validation.attributes.errors.requiredField'),
+            'website' => __('validation.attributes.errors.wrongFieldFormat'),
+            'phones.required' => __('validation.attributes.errors.requiredPhone'),
+            'phones.array' => __('validation.attributes.errors.requiredPhoneArray'),
+            'phones.*.number.required' => __('validation.attributes.errors.requiredPhoneNumber'),
+            'phones.*.number.regex' => __('validation.attributes.errors.requiredPhoneNumberMax'),
+            'phones.*.type.required' => __('validation.attributes.errors.requiredPhoneType'),
+            'phones.*.type.' . InDictionary::class => __('validation.attributes.errors.requiredPhoneTypeSpeciality'),
+            'accreditation.category.required_if' => __('validation.attributes.errors.requiredCategory'),
+            'accreditation.orderNo.required' => __('validation.attributes.errors.requiredOrderNumber'),
+            'accreditation.orderDate.required_if' => __('validation.attributes.errors.requiredOrderDate'),
+            'accreditation.orderDate.before_or_equal' => __('validation.attributes.errors.expiryDateGreat'),
+            'accreditation.issuedDate.before_or_equal' => __('validation.attributes.errors.expiryDateGreat'),
+            'accreditation.orderNo.min' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.minLen2') . ')',
+            'accreditation.category' => __('validation.attributes.errors.wrongFieldFormat'),
+            'accreditation.orderNo' => __('validation.attributes.errors.wrongFieldFormat'),
+            'license.issuedDate' => __('validation.attributes.errors.requiredIssuedDate'),
+            'license.issuedDate.before_or_equal' => __('validation.attributes.errors.expiryDateGreat'),
+            'license.activeFromDate' => __('validation.attributes.errors.requiredActiveFromDate'),
+            'license.issuedBy.min' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.minLen3') . ')',
+            'license.issuedBy' => __('validation.attributes.errors.requiredIssuedBy'),
+            'license.orderNo' => __('validation.attributes.errors.requiredOrderNumber'),
+            'receiverFundsCode' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.onlyNumeric') . ')',
+            'beneficiary.min' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.minLen3') . ')',
+            'beneficiary' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.onlyCyrillic') . ')',
+            'archive.*.date.required_if' => __('validation.attributes.errors.requiredField'),
+            'archive.*.date.before_or_equal' => __('validation.attributes.errors.expiryDateGreat'),
+            'archive.*.place.required_if' => __('validation.attributes.errors.requiredField'),
         ];
     }
 
@@ -291,7 +309,7 @@ class LegalEntitiesForms extends Form
             try {
                 $rule->validate('', '', fn() => null);
             } catch (CustomValidationException $e) {
-                $this->component->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error']);
+               $this->component->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error']);
 
                 return false;
             }
@@ -301,7 +319,7 @@ class LegalEntitiesForms extends Form
     }
 
     /**
-     * TODO: add rule for next cases:
+     * TODO: add rule for next cases: Or remove this after MVP (if not needed)
      *  - Check custom validation rules (mostly for business-logic)
      *
      * @return array
@@ -309,10 +327,7 @@ class LegalEntitiesForms extends Form
     protected function customRules(): array
     {
         // Place here the custom validation rules to be checked through creation/updating of the LegalEntity
-        $customValidationRules = [
-            new PhoneDublicates($this->phones),
-            new PhoneDublicates($this->owner['phones'])
-        ];
+        $customValidationRules = [];
 
         return $customValidationRules;
     }
