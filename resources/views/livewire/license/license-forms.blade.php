@@ -1,4 +1,3 @@
-<body class="bg-white dark:bg-gray-800 min-h-screen text-gray-900 dark:text-white">
 <div>
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">{{ __('Нова додаткова ліцензія') }}</x-slot>
@@ -98,4 +97,3 @@
         </div>
     </form>
 </div>
-</body>
