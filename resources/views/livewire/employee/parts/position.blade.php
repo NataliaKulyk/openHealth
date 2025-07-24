@@ -37,8 +37,7 @@
         </div>
         <div class="form-group">
             <select name="division" id="division" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" wire:model="form.doctor.divisionUuid">
-                <option value="" disabled selected hidden>{{ __('forms.select') }}</option>
-                <option value="b075f148-7f93-4fc2-b2ec-2d81b19a9b7b">Test division(mock)</option>
+                <option value="">{{ __('forms.select_division') }}</option>
             </select>
             <label for="division" class="label">{{ __('forms.division') }}</label>
             @error('form.doctor.divisionUuid') <p class="text-error">{{ $message }}</p> @enderror
