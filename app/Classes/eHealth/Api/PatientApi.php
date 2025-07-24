@@ -93,6 +93,23 @@ class PatientApi
     }
 
     /**
+     * Get diagnostic report data by provided ID.
+     *
+     * @param  string  $patientId
+     * @param  string  $diagnosticReport
+     * @return array
+     * @throws ApiException
+     */
+    public static function getDiagnosticReportById(string $patientId, string $diagnosticReport): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientId/diagnostic_reports/$diagnosticReport",
+            []
+        )->sendRequest();
+    }
+
+    /**
      * Submit procedure data package.
      *
      * @param  string  $patientId
@@ -123,6 +140,23 @@ class PatientApi
             HttpRequest::METHOD_GET,
             self::ENDPOINT_PATIENT . "/$patientId/procedures",
             $params
+        )->sendRequest();
+    }
+
+    /**
+     * Get procedures data by provided ID.
+     *
+     * @param  string  $patientId
+     * @param  string  $procedureId
+     * @return array
+     * @throws ApiException
+     */
+    public static function getProcedureById(string $patientId, string $procedureId): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientId/procedures/$procedureId",
+            []
         )->sendRequest();
     }
 
