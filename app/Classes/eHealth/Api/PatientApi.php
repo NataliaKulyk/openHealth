@@ -13,18 +13,6 @@ class PatientApi
     protected const string ENDPOINT_PATIENT = '/api/patients';
 
     /**
-     * Get the processing status of the async job.
-     *
-     * @param  string  $jobId
-     * @return array
-     * @throws ApiException
-     */
-    public static function getJobsDetailsById(string $jobId): array
-    {
-        return new Request(HttpRequest::METHOD_GET, "/api/jobs/$jobId", [])->sendRequest();
-    }
-
-    /**
      * Create episode.
      *
      * @param  string  $patientId
