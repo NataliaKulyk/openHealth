@@ -147,28 +147,6 @@
                                            class="ml-2 text-sm text-gray-500 dark:text-gray-300">{{ __('forms.dismissed') }}</label>
                                 </div>
 
-                        <div class="form-group col-span-full">
-                            <label class="default-label">{{ __('forms.status') }}</label>
-                            <div class="flex flex-col space-y-2 mt-2">
-                                <div>
-                                    <input type="checkbox" wire:model.live="status" value="APPROVED"
-                                           id="status_approved" class="default-checkbox">
-                                    <label for="status_approved"
-                                           class="ml-2 text-sm text-gray-500 dark:text-gray-300">{{ __('forms.active') }}</label>
-                                </div>
-                                <div>
-                                    <input type="checkbox" wire:model.live="status" value="NEW" id="status_new"
-                                           class="default-checkbox">
-                                    <label for="status_new"
-                                           class="ml-2 text-sm text-gray-500 dark:text-gray-300">{{ __('forms.draft') }}</label>
-                                </div>
-                                <div>
-                                    <input type="checkbox" wire:model.live="status" value="DISMISSED"
-                                           id="status_dismissed" class="default-checkbox">
-                                    <label for="status_dismissed"
-                                           class="ml-2 text-sm text-gray-500 dark:text-gray-300">{{ __('forms.dismissed') }}</label>
-                                </div>
-
                                 <div class="opacity-50">
                                     <input type="checkbox" id="status_verified" class="default-checkbox" disabled>
                                     <label for="status_verified"
