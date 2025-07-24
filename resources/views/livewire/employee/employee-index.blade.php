@@ -50,9 +50,8 @@
                     </div>
 
                     <div class="flex items-center space-x-2 pt-5">
-                        <a href="{{ route('employee.create', ['legalEntity' => legalEntity()->id]) }}" class="button-primary">
-                            {{ __('forms.newEmployee') }}
-                        </a>
+                        <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
+                           class="button-primary">{{ __('forms.new_employee') }}</a>
                         <button wire:click="syncEmployees" type="button" class="button-sync">
                             {{ __('forms.synchronise_with_eHealth') }}
                         </button>
@@ -128,17 +127,39 @@
                             <label for="filter_division" class="label">Медичний заклад</label>
                         </div>
 
-                        <div class="form-group group">
-                            <select wire:model.live="status"
-                                    name="filter_status"
-                                    id="filter_status"
-                                    class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                            >
-                                <option value="">Всі статуси</option>
-                                <option value="APPROVED">Активний</option>
-                                <option value="DISMISSED">Звільнений</option>
-                            </select>
-                            <label for="filter_status" class="label">Статус у системі</label>
+                        <div class="form-group col-span-full">
+                            <label class="default-label">{{ __('forms.status') }}</label>
+                            <div class="flex flex-col space-y-2 mt-2">
+                                <div>
+                                    <input type="checkbox" wire:model.live="status" value="APPROVED"
+                                           id="status_approved" class="default-checkbox">
+                                    <label for="status_approved"
+                                           class="ml-2 text-sm text-gray-500 dark:text-gray-300">{{ __('forms.active') }}</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" wire:model.live="status" value="NEW" id="status_new"
+                                           class="default-checkbox">
+                                    <label for="status_new"
+                                           class="ml-2 text-sm text-gray-500 dark:text-gray-300">{{ __('forms.draft') }}</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" wire:model.live="status" value="DISMISSED"
+                                           id="status_dismissed" class="default-checkbox">
+                                    <label for="status_dismissed"
+                                           class="ml-2 text-sm text-gray-500 dark:text-gray-300">{{ __('forms.dismissed') }}</label>
+                                </div>
+
+                                <div class="opacity-50">
+                                    <input type="checkbox" id="status_verified" class="default-checkbox" disabled>
+                                    <label for="status_verified"
+                                           class="ml-2 text-sm text-gray-400 dark:text-gray-500">{{ __('forms.verified') }}</label>
+                                </div>
+                                <div class="opacity-50">
+                                    <input type="checkbox" id="status_not_verified" class="default-checkbox" disabled>
+                                    <label for="status_not_verified"
+                                           class="ml-2 text-sm text-gray-400 dark:text-gray-500">{{ __('forms.not_verified') }}</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="w-full flex justify-start mt-4">
@@ -176,10 +197,10 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <a href="{{ route('employee.add-position', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                            <a href="{{ route('employee.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                <span class="text-xl leading-none">+</span>
-                                <span>{{ __('forms.addPosition') }}</span>
+                                    <span
+                                        class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
                             </a>
                         </div>
                     </div>
@@ -196,86 +217,41 @@
                             </tr>
                             </thead>
                             <tbody>
-                            @php $positions = $party->employees->merge($party->employeeRequests); @endphp
-                            @foreach($positions as $position)
+                            @php
+                                $positions = $party->employees->merge($party->employeeRequests);
+                                $groupedPositions = $positions->groupBy('position');
+                            @endphp
+                            @foreach($groupedPositions as $positionCode => $items)
+                                @php
+                                    $positionToShow = $items->firstWhere(fn($item) => $item instanceof \App\Models\Employee\Employee) ?? $items->first();
+                                @endphp
                                 <tr>
-                                    <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['POSITION'][$position->position] ?? $position->position }}</td>
-                                    <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['EMPLOYEE_TYPE'][$position->employee_type] ?? $position->employee_type }}</td>
-                                    <td class="td-input break-words whitespace-normal align-top">{{ $position->division->name ?? 'N/A' }}</td>
+                                    <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['POSITION'][$positionToShow->position] ?? $positionToShow->position }}</td>
+                                    <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['EMPLOYEE_TYPE'][$positionToShow->employee_type] ?? $positionToShow->employee_type }}</td>
+                                    <td class="td-input break-words whitespace-normal align-top">{{ $positionToShow->division->name ?? 'N/A' }}</td>
 
                                     <td class="td-input break-words whitespace-normal align-top">
-                                        @switch($position->status)
-                                            @case(\App\Enums\Status::APPROVED)
+                                        @if($positionToShow instanceof \App\Models\Employee\Employee)
+                                            @if($positionToShow->status?->value === 'APPROVED')
                                                 <span class="badge-green">Активний</span>
-                                                @break
-                                            @case(\App\Enums\Status::DISMISSED)
+                                            @else
                                                 <span class="badge-red">Звільнений</span>
-                                                @break
-                                            @case(\App\Enums\Status::NEW)
-                                                <span class="badge-red">Чернетка</span>
-                                                @break
-                                            @default
-                                                <span class="badge-yellow">{{ $position->status }}</span>
-                                        @endswitch
+                                            @endif
+                                        @else
+                                            <span class="badge-blue">Чернетка</span>
+                                        @endif
                                     </td>
 
                                     <td class="td-input text-center">
-                                        <div class="relative inline-block" x-data="{ open: false }" @click.outside="open = false">
-                                            <button @click="open = !open" class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-white" type="button">
-                                                <svg class="w-6 h-6 text-gray-800 dark:text-white svg-hover-action" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                                    <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2" d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"/>
-                                                </svg>
-                                            </button>
-                                            <div x-show="open" x-transition class="absolute right-0 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600" style="display: none;">
-                                                <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" @click="open = false">
-                                                    <li>
-                                                        <a href="{{ route('employee.show', ['legalEntity' => legalEntity()->id, 'id' => $position->id, 'type' => $position->type]) }}"
-                                                           class="flex items-center gap-2 py-2 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
-                                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-300" aria-hidden="true"
-                                                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                                <path stroke="currentColor" stroke-width="2"
-                                                                      d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
-                                                                <path stroke="currentColor" stroke-width="2"
-                                                                      d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                                                            </svg>
-                                                            Переглянути
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="{{ route('employee.edit', ['legalEntity' => legalEntity()->id, 'id' => $position->id, 'type' => $position->type]) }}"
-                                                           class="flex items-center gap-2 py-2 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
-                                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                                                 fill="none" viewBox="0 0 24 24">
-                                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                      d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"/>
-                                                            </svg>
-                                                            Редагувати
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                                @if($position->type === 'employee' && $position->status === \App\Enums\Status::APPROVED)
-                                                    <div class="py-1" @click="open = false">
-                                                        <button type="button"
-                                                                wire:click="showModalDismissed({{ $position->id }})"
-                                                                class="flex items-center gap-2 w-full py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600">
-                                                            <svg class="w-5 h-5 text-red-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                                                 fill="none" viewBox="0 0 24 24">
-                                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                      d="m15 9-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                                            </svg>
-                                                            {{ __('forms.dismissed') }}
-                                                        </button>
-                                                    </div>
-                                                @endif
-                                                @if($position->type === 'request' && !$position->uuid)
-                                                    <div class="py-1" @click="open = false">
-                                                        <button type="button" wire:click="confirmRequestDeletion({{ $position->id }})" class="block w-full text-right py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
-                                                            {{ __('forms.delete') }}
-                                                        </button>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
+                                        @include('livewire.employee.parts.actions-dropdown', [
+                                            'position' => $positionToShow,
+                                            'canViewEmployeeDetails' => $canViewEmployeeDetails,
+                                            'canUpdateEmployee' => $canUpdateEmployee,
+                                            'canDismissEmployee' => $canDismissEmployee,
+                                            'canViewEmployeeRequest' => $canViewEmployeeRequest,
+                                            'canUpdateEmployeeRequest' => $canUpdateEmployeeRequest,
+                                            'canDeleteEmployeeRequest' => $canDeleteEmployeeRequest,
+                                        ])
                                     </td>
                                 </tr>
                             @endforeach
@@ -296,45 +272,6 @@
         </div>
     </x-section>
 
-    {{-- MODAL FOR DISMISSAL --}}
-    <div x-data="{ showDismissModal: @entangle('showModal') }">
-        <template x-teleport="body">
-            <div x-show="showDismissModal" style="display: none" @keydown.escape.prevent.stop="showDismissModal = false" role="dialog" aria-modal="true" class="fixed inset-0 z-50 overflow-y-auto">
-                <div x-show="showDismissModal" x-transition.opacity class="fixed inset-0 bg-black/30"></div>
-                <div x-show="showDismissModal" x-transition @click="showDismissModal = false" class="relative flex min-h-screen items-center justify-center p-4">
-                    <div @click.stop x-trap.noscroll.inert="showDismissModal" class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-6 text-center shadow-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-                            <span x-text="$wire.dismissal_employee_name || 'Підтвердження дії'"></span> - звільнення
-                        </h2>
-                        <p class="mt-4 text-sm text-gray-600 whitespace-pre-line dark:text-gray-300" x-text="$wire.dismiss_text"></p>
-                        <div class="mt-6 flex justify-center gap-4">
-                            <button type="button" @click="showDismissModal = false" wire:click="closeModal" class="button-primary">Скасувати</button>
-                            <button type="button" wire:click="dismissed({{ $dismissed_id }})" wire:loading.attr="disabled" class="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Звільнити</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
-
-    {{-- MODAL FOR DELETING A DRAFT --}}
-    <div x-data="{ show: @entangle('showDeleteModal') }">
-        <template x-teleport="body">
-            <div x-show="show" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" style="display: none;">
-                <div x-show="show" x-transition.opacity class="fixed inset-0 bg-black/30"></div>
-                <div x-show="show" x-transition @click="show = false" class="relative flex min-h-screen items-center justify-center p-4">
-                    <div @click.stop x-trap.noscroll.inert="show" class="relative w-full max-w-md overflow-hidden rounded-lg bg-white p-6 text-center shadow-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                            Видалення чернетки для <span x-text="$wire.deleteRequestName || 'співробітника'"></span>
-                        </h3>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400" x-text="$wire.deleteRequestText"></p>
-                        <div class="mt-6 flex justify-center gap-4">
-                            <button type="button" @click="show = false" class="button-primary">Скасувати</button>
-                            <button type="button" wire:click="deleteRequest" wire:loading.attr="disabled" class="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Видалити</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
+    @include('livewire.employee.parts.modals.deactivate-modal')
+    @include('livewire.employee.parts.modals.delete-draft-modal')
 </div>
