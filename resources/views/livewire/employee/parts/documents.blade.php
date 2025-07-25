@@ -112,7 +112,7 @@
                     <div x-show="openModal"
                          x-transition
                          @click="openModal = false"
-                         class="relative flex min-h-screen items-center justify-start pl-72 p-4"
+                         class="relative flex min-h-screen items-center justify-center p-4"
                     >
                         <div @click.stop
                              x-trap.noscroll.inert="openModal"
