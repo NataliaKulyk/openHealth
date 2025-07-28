@@ -50,7 +50,7 @@
                     <div class="flex items-center space-x-2 pt-5 ml-auto">
                         <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
                            class="button-primary">{{ __('forms.new_employee') }}</a>
-                        <button wire:click="sync" type="button" class="button-sync">
+                        <button wire:click="syncEmployees" type="button" class="button-sync">
                             {{ __('forms.synchronise_with_eHealth') }}
                         </button>
                     </div>

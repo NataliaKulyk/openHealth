@@ -26,7 +26,6 @@
 
             {{-- Part 2: Documents --}}
             @include('livewire.employee.parts.documents')
-            @include('livewire.employee.parts.position')
 
             {{-- Part 3: Position --}}
             @include('livewire.employee.parts.position')

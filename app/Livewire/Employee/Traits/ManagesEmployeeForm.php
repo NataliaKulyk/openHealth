@@ -21,7 +21,6 @@ trait ManagesEmployeeForm
 
     protected ?Employee $employee = null;
     public ?EmployeeRequest $employeeRequest = null;
-    public ?int $employeeRequestId = null;
 
     /**
      * The main save method.

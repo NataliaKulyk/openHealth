@@ -2,8 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Livewire\Division\Api\DivisionRequestApi;
-use Log;
+use Illuminate\Support\Facades\Log;
 use Exception;
 use App\Core\Arr;
 use Carbon\Carbon;
@@ -86,22 +85,21 @@ class EmployeeRepository
     /**
      * Saves or updates employee-related data, including EmployeeRequest, Party, and associated details.
      *
-     * @param array                         $response
-     * @param LegalEntity                   $legalEntity
-     * @param Employee|EmployeeRequest|null $employeeModel The model class to create/update (can be null for a new request).
-     * @param string|null                   $employeeUUID  UUID of an existing Employee, if this is an EmployeeRequest that updates.
-     * @param bool                          $isNewRequest  Indicates a new unique EmployeeRequest creation scenario.
+     * @param array        $response
+     * @param LegalEntity  $legalEntity
+     * @param BaseEmployee $employeeModel The model class to create/update (can be null for a new request).
+     * @param string|null  $employeeUUID  UUID of an existing Employee, if this is an EmployeeRequest that updates.
+     * @param bool         $isNewRequest  Indicates a new unique EmployeeRequest creation scenario.
      *
-     * @return Employee|EmployeeRequest
-     * @throws Exception
+     * @return BaseEmployee
      */
     public function store(
         array $response,
         LegalEntity $legalEntity,
-        Employee|EmployeeRequest|null $employeeModel,
+        BaseEmployee $employeeModel,
         ?string $employeeUUID = null,
         bool $isNewRequest = false
-    ): Employee|EmployeeRequest
+    ): BaseEmployee
     {
         try {
 
@@ -139,6 +137,19 @@ class EmployeeRepository
             $employee = $this->createOrUpdate($response, $employeeModel, $legalEntity);
             $isEmployeeRequest = $employee instanceof EmployeeRequest;
             $employeeInstance = Employee::where('uuid', $employeeUUID)?->first();
+
+            $party = $employeeInstance?->party;
+
+
+            if (!$party && !empty($partyData['tax_id'])) {
+                $party = $this->partyRepository->updateOrCreate(
+                    ['tax_id' => $partyData['tax_id']], // Атрибути для пошуку
+                    $partyData
+                );
+            } elseif (!$party) {
+                $party = $this->partyRepository->create($partyData);
+            }
+
             $alreadyExistParty = $employeeInstance?->party;
             $party = $alreadyExistParty ?? $this->partyRepository->createOrUpdate($partyData);
 
@@ -197,7 +208,7 @@ class EmployeeRepository
 
         } catch (Exception $err) {
             Log::error('Create Employee Error: ' . $err->getMessage(), ['exception' => $err]);
-            throw new Exception(__('Create Employee Error') . ' : ' . $err->getMessage());
+            throw new \RuntimeException(__('Create Employee Error') . ' : ' . $err->getMessage());
        }
     }
 

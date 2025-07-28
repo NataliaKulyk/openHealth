@@ -2,15 +2,14 @@
 
 namespace App\Livewire\Employee;
 
+use App\Livewire\Employee\Traits\ManagesEmployeeForm;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use Illuminate\View\View;
 
 class EmployeeRequestEdit extends EmployeeComponent
 {
-
-    public ?EmployeeRequest $employeeRequest = null;
-    public ?int $employeeRequestId = null;
+    use ManagesEmployeeForm;
 
     public function mount(LegalEntity $legalEntity, EmployeeRequest $employee_request): void
     {
