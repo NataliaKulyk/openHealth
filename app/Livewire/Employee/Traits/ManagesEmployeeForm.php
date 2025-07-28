@@ -10,7 +10,6 @@ use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Livewire\Attributes\Locked;
 use Livewire\WithFileUploads;
 use App\Repositories\Repository;
 use Illuminate\Validation\ValidationException;
@@ -21,59 +20,29 @@ trait ManagesEmployeeForm
     use WithFileUploads;
 
     protected ?Employee $employee = null;
-
-    #[Locked]
+    public ?EmployeeRequest $employeeRequest = null;
     public ?int $employeeRequestId = null;
 
     /**
-     * This is the main save method with corrected logic.
-     *
-     * @throws ValidationException
+     * The main save method.
      */
     public function save(): void
     {
         try {
-            if (isset($this->form->documents) && is_array($this->form->documents)) {
-                foreach ($this->form->documents as $key => $document) {
-                    if (!empty($document['issuedAt'])) {
-                        $this->form->documents[$key]['issuedAt'] = Carbon::parse($document['issuedAt'])->format('Y-m-d');
-                    }
-                }
-            }
-
             $this->form->validate($this->form->rulesForSave());
             $preparedDataForDb = $this->form->getPreparedData();
 
-            // First, try to find the request we might be editing, if the ID is present.
             if (property_exists($this, 'employeeRequestId') && $this->employeeRequestId) {
                 $this->employeeRequest = EmployeeRequest::find($this->employeeRequestId);
             }
 
-            // We UPDATE only if we have a request model AND it's still a draft (no UUID).
             if ($this->employeeRequest && is_null($this->employeeRequest->uuid)) {
-
-                // --- UPDATE THE EXISTING DRAFT ---
-                DB::transaction(function () use ($preparedDataForDb) {
-                    $this->updateExistingDraft($preparedDataForDb);
-                });
-
+                DB::transaction(fn() => $this->updateExistingDraft($preparedDataForDb));
             } else {
-                // --- CREATE A NEW DRAFT ---
-                // This will run if:
-                // 1. We are on the EmployeeCreate component (no $employeeRequestId).
-                // 2. The record we were editing was already signed (has a UUID).
-                DB::transaction(function () use ($preparedDataForDb) {
-                    $this->createNewDraft($preparedDataForDb);
-                });
+                DB::transaction(fn() => $this->createNewDraft($preparedDataForDb));
             }
 
-            $this->dispatchFlashMessage(__('forms.employee_request_saved_successfully'), 'success');
-
-        } catch (ValidationException $e) {
-            $errorMessages = collect($e->errors())->flatten()->implode(' ');
-            $this->dispatchFlashMessage(__('forms.validation_failed_check_form') . ': ' . $errorMessages, 'error');
-
-            throw $e;
+            $this->dispatch('flashMessage', ['message' => __('forms.employee_request_saved_successfully'), 'type' => 'success']);
 
         } catch (Exception $e) {
             $this->handleException($e);
@@ -82,19 +51,20 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Helper method to update an existing draft and its relations.
+     * THE FIX: This method no longer updates the Party model directly.
+     * It only updates the EmployeeRequest and saves all changes to the Revision.
      */
     protected function updateExistingDraft(array $preparedDataForDb): void
     {
+        // 1. Update the main request attributes (position, start_date, etc.)
         $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
         $this->employeeRequest->fill($requestAttributes)->save();
 
-        if ($this->employeeRequest->party) {
-            $partyAttributes = Arr::only($preparedDataForDb, ['last_name', 'first_name', 'second_name', 'gender', 'birth_date', 'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself']);
-            $this->employeeRequest->party->update($partyAttributes);
-        }
-
+        // 2. We DO NOT update the associated party.
+        // Instead, we prepare all data (including potentially changed party data) for the revision.
         $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
+
+        // 3. Update or create the revision with the complete form data.
         if ($this->employeeRequest->revision) {
             $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
         } else {
@@ -118,9 +88,7 @@ trait ManagesEmployeeForm
         $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
         $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
 
-        // Update component's state to work with the NEW request.
         $this->employeeRequest = $newRequest;
-        // Also update the ID, if the property exists on the component.
         if (property_exists($this, 'employeeRequestId')) {
             $this->employeeRequestId = $newRequest->id;
         }
@@ -172,18 +140,11 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * NEW METHOD: This is the single entry point for the final "Sign" button in the modal.
      * It validates everything, saves, signs, and sends.
      */
     public function sign()
     {
-        try {
-            $this->save();
-        } catch (Exception $e) {
-            // If even saving the draft fails, we stop here.
-            // The handleException method will show the error.
-            return;
-        }
+        $this->save();
 
         // Now, we attempt to sign and send.
         try {

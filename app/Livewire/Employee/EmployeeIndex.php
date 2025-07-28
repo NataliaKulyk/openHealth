@@ -232,7 +232,7 @@ class EmployeeIndex extends EmployeeComponent
         $this->closeModal();
     }
 
-    public function sync(): void
+    public function syncEmployees(): void
     {
         try {
             $apiResponse = EmployeeRequestApi::getEmployees($this->legalEntity->uuid);
@@ -266,7 +266,6 @@ class EmployeeIndex extends EmployeeComponent
             $this->dispatch('flashMessage', ['message' => __('employees.sync_success'), 'type' => 'success']);
 
         } catch (\Exception $e) {
-
             Log::error('Employee sync failed: ' . $e->getMessage());
             $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => 'Помилка синхронізації']), 'type' => 'error']);
         }

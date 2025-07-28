@@ -50,7 +50,7 @@
                     <div class="flex items-center space-x-2 pt-5 ml-auto">
                         <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
                            class="button-primary">{{ __('forms.new_employee') }}</a>
-                        <button wire:click="syncEmployees" type="button" class="button-sync">
+                        <button wire:click="sync" type="button" class="button-sync">
                             {{ __('forms.synchronise_with_eHealth') }}
                         </button>
                     </div>
@@ -235,7 +235,7 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <a href="{{ route('employee.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                            <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
                                     <span
                                         class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>

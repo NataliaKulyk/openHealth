@@ -155,9 +155,19 @@
 
                                     <div>
                                         <label for="documentIssuedAt" class="label-modal">{{__('forms.issued_at')}}<span class="text-red-600"> *</span></label>
-                                        <input x-model="modalDocument.issuedAt" name="documentIssuedAt"
-                                               id="documentIssuedAt" class="input-modal datepicker-input"
-                                               autocomplete="off" required>
+                                        <input
+                                            x-model="modalDocument.issuedAt"
+                                            type="text"
+                                            name="documentIssuedAt"
+                                            id="documentIssuedAt"
+                                            class="input-modal datepicker-input"
+                                            placeholder=" "
+                                            autocomplete="off"
+                                            required
+                                            datepicker-autohide
+                                            datepicker-format="yyyy-mm-dd"
+                                            datepicker-button="false"
+                                        />
                                     </div>
                                 </div>
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
