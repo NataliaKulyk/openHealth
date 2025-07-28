@@ -109,7 +109,8 @@ class Login extends Component
         if (!$user->hasVerifiedEmail()) {
             // Save user's id to send a verification link again (if needed)
             session()->put('unverified_user_id', $user->id);
-            $this->redirect(route('verification.notice'), navigate: true);
+
+            return redirect(route('verification.notice'));
         }
 
         if (!$this->isLocalAuth) {
@@ -128,7 +129,9 @@ class Login extends Component
 
         if (!Auth::attempt($credentials)) {
             RateLimiter::hit($key, config('ehealth.auth.decay_seconds'));
+
             $this->addError('email', __('auth.login.error.validation.credentials'));
+
             return back();
         }
 
