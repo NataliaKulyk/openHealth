@@ -35,14 +35,14 @@
                     <td class="td-input" x-text="specDict[speciality.speciality]"></td>
                     <td class="td-input" x-text="speciality.attestationName"></td>
                     <td class="td-input" x-text="levelDict[speciality.level]"></td>
-                    <td class="td-input text-center">
+                    <td class="td-input text-left">
                         <template x-if="speciality.specialityOfficio">
-                            <svg class="w-6 h-6 text-green-500 mx-auto" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/>
                             </svg>
                         </template>
                         <template x-if="!speciality.specialityOfficio">
-                            <svg class="w-6 h-6 text-red-500 mx-auto" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 text-red-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/>
                             </svg>
                         </template>
@@ -206,11 +206,12 @@
                                         <input x-model="modalSpeciality.certificateNumber" type="text"
                                                id="specialityCertificateNumber" class="input-modal">
                                     </div>
-                                    <div>
-                                        <label for="specialityAttestationDate" class="label-modal">{{ __('forms.attestationDate') }} <span class="text-red-600"> *</span></label>
-                                        <input x-model="modalSpeciality.attestationDate" type="date"
-                                               id="specialityAttestationDate" class="input-modal datepicker-input"
-                                               autocomplete="off" required>
+                                    <div class="relative">
+                                        <svg class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M6 5V4a1 1 0 1 1 2 0v1h3V4a1 1 0 1 1 2 0v1h3V4a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v2H3V7a2 2 0 0 1 2-2h1ZM3 19v-8h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm5-6a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2H8Z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <label for="specialityAttestationDate" class="label-modal">{{ __('forms.attestationDate') }}<span class="text-red-600"> *</span></label>
+                                        <input x-model="modalSpeciality.attestationDate" type="text" name="specialityAttestationDate" id="specialityAttestationDate" class="input-modal datepicker-input" autocomplete="off">
                                     </div>
                                 </div>
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>

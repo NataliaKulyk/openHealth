@@ -7,7 +7,7 @@
 
         <x-slot name="navigation">
             <div class="flex flex-col">
-                <div class="flex flex-wrap items-end justify-between gap-4">
+                <div class="flex flex-wrap items-end justify-between gap-4" style="max-width: var(--container-6xl);">
                     <div class="flex items-end gap-4">
                         <div class="w-96">
                             <x-forms.form-group>
@@ -47,10 +47,10 @@
                         </button>
                     </div>
 
-                    <div class="flex items-center space-x-2 pt-5">
+                    <div class="flex items-center space-x-2 pt-5 ml-auto transform translate-x-[55px]">
                         <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
                            class="button-primary">{{ __('forms.new_employee') }}</a>
-                        <button wire:click="sync" type="button" class="button-sync">
+                        <button wire:click="syncEmployees" type="button" class="button-sync">
                             {{ __('forms.synchronise_with_eHealth') }}
                         </button>
                     </div>
@@ -206,9 +206,8 @@
     <x-section>
         <div class="space-y-6">
             @forelse($parties as $party)
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6" wire:key="party-{{ $party->id }}">
-                    <div
-                        class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:w-[1150px] lg:mx-0 lg:ml-10" wire:key="party-{{ $party->id }}">
+                    <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                         <div>
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $party->fullName }}</h3>
                             <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
@@ -225,14 +224,14 @@
                                            class="hover:underline">{{ $mobilePhone->number }}</a>
                                     </span>
                                 @endif
-                                    @if($party->email)
-                                        <span class="flex items-center gap-1.5">
+                                @if($party->email)
+                                    <span class="flex items-center gap-1.5">
                                         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m3.5 5.5 7.893 6.036a1 1 0 0 0 1.214 0L20.5 5.5M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
                                         </svg>
                                         <a href="mailto:{{$party->email}}" class="hover:underline">{{ $party->email }}</a>
                                     </span>
-                                    @endif
+                                @endif
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
