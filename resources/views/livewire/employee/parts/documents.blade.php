@@ -143,8 +143,6 @@
                                         <label for="documentNumber" class="label-modal">{{__('forms.document_number')}}<span class="text-red-600"> *</span></label>
                                         <input x-model="modalDocument.number" type="text" name="documentNumber"
                                                id="documentNumber" class="input-modal" required>
-                                        <p class="text-error text-xs"
-                                           x-show="!modalDocument.number.trim().length > 0">{{__('forms.field_empty')}}</p>
                                     </div>
 
                                     <div>
