@@ -26,8 +26,6 @@
         @click="
             @if($hasActions)
                 open = !open
-            @else
-                $wire.dispatch('flashMessage', { message: '{{ __('forms.no_actions_available') }}', type: 'error' })
             @endif
         "
         class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-white" type="button">
