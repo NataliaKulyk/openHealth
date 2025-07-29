@@ -200,12 +200,10 @@
         <div class="form-row-2">
             <div class="form-group group">
                 <select x-model="modalProcedure.division.identifier.value"
-                        x-init="
+                        @if(count($divisions) === 1)
                             {{-- Set division by default if only one exist --}}
-                            if ({{ count($divisions) === 1 }}) {
-                                modalProcedure.division.identifier.value = '{{ $divisions[0]['uuid'] }}';
-                            }
-                        "
+                            x-init="modalProcedure.division.identifier.value = '{{ $divisions[0]['uuid'] }}';"
+                        @endif
                         id="divisionNames"
                         class="input-select peer"
                 >

@@ -392,6 +392,23 @@ class PatientApi
     }
 
     /**
+     * Get clinical impression data by ID.
+     *
+     * @param  string  $patientId
+     * @param  string  $clinicalImpressionId
+     * @return array
+     * @throws ApiException
+     */
+    public static function getClinicalImpressionById(string $patientId, string $clinicalImpressionId): array
+    {
+        return new Request(
+            HttpRequest::METHOD_GET,
+            self::ENDPOINT_PATIENT . "/$patientId/clinical_impressions/$clinicalImpressionId",
+            []
+        )->sendRequest();
+    }
+
+    /**
      * Get Clinical impression list for a specified patient filtered by search params.
      *
      * @param  string  $patientId

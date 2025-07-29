@@ -73,12 +73,10 @@
         <div class="form-row-2">
             <div class="form-group group">
                 <select x-model="modalDiagnosticReport.division.identifier.value"
-                        x-init="
+                        @if(count($divisions) === 1)
                             {{-- Set division by default if only one exist --}}
-                            if ({{ count($divisions) === 1 }}) {
-                                modalDiagnosticReport.division.identifier.value = '{{ $divisions[0]['uuid'] }}';
-                            }
-                        "
+                            x-init="modalDiagnosticReport.division.identifier.value = '{{ $divisions[0]['uuid'] }}';"
+                        @endif
                         id="divisionNames"
                         class="input-select peer"
                         type="text"

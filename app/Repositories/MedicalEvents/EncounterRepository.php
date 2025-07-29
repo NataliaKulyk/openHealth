@@ -204,7 +204,7 @@ class EncounterRepository extends BaseRepository
         }
 
         // add system if priority is provided or when it's required
-        if ($encounter['class']['code'] === 'INPATIENT' || $encounter['class']['code']) {
+        if (isset($encounter['priority'])) {
             $encounter['priority']['coding'][0]['system'] = 'eHealth/encounter_priority';
         }
 
@@ -222,7 +222,7 @@ class EncounterRepository extends BaseRepository
             return $diagnose['diagnoses'];
         }, $conditions);
 
-        if ($encounter['division']['identifier']['value']) {
+        if (isset($encounter['division']) && $encounter['division']['identifier']['value']) {
             $encounter['division']['identifier']['type']['coding'][0] = [
                 'system' => 'eHealth/resources',
                 'code' => 'division'
@@ -488,10 +488,10 @@ class EncounterRepository extends BaseRepository
      * Format diagnostic reports data before request.
      *
      * @param  array  $diagnosticReports
-     * @param  string  $divisionUuid
+     * @param  string|null  $divisionUuid
      * @return array
      */
-    public function formatDiagnosticReportsRequest(array $diagnosticReports, string $divisionUuid): array
+    public function formatDiagnosticReportsRequest(array $diagnosticReports, ?string $divisionUuid = null): array
     {
         $diagnosticReportForm = array_map(function (array $diagnosticReport) use ($divisionUuid) {
             // delete frontend properties
@@ -543,15 +543,11 @@ class EncounterRepository extends BaseRepository
                 ],
             ];
 
-            $diagnosticReport['division'] = [
-                'identifier' => [
-                    'type' => [
-                        'coding' => [['system' => 'eHealth/resources', 'code' => 'division']],
-                        'text' => ''
-                    ],
-                    'value' => $divisionUuid
-                ],
-            ];
+            if (is_null($divisionUuid)) {
+                unset($diagnosticReport['division']);
+            } else {
+                $diagnosticReport['division']['identifier']['value'] = $divisionUuid;
+            }
 
             if (empty($diagnosticReport['resultsInterpreter']['text'])) {
                 unset($diagnosticReport['resultsInterpreter']);
@@ -599,6 +595,10 @@ class EncounterRepository extends BaseRepository
 
             $procedure['recordedBy']['identifier']['value'] = $this->employeeUuid;
 
+            if (empty($procedure['division']['identifier']['value'])) {
+                unset($procedure['division']);
+            }
+
             if ($procedure['primarySource']) {
                 unset($procedure['reportOrigin']);
 
@@ -643,12 +643,12 @@ class EncounterRepository extends BaseRepository
                 unset($reasonReference);
             }
 
-            if ($procedure['outcome']['coding'][0]['code'] === '') {
+            if (empty($procedure['outcome'])) {
                 unset($procedure['outcome']);
             }
 
-            if ($procedure['usedCodes']['coding'][0]['code'] === '') {
-                unset($procedure['outcome']);
+            if (empty($procedure['usedCodes'])) {
+                unset($procedure['usedCodes']);
             }
 
             if (!empty($procedure['complicationDetails'])) {

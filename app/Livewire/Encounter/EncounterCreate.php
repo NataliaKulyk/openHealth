@@ -128,7 +128,7 @@ class EncounterCreate extends EncounterComponent
             'diagnosticReports' => !empty($this->form->diagnosticReports)
                 ? $encounterRepository->formatDiagnosticReportsRequest(
                     $this->form->diagnosticReports,
-                    $this->form->encounter['division']['identifier']['value']
+                    $this->form->encounter['division']['identifier']['value'] ?? null
                 )
                 : [],
             'observations' => !empty($this->form->observations)

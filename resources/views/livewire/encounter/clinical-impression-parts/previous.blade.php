@@ -227,21 +227,21 @@
                                                             ></div>
                                                         </th>
                                                         <td class="td-input"
-                                                            x-text="`${ previous.code.coding[0].code } - ${ dictionary[previous.code.coding[0].code] }`"
+                                                            x-text="`${ clinicalImpression.code.coding[0].code } - ${ dictionary[clinicalImpression.code.coding[0].code] }`"
                                                         ></td>
                                                         <td class="td-input">
                                                             <button @click.prevent="
                                                                         const id = clinicalImpression.id;
-                                                                        const index = selectedProcedureReasonIds.indexOf(id);
+                                                                        const index = selectedPreviousIds.indexOf(id);
 
                                                                         if (index === -1) {
-                                                                            selectedProcedureReasonIds.push(id);
+                                                                            selectedPreviousIds.push(id);
                                                                         } else {
-                                                                            selectedProcedureReasonIds.splice(index, 1); // toggle off
+                                                                            selectedPreviousIds.splice(index, 1); // toggle off
                                                                         }
                                                                     "
                                                                     class="button-primary w-28"
-                                                                    x-text="selectedProcedureReasonIds.includes(clinicalImpression.id)
+                                                                    x-text="selectedPreviousIds.includes(clinicalImpression.id)
                                                                         ? '{{ __('patients.added') }}'
                                                                         : '{{ __('forms.add') }}'"
                                                             >
@@ -271,9 +271,9 @@
 
                                     <button @click.prevent
                                             @click="
-                                            const existingIds = modalClinicalImpression.previous.map(prv => prv.id);
+                                            const existingIds = modalClinicalImpression.previousList.map(prv => prv.id);
 
-                                                {{-- Get only the new problems that are not already in the array --}}
+                                                {{-- Get only the new previous that are not already in the array --}}
                                                 const newPreviousList = searchResults
                                                     .filter(previous => selectedPreviousIds.includes(previous.id) && !existingIds.includes(previous.id))
                                                     .map(previous => ({
@@ -284,7 +284,7 @@
                                                     }));
 
                                                 {{-- Add them to the array --}}
-                                                modalClinicalImpression.previousList = modalClinicalImpression.previousList.concat(newProblems);
+                                                modalClinicalImpression.previousList = modalClinicalImpression.previousList.concat(newPreviousList);
 
                                                 openModal = false;
                                                 searchResults = [];

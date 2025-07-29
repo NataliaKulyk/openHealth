@@ -21,7 +21,7 @@
             <template x-for="(supporting, index) in modalClinicalImpression.supportingInfoEpisodes">
                 <tr>
                     <td class="td-input"
-                        x-text="new Date(supporting.created_at).toLocaleDateString('uk-UA')"
+                        x-text="new Date(supporting.inserted_at).toLocaleDateString('uk-UA')"
                     ></td>
                     <td class="td-input"
                         x-text="'Епізод' + `${ supporting.code ? ' : ' + supporting.code + ' ' + (
@@ -173,9 +173,8 @@
                                                     <tr class="border-b dark:border-gray-700">
                                                         <th scope="row" class="table-cell-primary">
                                                             <div class="text-base"
-                                                                 x-text="new Date(episode.created_at).toLocaleDateString('uk-UA')"
-                                                            >
-                                                            </div>
+                                                                 x-text="new Date(episode.inserted_at).toLocaleDateString('uk-UA')"
+                                                            ></div>
                                                         </th>
 
                                                         <td class="td-input">
@@ -238,9 +237,8 @@
 
                                                         return {
                                                             id: episode.id,
-                                                            created_at: episode.created_at,
-                                                            code: currentDiagnosis?.code?.coding?.[0]?.code ?? '',
-                                                            type: 'episode_of_care'
+                                                            inserted_at: episode.inserted_at,
+                                                            code: currentDiagnosis?.code?.coding?.[0]?.code ?? ''
                                                         };
                                                     });
 
