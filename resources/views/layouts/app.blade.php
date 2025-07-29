@@ -47,8 +47,6 @@
             @stack('modals')
             @stack('scripts')
 
-            @livewire('components.flash-message')
-
             @vite(['resources/js/index.js', 'resources/js/app.js'])
 
             @yield('scripts')
