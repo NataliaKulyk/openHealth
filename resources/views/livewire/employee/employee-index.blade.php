@@ -47,7 +47,7 @@
                         </button>
                     </div>
 
-                    <div class="flex items-center space-x-2 pt-5 ml-auto">
+                    <div class="flex items-center space-x-2 pt-5 ml-auto transform translate-x-[55px]">
                         <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
                            class="button-primary">{{ __('forms.new_employee') }}</a>
                         <button wire:click="syncEmployees" type="button" class="button-sync">
