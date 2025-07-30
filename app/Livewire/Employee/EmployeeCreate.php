@@ -26,6 +26,10 @@ class EmployeeCreate extends EmployeeComponent
 
     protected function getEmployeeRequestForSave(): ?EmployeeRequest
     {
+        if (!empty($this->employeeRequestId)) {
+            return EmployeeRequest::find($this->employeeRequestId);
+        }
+
         return null;
     }
 }

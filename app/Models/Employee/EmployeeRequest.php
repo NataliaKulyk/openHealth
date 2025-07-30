@@ -2,6 +2,7 @@
 
 namespace App\Models\Employee;
 
+use App\Enums\Employee\RequestStatus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -24,4 +25,8 @@ class EmployeeRequest extends BaseEmployee
     {
         return $this->belongsTo(Employee::class);
     }
+
+    protected $casts = [
+        'status' => RequestStatus::class,
+    ];
 }

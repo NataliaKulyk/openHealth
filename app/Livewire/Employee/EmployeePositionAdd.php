@@ -44,8 +44,16 @@ class EmployeePositionAdd extends EmployeeComponent
         return view('livewire.employee.employee');
     }
 
+    /**
+     * Finds and returns the existing draft request if its ID is known.
+     * Returns null only if this is the very first save action for a new form.
+     */
     protected function getEmployeeRequestForSave(): ?EmployeeRequest
     {
+        if (!empty($this->employeeRequestId)) {
+            return EmployeeRequest::find($this->employeeRequestId);
+        }
+
         return null;
     }
 }

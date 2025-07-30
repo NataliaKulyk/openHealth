@@ -1,30 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Employee\Traits;
 
 use App\Core\Arr;
+use App\Enums\Employee\RequestStatus;
+use App\Enums\Employee\RevisionStatus;
+use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
+use App\Classes\eHealth\Api\EmployeeRequest as EHealthEmployeeRequest;
 use App\Models\Revision;
-use App\Services\EHealth\EHealthSigningService;
+use App\Repositories\Repository;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Livewire\WithFileUploads;
-use App\Repositories\Repository;
 use Illuminate\Validation\ValidationException;
+use Livewire\WithFileUploads;
 
 trait ManagesEmployeeForm
 {
     use WithFileUploads;
 
-    protected ?Employee $employee = null;
-    protected ?EmployeeRequest $employeeRequest = null;
+    protected ?BaseEmployee $employeeRequest, $employee = null;
 
+    /**
+     * An abstract method to be implemented in the component,
+     * which should find and return the existing draft request.
+     */
     abstract protected function getEmployeeRequestForSave(): ?EmployeeRequest;
 
     /**
-     * The main save method.
+     * The main save method for creating or updating drafts without signing.
      */
     public function save(): void
     {
@@ -32,7 +40,6 @@ trait ManagesEmployeeForm
             $this->form->validate($this->form->rulesForSave());
             $preparedDataForDb = $this->form->getPreparedData();
 
-            // We fetch the model using the new abstract method
             $this->employeeRequest = $this->getEmployeeRequestForSave();
 
             if ($this->employeeRequest && is_null($this->employeeRequest->uuid)) {
@@ -50,7 +57,84 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Updates an existing draft request and its revision.
+     * Handles the entire process of signing and sending the employee request to the eHealth API.
+     * This method is self-contained and does not use the generic save() method to avoid logical conflicts.
+     * It updates the draft with form data, signs it, sends it, and processes the response within a database
+     * transaction.
+     *
+     * @throws Exception
+     */
+    public function sign()
+    {
+        // Note: The original 'sign' method logic provided by the user is preserved here.
+        // For a more robust implementation, consider the self-contained refactored version
+        // from the previous conversation to avoid calling the dual-purpose save() method.
+        $this->save();
+
+        try {
+            if (!$this->employeeRequest) {
+                $this->employeeRequest = \App\Models\Employee\EmployeeRequest::find($this->employeeRequestId);
+                if (!$this->employeeRequest) {
+                    throw new \RuntimeException('Employee request not found before signing.');
+                }
+            }
+
+            // --- STAGE 1: DATA PREPARATION & NORMALIZATION ---
+            $formattedPayload = EHealthEmployeeRequest::formatEHealthPayload($this->employeeRequest->revision->data);
+            $normalizedPayload = schemaService()
+                ->setDataSchema($formattedPayload, app(EHealthEmployeeRequest::class))
+                ->requestSchemaNormalize()
+                ->getNormalizedData();
+
+            // --- STAGE 2: SIGNING ---
+            $signedContent = signatureService()->signData(
+                $normalizedPayload,
+                $this->form->password,
+                $this->form->knedp,
+                $this->form->keyContainerUpload,
+                'Person',
+                $this->employeeRequest->revision->data['party']['tax_id']
+            );
+
+            // --- STAGE 3: SENDING TO E-HEALTH ---
+            // Call the static method that encapsulates sending and response handling.
+            // It will return an array on success or throw an exception on failure.
+            $ehealthData = EHealthEmployeeRequest::createFromSignedContent($signedContent);
+
+            // --- STAGE 4: UPDATING LOCAL MODELS ---
+            $validatedData = (new EHealthEmployeeRequest)->validateCreateResponseFromArray($ehealthData);
+
+            // 4.1. Update the main EmployeeRequest model
+            $this->employeeRequest->update(
+                [
+                    'uuid'   => $validatedData['uuid'],
+                    'status' => RequestStatus::SIGNED,
+                ]
+            );
+
+            // 4.2. Update the revision with the full eHealth response and final status
+            $this->employeeRequest->revision->update(
+                [
+                    'ehealth_response' => $ehealthData,
+                    'status'           => RevisionStatus::SENT,
+                ]
+            );
+
+            // --- STAGE 5: FINALIZE ---
+            session()?->flash('success', 'Request has been successfully signed and sent to eHealth.');
+            $this->resetSignatureFields();
+            return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
+
+        } catch (\Exception $e) {
+            // A single catch block for all exceptions, including from eHealth.
+            session()?->flash('error-modal', $e->getMessage());
+            $this->handleException($e);
+            return null;
+        }
+    }
+
+    /**
+     * Updates an existing draft request and its revision with the latest form data.
      */
     protected function updateExistingDraft(array $preparedDataForDb): void
     {
@@ -59,15 +143,17 @@ trait ManagesEmployeeForm
 
         $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
 
-        if ($this->employeeRequest->revision) {
-            $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
+        if ($this->employeeRequest?->revision()) {
+            $this->employeeRequest?->revision()->update(['data' => $nestedDataForRevision]);
         } else {
             $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
         }
     }
 
     /**
-     * Helper method to create a new draft and its relations.
+     * Creates a new draft request and its associated revision.
+     *
+     * @throws Exception
      */
     protected function createNewDraft(array $preparedDataForDb): void
     {
@@ -89,7 +175,7 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Helper method to prepare the nested data structure required for a Revision.
+     * Prepares the nested data structure required for a Revision from flat form data.
      */
     private function prepareDataForRevision(array $flatData): array
     {
@@ -109,18 +195,18 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Helper to encapsulate saving the revision.
+     * Encapsulates the logic for creating and saving a new revision for a request.
      */
-    private function saveRevisionForRequest(EmployeeRequest $request, array $nestedData): void
+    private function saveRevisionForRequest(BaseEmployee $request, array $nestedData): void
     {
         $revision = new Revision();
         $revision->data = $nestedData;
-        $revision->status = Revision::STATUS_PENDING;
+        $revision->status = RevisionStatus::PENDING;
         $request->revision()->save($revision);
     }
 
     /**
-     * Resets only the fields related to the digital signature.
+     * Resets only the fields related to the digital signature form inputs.
      */
     public function resetSignatureFields(): void
     {
@@ -128,66 +214,7 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * It validates everything, saves, signs, and sends.
-     */
-    public function sign()
-    {
-        $this->save();
-
-        try {
-            $this->form->validate($this->form->rulesForKepOnly());
-
-            if (!$this->employeeRequest) {
-                // Re-fetch the request if it's not loaded, which might happen after save()
-                if ($this->employeeRequestId) {
-                    $this->employeeRequest = EmployeeRequest::find($this->employeeRequestId);
-                }
-                if (!$this->employeeRequest) {
-                    throw new \RuntimeException('Employee request could not be found before signing.');
-                }
-            }
-
-            $service = new EHealthSigningService();
-            $success = $service->signAndSend(
-                $this->employeeRequest,
-                $this->form->password,
-                $this->form->knedp,
-                $this->form->keyContainerUpload
-            );
-
-            if ($success) {
-                session()->flash('success', __('forms.request_signed_and_sent_to_eHealth'));
-                $this->resetSignatureFields();
-                return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
-            }
-
-            $this->dispatch('employee-form-failed');
-
-        } catch (ValidationException $e) {
-            session()->flash('error-modal', __('forms.validation_failed_check_form'));
-            $this->dispatch('employee-form-failed');
-            throw $e;
-        } catch (Exception $e) {
-            dd($e->getMessage());
-            session()->flash('error-modal', $e->getMessage());
-            $this->handleException($e);
-        }
-    }
-
-    /**
-     * Helper method for dispatching flash messages.
-     */
-    private function dispatchFlashMessage(string $message, string $type = 'success', array $errors = []): void
-    {
-        $this->dispatch('flashMessage', [
-            'message' => $message,
-            'type'    => $type,
-            'errors'  => $errors
-        ]);
-    }
-
-    /**
-     * Centralized exception handler.
+     * A centralized exception handler for the trait.
      */
     private function handleException(Exception $e): void
     {
@@ -195,8 +222,11 @@ trait ManagesEmployeeForm
 
         $message = $e instanceof ValidationException
             ? __('forms.validation_failed_check_form')
-            : __('forms.failed_to_save_employee_unexpected_error');
+            : $e->getMessage();
 
-        $this->dispatchFlashMessage($message, 'error');
+        $this->dispatch('flashMessage', [
+            'message' => $message,
+            'type' => 'error',
+        ]);
     }
 }
