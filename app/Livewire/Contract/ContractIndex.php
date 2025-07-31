@@ -6,9 +6,12 @@ use App\Livewire\Contract\Forms\Api\ContractRequestApi;
 use App\Models\Contract;
 use App\Models\Employee;
 use App\Models\LegalEntity;
+use App\Services\DictionaryService;
 use App\Traits\FormTrait;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Illuminate\Support\Facades\Cache;
@@ -16,7 +19,7 @@ class ContractIndex extends Component
 {
     use FormTrait;
 
-    const CACHE_PREFIX = 'register_contract_form';
+    const string CACHE_PREFIX = 'register_contract_form';
 
     public ?array $tableHeaders;
 
@@ -25,7 +28,7 @@ class ContractIndex extends Component
     ];
 
     #[Validate('required')]
-    public string $contract_type;
+    public string $contractType;
 
     protected string $contractCacheKey;
     /**
@@ -35,7 +38,13 @@ class ContractIndex extends Component
 
     public ?LegalEntity $legalEntity;
 
+    #[Locked]
+    public int $legalEntityId;
+
+    public?int $selectedContractId = null;
+
     public ?Contract $contract;
+
     public function getLegalEntity(): void
     {
         $this->legalEntity = legalEntity();
@@ -57,6 +66,7 @@ class ContractIndex extends Component
 //        dd(Cache::get($this->contractCacheKey));
     }
 
+    #[Computed]
     public function tableHeaders(): void
     {
         $this->tableHeaders = [
@@ -69,9 +79,18 @@ class ContractIndex extends Component
         ];
     }
 
+    #[Computed]
+    public function contractTypes(): array
+    {
+        // Assuming getDictionary() fetches this data
+        // This logic should be moved to a dedicated service and called here
+        return DictionaryService::get('CONTRACT_TYPE');
+    }
+
     public function render()
     {
         $perPage = config('pagination.per_page');
+
         $contracts = $this->legalEntity->contract()->paginate($perPage);
 
         return view('livewire.contract.contract-index', compact('contracts'));
@@ -79,17 +98,26 @@ class ContractIndex extends Component
 
     public function createRequest()
     {
+        // This part handles resuming a form from cache
         if (Cache::has($this->contractCacheKey)){
-            return redirect()->route('contract.form', legalEntity());
+            // FIX 1: Make the redirect explicit here
+            return redirect()->route('contract.form', [
+                'legalEntity' => legalEntity()
+            ]);
         }
+
         $this->validate();
 
-        $initContractRequestApi = ContractRequestApi::initContractRequestApi($this->contract_type);
-        if (!empty($initContractRequestApi)){
-           Cache::put($this->contractCacheKey, $initContractRequestApi);
+        $initContractRequestApi = ContractRequestApi::initContractRequestApi($this->contractType);
+        if (!empty($initContractRequestApi)) {
+            Cache::tags(['legal-entity:'. $this->legalEntity->uuid])
+                ->put($this->contractCacheKey, $initContractRequestApi, now()->addHours(24));
         }
-        return redirect()->route('contract.form', legalEntity());
 
+        // FIX 2: Make the main redirect explicit here as well
+        return redirect()->route('contract.form', [
+            'legalEntity' => legalEntity()
+        ]);
     }
 
     public function hasInitContract(): void
@@ -97,6 +125,12 @@ class ContractIndex extends Component
         if (Cache::has($this->contractCacheKey)){
             $this->hasInitContract = false;
         }
+    }
+
+    #[Computed]
+    public function hasExistingFormCache(): bool
+    {
+        return Cache::has($this->contractCacheKey);
     }
 
     public function showContract($id):void

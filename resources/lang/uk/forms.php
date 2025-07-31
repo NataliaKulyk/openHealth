@@ -252,6 +252,7 @@ return [
     'serialAndNumber' => 'Серія та номер',
     'contractType' => 'Тип договору',
     'contract' => 'Договір',
+    'new_contract' => 'Заява на укладання договору з НСЗУ',
     'initializationContract' => 'Ініціалізація договору',
     'addContract' => 'Додати договір',
     'editContract' => 'Редагувати договір № :contract',

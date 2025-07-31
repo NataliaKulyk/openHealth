@@ -46,12 +46,12 @@ class ContractForm extends Component
 
     public string $legalEntitySearch = '';
 
-    public function boot()
+    public function boot(): void
     {
-        $this->contractCacheKey = self::CACHE_PREFIX . '-' . Auth::user()->legalEntity->uuid;
+        $this->contractCacheKey = self::CACHE_PREFIX . '-' . legalEntity()->uuid;
     }
 
-    public function mount(LegalEntity $legalEntity, $id = '')
+    public function mount(LegalEntity $legalEntity, $id = ''): void
     {
         if ($id !== '') {
             $this->contract_request->previous_request_id = $id;

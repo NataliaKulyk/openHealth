@@ -1,7 +1,7 @@
 <div>
     <x-section-navigation x-data="{ showFilter: false }" class=''>
         <x-slot name='title'>
-            {{ $contract_request->previous_request_id === '' ? __('forms.addContract') :  __('forms.editContract', ['contract' => $contract_request->previous_request_id]) }}
+            {{ $contract_request->previous_request_id === '' ? __('forms.new_contract') :  __('forms.editContract', ['contract' => $contract_request->previous_request_id]) }}
         </x-slot>
         {{-- <x-slot name='description'>
             {{ $contract_request->previous_request_id === '' ? __('forms.addContract') :  __('forms.editContract', ['contract' => $contract_request->previous_request_id]) }}
@@ -16,14 +16,14 @@
                     <div class='dark:bg-boxdark'>
                         <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
                             <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.legalEntityInfo') }}
+                                {{ __('forms.legal_entity_info') }}
                             </h3>
                         </div>
                         <div class='flex flex-col gap-5.5 p-6.5'>
                             <x-forms.form-group class='mb-4'>
                                 <x-slot name='label'>
                                     <x-forms.label for='legal_entity_name' class='default-label'>
-                                        {{ __('forms.legalEntityName') }} *
+                                        {{ __('forms.legal_entity_name') }} *
                                     </x-forms.label>
                                 </x-slot>
                                 <x-slot name='input'>
@@ -40,7 +40,7 @@
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='legal_entity_owner' class='default-label'>
-                                        {{ __('forms.legalEntityOwner')}} *
+                                        {{ __('forms.legal_entity_owner')}} *
                                     </x-forms.label>
                                 </x-slot>
                                 <x-slot name='input'>
@@ -95,63 +95,44 @@
             </div>
         </div>
 
-        {{-- LegalEntity Documents --}}
+        {{-- Block 2: Legal Entity Documents --}}
+        {{-- This section handles the file uploads for the contract. --}}
         <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
+            <h3 class='font-medium text-2xl text-black dark:text-white mb-4'>
+                {{ __('forms.documentsMedicalOrganization') }}
+            </h3>
             <div class='grid grid-cols-1 gap-9 sm:grid-cols-2'>
-                <div class='flex flex-col gap-9'>
-                    <div class='dark:bg-boxdark'>
-                        <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
-                            <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.documentsMedicalOrganization') }}
-                            </h3>
-                        </div>
-
-                        <div class='flex flex-col gap-5.5 p-6.5'>
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='contractor_base' class='default-label'>
-                                        {{ __('forms.statuteMd5') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.file
-                                        wire:model='contract_request.statute_md5'
-                                        type='file'
-                                        id='statute_md5'
-                                    />
-                                </x-slot>
-                                @error('contract_request.statute_md5')
-                                <x-slot name='error'>
-                                    <x-forms.error>
-                                        {{ $message }}
-                                    </x-forms.error>
-                                </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                            <x-forms.form-group class='mt-4'>
-                                <x-slot name='label'>
-                                    <x-forms.label for='additional_document_md5' class='default-label'>
-                                        {{ __('forms.additionalDocumentMd5') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.file
-                                        wire:model='contract_request.additional_document_md5'
-                                        type='file'
-                                        id='additional_document_md5'
-                                    />
-                                </x-slot>
-                                @error('contract_request.additional_document_md5')
-                                <x-slot name='error'>
-                                    <x-forms.error>
-                                        {{ $message }}
-                                    </x-forms.error>
-                                </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-                        </div>
-                    </div>
+                <div class='flex flex-col gap-5.5'>
+                    <x-forms.form-group>
+                        <x-slot name='label'>
+                            <x-forms.label for='statute_md5' class='default-label'>{{ __('forms.statuteMd5') }} *</x-forms.label>
+                        </x-slot>
+                        <x-slot name='input'>
+                            {{--
+                                FIX: The 'Undefined variable $file' error is solved here.
+                                By passing ':file="null"', we explicitly initialize the $file variable
+                                within the component's scope, preventing the error without modifying the component file itself.
+                            --}}
+                            <x-forms.file :file="null" wire:model='contract_request.statute_md5' type='file' id='statute_md5' />
+                        </x-slot>
+                        @error('contract_request.statute_md5')
+                        <x-forms.error>{{ $message }}</x-forms.error>
+                        @enderror
+                    </x-forms.form-group>
+                </div>
+                <div class='flex flex-col gap-5.5'>
+                    <x-forms.form-group>
+                        <x-slot name='label'>
+                            <x-forms.label for='additional_document_md5' class='default-label'>{{ __('forms.additionalDocumentMd5') }} *</x-forms.label>
+                        </x-slot>
+                        <x-slot name='input'>
+                            {{-- The same fix is applied here for the second file input. --}}
+                            <x-forms.file :file="null" wire:model='contract_request.additional_document_md5' type='file' id='additional_document_md5' />
+                        </x-slot>
+                        @error('contract_request.additional_document_md5')
+                        <x-forms.error>{{ $message }}</x-forms.error>
+                        @enderror
+                    </x-forms.form-group>
                 </div>
             </div>
         </div>
@@ -162,35 +143,28 @@
                 <div class='dark:bg-boxdark'>
                     <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
                         <h3 class='font-medium text-2xl text-black dark:text-white'>
-                            {{ __('forms.сontractTerm') }}
+                            {{ __('forms.contract') }}
                         </h3>
                     </div>
 
                     <div class='flex justify-start flex-wrap gap-14 p-6.5'>
-                        <x-forms.form-group>
-                            <x-slot name='label'>
-                                <x-forms.label for='id_form' class='default-label'>
-                                    {{ __('forms.contractType') }} *
-                                </x-forms.label>
+                        <x-forms.select
+                            :disabled="$contract_request->previous_request_id !== ''" {{-- This line is changed --}}
+                        class='default-input'
+                            wire:model='contract_request.id_form'
+                            type='text'
+                            id='id_form'
+                        >
+                            <x-slot name='option'>
+                                {{-- You might want to add a placeholder for new contracts --}}
+                                <option value=''>{{ __('forms.contractType') }}</option>
+
+                                {{-- Loop through all available contract types --}}
+                                @foreach($this->dictionaries['CONTRACT_TYPE'] as $key => $contract_type)
+                                    <option value="{{ $key }}">{{ $contract_type }}</option>
+                                @endforeach
                             </x-slot>
-                            <x-slot name='input'>
-                                <x-forms.select
-                                    disabled
-                                    class='default-input'
-                                    wire:model='contract_request.id_form'
-                                    type='text'
-                                    id='id_form'
-                                >
-                                    <x-slot name='option'>
-            {{--                        @foreach($this->dictionaries['CONTRACT_TYPE'] as $k=>$contract_type )--}}
-                                        <option value='PMD_1'>
-                                            {{ $this->dictionaries['CONTRACT_TYPE']['PMD_1'] }}
-                                        </option>
-            {{--                        @endforeach--}}
-                                    </x-slot>
-                                </x-forms.select>
-                            </x-slot>
-                        </x-forms.form-group>
+                        </x-forms.select>
 
                         <x-forms.form-group class='max-w-[190px]'>
                             <x-slot name='label'>

@@ -1,3 +1,14 @@
+{{--@if(!$this->hasExistingFormCache)--}}
+{{--    <div>--}}
+{{--        // Form to select contract type--}}
+{{--    </div>--}}
+{{--@else--}}
+{{--    <div>--}}
+{{--        <p>A contract creation process is already in progress.</p>--}}
+{{--        <a href="{{ route('contract.form', $this->legalEntity) }}">Continue</a>--}}
+{{--    </div>--}}
+{{--@endif--}}
+
 <div>
     <x-section-navigation x-data="{ showFilter: false }" class="">
         <x-slot name='title'>{{ __('forms.contract') }}</x-slot>
@@ -8,10 +19,9 @@
             <div class='rounded-sm border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark'>
                 <div class='items-center flex justify-end border-stroke px-7 py-4 dark:border-strokedark'>
                     <a
-                        href=''
+                        href="{{ route('contract.create', [legalEntity()]) }}"
                         type='button'
                         class='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800'
-                        wire:click.prevent="openModal('intialization_contract')"
                     >
                         {{ __('forms.addContract') }}
                     </a>
@@ -121,7 +131,7 @@
                                                         class='absolute right-0 mt-2 w-40 rounded-md bg-white shadow-md z-50'
                                                     >
                                                         <a
-                                                            href="{{ route('contract.form', [legalEntity(), $contract->uuid]) }}"
+                                                            href="{{ route('contract.edit', ['legalEntity' => legalEntity(), 'contract' => $contract->uuid]) }}"
                                                             class='flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500'
                                                         >
                                                             {{ __('forms.edit') }}

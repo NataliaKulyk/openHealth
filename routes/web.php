@@ -130,9 +130,12 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 ->name('edit')->middleware('can:update,employee_request');
         });
 
+        // routes/web.php
+
         Route::prefix('contract')->group(function () {
             Route::get('/', ContractIndex::class)->name('contract.index');
-            Route::get('/form/{id?}', ContractForm::class)->name('contract.form');
+            Route::get('/create', ContractForm::class)->name('contract.create'); // Route for showing the creation form
+            Route::get('/{contract:uuid}/edit', ContractForm::class)->name('contract.edit'); // Route for showing the edit form
         });
 
 
