@@ -202,7 +202,7 @@
                                                 {{ __('forms.select') }} {{ mb_strtolower(__('patients.episode')) }}
                                             </option>
                                             @foreach($episodes as $key => $episode)
-                                                <option value="{{ $episode['id'] }}" wire:key="{{ $key }}">
+                                                <option value="{{ $episode['id'] }}">
                                                     {{ $episode['name'] }} ({{ __('patients.' . $episode['status']) }})
                                                     від {{ CarbonImmutable::parse($episode['inserted_at'])->format('d.m.Y') }}
                                                 </option>

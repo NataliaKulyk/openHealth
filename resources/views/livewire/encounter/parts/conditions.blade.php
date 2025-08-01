@@ -257,9 +257,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/diagnosis_roles'] as $key => $diagnosisRole)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $diagnosisRole }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $diagnosisRole }}</option>
                                         @endforeach
                                     </select>
 
@@ -299,9 +297,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/condition_clinical_statuses'] as $key => $clinicalStatus)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $clinicalStatus }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $clinicalStatus }}</option>
                                         @endforeach
                                     </select>
 
@@ -324,9 +320,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/condition_verification_statuses'] as $key => $verificationStatus)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $verificationStatus }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $verificationStatus }}</option>
                                         @endforeach
                                     </select>
 
@@ -443,9 +437,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/condition_severities'] as $key => $conditionSeverity)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $conditionSeverity }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $conditionSeverity }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -517,9 +509,7 @@
                                             >
                                                 <option selected>{{ __('forms.select') }}</option>
                                                 @foreach($this->dictionaries['eHealth/report_origins'] as $key => $reportOrigin)
-                                                    <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                        {{ $reportOrigin }}
-                                                    </option>
+                                                    <option value="{{ $key }}">{{ $reportOrigin }}</option>
                                                 @endforeach
                                             </select>
 

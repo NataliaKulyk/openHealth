@@ -16,9 +16,7 @@
                     {{ __('forms.select') }} {{ mb_strtolower(__('patients.code')) }} *
                 </option>
                 @foreach($this->dictionaries['eHealth/clinical_impression_patient_categories'] as $key => $clinicalImpressionPatientCategory)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">
-                        {{ $clinicalImpressionPatientCategory }}
-                    </option>
+                    <option value="{{ $key }}">{{ $clinicalImpressionPatientCategory }}</option>
                 @endforeach
             </select>
         </div>

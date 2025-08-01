@@ -145,7 +145,7 @@
             >
                 <option selected>{{ __('forms.select') }} *</option>
                 @foreach($this->dictionaries['GENDER'] as $key => $gender)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">{{ $gender }}</option>
+                    <option value="{{ $key }}">{{ $gender }}</option>
                 @endforeach
             </select>
 
