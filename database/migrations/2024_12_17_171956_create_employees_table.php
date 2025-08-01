@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Employee\RequestStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,7 +22,7 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->string('employee_type');
             $table->date('inserted_at')->nullable();
-            $table->string('status')->nullable();
+            $table->enum('status', array_column(RequestStatus::cases(), 'value'))->default(RequestStatus::NEW->value)->nullable();
             $table->foreignId('employee_id')->nullable()->constrained('employees')->onDelete('cascade');
             $table->foreignId('legal_entity_id')->nullable()->constrained('legal_entities')->onDelete('cascade');
             $table->foreignId('division_id')->nullable()->constrained('divisions')->onDelete('cascade');

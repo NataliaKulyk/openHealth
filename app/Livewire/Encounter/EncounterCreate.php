@@ -6,7 +6,7 @@ namespace App\Livewire\Encounter;
 
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
-use App\Core\Arr as CoreArr;
+use App\Core\Arr;
 use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
 use App\Models\LegalEntity;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
@@ -41,7 +41,7 @@ class EncounterCreate extends EncounterComponent
      */
     public function save(): void
     {
-        if (!Auth::user()?->can('create', Encounter::class)) {
+        if (Auth::user()?->cannot('create', Encounter::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення взаємодії.',
                 'type' => 'error'
@@ -64,7 +64,7 @@ class EncounterCreate extends EncounterComponent
      */
     public function sign(): void
     {
-        if (!Auth::user()?->can('create', Encounter::class)) {
+        if (Auth::user()?->cannot('create', Encounter::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення взаємодії.',
                 'type' => 'error'
@@ -83,7 +83,7 @@ class EncounterCreate extends EncounterComponent
         }
 
         $base64EncryptedData = $this->sendEncryptedData(
-            $this->convertArrayKeysToSnakeCase($formattedData),
+            Arr::toSnakeCase($formattedData),
             Auth::user()->party->taxId
         );
 
@@ -283,7 +283,7 @@ class EncounterCreate extends EncounterComponent
     protected function createEpisode(array $formattedEpisode): void
     {
         try {
-            PatientApi::createEpisode($this->patientUuid, $this->convertArrayKeysToSnakeCase($formattedEpisode));
+            PatientApi::createEpisode($this->patientUuid, Arr::toSnakeCase($formattedEpisode));
         } catch (ApiException) {
             $this->dispatch('flashMessage', [
                 'message' => __('Виникла помилка при створенні епізоду. Зверніться до адміністратора.'),
@@ -356,7 +356,7 @@ class EncounterCreate extends EncounterComponent
             $episodeData = PatientApi::getEpisodeById($this->patientUuid, $uuid);
 
             if ($episodeData) {
-                Repository::episode()->store(CoreArr::toCamelCase($episodeData));
+                Repository::episode()->store(Arr::toCamelCase($episodeData));
             }
         } catch (ApiException|Throwable $e) {
             $this->flashGeneralError();
@@ -385,7 +385,7 @@ class EncounterCreate extends EncounterComponent
             $procedureData = PatientApi::getProcedureById($this->patientUuid, $uuid);
 
             if ($procedureData) {
-                Repository::procedure()->store([CoreArr::toCamelCase($procedureData)]);
+                Repository::procedure()->store([Arr::toCamelCase($procedureData)]);
             }
         } catch (ApiException|Throwable $e) {
             $this->flashGeneralError();
@@ -414,7 +414,7 @@ class EncounterCreate extends EncounterComponent
             $diagnosticReportData = PatientApi::getDiagnosticReportById($this->patientUuid, $uuid);
 
             if ($diagnosticReportData) {
-                Repository::diagnosticReport()->store([CoreArr::toCamelCase($diagnosticReportData)]);
+                Repository::diagnosticReport()->store([Arr::toCamelCase($diagnosticReportData)]);
             }
         } catch (ApiException|Throwable $e) {
             $this->flashGeneralError();

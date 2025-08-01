@@ -7,6 +7,7 @@ namespace App\Livewire\DiagnosticReport;
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
+use App\Core\Arr;
 use App\Repositories\MedicalEvents\Repository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
      */
     public function save(array $data): void
     {
-        if (!Auth::user()?->can('create', DiagnosticReport::class)) {
+        if (Auth::user()?->cannot('create', DiagnosticReport::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення діагностичного звіту.',
                 'type' => 'error'
@@ -59,7 +60,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
      */
     public function sign(array $data): void
     {
-        if (!Auth::user()?->can('create', DiagnosticReport::class)) {
+        if (Auth::user()?->cannot('create', DiagnosticReport::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення діагностичного звіту.',
                 'type' => 'error'
@@ -84,8 +85,8 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
         }
 
         $base64EncryptedData = $this->sendEncryptedData(
-            $this->convertArrayKeysToSnakeCase($formattedData),
-            Auth::user()->tax_id
+            Arr::toSnakeCase($formattedData),
+            Auth::user()->party->taxId
         );
         PatientApi::submitDiagnosticReportPackage($this->patientUuid, ['signed_data' => $base64EncryptedData]);
 

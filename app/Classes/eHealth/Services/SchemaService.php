@@ -88,7 +88,7 @@ class SchemaService
     // Convert collection to array
     public function getNormalizedData(): array
     {
-        return $this->normalizedData->toArray();
+        return $this->normalizedData?->toArray() ?? [];
     }
 
     public function mappingSchemaNormalize(): self

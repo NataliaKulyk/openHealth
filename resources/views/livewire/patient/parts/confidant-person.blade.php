@@ -1,5 +1,3 @@
-{{-- Component to input values to the table through the Modal, built with Alpine --}}
-
 <div class="relative"> {{-- This required for table overflow scrolling --}}
     <fieldset class="fieldset"
               {{-- Binding documentsRelationship to Alpine, it will be re-used in the modal.
@@ -42,17 +40,17 @@
                                  openDropdown: false,
                                  toggle() {
                                      if (this.openDropdown) {
-                                         return this.close()
+                                         return this.close();
                                      }
 
-                                     this.$refs.button.focus()
+                                     this.$refs.button.focus();
 
-                                     this.openDropdown = true
+                                     this.openDropdown = true;
                                  },
                                  close(focusAfter) {
-                                     if (!this.openDropdown) return
+                                     if (!this.openDropdown) return;
 
-                                     this.openDropdown = false
+                                     this.openDropdown = false;
 
                                      focusAfter && focusAfter.focus()
                                  }
@@ -64,7 +62,7 @@
                         >
                             {{-- Dropdown Button --}}
                             <button x-ref="button"
-                                    x-on:click="toggle()"
+                                    @click="toggle()"
                                     :aria-expanded="openDropdown"
                                     :aria-controls="$id('dropdown-button')"
                                     type="button"
@@ -95,7 +93,7 @@
                                                     openModal = true; {{-- Open the modal --}}
                                                     item = index; {{-- Identify the item we are corrently editing --}}
                                                     {{-- Replace the previous document with the current, don't assign object directly (modalDocument = document) to avoid reactiveness --}}
-                                                    modalDocument = new DocRelationship(document)
+                                                    modalDocument = new DocRelationship(document);
                                                     newDocument = false; {{-- This document is already created --}}
                                                 "
                                             class="dropdown-button"
@@ -104,7 +102,8 @@
                                     </button>
 
                                     <button @click.prevent="documentsRelationship.splice(index, 1); close($refs.button)"
-                                            class="dropdown-button dropdown-delete">
+                                            class="dropdown-button dropdown-delete"
+                                    >
                                         {{ __('forms.delete') }}
                                     </button>
                                 </div>
@@ -122,7 +121,7 @@
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
                         newDocument = true; {{-- We are adding a new document --}}
-                        modalDocument = new DocRelationship() {{-- Replace the data of the previous document with a new one--}}
+                        modalDocument = new DocRelationship(); {{-- Replace the data of the previous document with a new one--}}
                     "
                     class="item-add my-5"
             >
@@ -175,6 +174,7 @@
                                                 <option value="{{ $key }}">{{ $documentRelationshipType }}</option>
                                             @endforeach
                                         </select>
+
                                         {{-- Check if the picked value is the one from the dictionary --}}
                                         <p class="text-error text-xs"
                                            x-show="!Object.keys(dictionary).includes(modalDocument.type)"
@@ -195,7 +195,8 @@
                                                autocomplete="off"
                                                required
                                         >
-                                        <p class="text-error text-xs" x-show="!modalDocument.number.trim().length > 0">
+
+                                        <p class="text-error text-xs" x-show="!modalDocument.number.trim()">
                                             {{ __('forms.field_empty') }}
                                         </p>
                                     </div>
@@ -211,7 +212,8 @@
                                                class="input-modal"
                                                autocomplete="off"
                                         >
-                                        <p class="text-error text-xs" x-show="!modalDocument.issuedBy.trim().length > 0">
+
+                                        <p class="text-error text-xs" x-show="!modalDocument.issuedBy.trim()">
                                             {{ __('forms.field_empty') }}
                                         </p>
                                     </div>
@@ -222,6 +224,7 @@
                                         >
                                             <use xlink:href="#svg-calendar-week"></use>
                                         </svg>
+
                                         <label for="documentIssuedAt" class="label-modal">
                                             {{ __('forms.document_issued_at') }}
                                         </label>
@@ -233,7 +236,8 @@
                                                class="input-modal datepicker-input"
                                                autocomplete="off"
                                         >
-                                        <p class="text-error text-xs" x-show="!modalDocument.issuedAt.trim().length > 0">
+
+                                        <p class="text-error text-xs" x-show="!modalDocument.issuedAt.trim()">
                                             {{ __('forms.field_empty') }}
                                         </p>
                                     </div>
@@ -267,8 +271,19 @@
                                     </button>
 
                                     <button class="button-primary"
-                                            @click.prevent="newDocument !== false ? documentsRelationship.push(modalDocument) : documentsRelationship[item] = modalDocument; openModal = false"
-                                            :disabled="!(modalDocument.type.trim().length > 0 && modalDocument.number.trim().length > 0 && modalDocument.issuedBy.trim().length > 0 && modalDocument.issuedAt.trim().length > 0)"
+                                            @click.prevent="
+                                                newDocument !== false
+                                                    ? documentsRelationship.push(modalDocument)
+                                                    : documentsRelationship[item] = modalDocument;
+
+                                                openModal = false
+                                            "
+                                            :disabled="!(
+                                                modalDocument.type.trim() &&
+                                                modalDocument.number.trim() &&
+                                                modalDocument.issuedBy.trim() &&
+                                                modalDocument.issuedAt.trim()
+                                            )"
                                     >
                                         {{ __('forms.save') }}
                                     </button>

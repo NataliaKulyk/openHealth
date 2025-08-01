@@ -82,7 +82,7 @@ class LegalEntity extends Model
         return $this->hasMany(Employee::class);
     }
 
-    public function employeesRequest(): HasMany
+    public function employeeRequests(): HasMany
     {
         return $this->hasMany(EmployeeRequest::class);
     }

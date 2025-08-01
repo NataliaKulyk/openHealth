@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\LegalEntity;
@@ -9,7 +11,7 @@ use Illuminate\Auth\Access\Response;
 
 class LicensePolicy
 {
-    /*
+    /**
      * User can read the license
      */
     public function access(User $user, License $currentLicense, ?LegalEntity $currentLegalEntity = null): Response
@@ -18,7 +20,7 @@ class LicensePolicy
             $currentLegalEntity = legalEntity();
         }
 
-        // Should belogn to the same legal entity
+        // Should belong to the same legal entity
         if ($currentLicense->legalEntity->id !== $currentLegalEntity->id) {
             return Response::denyWithStatus(404);
         }

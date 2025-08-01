@@ -4,65 +4,67 @@
             {{ __('patients.uploading_documents') }}
         </legend>
 
-        @foreach($uploadedDocuments as $key => $document)
-            <div class="pb-4 flex" wire:key="{{ $key }}">
-                <div class="flex-grow">
-                    <label class="block mb-3 text-sm font-medium text-gray-900 dark:text-white"
-                           for="file_input_{{ $key }}"
-                    >
-                        {{ __('patients.documents.' . Str::lower(Str::afterLast($document['type'], '.'))) }}
-                    </label>
-                    <div class="flex items-center gap-4">
-                        <input
-                            class="xl:w-1/2 block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                            id="file_input_{{ $key }}"
-                            type="file"
-                            wire:model.live="form.uploadedDocuments.{{ $key }}"
+        @if(!$isApproved)
+            @foreach($uploadedDocuments as $key => $document)
+                <div class="pb-4 flex" wire:key="{{ $key }}">
+                    <div class="flex-grow">
+                        <label class="block mb-3 text-sm font-medium text-gray-900 dark:text-white"
+                               for="file_input_{{ $key }}"
                         >
+                            {{ $this->getDocumentLabel($document) }}
+                        </label>
+                        <div class="flex items-center gap-4">
+                            <input type="file"
+                                   class="xl:w-1/2 block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                                   id="file_input_{{ $key }}"
+                                   wire:model.live="form.uploadedDocuments.{{ $key }}"
+                            >
 
-                        @if(isset($patientRequest->uploadedDocuments[$key]) && !$errors->has("form.uploadedDocuments.$key"))
-                            @if(!isset($uploadedFiles[$key]) || $uploadedFiles[$key] === false)
-                                <button class="flex items-center gap-1"
-                                        wire:click.prevent="deleteDocument({{ $key }})"
-                                >
-                                    <svg width="14" height="14" class="text-red-600">
-                                        <use xlink:href="#svg-trash"></use>
-                                    </svg>
-                                    <span class="font-medium text-red-600 text-sm">{{ __('forms.delete') }}</span>
-                                </button>
-                            @else
-                                <button class="flex items-center gap-1">
-                                    <svg width="14" height="14">
-                                        <use xlink:href="#svg-check-circle"></use>
-                                    </svg>
-                                    <span class="font-medium text-green-400 text-sm">{{ __('Відправлено') }}</span>
-                                </button>
+                            @if(isset($patientRequest->uploadedDocuments[$key]) && !$errors->has("form.uploadedDocuments.$key"))
+                                @if(!isset($uploadedFiles[$key]) || $uploadedFiles[$key] === false)
+                                    <button class="flex items-center gap-1"
+                                            wire:click.prevent="deleteDocument({{ $key }})"
+                                    >
+                                        <svg width="14" height="14" class="text-red-600">
+                                            <use xlink:href="#svg-trash"></use>
+                                        </svg>
+                                        <span class="font-medium text-red-600 text-sm">{{ __('forms.delete') }}</span>
+                                    </button>
+                                @else
+                                    <button class="flex items-center gap-1">
+                                        <svg width="14" height="14">
+                                            <use xlink:href="#svg-check-circle"></use>
+                                        </svg>
+                                        <span class="font-medium text-green-400 text-sm">{{ __('Відправлено') }}</span>
+                                    </button>
+                                @endif
                             @endif
-                        @endif
+                        </div>
+
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                            {{ __('Розмір завантажуваного файлу не більше 10МБ у форматі jpeg') }}
+                        </p>
+
+                        @error("form.uploadedDocuments.$key")
+                        <p class="text-error">
+                            {{ $message }}
+                        </p>
+                        @enderror
                     </div>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
-                        {{ __('Розмір завантажуваного файлу не більше 10МБ у форматі jpeg') }}
-                    </p>
-
-                    @error("form.uploadedDocuments.$key")
-                    <p class="text-error">
-                        {{ $message }}
-                    </p>
-                    @enderror
                 </div>
-            </div>
-        @endforeach
+            @endforeach
 
-        @if(!$isUploaded)
-            <x-forms.form-group>
-                <x-slot name="label">
-                    <x-forms.button-with-icon wire:click.prevent="sendFiles"
-                                              class="button-primary flex-row-reverse mt-8"
-                                              label="{{ __('Відправити файли') }}"
-                                              svgId="svg-arrow-right"
-                    />
-                </x-slot>
-            </x-forms.form-group>
+            @if(!$isUploaded)
+                <x-forms.form-group>
+                    <x-slot name="label">
+                        <x-forms.button-with-icon wire:click.prevent="sendFiles"
+                                                  class="button-primary flex-row-reverse mt-8"
+                                                  label="{{ __('Відправити файли') }}"
+                                                  svgId="svg-arrow-right"
+                        />
+                    </x-slot>
+                </x-forms.form-group>
+            @endif
         @endif
     @endif
 
@@ -106,40 +108,38 @@
 
                 <!-- Resend SMS button -->
                 <div>
-                    <button
-                        type="button"
-                        wire:click.prevent="resendSms"
-                        x-data="{
-                            cooldown: @entangle('resendCooldown'),
-                            interval: null,
-                            startCooldown() {
-                                if (this.interval) {
-                                    clearInterval(this.interval);
-                                    this.interval = null;
-                                }
-                                if (this.cooldown > 0) {
-                                    this.interval = setInterval(() => {
-                                        if (this.cooldown > 0) {
-                                            this.cooldown--;
-                                        } else {
-                                            clearInterval(this.interval);
-                                            this.interval = null;
-                                        }
-                                    }, 1000);
-                                }
-                            },
-                        }"
-                        x-init="startCooldown()"
-                        x-effect="startCooldown()"
-                        :disabled="cooldown > 0"
-                        :class="{ 'cursor-not-allowed': cooldown > 0 }"
-                        class="light-button px-3 flex items-center gap-2 w-full"
+                    <button type="button"
+                            wire:click.prevent="resendSms"
+                            x-data="{
+                                cooldown: @entangle('resendCooldown'),
+                                interval: null,
+                                startCooldown() {
+                                    if (this.interval) {
+                                        clearInterval(this.interval);
+                                        this.interval = null;
+                                    }
+                                    if (this.cooldown > 0) {
+                                        this.interval = setInterval(() => {
+                                            if (this.cooldown > 0) {
+                                                this.cooldown--;
+                                            } else {
+                                                clearInterval(this.interval);
+                                                this.interval = null;
+                                            }
+                                        }, 1000);
+                                    }
+                                },
+                            }"
+                            x-init="startCooldown()"
+                            x-effect="startCooldown()"
+                            :disabled="cooldown > 0"
+                            :class="{ 'cursor-not-allowed': cooldown > 0 }"
+                            class="light-button px-3 flex items-center gap-2 w-full"
                     >
                         <svg width="16" height="17">
                             <use xlink:href="#svg-mail"></use>
                         </svg>
-                        <span
-                            x-text="cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : 'Відправити ще раз'">
+                        <span x-text="cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : 'Відправити ще раз'">
                         </span>
                     </button>
                 </div>

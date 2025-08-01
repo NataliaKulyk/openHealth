@@ -1,34 +1,14 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Livewire\Patient\Forms\Api;
 
 use App\Classes\eHealth\Api\PersonApi;
 use Illuminate\Support\Str;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PatientRequestApi extends PersonApi
 {
-    /**
-     * Build an array of parameters for uploading files to storage.
-     *
-     * @param  TemporaryUploadedFile  $uploadedFile
-     * @return array[]
-     */
-    public static function buildUploadFileRequest(TemporaryUploadedFile $uploadedFile): array
-    {
-        return [
-            'multipart' => [
-                [
-                    'name' => 'file',
-                    'contents' => fopen($uploadedFile->getRealPath(), 'rb'),
-                    'filename' => $uploadedFile->getClientOriginalName()
-                ],
-            ],
-        ];
-    }
-
     /**
      * Build an array of parameters for a patient request list.
      *

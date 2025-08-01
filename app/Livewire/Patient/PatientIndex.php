@@ -6,6 +6,7 @@ namespace App\Livewire\Patient;
 
 use App\Classes\eHealth\Api\PersonApi;
 use App\Classes\eHealth\Exceptions\ApiException;
+use App\Core\Arr;
 use App\Livewire\Patient\Forms\Api\PatientRequestApi;
 use App\Livewire\Patient\Forms\PatientForm as Form;
 use App\Models\LegalEntity;
@@ -66,7 +67,7 @@ class PatientIndex extends Component
         $this->form->rulesForModelValidate('patientsFilter');
 
         // Search in our DB
-        $this->originalPatients = Person::where(arrayKeysToSnake($this->form->patientsFilter))
+        $this->originalPatients = Person::where(Arr::toSnakeCase($this->form->patientsFilter))
             ->with('phones')
             ->select([
                 'id', 'uuid', 'first_name', 'last_name', 'second_name', 'birth_date', 'tax_id', 'verification_status'
@@ -77,7 +78,7 @@ class PatientIndex extends Component
         // Don't use phone when searching locally.
         unset($this->form->patientsFilter['phoneNumber']);
         // Search for application
-        $personRequests = PersonRequest::where(arrayKeysToSnake($this->form->patientsFilter))
+        $personRequests = PersonRequest::where(Arr::toSnakeCase($this->form->patientsFilter))
             ->where('status', 'APPLICATION')
             ->with('phones')
             ->select(['id', 'status', 'first_name', 'last_name', 'second_name', 'birth_date', 'tax_id'])
@@ -173,6 +174,7 @@ class PatientIndex extends Component
                 'message' => 'Виникла помилка, зверніться до адміністратора.',
                 'type' => 'error'
             ]);
+
             return;
         }
 
@@ -260,6 +262,7 @@ class PatientIndex extends Component
     {
         return array_map(static function ($patient) use ($status) {
             $patient['status'] = $status;
+
             return $patient;
         }, $persons);
     }

@@ -24,7 +24,7 @@ class Register extends Component
     /**
      * Handle an incoming registration request.
      */
-    public function register()
+    public function register(): void
     {
         $userData = $this->validate([
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
@@ -55,7 +55,7 @@ class Register extends Component
             session()->flash('error', __('Помилка при створенні користувача. Зверніться до адміністратора'));
 
             // Stay on the Register page even if an error(s) occur
-            return $this->redirect(request()->header('Referer'), navigate: true);
+            $this->redirect(request()->header('Referer'), navigate: true);
         }
     }
 

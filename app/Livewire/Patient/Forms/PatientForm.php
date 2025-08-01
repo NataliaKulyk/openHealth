@@ -10,7 +10,7 @@ use App\Rules\InDictionary;
 use App\Rules\TwoLettersFourToSixDigitsOrComplex;
 use App\Rules\TwoLettersSixDigits;
 use App\Rules\EightDigitsHyphenFiveDigits;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 use Illuminate\Validation\ValidationException;
@@ -48,13 +48,18 @@ class PatientForm extends Form
 
         'patient.authenticationMethods.*.type' => ['required', 'string', new InDictionary('AUTHENTICATION_METHOD')],
         'patient.authenticationMethods.*.phoneNumber' => [
-            'required_if:patient.authenticationMethods.*.type,OTP', 'regex:/^\+38[0-9]{10}$/'
+            'required_if:patient.authenticationMethods.*.type,OTP',
+            'regex:/^\+38[0-9]{10}$/'
         ],
         'patient.authenticationMethods.*.value' => [
-            'nullable', 'required_if:patient.authenticationMethods.*.type,THIRD_PERSON', 'string'
+            'nullable',
+            'required_if:patient.authenticationMethods.*.type,THIRD_PERSON',
+            'string'
         ],
         'patient.authenticationMethods.*.alias' => [
-            'nullable', 'required_if:patient.authenticationMethods.*.type,THIRD_PERSON', 'string'
+            'nullable',
+            'required_if:patient.authenticationMethods.*.type,THIRD_PERSON',
+            'string'
         ]
     ])]
     public array $patient = [
@@ -215,7 +220,7 @@ class PatientForm extends Form
     {
         foreach ($this->documents as $key => $document) {
             $rules["documents.$key.number"][] = match ($document['type']) {
-                'PASSPORT', 'REFUGEE_CERTIFICATE' => new TwoLettersSixDigits(),
+                'PASSPORT', 'REFUGEE_CERTIFICATE', 'COMPLEMENTARY_PROTECTION_CERTIFICATE' => new TwoLettersSixDigits(),
                 'NATIONAL_ID' => 'digits:9',
                 'BIRTH_CERTIFICATE', 'TEMPORARY_PASSPORT', 'CHILD_BIRTH_CERTIFICATE', 'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE' => new AlphaNumericWithSymbols(),
                 'TEMPORARY_CERTIFICATE' => new TwoLettersFourToSixDigitsOrComplex(),
@@ -276,7 +281,7 @@ class PatientForm extends Form
      */
     private function validateNecessityOfConfidantPerson(): array
     {
-        $personAge = Carbon::parse($this->patient['birthDate'])->age;
+        $personAge = CarbonImmutable::parse($this->patient['birthDate'])->age;
 
         // If age less than 18 then check that confidant_person is submitted
         if ($personAge < self::NO_SELF_REGISTRATION_AGE && empty($this->documentsRelationship['personId'])) {
@@ -288,15 +293,12 @@ class PatientForm extends Form
 
         // If age between 14 and 18 then
         if ($personAge > self::NO_SELF_REGISTRATION_AGE && $personAge < self::PERSON_FULL_LEGAL_CAPACITY_AGE) {
-            $legalCapacityDocumentTypes = [
-                'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE', 'STATE_REGISTER_EXTRACT',
-                'EMPLOYMENT_CONTRACT', 'LEGAL_CAPACITY_DOCUMENT'
-            ];
+            $personLegalCapacityDocumentTypes = config('ehealth.person_legal_capacity_document_types');
 
             $hasLegalCapacityDocument = false;
 
             foreach ($this->documents as $document) {
-                if (in_array($document['type'], $legalCapacityDocumentTypes, true)) {
+                if (in_array($document['type'], $personLegalCapacityDocumentTypes, true)) {
                     $hasLegalCapacityDocument = true;
                     break;
                 }
@@ -332,7 +334,7 @@ class PatientForm extends Form
      */
     private function validateDocumentsForMinorPatient(): array
     {
-        $personAge = Carbon::parse($this->patient['birthDate'])->age;
+        $personAge = CarbonImmutable::parse($this->patient['birthDate'])->age;
 
         if ($personAge < self::NO_SELF_AUTH_AGE) {
             $requiredDocumentTypes = ['BIRTH_CERTIFICATE', 'BIRTH_CERTIFICATE_FOREIGN'];
@@ -368,18 +370,30 @@ class PatientForm extends Form
      */
     private function validatePersonDocuments(): array
     {
-        $personAge = Carbon::parse($this->patient['birthDate'])->age;
-        $personLegalCapacityDocumentTypes = [
-            'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE', 'STATE_REGISTER_EXTRACT',
-            'EMPLOYMENT_CONTRACT', 'LEGAL_CAPACITY_DOCUMENT'
-        ];
+        $personAge = CarbonImmutable::parse($this->patient['birthDate'])->age;
+        $personLegalCapacityDocumentTypes = config('ehealth.person_legal_capacity_document_types');
+        $personRegistrationDocumentTypes = config('ehealth.person_registration_document_types');
+        $selfAuthAgeDocumentTypes = config('ehealth.self_auth_age_document_types');
 
-        // if age not between 14 and 18
+        // Check submitted person document types exist in PERSON_REGISTRATION_DOCUMENT_TYPES config parameter
+        // that contains values from DOCUMENT_TYPE dictionary
+        $allAllowedTypes = array_merge($personLegalCapacityDocumentTypes, $personRegistrationDocumentTypes);
+
+        foreach ($this->documents as $document) {
+            if (!in_array($document['type'], (array)$allAllowedTypes, true)) {
+                return [
+                    'error' => true,
+                    'message' => __("Submitted document type is not allowed: {$document['type']}.")
+                ];
+            }
+        }
+
+        // Check document types from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter (that prove persons legal capacity) are not submitted
+        // if persons age is less than no_self_registration_age global parameter or greater than person_full_legal_capacity_age global parameter
         if ($personAge < self::NO_SELF_REGISTRATION_AGE || $personAge > self::PERSON_FULL_LEGAL_CAPACITY_AGE) {
-            if (isset($this->documents)) {
+            if (!empty($this->documents)) {
                 foreach ($this->documents as $document) {
                     if (in_array($document['type'], $personLegalCapacityDocumentTypes, true)) {
-                        // return the first found document type
                         return [
                             'error' => true,
                             'message' => __("{$document['type']} не може бути подана для цієї особи.")
@@ -389,29 +403,46 @@ class PatientForm extends Form
             }
         }
 
-        $personRegistrationDocumentTypes = [
-            'PASSPORT', 'NATIONAL_ID', 'BIRTH_CERTIFICATE', 'BIRTH_CERTIFICATE_FOREIGN', 'PERMANENT_RESIDENCE_PERMIT',
-            'REFUGEE_CERTIFICATE', 'TEMPORARY_CERTIFICATE', 'TEMPORARY_PASSPORT'
-        ];
-        $hasLegalCapacityDocument = false;
-        $hasRegistrationDocument = false;
+        // If at least one document type from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter is submitted,
+        // check that at least one document type from PERSON_REGISTRATION_DOCUMENT_TYPES is submitted
+        $submittedLegalCapacityDocuments = array_intersect(
+            array_column($this->documents, 'type'),
+            $personLegalCapacityDocumentTypes
+        );
+        if (!empty($submittedLegalCapacityDocuments)) {
+            $submittedRegistrationDocuments = array_intersect(
+                array_column($this->documents, 'type'),
+                $personRegistrationDocumentTypes
+            );
 
-        // If there is at least one document with LEGAL_CAPACITY, check for at least one REGISTRATION
-        if (isset($this->documents)) {
-            foreach ($this->documents as $document) {
-                if (in_array($document['type'], $personLegalCapacityDocumentTypes, true)) {
-                    $hasLegalCapacityDocument = true;
-                }
-
-                if (in_array($document['type'], $personRegistrationDocumentTypes, true)) {
-                    $hasRegistrationDocument = true;
-                }
-            }
-
-            if ($hasLegalCapacityDocument && !$hasRegistrationDocument) {
+            if (empty($submittedRegistrationDocuments)) {
                 return [
                     'error' => true,
-                    'message' => __('validation.custom.patient.personalDocumentsRequired')
+                    'message' => __('Документ, що підтверджує особисті дані, повинен бути поданий.')
+                ];
+            }
+
+            // If at least one document type from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter is submitted,
+            // check that at least one document type from PERSON_REGISTRATION_DOCUMENT_TYPES is submitted
+            if (count($submittedLegalCapacityDocuments) > 1) {
+                return [
+                    'error' => true,
+                    'message' => __('Only one legal capacity document must be submitted.')
+                ];
+            }
+        }
+
+        // Check if person age > prm.global_parameters.no_self_auth_age check existence SELF_AUTH_AGE_DOCUMENT_TYPES
+        if ($personAge > self::NO_SELF_AUTH_AGE) {
+            $submittedTypes = array_column($this->documents, 'type');
+            $hasSelfAuthType = (bool) array_intersect($submittedTypes, $selfAuthAgeDocumentTypes);
+
+            if (!$hasSelfAuthType) {
+                $allowedTypesList = implode(', ', $selfAuthAgeDocumentTypes);
+
+                return [
+                    'error' => true,
+                    'message' => __("Не можна створити з таким типом документів, оберіть один із: $allowedTypesList")
                 ];
             }
         }

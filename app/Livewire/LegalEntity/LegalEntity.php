@@ -16,10 +16,9 @@ use Livewire\WithFileUploads;
 use App\Traits\AddressSearch;
 use App\Livewire\Actions\Logout;
 use App\Models\Employee\Employee;
+use App\Events\LegalEntityCreate;
 use Illuminate\Support\Facades\DB;
-use App\Mail\OwnerCredentialsMail;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Classes\Cipher\Traits\Cipher;
 use App\Classes\Cipher\Api\CipherApi;
@@ -531,16 +530,10 @@ abstract class LegalEntity extends Component
         ]);
     }
 
-    /**
-     * Handle success response from API request.
-     *
-     * @param array $response The response from the API request
-     * @return void
-     */
-    protected function handleSuccessResponse(array $response, array $requestData = [])
+    protected function filterUnprovidedFields(array $response, array $requestData): array
     {
         /**
-         * This need to check beacuse it's not always present.
+         * This need to check because it's not always present.
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
@@ -549,7 +542,7 @@ abstract class LegalEntity extends Component
         }
 
         /**
-         * This need to check beacuse it's not always present.
+         * This need to check because it's not always present.
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
@@ -557,50 +550,7 @@ abstract class LegalEntity extends Component
             unset($response['data']['archive']);
         }
 
-        try {
-            DB::transaction(function() use($response, $requestData) {
-
-                $this->createOrUpdateLegalEntity($response);
-
-                setPermissionsTeamId($this->legalEntity->id);
-
-                $this->createLicense($response['data']['license']);
-
-                try {
-                    $user = $this->createUser();
-                } catch (Exception $err) {
-                    throw new Exception('Error: create User: ' . $err->getMessage(), 2);
-                }
-
-                $user->unsetRelation('roles');
-
-                try {
-                    $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id'], $user?->id ?? null);
-                } catch (Exception $err) {
-                    throw new Exception('Error: createEmployeeRequest: ' . $err->getMessage(), $err->getCode());
-                }
-
-                if (Cache::has($this->entityCacheKey)) {
-                    Cache::forget($this->entityCacheKey);
-                }
-
-                if (Cache::has($this->ownerCacheKey)) {
-                    Cache::forget($this->ownerCacheKey);
-                }
-
-                if (Cache::has($this->stepCacheKey)) {
-                    Cache::forget($this->stepCacheKey);
-                }
-            });
-
-            app(Logout::class)();
-
-            return Redirect::route('login') ?? null;
-        } catch (Exception $err) {
-            Log::error(__('Сталася помилка під час обробки запиту'), ['error' => $err->getMessage()]);
-
-            throw new Exception(__('Сталася помилка під час обробки запиту.' . ' Код помилки: ' . $err->getCode()));
-        }
+        return $response;
     }
 
     /**
@@ -685,7 +635,7 @@ abstract class LegalEntity extends Component
      *
      * @return void
      */
-    protected function createOrUpdateLegalEntity(array $data): LegalEntityModel|null
+    protected function persistLegalEntity(array $data): array
     {
         // Get the UUID from the data, if it exists
         $uuid = $data['data']['id'] ?? '';
@@ -697,7 +647,7 @@ abstract class LegalEntity extends Component
 
         $phones = $data['data']['phones'];
         unset($data['data']['phones']);
-        unset($data['data']['license']); // UNset this because it already set if create or present and dany to modify if edit
+        unset($data['data']['license']); // Do unset this because it already set if create or present and deny to modify if edit
 
         try {
             // Find or create a new LegalEntity object by UUID
@@ -723,9 +673,38 @@ abstract class LegalEntity extends Component
             // Save or update the object in the database
             $this->legalEntity->save();
 
-            $this->addressRepository->addAddresses($this->legalEntity, $addressData);
+        } catch (Exception $err) {
+            throw new Exception('LegalEntity Create Error: ' . $err->getMessage());
+        }
 
-            $this->phoneRepository->syncPhones($this->legalEntity, $phones);
+        return ['addressData' => $addressData, 'phones' => $phones];
+    }
+
+    protected function createNewLegalEntity(array $data): LegalEntityModel|null
+    {
+        $legalEntityData = $this->persistLegalEntity($data);
+
+        try {
+            $this->addressRepository->addAddresses($this->legalEntity, $legalEntityData['addressData']);
+
+            $this->phoneRepository->addPhones($this->legalEntity, $legalEntityData['phones']);
+
+            $this->legalEntity->refresh();
+        } catch (Exception $err) {
+            throw new Exception('LegalEntity Create Error: ' . $err->getMessage());
+        }
+
+        return $this->legalEntity;
+    }
+
+    protected function modifyLegalEntity(array $data): LegalEntityModel|null
+    {
+        $legalEntityData = $this->persistLegalEntity($data);
+
+        try {
+            $this->addressRepository->syncAddresses($this->legalEntity, $legalEntityData['addressData']);
+
+            $this->phoneRepository->syncPhones($this->legalEntity, $legalEntityData['phones']);
 
             $this->legalEntity->refresh();
         } catch (Exception $err) {
@@ -761,32 +740,21 @@ abstract class LegalEntity extends Component
         $authenticatedUser = Auth::user();
 
         // Retrieve the email address of the legal entity owner from the form or set it to null
-        $email = $this->legalEntityForm->owner['email'] ?? null;
+        $ownerEmail = $this->legalEntityForm->owner['email'] ?? null;
 
         // Generate a random password
         $password = Str::random(10);
 
         // Check if a user with the provided email already exists
-        $user = User::where('email', $email)->first();
-
-        // If the authenticated user claim self as the owner of the Legal Entity, use them as the user
-        $isOwner = isset($authenticatedUser->email) && strtolower($authenticatedUser->email) === $email;
-
-        if ($isOwner) {
-            // If the authenticated user is the LegalEntity owner, use them as the user
-            $user = $authenticatedUser;
-        } elseif (!$user) {
-            // If no user exists with that email, create a new user (new owner)
-            $user = User::create([
-                'email'    => $email,
+        $owner = User::where('email', $ownerEmail)->first() ?? User::create([
+                'email'    => $ownerEmail,
                 'password' => Hash::make($password),
-            ]);
-        }
+            ]);;
 
         try{
-            $user->save();
+            $owner->save();
 
-            $user->refresh();
+            $owner->refresh();
         } catch (Exception $e) {
             $this->dispatchErrorMessage(__('Сталася помилка під час обробки запиту'), ['error' => $e->getMessage()]);
 
@@ -796,21 +764,18 @@ abstract class LegalEntity extends Component
         auth()->shouldUse('web');
 
         // Assign the 'OWNER' role to the user authenticated via web guad
-        $user->assignRole('OWNER');
+        $owner->assignRole('OWNER');
 
         auth()->shouldUse('ehealth');
 
         // Assign the 'OWNER' role to the user authenticaed via ehealth guard
-        $user->assignRole('OWNER');
+        $owner->assignRole('OWNER');
 
-        if (!$isOwner) {
-            event(new Registered($user));
+        // Send credentials and email verification link
+        event(new LegalEntityCreate($authenticatedUser, $owner, $password));
 
-            // Send an email with the owner credentials to the user
-            Mail::to($user->email)->send(new OwnerCredentialsMail($user->email, $password));
-            Mail::to($authenticatedUser->email)->send(new OwnerCredentialsMail( '', '', __('Нового користувача зареєстровано в системі. На вказану адресу ' . $user->email . ' надіслано дані для входу в систему')));
-        }
+        Log::info("LegalEntity: New OWNER has been successfully registered! User credentials was sended to the {$owner->email} address");
 
-        return $user;
+        return $owner;
     }
 }

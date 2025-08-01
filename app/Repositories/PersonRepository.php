@@ -20,65 +20,59 @@ class PersonRepository
      * @param  array  $response  Response from API
      * @param  string  $modelClass
      * @param  string|null  $personUuid
-     * @return bool
+     * @return void
      * @throws Throwable
      */
-    public static function savePersonResponseData(array $response, string $modelClass, ?string $personUuid = null): bool
+    public static function savePersonResponseData(array $response, string $modelClass, ?string $personUuid = null): void
     {
-        DB::beginTransaction();
+        DB::transaction(static function () use ($response, $modelClass, $personUuid) {
+            try {
+                $personRequest = self::createOrUpdate($response, $modelClass, $personUuid);
 
-        try {
-            $personRequest = self::createOrUpdate($response, $modelClass, $personUuid);
+                $documents = $response['person']['documents'] ?? $response['documents'] ?? null;
+                if ($documents) {
+                    Repository::document()->addDocuments($personRequest, $documents);
+                }
 
-            $documents = $response['person']['documents'] ?? $response['documents'] ?? null;
-            if ($documents) {
-                Repository::document()->addDocuments($personRequest, $documents);
+                $addresses = $response['person']['addresses'] ?? [$response['addresses']] ?? null;
+                if ($addresses) {
+                    Repository::address()->addAddresses($personRequest, $addresses);
+                }
+
+                $phones = $response['person']['phones'] ?? $response['patient']['phones'] ?? null;
+                if ($phones) {
+                    Repository::phone()->addPhones($personRequest, $phones);
+                }
+
+                $authenticationMethods = $response['person']['authentication_methods'] ?? $response['patient']['authentication_methods'] ?? null;
+                if ($authenticationMethods) {
+                    Repository::authenticationMethod()->addAuthenticationMethod($personRequest, $authenticationMethods);
+                }
+
+                if (!empty($response['confidant_person'])) {
+                    $confidantData = [
+                        'documents_relationship' => $response['documents_relationship'],
+                        'confidantPersonInfo' => $response['confidant_person'][0]
+                    ];
+
+                    Repository::confidantPerson()->addConfidantPerson($personRequest, $confidantData);
+                }
+
+                if (!empty($response['person']['confidant_person'])) {
+                    Repository::confidantPerson()->addConfidantPerson(
+                        $personRequest,
+                        $response['person']['confidant_person']
+                    );
+                }
+            } catch (Exception $e) {
+                Log::channel('db_errors')->error('Error saving person request data', [
+                    'error' => $e->getMessage(),
+                    'response' => $response
+                ]);
+
+                throw $e;
             }
-
-            $addresses = $response['person']['addresses'] ?? [$response['addresses']] ?? null;
-            if ($addresses) {
-                Repository::address()->addAddresses($personRequest, $addresses);
-            }
-
-            $phones = $response['person']['phones'] ?? $response['patient']['phones'] ?? null;
-            if ($phones) {
-                Repository::phone()->addPhones($personRequest, $phones);
-            }
-
-            $authenticationMethods = $response['person']['authentication_methods'] ?? $response['patient']['authentication_methods'] ?? null;
-            if ($authenticationMethods) {
-                Repository::authenticationMethod()->addAuthenticationMethod($personRequest, $authenticationMethods);
-            }
-
-            if (!empty($response['confidant_person'])) {
-                $confidantData = [
-                    'documents_relationship' => $response['documents_relationship'],
-                    'confidantPersonInfo' => $response['confidant_person'][0]
-                ];
-
-                Repository::confidantPerson()->addConfidantPerson($personRequest, $confidantData);
-            }
-
-            if (!empty($response['person']['confidant_person'])) {
-                Repository::confidantPerson()->addConfidantPerson(
-                    $personRequest,
-                    $response['person']['confidant_person']
-                );
-            }
-
-            DB::commit();
-
-            return true;
-        } catch (Exception $e) {
-            DB::rollBack();
-
-            Log::channel('db_errors')->error('Error saving person request data', [
-                'error' => $e->getMessage(),
-                'response' => $response
-            ]);
-
-            return false;
-        }
+        });
     }
 
     /**
@@ -129,23 +123,22 @@ class PersonRepository
      * Update person request status by provided UUID.
      *
      * @param  array  $response
-     * @return bool
+     * @return void
+     * @throws Exception
      */
-    public static function updatePersonRequestStatusByUuid(array $response): bool
+    public static function updatePersonRequestStatusByUuid(array $response): void
     {
         try {
             PersonRequest::where('uuid', $response['id'])->update([
                 'status' => $response['status']
             ]);
-
-            return true;
         } catch (Exception $e) {
             Log::channel('db_errors')->error('Error updating person request status', [
                 'error' => $e->getMessage(),
                 'response' => $response
             ]);
 
-            return false;
+            throw $e;
         }
     }
 
@@ -153,10 +146,9 @@ class PersonRepository
      * Establish a connection between PersonRequest and Person.
      *
      * @param  array  $response
-     * @return bool
      * @throws Exception
      */
-    public static function createRelation(array $response): bool
+    public static function createRelation(array $response): void
     {
         try {
             $personRequest = PersonRequest::where('uuid', $response['id'])->firstOrFail();
@@ -165,14 +157,13 @@ class PersonRepository
             $personRequest->person()->associate($person);
             $personRequest->save();
 
-            return true;
         } catch (Exception $e) {
             Log::channel('db_errors')->error('Error establishing relation between PersonRequest and Person', [
                 'error' => $e->getMessage(),
                 'response' => $response
             ]);
 
-            return false;
+            throw $e;
         }
     }
 

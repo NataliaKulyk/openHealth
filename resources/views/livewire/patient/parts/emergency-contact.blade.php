@@ -51,7 +51,7 @@
                    type="text"
                    name="emergencyContactSecondName"
                    id="emergencyContactSecondName"
-                   class="input peer @error('form.patient.secondName') input-error @enderror"
+                   class="input peer @error('form.patient.emergencyContact.secondName') input-error @enderror"
                    placeholder=" "
                    autocomplete="off"
             />

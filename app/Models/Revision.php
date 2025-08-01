@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Employee\RevisionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,10 +18,6 @@ class Revision extends Model
     use HasCamelCasing;
     use SoftDeletes;
 
-    public const STATUS_APPLIED = 'APPLIED';
-    public const STATUS_OUTDATED = 'OUTDATED';
-    public const STATUS_PENDING = 'PENDING';
-
     protected $hidden = [
         'id',
         'revisionable_type',
@@ -29,6 +26,7 @@ class Revision extends Model
 
     protected $fillable = [
         'data',
+        'ehealth_response',
         'status',
         'revisionable_type',
         'revisionable_id'
@@ -38,24 +36,12 @@ class Revision extends Model
     protected $casts = [
         'data' => 'array',
         'deleted_at' => 'datetime',
+        'status' => RevisionStatus::class,
+        'ehealth_response' => 'array',
     ];
 
     public function revisionable(): MorphTo
     {
         return $this->morphTo();
-    }
-
-    public function setApplied(): void
-    {
-        $this->status = self::STATUS_APPLIED;
-        $this->save();
-        $this->delete();
-    }
-
-    public function setOutdated(): void
-    {
-        $this->status = self::STATUS_OUTDATED;
-        $this->save();
-        $this->delete();
     }
 }

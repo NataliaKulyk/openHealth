@@ -6,10 +6,14 @@ use Exception;
 use App\Models\License;
 use Illuminate\Support\Arr;
 use App\Models\Relations\Phone;
+use App\Livewire\Actions\Logout;
 use App\Models\Relations\Address;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Repositories\PhoneRepository;
 use App\Repositories\AddressRepository;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 use App\Models\LegalEntity as LegalEntityModel;
 
@@ -467,6 +471,60 @@ class CreateLegalEntity extends LegalEntity
         return true;
     }
 
+      /**
+     * Handle success response from API request.
+     *
+     * @param array $response The response from the API request
+     * @return void
+     */
+    protected function handleSuccessResponse(array $response, array $requestData = [])
+    {
+        try {
+            DB::transaction(function() use($response, $requestData) {
+
+                $this->createNewLegalEntity($response);
+
+                setPermissionsTeamId($this->legalEntity->id);
+
+                $this->createLicense($response['data']['license']);
+
+                try {
+                    $user = $this->createUser();
+                } catch (Exception $err) {
+                    throw new Exception('Error: create User: ' . $err->getMessage(), 2);
+                }
+
+                $user->unsetRelation('roles');
+
+                try {
+                    $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id'], $user?->id ?? null);
+                } catch (Exception $err) {
+                    throw new Exception('Error: createEmployeeRequest: ' . $err->getMessage(), $err->getCode());
+                }
+
+                if (Cache::has($this->entityCacheKey)) {
+                    Cache::forget($this->entityCacheKey);
+                }
+
+                if (Cache::has($this->ownerCacheKey)) {
+                    Cache::forget($this->ownerCacheKey);
+                }
+
+                if (Cache::has($this->stepCacheKey)) {
+                    Cache::forget($this->stepCacheKey);
+                }
+            });
+
+            app(Logout::class)();
+
+            return Redirect::route('login') ?? null;
+        } catch (Exception $err) {
+            Log::error(__('Сталася помилка під час обробки запиту'), ['error' => $err->getMessage()]);
+
+            throw new Exception(__('Сталася помилка під час обробки запиту.' . ' Код помилки: ' . $err->getCode()));
+        }
+    }
+
     public function createLegalEntity()
     {
         $this->stepSignificancy();
@@ -475,9 +533,13 @@ class CreateLegalEntity extends LegalEntity
         if ($this->validationRequest()) {
             $result = $this->signLegalEntity();
 
-            // Handle successful API response
+            $requestData = $result['request'];
+
+            $response = $this->filterUnprovidedFields($result['response'], $requestData);
+
             try {
-                $this->handleSuccessResponse($result['response'], $result['request']);
+                // Handle successful API response
+                $this->handleSuccessResponse($response, $requestData);
             } catch(Exception $err) {
                 // Dispatch error message for possible errors
                 $this->dispatchErrorMessage($err->getMessage());

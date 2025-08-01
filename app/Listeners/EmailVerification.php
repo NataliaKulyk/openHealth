@@ -2,11 +2,11 @@
 
 namespace App\Listeners;
 
+use Log;
 use Exception;
-use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Log;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 
 class EmailVerification extends SendEmailVerificationNotification
 {

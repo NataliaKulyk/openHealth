@@ -2,21 +2,20 @@
 
 namespace App\Repositories;
 
-use App\Livewire\Division\Api\DivisionRequestApi;
-use Log;
 use Exception;
 use App\Core\Arr;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Division;
-use App\Models\Revision;
 use Illuminate\Support\Str;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\Employee\BaseEmployee;
 use Illuminate\Http\RedirectResponse;
+use App\Enums\Employee\RevisionStatus;
 use App\Classes\eHealth\Api\EmployeeApi;
 use App\Models\Employee\EmployeeRequest;
 use Illuminate\Support\Facades\Validator;
@@ -92,7 +91,7 @@ class EmployeeRepository
      * @param string|null                   $employeeUUID  UUID of an existing Employee, if this is an EmployeeRequest that updates.
      * @param bool                          $isNewRequest  Indicates a new unique EmployeeRequest creation scenario.
      *
-     * @return Employee|EmployeeRequest
+     * @return BaseEmployee
      * @throws Exception
      */
     public function store(
@@ -101,7 +100,7 @@ class EmployeeRepository
         Employee|EmployeeRequest|null $employeeModel,
         ?string $employeeUUID = null,
         bool $isNewRequest = false
-    ): Employee|EmployeeRequest
+    ): BaseEmployee
     {
         try {
 
@@ -189,7 +188,7 @@ class EmployeeRepository
 
                 $this->revisionRepository->saveRevision($employee, [
                     'data' => $responseData,
-                    'status' => Revision::STATUS_PENDING,
+                    'status' => RevisionStatus::PENDING,
                 ]);
             }
 

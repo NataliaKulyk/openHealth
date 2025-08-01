@@ -96,7 +96,7 @@ return [
     'phone.dublicates' => 'Дозволяється лише один телефонний номер типу \':type\'',
     'present' => 'Поле :attribute повинне бути присутнє.',
     'regex' => 'Поле :attribute має хибний формат.',
-    'required' => "Поле :attribute є обов'язковим для заповнення.",
+    'required' => "Поле ':attribute' є обов'язковим для заповнення.",
     'required_if' => "Поле :attribute є обов'язковим для заповнення, коли :other є рівним :value.",
     'required_unless' => "Поле :attribute є обов'язковим, якщо :other не вказано у :values.",
     'prohibited' => 'Поле :attribute заборонено.',
@@ -208,22 +208,41 @@ return [
                 'number' => 'Серія/номер документа'
             ]
         ],
-        'party' => [
-            'firstName' => 'Ім’я',
-            'lastName' => 'Прізвище',
-            'secondName' => 'По батькові',
-            'birthDate' => 'Дата народження',
-            'email' => 'E-mail',
-            'gender' => 'Стать',
-            'position' => 'Посада керівника НМП',
-            'taxId' => 'РНОКПП',
-            'employeeType' => 'Роль',
-        ],
-        'party.phones.*.type' => 'Тип телефону',
-        'party.phones.*.number' => 'Номер телефону',
-        'party.documents.*.type' => 'Тип документа',
+        // Party
+        'party.lastName' => __('forms.last_name'),
+        'party.firstName' => __('forms.first_name'),
+        'party.secondName' => __('forms.second_name'),
+        'party.gender' => __('forms.gender'),
+        'party.birthDate' => __('forms.birth_date'),
+        'party.taxId' => __('forms.tax_id'),
+        'party.email' => __('forms.email'),
+        'party.workingExperience' => __('forms.working_experience'),
+        'party.aboutMyself' => __('forms.about_myself'),
+
+        // Phones (nested under party)
+        'party.phones' => __('forms.phones'),
+        'party.phones.*.type' => __('forms.phone_type'),
+        'party.phones.*.number' => __('forms.phone_number'),
+
         'party.documents.*.number' => 'Серія/номер документа',
-        'position' => 'Посада',
+
+        'documents.*.type' => __('forms.document_type'),
+        'documents.*.number' => __('forms.document_number'),
+        'documents.*.issuedBy' => __('forms.document_issued_by'),
+        'documents.*.issuedAt' => __('forms.document_issued_at'),
+
+        // Position
+        'position' => __('forms.position'),
+        'employeeType' => __('forms.employee_type'),
+
+        // Doctor Specific
+        'doctor.specialities' => __('forms.specialities'),
+        'doctor.educations' => __('forms.education'),
+        'doctor.qualifications' => __('forms.qualifications'),
+        'doctor.scienceDegrees' => __('forms.science_degree'),
+
+
+        'divisionId' => __('forms.division'),
         'patient' => [
             'firstName' => 'ім’я',
             'lastName' => 'прізвище',

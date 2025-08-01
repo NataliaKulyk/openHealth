@@ -1,65 +1,59 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Employee;
 
-use App\Core\Arr;
-use App\Livewire\Employee\Forms\EmployeeForm;
 use App\Livewire\Employee\Traits\ManagesEmployeeForm;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use Illuminate\View\View;
+use Livewire\Attributes\Locked;
 
 class EmployeePositionAdd extends EmployeeComponent
 {
     use ManagesEmployeeForm;
 
-    public EmployeeForm $form;
-    public string $pageTitle;
-    public ?int $employeeRequestId = null;
+    #[Locked]
+    public ?int $partyId = null;
 
-    /**
-     * The mount method now uses a hybrid approach to populate form data.
-     * It prioritizes live data from Party relations, but falls back to the
-     * latest EmployeeRequest revision if data (like phones or documents) is missing.
-     */
+    protected ?Party $party = null;
+
     public function mount(LegalEntity $legalEntity, Party $party): void
     {
-        $this->getDictionary();
-        $this->form->populateFromParty($party);
+        $this->loadDictionaries();
+        $this->isPersonalDataLocked = true;
 
-        $needsRevisionCheck = empty($this->form->documents) || empty($this->form->party['phones']) || empty($this->form->party['phones'][0]['number']);
+        $this->party = $party;
+        $this->partyId = $party->id;
 
-        if ($needsRevisionCheck) {
-            $latestRequest = $party->employeeRequests()->latest()->first();
-
-            if ($latestRequest && $latestRequest->revision) {
-                $revisionData = $latestRequest->revision->data ?? [];
-
-                if (empty($this->form->party['phones']) || empty($this->form->party['phones'][0]['number'])) {
-                    $phonesData = $revisionData['phones'] ?? [];
-                    if (!empty($phonesData)) {
-                        $this->form->party['phones'] = Arr::toCamelCase($phonesData);
-                    }
-                }
-
-                if (empty($this->form->documents)) {
-                    $documentsData = $revisionData['documents'] ?? [];
-                    if (!empty($documentsData)) {
-                        $this->form->documents = Arr::toCamelCase($documentsData);
-                    }
-                }
-            }
-        }
-
+        $this->form->hydrate($this->party);
         $this->form->resetPositionFields();
+    }
 
-        $this->pageTitle = __('forms.addPosition');
+    public function boot(): void
+    {
+        if ($this->partyId) {
+            $this->party = Party::findOrFail($this->partyId);
+        }
     }
 
     public function render(): View
     {
-        return view('livewire.employee.employee', [
-            'pageTitle' => $this->pageTitle,
-        ]);
+        return view('livewire.employee.employee');
+    }
+
+    /**
+     * Finds and returns the existing draft request if its ID is known.
+     * Returns null only if this is the very first save action for a new form.
+     */
+    protected function getEmployeeRequestForSave(): ?EmployeeRequest
+    {
+        if (!empty($this->employeeRequestId)) {
+            return EmployeeRequest::find($this->employeeRequestId);
+        }
+
+        return null;
     }
 }

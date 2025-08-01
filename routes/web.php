@@ -9,34 +9,38 @@ use App\Livewire\Auth\VerifyEmail;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\EHealthLoginController;
+use App\Livewire\Employee\EmployeeEdit;
+use App\Livewire\Employee\EmployeeShow;
+use App\Livewire\Employee\EmployeeIndex;
+use App\Livewire\Employee\EmployeeCreate;
 use App\Livewire\Employee\EmployeePositionAdd;
+use App\Livewire\Employee\EmployeeRequestEdit;
+use App\Livewire\Employee\EmployeeRequestShow;
+use App\Models\License;
 use App\Livewire\License\LicenseEdit;
 use App\Livewire\License\LicenseView;
+use App\Livewire\License\LicenseCreate;
 use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
-use App\Livewire\Employee\EmployeeShow;
 use App\Livewire\Procedure\ProcedureCreate;
 use App\Models\LegalEntity;
-use App\Models\License;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Procedure;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Patient\PatientIndex;
 use App\Livewire\Contract\ContractForm;
 use App\Livewire\Division\DivisionForm;
-use App\Livewire\Employee\EmployeeEdit;
 use App\Livewire\Auth\SelectLegalEntity;
 use App\Livewire\Contract\ContractIndex;
-use App\Livewire\Employee\EmployeeIndex;
 use App\Http\Controllers\HomeController;
 use App\Livewire\Division\DivisionIndex;
 use App\Http\Controllers\EmailController;
-use App\Livewire\Employee\EmployeeCreate;
 use App\Livewire\Encounter\EncounterEdit;
 use App\Livewire\Encounter\EncounterCreate;
 use App\Livewire\LegalEntity\EditLegalEntity;
-use App\Livewire\License\LicenseCreate;
 use App\Livewire\License\LicenseIndex;
 use App\Livewire\Patient\Records\PatientData;
 use App\Livewire\Declaration\DeclarationIndex;
@@ -107,12 +111,26 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/{division}/healthcare-service', HealthcareServiceForm::class)->name('healthcare_service.index');
         });
 
-        Route::prefix('employees')->name('employee.')->group(function () {
+        Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {
             Route::get('/', EmployeeIndex::class)->name('index');
+
+            Route::get('/{employee}', EmployeeShow::class)
+                ->name('show')->middleware('can:view,employee');
+
+            Route::get('/{employee}/edit', EmployeeEdit::class)
+                ->name('edit')->middleware('can:update,employee');
+        });
+
+        // --- Group for Employee Requests ---
+        Route::prefix('employee-request')->name('employee-request.')->middleware('auth')->group(function () {
             Route::get('/create', EmployeeCreate::class)->name('create');
-            Route::get('/party/{party}/add-position', EmployeePositionAdd::class)->name('add-position');
-            Route::get('/{id}/{type?}', EmployeeShow::class)->name('show');
-            Route::get('/{id}/{type?}/edit', EmployeeEdit::class)->name('edit');
+            Route::get('/party/{party}/position-add', EmployeePositionAdd::class)->name('position-add');
+
+            Route::get('/{employee_request}', EmployeeRequestShow::class)
+                ->name('show')->middleware('can:view,employee_request');
+
+            Route::get('/{employee_request}/edit', EmployeeRequestEdit::class)
+                ->name('edit')->middleware('can:update,employee_request');
         });
 
         Route::prefix('contract')->group(function () {
@@ -144,23 +162,23 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         Route::group(['middleware' => ['role:OWNER|ADMIN|DOCTOR']], static function () {
             Route::prefix('patient')->group(static function () {
                 Route::get('/', PatientIndex::class)->name('patient.index');
-                Route::get('/create/{patientId?}', PatientComponent::class)->name('patient.form');
+                Route::get('/create/{id?}', PatientComponent::class)->name('patient.form');
                 Route::get('/{patientId}/patient-data', PatientData::class)->name('patient.patient-data');
                 Route::get('/{patientId}/summary', PatientSummary::class)->name('patient.summary');
                 Route::get('/{patientId}/episodes', PatientEpisodes::class)->name('patient.episodes');
 
-                Route::middleware('can:create,' . Encounter::class)->group(static function () {
+                Route::can('create' . Encounter::class)->group(static function () {
                     Route::get('/{patientId}/encounter/create', EncounterCreate::class)->name('encounter.create');
                     Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
                 });
 
                 Route::whereNumber('patientId')->group(static function () {
-                    Route::middleware('can:create,' . DiagnosticReport::class)
-                        ->get('{patientId}/diagnostic-report/create', DiagnosticReportCreate::class)
+                    Route::get('{patientId}/diagnostic-report/create', DiagnosticReportCreate::class)
+                        ->can('create', DiagnosticReport::class)
                         ->name('diagnostic-report.create');
 
-                    Route::middleware('can:create,' . Procedure::class)
-                        ->get('{patientId}/procedure/create', ProcedureCreate::class)
+                    Route::get('{patientId}/procedure/create', ProcedureCreate::class)
+                        ->can('create', Procedure::class)
                         ->name('procedure.create');
                 });
             });
