@@ -1,7 +1,7 @@
 <div>
     <x-section-navigation x-data="{ showFilter: false }" class=''>
         <x-slot name='title'>
-            {{ $contract_request->previous_request_id === '' ? __('forms.new_contract') :  __('forms.editContract', ['contract' => $contract_request->previous_request_id]) }}
+            {{ $contract_request->previous_request_id === '' ? __('forms.contract.new_contract') :  __('forms.contract.editContract', ['contract' => $contract_request->previous_request_id]) }}
         </x-slot>
         {{-- <x-slot name='description'>
             {{ $contract_request->previous_request_id === '' ? __('forms.addContract') :  __('forms.editContract', ['contract' => $contract_request->previous_request_id]) }}
@@ -10,97 +10,46 @@
 
     <div class='flex bg-white pb-10 p-6 flex-col'>
         {{-- LegalEntity Info --}}
-        <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-            <div class='grid grid-cols-1 gap-9 sm:grid-cols-2'>
-                <div class='flex flex-col gap-9'>
-                    <div class='dark:bg-boxdark'>
-                        <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
-                            <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.legal_entity_info') }}
-                            </h3>
-                        </div>
-                        <div class='flex flex-col gap-5.5 p-6.5'>
-                            <x-forms.form-group class='mb-4'>
-                                <x-slot name='label'>
-                                    <x-forms.label for='legal_entity_name' class='default-label'>
-                                        {{ __('forms.legal_entity_name') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        disabled
-                                        class='default-input'
-                                        value="{{ $legalEntity['edr']['public_name'] ?? '' }}"
-                                        type='text'
-                                        id='legal_entity_name'
-                                    />
-                                </x-slot>
-                            </x-forms.form-group>
-
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='legal_entity_owner' class='default-label'>
-                                        {{ __('forms.legal_entity_owner')}} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        disabled
-                                        class='default-input'
-                                        value="{{ $legalEntity['edr']['name'] ?? '' }}"
-                                        type='text'
-                                        id='legal_entity_owner'
-                                    />
-                                </x-slot>
-
-                            </x-forms.form-group>
-
+            <fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
+                <legend class="legend">
+                    <h2> {{ __('forms.legal_entity_info') }}</h2>
+                </legend>
+                <div class="form">
+                    <div class="form-row-3">
+                            <div class="form-group">
+                                <input value="{{ $legalEntity['edr']['public_name'] ?? '' }}"  type="text" name="legal_entity_name" id="legal_entity_name" class="peer input text-gray-500" placeholder=" " required />
+                                <label for="legal_entity_name" class="label">{{ __('forms.legal_entity_name') }}</label>
+                                @error('form.party.firstName') <p class="text-error">{{$message}}</p> @enderror
+                            </div>
+                            <div class="form-group">
+                                <input value="{{ $legalEntity['edr']['name'] ?? '' }}"  type="text" name="legal_entity_owner" id="legal_entity_owner" class="peer input text-gray-500" placeholder=" " required />
+                                <label for="legal_entity_name" class="label">{{ __('forms.legal_entity_owner')}}</label>
+                                @error('form.party.legal_entity_name') <p class="text-error">{{$message}}</p> @enderror
+                            </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <input value="{{ $legalEntity['edr']['name'] ?? '' }}"  type="text" name="contractor_base" id="contractor_base" class="peer input text-gray-500" placeholder=" " required />
+                            <label for="contractor_base" class="label">{{ __('forms.contract.contractorBase') }}</label>
+                            @error('form.party.contractor_base') <p class="text-error">{{$message}}</p> @enderror
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class='grid grid-cols-1 gap-9 sm:grid-cols-2'>
-                <div class='flex flex-col gap-9'>
-                    <div class='dark:bg-boxdark'>
-                        <div class='border-stroke px-6.5 py-2 dark:border-strokedark'>
-                        </div>
-
-                        <div class='flex flex-col gap-5.5 p-6.5'>
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='contractor_base' class='default-label'>
-                                        {{ __('forms.contractorBase') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        disabled
-                                        class='default-input'
-                                        wire:model='contract_request.contractor_base'
-                                        type='text'
-                                        id='contractor_base'
-                                    />
-                                </x-slot>
-                                @error('contract_request.contractor_base')
-                                <x-slot name='error'>
-                                    <x-forms.error>
-                                        {{ $message }}
-                                    </x-forms.error>
-                                </x-slot>
-                                @enderror
-                            </x-forms.form-group>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <input {{--value="{{ $legalEntity['edr']['name'] ?? '' }}"--}}  type="number" name="numberOfPeople" id="numberOfPeople" class="peer input text-gray-500" placeholder=" " required />
+                            <label for="numberOfPeople" class="label">{{ __('forms.contract.numberOfPeople') }}</label>
+                            @error('form.party.numberOfPeople') <p class="text-error">{{$message}}</p> @enderror
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
+            </div>
+            </fieldset>
         {{-- Block 2: Legal Entity Documents --}}
         {{-- This section handles the file uploads for the contract. --}}
-        <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-            <h3 class='font-medium text-2xl text-black dark:text-white mb-4'>
-                {{ __('forms.documentsMedicalOrganization') }}
-            </h3>
+        <fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
+            <legend class="legend">
+                <h2>{{ __('forms.documentsMedicalOrganization') }}</h2>
+            </legend>
             <div class='grid grid-cols-1 gap-9 sm:grid-cols-2'>
                 <div class='flex flex-col gap-5.5'>
                     <x-forms.form-group>
@@ -135,230 +84,109 @@
                     </x-forms.form-group>
                 </div>
             </div>
-        </div>
+        </fieldset>
 
         {{-- LegalEntity Contract Terms --}}
-        <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-            <div class='flex flex-col gap-9'>
-                <div class='dark:bg-boxdark'>
-                    <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
-                        <h3 class='font-medium text-2xl text-black dark:text-white'>
-                            {{ __('forms.contract') }}
-                        </h3>
-                    </div>
-
-                    <div class='flex justify-start flex-wrap gap-14 p-6.5'>
-                        <x-forms.select
-                            :disabled="$contract_request->previous_request_id !== ''" {{-- This line is changed --}}
-                        class='default-input'
-                            wire:model='contract_request.id_form'
-                            type='text'
-                            id='id_form'
-                        >
-                            <x-slot name='option'>
-                                {{-- You might want to add a placeholder for new contracts --}}
-                                <option value=''>{{ __('forms.contractType') }}</option>
-
-                                {{-- Loop through all available contract types --}}
-                                @foreach($this->dictionaries['CONTRACT_TYPE'] as $key => $contract_type)
-                                    <option value="{{ $key }}">{{ $contract_type }}</option>
-                                @endforeach
-                            </x-slot>
-                        </x-forms.select>
-
-                        <x-forms.form-group class='max-w-[190px]'>
-                            <x-slot name='label'>
-                                <x-forms.label for='start_date' class='default-label'>
-                                    {{ __('forms.startDateContract') }} *
-                                </x-forms.label>
-                            </x-slot>
-                            <x-slot name='input'>
-                                <x-forms.input-date
-                                    id='start_date'
-                                    wire:model='contract_request.start_date'
-                                    type='date'
-                                />
-                            </x-slot>
-                            @error('legalEntityForm.start_date')
-                            <x-slot name='error'>
-                                <x-forms.error>
-                                    {{ $message }}
-                                </x-forms.error>
-                            </x-slot>
-                            @enderror
-                        </x-forms.form-group>
-
-                        <x-forms.form-group class='max-w-[210px]'>
-                            <x-slot name='label'>
-                                <x-forms.label for='end_date' class='default-label'>
-                                    {{ __('forms.endDateContract') }} *
-                                </x-forms.label>
-                            </x-slot>
-                            <x-slot name='input'>
-                                <x-forms.input-date
-                                    id='end_date'
-                                    wire:model='contract_request.end_date'
-                                    type='date'
-                                />
-                            </x-slot>
-                            @error('legalEntityForm.end_date')
-                            <x-slot name='error'>
-                                <x-forms.error>
-                                    {{ $message }}
-                                </x-forms.error>
-                            </x-slot>
-                            @enderror
-                        </x-forms.form-group>
-                    </div>
-                </div>
+        <fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
+            <legend class="legend">
+                <h2>{{ __('forms.contract.contracts') }}</h2>
+            </legend>
+            <div class="form-row">
+            <div class="form-group">
+                <select wire:model="contract_request.id_form" name="id_form" id="id_form" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" required>
+                    <option value="" disabled selected hidden>{{ __('forms.select') }} {{ __('forms.contract.contractType') }}</option>
+                    @foreach($this->dictionaries['CONTRACT_TYPE'] as $key => $contract_type)
+                        <option value="{{ $key }}">{{ $contract_type }}</option>
+                    @endforeach
+                </select>
+                <label for="id_form" class="label">{{ __('forms.contract.contractType') }}</label>
+                @error('contract_request.id_form')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
-        </div>
+            </div>
+                        <div class="form-row-2 items-start">
+                        <div class="form-group datepicker-wrapper relative w-full">
+                            <input wire:model='contract_request.start_date' type="text" name="start_date" id="start_date" class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
+                            <label for="start_date" class="wrapped-label">{{ __('forms.contract.startDateContract') }}</label>
+                            @error('form.party.start_date') <p class="text-error">{{$message}}</p> @enderror
+                        </div>
+                        <div class="form-group datepicker-wrapper relative w-full">
+                            <input wire:model='contract_request.end_date' type="text" name="end_date" id="end_date" class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false"/>
+                            <label for="end_date" class="wrapped-label">{{ __('forms.contract.endDateContract') }}</label>
+                            @error('form.party.end_date') <p class="text-error">{{$message}}</p> @enderror
+                        </div>
+                        </div>
+        </fieldset>
 
         {{-- Payment Information --}}
-        <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-            <div class='grid grid-cols-1 gap-9 sm:grid-cols-2'>
-                <div class='flex flex-col gap-9'>
-                    <div class='dark:bg-boxdark'>
-                        <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
-                            <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.paymentDetails') }}
-                            </h3>
-                        </div>
-
-                        <div class='flex flex-col gap-5.5 p-6.5'>
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='bank_name' class='default-label'>
-                                        {{ __('forms.bankName') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        class='default-input'
-                                        wire:model='contract_request.contractor_payment_details.bank_name'
-                                        type='text'
-                                        id='bank_name'
-                                    />
-                                </x-slot>
-                                @error('contract_request.contractor_payment_details.bank_name')
-                                <x-slot name='error'>
-                                    <x-forms.error>
-                                        {{ $message }}
-                                    </x-forms.error>
-                                </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                            <x-forms.form-group class='mt-4'>
-                                <x-slot name='label'>
-                                    <x-forms.label for='MFO' class='default-label'>
-                                        {{ __('forms.mfo') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        class='default-input'
-                                        wire:model='contract_request.contractor_payment_details.mfo' type='text'
-                                        id='MFO'
-                                    />
-                                </x-slot>
-                                @error('contract_request.contractor_payment_details.mfo')
-                                <x-slot name='error'>
-                                    <x-forms.error>
-                                        {{ $message }}
-                                    </x-forms.error>
-                                </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                            <x-forms.form-group class='mt-4'>
-                                <x-slot name='label'>
-                                    <x-forms.label for='payer_account' class='default-label'>
-                                        {{ __('forms.payerAccount') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        class='default-input'
-                                        wire:model='contract_request.contractor_payment_details.payer_account' type='text'
-                                        id='payer_account'
-                                        x-data
-                                        x-mask='UA99 9999999 999999999999999999'
-                                    />
-                                </x-slot>
-                                @error('contract_request.contractor_payment_details.payer_account')
-                                <x-slot name='error'>
-                                    <x-forms.error>
-                                        {{ $message }}
-                                    </x-forms.error>
-                                </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                        </div>
-                    </div>
+        <fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
+            <legend class="legend">
+                <h2>{{ __('forms.paymentDetails') }}</h2>
+            </legend>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <input wire:model='contract_request.contractor_payment_details.bank_name'  type="text" name="bank_name" id="bank_name" class="peer input text-gray-500" placeholder=" " required />
+                    <label for="bank_name" class="label">{{ __('forms.bankName') }}</label>
+                    @error('form.party.bank_name') <p class="text-error">{{$message}}</p> @enderror
+                </div>
+                <div class="form-group">
+                    <input wire:model='contract_request.contractor_payment_details.bank_name'  type="text" name="MFO" id="MFO" class="peer input text-gray-500" placeholder=" " required />
+                    <label for="MFO" class="label">{{ __('forms.mfo') }}</label>
+                    @error('form.party.MFO') <p class="text-error">{{$message}}</p> @enderror
                 </div>
             </div>
-        </div>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <input
+                        required
+                        type="text"
+                        placeholder=" "
+                        class="peer input"
+                        wire:model="contract_request.contractor_payment_details.payer_account"
+                        x-data
+                        x-mask="UA99 9999999 999999999999999999"
+                    />
+                    <label class="label">{{ __('forms.payerAccount') }}</label>
+                    @error('contract_request.contractor_payment_details.payer_account')
+                    <p class="text-error">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </fieldset>
 
         {{-- Places of service provision --}}
-        <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-            <div class='grid grid-cols-1 gap-9 sm:grid-cols-2'>
-                <div class='flex flex-col gap-9'>
-                    <div class='dark:bg-boxdark'>
-                        <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
-                            <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.placesOfService') }}
-                            </h3>
-                        </div>
-
-                        <div class='flex flex-col gap-5.5 p-6.5'>
-                            @if($divisions)
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='contractor_divisions' class='default-label'>
-                                        {{ __('forms.division') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.select
-                                        multiple
-                                        size='5'
-                                        id='contractor_divisions'
-                                        class='default-input'
-                                        wire:model='contract_request.contractor_divisions'
-                                    >
-                                        <x-slot name='option'>
-                                            @foreach($divisions as $k=>$division )
-                                                <option value="{{$division->uuid}}">{{$division->name}}</option>
-                                            @endforeach
-                                        </x-slot>
-                                    </x-forms.select>
-                                </x-slot>
-                                @error('contract_request.contractor_divisions')
-                                <x-slot name='error'>
-                                    <x-forms.error>
-                                        {{ $message }}
-                                    </x-forms.error>
-                                </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-                            @endif
-                        </div>
-                    </div>
+        <fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
+            <legend class="legend">
+                <h2> {{ __('forms.placesOfService') }}</h2>
+            </legend>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label class="label" for="contractor_divisions">{{ __('forms.contract.chooseLocation') }}</label>
+                    <select id="contractor_divisions"
+                            class="input-select @error('contract_request.contractor_divisions') input-error @enderror"
+                            wire:model="contract_request.contractor_divisions"
+                            multiple
+                            size="5"
+                    >
+                        @if($divisions)
+                            @foreach($divisions as $division)
+                                <option value="{{$division->uuid}}">{{$division->name}}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                    @error('contract_request.contractor_divisions')
+                    <p class="text-error">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
-        </div>
+        </fieldset>
 
         {{-- Involved Person --}}
-        <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-            <div class='flex flex-col gap-9'>
-                <div class='dark:bg-boxdark'>
-                    <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
-                        <h3 class='font-medium text-2xl text-black dark:text-white'>
-                            {{ __('forms.involvedPersons') }}
-                        </h3>
-                    </div>
+        <fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
+            <legend class="legend">
+                <h2>{{ __('forms.involvedPersons') }}</h2>
+            </legend>
                     <div class='flex flex-col gap-5.5 p-6.5'>
                         @if($external_contractors)
 
@@ -443,19 +271,15 @@
                                 </tbody>
                             </table>
                         @endif
-                        <a
-                            class='text-primary'
-                            wire:click.prevent="openModal('addExternalContractors')"
-                            href=''
-                        >
-                            + {{ __('forms.addInvolvedPerson') }}
-                        </a>
+                            <button
+                                type="button"
+                                class="item-add"
+                                wire:click.prevent="openModal('addExternalContractors')"
+                            >
+                                <span>{{ __('forms.addInvolvedPerson') }}</span>
+                            </button>
                     </div>
-
-                </div>
-            </div>
-        </div>
-
+        </fieldset>
         {{-- Agreement --}}
         <div class='w-full mt-4 bg-white border-t border-gray-200 dark:border-gray-700'>
             <div class='flex flex-col gap-9'>
