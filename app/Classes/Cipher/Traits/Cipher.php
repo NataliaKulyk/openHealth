@@ -60,7 +60,8 @@ trait Cipher
             $this->convertFileToBase64(),
             $this->knedp,
             $signatoryInitiator,
-            $taxId
+            $taxId,
+            $data['edrpou']
         );
     }
 
