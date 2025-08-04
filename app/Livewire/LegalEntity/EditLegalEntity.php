@@ -143,7 +143,11 @@ class EditLegalEntity extends LegalEntity
             $this->dispatchBrowserEvent('scroll-to-error');
         }
 
-        $result = $this->signLegalEntity();
+        // TODO: until refactoring
+        if (! $result = $this->signLegalEntity()) {
+            return;
+        }
+
 
         $data = $result['request'];
         $response = $this->filterUnprovidedFields($result['response'], $data);

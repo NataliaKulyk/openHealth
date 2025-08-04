@@ -68,7 +68,7 @@ class LegalEntitiesForms extends Form
             'owner.gender' => 'required|string',
             'owner.birthDate' => ['required', 'date', 'before_or_equal:today', new BirthDate($this->owner['email'] ?? ''), new AgeCheck()],
             'owner.noTaxId' => 'boolean|nullable',
-            'owner.taxId' => ['required_unless:owner.noTaxId,true', 'string', new TaxId($this->owner['email'] ?? '')],
+            'owner.taxId' => ['required_unless:owner.noTaxId,true', 'string', new TaxId()],
             'owner.documents.type' => ['required','string', new InDictionary('DOCUMENT_TYPE')],
             'owner.documents.number' => ['required', 'string', new DocumentNumber($this->owner['documents']['type'] ?? '')],
             'owner.documents.issuedAt' => 'sometimes|date|before_or_equal:today',

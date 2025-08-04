@@ -531,7 +531,10 @@ class CreateLegalEntity extends LegalEntity
 
         // Validate All the data from the form
         if ($this->validationRequest()) {
-            $result = $this->signLegalEntity();
+            // TODO: until refactoring
+            if (! $result = $this->signLegalEntity()) {
+                return;
+            }
 
             $requestData = $result['request'];
 
