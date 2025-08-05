@@ -174,9 +174,9 @@ class EmployeeIndex extends EmployeeComponent
     }
 
     /**
-     * Prepares and shows the dismissal modal.
+     * Prepares and shows the deactivation modal.
      */
-    public function showModalDismissed(int $id): void
+    public function showModalDeactivate(int $id): void
     {
         $employee = Employee::with('party')->find($id);
         if (!$employee) return;
@@ -360,6 +360,12 @@ class EmployeeIndex extends EmployeeComponent
         }
         $this->showDeleteModal = false;
         $this->requestToDeleteId = null;
+    }
+
+    public function notifyNoAccess()
+    {
+        session()->flash('error', 'Відказано у доступі');
+        $this->skipRender();
     }
 
     /**
