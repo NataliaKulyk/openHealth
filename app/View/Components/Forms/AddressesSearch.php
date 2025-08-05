@@ -49,6 +49,7 @@ class AddressesSearch extends Component
         return [
             'address.area' => ['required', 'string'],
             'address.region' => [
+                'sometimes',
                 Rule::requiredIf(function () use ($address) {
                     if (empty($address['area'])) {
                         return true;
@@ -60,8 +61,8 @@ class AddressesSearch extends Component
             'address.settlementType' => ['required', 'string'],
             'address.settlement' => ['required', 'string'],
             'address.settlementId' => ['required', 'string'],
-            'address.streetType' => ['required', 'string'],
-            'address.street' => ['required', 'string'],
+            'address.streetType' => ['nullable', 'string'],
+            'address.street' => ['nullable', 'string'],
             'address.building' => ['nullable', 'string'],
             'address.apartment' => ['nullable', 'string'],
             'address.zip' => ['nullable', 'string', new Zip()],
@@ -72,11 +73,8 @@ class AddressesSearch extends Component
     {
         return [
             'address.area' => __("Поле 'Область' є обов’язковим"),
-            'address.region' => __("Поле 'Район' є обов’язковим"),
             'address.settlementType' => __("Поле 'Тип населеного пункту' є обов’язковим"),
             'address.settlement' => __("Поле 'Населений пункт' є обов’язковим"),
-            'address.streetType' => __("Поле 'Тип вулиці' є обов’язковим"),
-            'address.street' => __("Поле 'Вулиця' є обов’язковим"),
             'address.building' => __("Неправильний формат номеру будинка"),
             'address.apartment' => __("Неправильний формат номеру квартири"),
             'address.zip' => __("Неправильний формат поштового індекса"),

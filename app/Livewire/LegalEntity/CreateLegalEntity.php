@@ -486,7 +486,9 @@ class CreateLegalEntity extends LegalEntity
 
                 setPermissionsTeamId($this->legalEntity->id);
 
-                $this->createLicense($response['data']['license']);
+                if (isset($response['data']['license'])) {
+                    $this->createLicense($response['data']['license']);
+                }
 
                 try {
                     $user = $this->createUser();
@@ -517,7 +519,9 @@ class CreateLegalEntity extends LegalEntity
 
             app(Logout::class)();
 
-            return Redirect::route('login') ?? null;
+            Log::info("LegalEntity: New OWNER has been successfully registered!");
+
+            return Redirect::route('login')->with('success', __('forms.legal_entity_registered')) ?? null;
         } catch (Exception $err) {
             Log::error(__('Сталася помилка під час обробки запиту'), ['error' => $err->getMessage()]);
 

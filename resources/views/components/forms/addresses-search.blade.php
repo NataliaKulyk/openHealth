@@ -60,7 +60,6 @@
             x-on:mouseleave="timeout = setTimeout(() => { showTo = false }, 800)"
         >
             <input
-                required
                 type="text"
                 placeholder=" "
                 id="addressRegion"
@@ -214,7 +213,6 @@
     {{-- STREET_TYPE --}}
     <div class="form-group group !z-[14]">
         <select
-            required
             id="addressStreetType"
             wire:model.live="address.streetType"
             aria-describedby="{{ $hasStreetTypeError ? 'addressStreetTypeErrorHelp' : '' }}"
@@ -245,7 +243,6 @@
     {{-- STREET --}}
     <div class="form-group group !z-[13]">
         <input
-            required
             type="text"
             placeholder=" "
             id="addressStreet"

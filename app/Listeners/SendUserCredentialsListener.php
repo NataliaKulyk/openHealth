@@ -81,6 +81,8 @@ class SendUserCredentialsListener implements ShouldQueue
         // Send a credentials for the owner's account (only for local login!)
         Mail::to($event->owner->email)
             ->send(new OwnerCredentialsMail($event->owner->email, $event->password));
+
+        Log::info("LegalEntity: User credentials was sended to the {$event->owner->email} address");
     }
 
     /**

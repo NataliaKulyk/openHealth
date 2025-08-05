@@ -157,6 +157,8 @@ abstract class LegalEntity extends Component
                 unset($modelData['licenses']);
             }
 
+            $modelData['website'] ??= '';
+
             $this->legalEntityForm->fill($modelData);
 
             return true;
@@ -339,9 +341,10 @@ abstract class LegalEntity extends Component
             'data.phones' => 'required|array',
             'data.phones.*.type' => 'required|string',
             'data.phones.*.number' => 'required|string|size:13',
-            'data.receiver_funds_code' => 'sometimes|string',
-            'data.beneficiary' => 'sometimes|string',
-            'data.website' => 'sometimes|string',
+            'data.phones.*.note' => 'sometimes|string',
+            'data.receiver_funds_code' => 'nullable|string',
+            'data.beneficiary' => 'nullable|string',
+            'data.website' => 'nullable|string',
             'data.email' => 'required|string',
             'data.nhs_verified' => 'required|boolean',
             'data.nhs_reviewed' => 'required|boolean',
@@ -364,16 +367,16 @@ abstract class LegalEntity extends Component
             'data.accreditation.issued_date' => 'sometimes|string',
             'data.accreditation.expiry_date' => 'sometimes|string',
             'data.accreditation.order_no' => 'required_with:data.accreditation.category|string',
-            'data.license' => 'required|array',
+            'data.license' => 'nullable|array',
             'data.license.id' => 'sometimes|string',
-            'data.license.type' => 'required|string',
+            'data.license.type' => 'sometimes|string',
             'data.license.license_number' => 'sometimes|string',
-            'data.license.issued_by' => 'required|string',
-            'data.license.issued_date' => 'required|string',
-            'data.license.expiry_date' => 'sometimes|string',
-            'data.license.active_from_date' => 'required|string',
-            'data.license.what_licensed' => 'required|string',
-            'data.license.order_no' => 'required|string',
+            'data.license.issued_by' => 'sometimes|string',
+            'data.license.issued_date' => 'sometimes|string',
+            'data.license.expiry_date' => 'nullable|string',
+            'data.license.active_from_date' => 'sometimes|string',
+            'data.license.what_licensed' => 'sometimes|string',
+            'data.license.order_no' => 'sometimes|string',
             'data.archive' => 'nullable|array',
             'data.archive.*.date' => 'required_if:data.archive,array|string',
             'data.archive.*.place' => 'required_if:data.archive,array|string',
@@ -388,7 +391,7 @@ abstract class LegalEntity extends Component
             'urgent.security.client_id' => 'required|string',
         ]);
 
-        // If "category": "NO_ACCREDITATION" than data.accreditation.order_date should be null
+        // If "category" has value "NO_ACCREDITATION" then data.accreditation.order_date should be null
         $validator->sometimes(
             'data.accreditation.order_date',
             'required_unless:data.accreditation.category,NO_ACCREDITATION|string',
@@ -480,7 +483,11 @@ abstract class LegalEntity extends Component
 
         Arr::forget($data, ['archivation_show', 'accreditation_show']);
 
-        return removeEmptyKeys($data);
+        $data = removeEmptyKeys($data);
+
+        $data['website'] ??= "";
+
+        return $data;
     }
 
     /**
@@ -777,8 +784,6 @@ abstract class LegalEntity extends Component
 
         // Send credentials and email verification link
         event(new LegalEntityCreate($authenticatedUser, $owner, $password));
-
-        Log::info("LegalEntity: New OWNER has been successfully registered! User credentials was sended to the {$owner->email} address");
 
         return $owner;
     }

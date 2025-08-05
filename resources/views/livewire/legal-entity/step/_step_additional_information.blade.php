@@ -6,7 +6,10 @@
 <fieldset
     class="fieldset"
     xmlns="http://www.w3.org/1999/html"
-    x-data="{ title: '{{ __('forms.information') }}', index: 7 }"
+    x-data="{
+        title: '{{ __('forms.information') }}',
+        index: 7,
+    }"
     x-init="typeof addHeader !== 'undefined' && addHeader(title, index)"
     x-show="activeStep === index || isEdit"
     x-cloak

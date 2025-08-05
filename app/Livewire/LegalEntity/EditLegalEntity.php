@@ -188,6 +188,10 @@ class EditLegalEntity extends LegalEntity
 
     public function render()
     {
-        return view('livewire.legal-entity.edit-legal-entity', ['isEdit' => true]);
+        $beneficiary = legalEntity()->beneficiary ?? null;
+        $receiverFundsCode = legalEntity()->receiverFundsCode ?? null;
+
+        return view('livewire.legal-entity.edit-legal-entity', ['isEdit' => true]
+        );
     }
 }

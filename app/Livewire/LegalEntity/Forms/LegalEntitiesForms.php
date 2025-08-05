@@ -60,7 +60,7 @@ class LegalEntitiesForms extends Form
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'edrpou' => ['required', 'regex:/^(\d{8,10}|[А-ЯЁЇІЄҐ]{2}\d{6})$/', new UniqueEdrpou()],
             'owner.lastName' => ['required', 'min:3', new Name()],
             'owner.firstName' => ['required', 'min:3', new Name()],
@@ -71,7 +71,7 @@ class LegalEntitiesForms extends Form
             'owner.taxId' => ['required_unless:owner.noTaxId,true', 'string', new TaxId()],
             'owner.documents.type' => ['required','string', new InDictionary('DOCUMENT_TYPE')],
             'owner.documents.number' => ['required', 'string', new DocumentNumber($this->owner['documents']['type'] ?? '')],
-            'owner.documents.issuedAt' => 'sometimes|date|before_or_equal:today',
+            'owner.documents.issuedAt' => 'nullable|date|before_or_equal:today',
             'owner.phones' => 'required|array',
             'owner.phones.*.number' => ['required', 'string', new PhoneNumber()],
             'owner.phones.*.type' => [
@@ -83,7 +83,7 @@ class LegalEntitiesForms extends Form
             'owner.email' => ['required','email',new Email()],
             'owner.position' => ['required','string', new InDictionary('POSITION')],
             'email' => ['required','email',new Email()],
-            'website' => ['required', 'regex:/^(https?:\/\/)?(www\.)?([a-z0-9\-]+\.)+[a-z]{2,}$/i'],
+            'website' => ['sometimes', 'regex:/^(https?:\/\/)?(www\.)?([a-z0-9\-]+\.)+[a-z]{2,}$/i'],
             'phones' => 'required|array',
             'phones.*.number' => ['required', 'string', new PhoneNumber()],
             'phones.*.type' => [
@@ -92,10 +92,11 @@ class LegalEntitiesForms extends Form
                 new InDictionary('PHONE_TYPE'),
                 new PhoneDuplicates($this->phones)
             ],
-            'accreditation' => 'sometimes|array',
+            'phones.*.note' => 'nullable|string',
+            'accreditation' => 'nullable|array',
             'accreditation.category' => 'required_if:accreditationShow,true|string',
             'accreditation.orderNo' =>  $this->accreditationShow ? 'required|string|min:2' : 'nullable|string',
-            'accreditation.orderDate' => 'required_if:accreditationShow,true|date|before_or_equal:today',
+            'accreditation.orderDate' => 'nullable|date|before_or_equal:today',
             'accreditation.issuedDate' => ['nullable', 'date', 'before_or_equal:today'],
             'accreditation.expiryDate' => ['nullable', 'date', new ExpiryDate($this->accreditation['issuedDate'] ?? '')],
             'license.type' => 'required|string',
@@ -105,12 +106,27 @@ class LegalEntitiesForms extends Form
             'license.expiryDate' => ['nullable', 'date', new ExpiryDate($this->license['activeFromDate'] ?? '')],
             'license.orderNo' => 'required|string',
             'license.licenseNumber' => ['nullable', 'string', 'regex:/^(?!.*[ЫЪЭЁыъэё@$^#])[a-zA-ZА-ЯҐЇІЄа-яґїіє0-9№\"!\^\*)\]\[(&._-].*$/'],
-            'receiverFundsCode' => 'nullable|string|regex:/^[0-9]+$/',
-            'beneficiary' => ['min:3', new Cyrillic()],
-            'archive' => 'sometimes|array',
+            'receiverFundsCode' => [
+                legalEntity()?->receiverFundsCode ? 'required' : 'nullable',
+                'string',
+                'regex:/^[0-9]+$/'
+            ],
+            'beneficiary' => [
+                legalEntity()?->beneficiary ? 'required' : 'nullable',
+                'string',
+                new Cyrillic(),
+                "regex:/^(?!.*[ЫЪЭЁыъэё@%&$^#])[А-ЯҐЇІЄа-яґїіє’\'\- ]+$/u",
+            ],
+            'archive' => 'nullable|array',
             'archive.*.date'  => 'required_if:archivationShow,true|date|before_or_equal:today',
             'archive.*.place' => 'required_if:archivationShow,true|string',
         ];
+
+        if (($this->accreditation['category'] ?? null) !== 'NO_ACCREDITATION' && $this->accreditationShow) {
+            $rules['accreditation.orderDate'] = 'required|date|before_or_equal:today';
+        }
+
+        return $rules;
     }
 
     public function messages(): array
@@ -160,7 +176,11 @@ class LegalEntitiesForms extends Form
             'license.issuedBy' => __('validation.attributes.errors.requiredIssuedBy'),
             'license.orderNo' => __('validation.attributes.errors.requiredOrderNumber'),
             'receiverFundsCode' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.onlyNumeric') . ')',
+            'receiverFundsCode.required' => __('validation.attributes.errors.nonEmpty'),
+            'receiverFundsCode.regex' => __('validation.attributes.errors.wrongSymbols'),
             'beneficiary.min' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.minLen3') . ')',
+            'beneficiary.required' => __('validation.attributes.errors.nonEmpty'),
+            'beneficiary.regex' => __('validation.attributes.errors.wrongSymbols'),
             'beneficiary' => __('validation.attributes.errors.wrongFieldFormat') . '('. __('validation.attributes.errors.onlyCyrillic') . ')',
             'archive.*.date.required_if' => __('validation.attributes.errors.requiredField'),
             'archive.*.date.before_or_equal' => __('validation.attributes.errors.expiryDateGreat'),
