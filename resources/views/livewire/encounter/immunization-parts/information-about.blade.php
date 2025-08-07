@@ -16,9 +16,7 @@
             >
                 <option selected>{{ __('forms.select') }}</option>
                 @foreach($this->dictionaries['eHealth/vaccine_codes'] as $key => $vaccineCode)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">
-                        {{ $key }} - {{ $vaccineCode }}
-                    </option>
+                    <option value="{{ $key }}">{{ $key }} - {{ $vaccineCode }}</option>
                 @endforeach
             </select>
 
@@ -145,16 +143,18 @@
                         autocomplete="off"
                         required
                 >
-                    <option selected>{{ __('forms.select') }}</option>
+                    <option selected value="">{{ __('forms.select') }}</option>
                     @foreach($this->dictionaries['eHealth/immunization_dosage_units'] as $key => $immunizationDosageUnit)
-                        <option value="{{ $key }}" wire:key="{{ $key }}">
-                            {{ $immunizationDosageUnit }}
-                        </option>
+                        <option value="{{ $key }}">{{ $immunizationDosageUnit }}</option>
                     @endforeach
                 </select>
 
                 <p class="text-error text-xs"
-                   x-show="(modalImmunization.doseQuantity?.unit?.trim().length < 1 && modalImmunization.notGiven === false)"
+                   x-show="
+                       modalImmunization.notGiven === false &&
+                       (modalImmunization.primarySource === true || modalImmunization.primarySource === false) &&
+                       (!modalImmunization.doseQuantity?.unit || modalImmunization.doseQuantity.unit.trim() === '')
+                   "
                 >
                     {{ __('forms.field_empty') }}
                 </p>
@@ -177,9 +177,7 @@
             >
                 <option selected>{{ __('forms.select') }}</option>
                 @foreach($this->dictionaries['eHealth/vaccination_routes'] as $key => $vaccinationRoute)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">
-                        {{ $vaccinationRoute }}
-                    </option>
+                    <option value="{{ $key }}">{{ $vaccinationRoute }}</option>
                 @endforeach
             </select>
 
@@ -209,9 +207,7 @@
             >
                 <option selected>{{ __('forms.select') }}</option>
                 @foreach($this->dictionaries['eHealth/immunization_body_sites'] as $key => $immunizationBodySite)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">
-                        {{ $immunizationBodySite }}
-                    </option>
+                    <option value="{{ $key }}">{{ $immunizationBodySite }}</option>
                 @endforeach
             </select>
 

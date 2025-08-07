@@ -65,8 +65,10 @@ class EncounterRepository extends BaseRepository
                 $performer = Repository::identifier()->store($encounterData['performer']['identifier']['value']);
                 Repository::codeableConcept()->attach($performer, $encounterData['performer']);
 
-                $division = Repository::identifier()->store($encounterData['division']['identifier']['value']);
-                Repository::codeableConcept()->attach($division, $encounterData['division']);
+                if (isset($encounterData['division'])) {
+                    $division = Repository::identifier()->store($encounterData['division']['identifier']['value']);
+                    Repository::codeableConcept()->attach($division, $encounterData['division']);
+                }
 
                 /** @var EncounterSql|EncounterMongo $encounter */
                 $encounter = $this->model::create([
@@ -79,7 +81,7 @@ class EncounterRepository extends BaseRepository
                     'type_id' => $type->id,
                     'priority_id' => $priority->id ?? null,
                     'performer_id' => $performer->id,
-                    'division_id' => $division->id
+                    'division_id' => $division->id ?? null
                 ]);
 
                 $encounter->period()->create([
@@ -259,59 +261,75 @@ class EncounterRepository extends BaseRepository
     }
 
     /**
-     * Format Conditions data before request.
+     * Format conditions data before request.
      *
      * @param  array  $conditions
      * @return array
      */
     public function formatConditionsRequest(array $conditions): array
     {
-        $conditionForm = array_map(
-            function (array $condition, int $index) {
-                unset($condition['query']);
-                // set ID same as diagnose
-                $condition['id'] = $this->diagnoseUuids[$index];
+        $conditionForm = array_map(function (array $condition, int $index) {
+            unset($condition['query']);
+            // set ID same as diagnose
+            $condition['id'] = $this->diagnoseUuids[$index];
 
-                $condition['context']['identifier']['type']['coding'][0] = [
-                    'system' => 'eHealth/resources',
-                    'code' => 'encounter'
-                ];
-                $condition['context']['identifier']['value'] = $this->encounterUuid;
+            $condition['context']['identifier']['type']['coding'][0] = [
+                'system' => 'eHealth/resources',
+                'code' => 'encounter'
+            ];
+            $condition['context']['identifier']['value'] = $this->encounterUuid;
 
-                // Remove coding with empty code
-                $condition['code']['coding'] = array_values(
-                    array_filter(
-                        $condition['code']['coding'],
-                        static fn (array $coding) => !empty($coding['code']) && trim($coding['code']) !== ''
-                    )
-                );
+            // Remove coding with empty code
+            $condition['code']['coding'] = array_values(
+                array_filter(
+                    $condition['code']['coding'],
+                    static fn (array $coding) => !empty($coding['code']) && trim($coding['code']) !== ''
+                )
+            );
 
-                // unset if code not provided
-                if ($condition['severity']['coding'][0]['code'] === '') {
-                    unset($condition['severity']);
-                }
+            // unset if code not provided
+            if ($condition['severity']['coding'][0]['code'] === '') {
+                unset($condition['severity']);
+            }
 
-                if ($condition['primarySource']) {
-                    $condition['asserter']['identifier']['value'] = $this->employeeUuid;
+            if ($condition['primarySource']) {
+                $condition['asserter']['identifier']['value'] = $this->employeeUuid;
 
-                    unset($condition['reportOrigin']);
-                } else {
-                    unset($condition['asserter']);
-                }
+                unset($condition['reportOrigin']);
+            } else {
+                unset($condition['asserter']);
+            }
 
-                // convert dates
-                if (isset($condition['onsetTime'])) {
-                    $condition['onsetDate'] = convertToISO8601($condition['onsetDate'] . $condition['onsetTime']);
-                    $condition['assertedDate'] = convertToISO8601($condition['assertedDate'] . $condition['assertedTime']);
-                    unset($condition['onsetTime'], $condition['assertedTime'], $condition['diagnoses']);
-                }
+            // convert dates
+            if (isset($condition['onsetTime'])) {
+                $condition['onsetDate'] = convertToISO8601($condition['onsetDate'] . $condition['onsetTime']);
+                $condition['assertedDate'] = convertToISO8601($condition['assertedDate'] . $condition['assertedTime']);
+                unset($condition['onsetTime'], $condition['assertedTime'], $condition['diagnoses']);
+            }
 
-                if (empty($condition['evidences'][0]['codes'])) {
-                    unset($condition['evidences']);
-                }
+            if (!empty($condition['evidences'][0]['details'])) {
+                $condition['evidences'][0]['details'] = collect($condition['evidences'][0]['details'])
+                    ->map(static function (array $detail) {
+                        $data = [];
 
-                return $condition;
-            },
+                        Arr::set($data, 'identifier.type.coding', [
+                            [
+                                'system' => 'eHealth/resources',
+                                'code' => 'condition'
+                            ]
+                        ]);
+                        Arr::set($data, 'identifier.value', $detail['id']);
+
+                        return $data;
+                    })->toArray();
+            }
+
+            if (empty($condition['evidences'][0]['codes']) && empty($condition['evidences'][0]['details'])) {
+                unset($condition['evidences']);
+            }
+
+            return $condition;
+        },
             $conditions,
             array_keys($conditions)
         );
@@ -376,8 +394,7 @@ class EncounterRepository extends BaseRepository
                 $immunization['expirationDate'] = convertToISO8601($immunization['expirationDate'] . now()->format('H:i'));
             }
 
-            // remove key where value is null
-            return array_filter($immunization, static fn (mixed $value) => !is_null($value));
+            return removeEmptyKeys($immunization);
         }, $immunizations);
 
         return schemaService()
@@ -549,7 +566,7 @@ class EncounterRepository extends BaseRepository
                 $diagnosticReport['division']['identifier']['value'] = $divisionUuid;
             }
 
-            if (empty($diagnosticReport['resultsInterpreter']['text'])) {
+            if (empty($diagnosticReport['resultsInterpreter']['reference']['identifier']['value'])) {
                 unset($diagnosticReport['resultsInterpreter']);
             }
 
@@ -715,7 +732,7 @@ class EncounterRepository extends BaseRepository
 
             // TODO: після створення, додати форматування попередньої клінічної оцінки, вона має бути тільки одна
 
-            if (!empty($clinicalImpression['findings'])) {
+            if (!empty($clinicalImpression['problems'])) {
                 $clinicalImpression['problems'] = collect($clinicalImpression['problems'])
                     ->map(static function (array $problem) {
                         $data = [];

@@ -5,7 +5,7 @@
                 Note that it's necessary for modal to work properly --}}
               x-data="{
                   openModal: false,
-                  modalEvidenceCode: new ConditionEvidence(),
+                  modalEvidenceCode: new EvidenceCode(),
                   newEvidenceCode: false,
                   item: 0,
                   dictionary: $wire.dictionaries['eHealth/ICPC2/condition_codes']
@@ -34,23 +34,23 @@
                                  openDropdown: false,
                                  toggle() {
                                      if (this.openDropdown) {
-                                         return this.close()
+                                         return this.close();
                                      }
 
-                                     this.$refs.button.focus()
+                                     this.$refs.button.focus();
 
-                                     this.openDropdown = true
+                                     this.openDropdown = true;
                                  },
                                  close(focusAfter) {
-                                     if (!this.openDropdown) return
+                                     if (!this.openDropdown) return;
 
-                                     this.openDropdown = false
+                                     this.openDropdown = false;
 
                                      focusAfter && focusAfter.focus()
                                  }
                              }"
                              @keydown.escape.prevent.stop="close($refs.button)"
-                             @focusin.window="! $refs.panel.contains($event.target) && close()"
+                             @focusin.window="!$refs.panel.contains($event.target) && close()"
                              x-id="['dropdown-button']"
                              class="relative"
                         >
@@ -86,7 +86,7 @@
                                             openModal = true; {{-- Open the modal --}}
                                             item = index; {{-- Identify the item we are corrently editing --}}
                                             {{-- Replace the previous evidence with the current, don't assign object directly (modalEvidenceCode = evidence) to avoid reactiveness --}}
-                                            modalEvidenceCode = new ConditionEvidence({
+                                            modalEvidenceCode = new EvidenceCode({
                                                 codes: [{
                                                     coding: evidence.coding
                                                 }]
@@ -117,7 +117,7 @@
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
                         newEvidenceCode = true; {{-- We are adding a new evidence --}}
-                        modalEvidenceCode = new ConditionEvidence(); {{-- Replace the data of the previous evidence with a new one--}}
+                        modalEvidenceCode = new EvidenceCode(); {{-- Replace the data of the previous evidence with a new one--}}
                     "
                     class="item-add my-5"
             >
@@ -207,7 +207,7 @@
     /**
      * Representation of the user's personal evidenceCode
      */
-    class ConditionEvidence {
+    class EvidenceCode {
         codes = [
             {
                 coding: [{ system: 'eHealth/ICPC2/reasons', code: '' }]

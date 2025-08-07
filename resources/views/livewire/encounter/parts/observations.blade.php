@@ -244,10 +244,10 @@
                                             "
                                             class="button-primary"
                                             :disabled="!(
-                                                modalObservation.issuedDate.trim().length > 0 &&
-                                                modalObservation.issuedTime.trim().length > 0 &&
-                                                modalObservation.categories[0].coding[0].code.trim().length > 0 &&
-                                                modalObservation.code.coding[0].code.trim().length > 0
+                                                modalObservation.issuedDate.trim() &&
+                                                modalObservation.issuedTime.trim() &&
+                                                modalObservation.categories[0].coding[0].code.trim() &&
+                                                modalObservation.code.coding[0].code.trim()
                                             )"
                                     >
                                         {{ __('forms.save') }}
@@ -299,6 +299,10 @@
         };
         components = [
             {
+                code: {
+                    coding: [{ system: '', code: '' }],
+                    text: ''
+                },
                 valueCodeableConcept: {
                     coding: [{ system: '', code: '' }],
                     text: ''

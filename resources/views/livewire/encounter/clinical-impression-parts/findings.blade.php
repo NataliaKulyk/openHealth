@@ -27,7 +27,7 @@
             </thead>
             <tbody>
             <template x-for="(finding, index) in modalClinicalImpression.findings">
-                <tr x-data="console.log(modalClinicalImpression.findings)">
+                <tr>
                     <td class="td-input"
                         x-text="new Date(finding.inserted_at).toLocaleDateString('uk-UA')"
                     ></td>
@@ -172,7 +172,7 @@
                                                 {{ __('forms.select') }} {{ mb_strtolower(__('patients.episode')) }}
                                             </option>
                                             @foreach($episodes as $key => $episode)
-                                                <option value="{{ $episode['id'] }}" wire:key="{{ $key }}">
+                                                <option value="{{ $episode['id'] }}">
                                                     {{ $episode['name'] }} ({{ __('patients.' . $episode['status']) }})
                                                     від {{ CarbonImmutable::parse($episode['inserted_at'])->format('d.m.Y') }}
                                                 </option>

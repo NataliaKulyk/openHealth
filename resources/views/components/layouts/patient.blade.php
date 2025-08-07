@@ -1,7 +1,7 @@
 <section>
     <x-section-navigation x-data="{ showFilter: true }" class="breadcrumb-form">
         <x-slot name="title">
-            {{ $lastName }} {{ $firstName }} {{ $secondName ?? '' }}
+            {{ $patientFullName }}
         </x-slot>
 
         <x-slot name="navigation">

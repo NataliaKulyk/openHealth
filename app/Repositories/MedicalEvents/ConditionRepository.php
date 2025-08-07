@@ -65,13 +65,29 @@ class ConditionRepository extends BaseRepository
                     ]);
 
                     if (!empty($datum['evidences'])) {
-                        foreach ($datum['evidences']['codes'] as $evidence) {
-                            $codes = Repository::codeableConcept()->store($evidence);
+                        foreach ($datum['evidences'] as $evidence) {
+                            if (!empty($evidence['codes'])) {
+                                foreach ($evidence['codes'] as $evidenceCode) {
+                                    $code = Repository::codeableConcept()->store($evidenceCode);
+                                    ConditionEvidence::create([
+                                        'condition_id' => $condition->id,
+                                        'codes_id' => $code->id
+                                    ]);
+                                }
+                            }
 
-                            ConditionEvidence::create([
-                                'condition_id' => $condition->id,
-                                'codes_id' => $codes->id,
-                            ]);
+                            if (!empty($evidence['details'])) {
+                                foreach ($evidence['details'] as $evidenceDetail) {
+                                    $identifier = Repository::identifier()
+                                        ->store($evidenceDetail['identifier']['value']);
+                                    Repository::codeableConcept()->attach($identifier, $evidenceDetail);
+
+                                    ConditionEvidence::create([
+                                        'condition_id' => $condition->id,
+                                        'details_id' => $identifier->id
+                                    ]);
+                                }
+                            }
                         }
                     }
                 }

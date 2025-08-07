@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\User;
@@ -9,36 +11,36 @@ use Illuminate\Support\Facades\Auth;
 
 class LegalEntityPolicy
 {
-   /**
-    * Determine if the user has access to the legal entity
-    */
-   public function access(User $user, LegalEntity $currentEntity): Response
-   {
-       $legalEntitiyIds = $user->employees->pluck('legal_entity_id')->toArray();
+    /**
+     * Determine if the user has access to the legal entity
+     */
+    public function access(User $user, LegalEntity $currentEntity): Response
+    {
+        $legalEntitiesIds = $user->employees->pluck('legal_entity_id')->toArray();
 
-       $shouldAllow = in_array($currentEntity->id, $legalEntitiyIds);
+        $shouldAllow = in_array($currentEntity->id, $legalEntitiesIds);
 
-       if (!$shouldAllow) {
-           return Response::denyWithStatus(404);
-       }
+        if (!$shouldAllow) {
+            return Response::denyWithStatus(404);
+        }
 
-       app()->bind(LegalEntity::class, fn () => $currentEntity);
-       app()->alias(LegalEntity::class, 'legalEntity');
+        app()->bind(LegalEntity::class, fn () => $currentEntity);
+        app()->alias(LegalEntity::class, 'legalEntity');
 
-       setPermissionsTeamId($currentEntity->id);
+        setPermissionsTeamId($currentEntity->id);
 
-       return Response::allow();
-   }
+        return Response::allow();
+    }
 
-   /**
-    * Determine if the user can create an legal entities
-    *
-    * @param \App\Models\User $user
-    *
-    * @return bool|Response
-    */
-   public function create(User $user)
-   {
+    /**
+     * Determine if the user can create a legal entities
+     *
+     * @param  User  $user
+     *
+     * @return true|Response
+     */
+    public function create(User $user): true|Response
+    {
         // Temporarily. Available for all unconnected users (to the LegalEntity). Until change for real logic
         if ($user->roles->isEmpty()) {
             return true;
@@ -49,14 +51,14 @@ class LegalEntityPolicy
         }
 
         return Response::deny('This action is unauthorized.');
-   }
+    }
 
-   public function edit(User $user)
-   {
+    public function edit(User $user): Response
+    {
         if ($user->hasRole(['OWNER']) && Auth::guard('ehealth')->check()) {
             return Response::allow();
         }
 
         return Response::deny('This action is unauthorized.');
-   }
+    }
 }

@@ -8,6 +8,7 @@ use App\Classes\Cipher\Exceptions\ApiException as CipherApiException;
 use App\Classes\Cipher\Traits\Cipher;
 use App\Classes\eHealth\Exceptions\ApiException as eHealthApiException;
 use App\Livewire\DiagnosticReport\Forms\DiagnosticReportForm as Form;
+use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
 use App\Models\Person\Person;
 use App\Traits\FormTrait;
@@ -41,22 +42,16 @@ class DiagnosticReportComponent extends Component
     public string $patientUuid;
 
     /**
-     * Patient first name.
+     * Patient full name.
      * @var string
      */
-    public string $firstName;
+    public string $patientFullName;
 
     /**
-     * Patient last name.
-     * @var string
+     * List of employees of current legal entity.
+     * @var array
      */
-    public string $lastName;
-
-    /**
-     * Patient second name.
-     * @var string|null
-     */
-    public ?string $secondName = null;
+    public array $employees;
 
     /**
      * List of authorized user's divisions.
@@ -144,6 +139,18 @@ class DiagnosticReportComponent extends Component
         $this->patientId = $patientId;
         $this->employeeFullName = $authUser->getEncounterWriterEmployee()->fullName;
 
+        $employees = Employee::withoutEagerLoads()
+            ->select('uuid', 'party_id')
+            ->with('party:id,last_name,first_name,second_name')
+            ->where('legal_entity_id', legalEntity()->id)
+            ->get();
+        $this->employees = $employees->map(function (Employee $employee) {
+            return [
+                'uuid' => $employee->uuid,
+                'name' => $employee->fullName
+            ];
+        })->toArray();
+
         $this->setPatientData();
         $this->divisions = legalEntity()->division->toArray();
 
@@ -198,9 +205,7 @@ class DiagnosticReportComponent extends Component
             ->firstOrFail();
 
         $this->patientUuid = $patient->uuid;
-        $this->firstName = $patient->first_name;
-        $this->lastName = $patient->last_name;
-        $this->secondName = $patient->second_name;
+        $this->patientFullName = $patient->fullName;
     }
 
     /**

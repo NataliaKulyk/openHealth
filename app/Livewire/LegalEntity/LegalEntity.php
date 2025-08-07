@@ -359,12 +359,11 @@ abstract class LegalEntity extends Component
             'data.residence_address.building' => 'sometimes|string',
             'data.residence_address.apartment' => 'sometimes|string',
             'data.residence_address.zip' => 'sometimes|string',
-            'data.accreditation' => 'sometimes|array',
-            'data.accreditation.category' => 'required|string',
+            'data.accreditation' => 'nullable|array',
+            'data.accreditation.category' => 'required_if:data.accreditation,array|string',
             'data.accreditation.issued_date' => 'sometimes|string',
             'data.accreditation.expiry_date' => 'sometimes|string',
-            'data.accreditation.order_no' => 'required|string',
-            'data.accreditation.order_date' => 'required_unless:data.accreditation.category,NO_ACCREDITATION|string',
+            'data.accreditation.order_no' => 'required_with:data.accreditation.category|string',
             'data.license' => 'required|array',
             'data.license.id' => 'sometimes|string',
             'data.license.type' => 'required|string',
@@ -376,8 +375,8 @@ abstract class LegalEntity extends Component
             'data.license.what_licensed' => 'required|string',
             'data.license.order_no' => 'required|string',
             'data.archive' => 'nullable|array',
-            'data.archive.*.date' => 'required_with:data.archive|string',
-            'data.archive.*.place' => 'required_with:data.archive|string',
+            'data.archive.*.date' => 'required_if:data.archive,array|string',
+            'data.archive.*.place' => 'required_if:data.archive,array|string',
             'data.inserted_by' => 'nullable|string',
             'data.inserted_at' => 'nullable|string',
             'data.updated_by' => 'nullable|string',
@@ -388,6 +387,16 @@ abstract class LegalEntity extends Component
             'urgent.security.client_secret' => 'required|string',
             'urgent.security.client_id' => 'required|string',
         ]);
+
+        // If "category": "NO_ACCREDITATION" than data.accreditation.order_date should be null
+        $validator->sometimes(
+            'data.accreditation.order_date',
+            'required_unless:data.accreditation.category,NO_ACCREDITATION|string',
+            fn($input) => isset(
+                    $input->data['accreditation']) &&
+                    is_array($input->data['accreditation']) &&
+                    array_key_exists('category', $input->data['accreditation']
+        ));
 
         if ($validator->fails()) {
             Log::error('Legal Entity Response Schema:', ['errors' => $validator->errors()]);

@@ -24,6 +24,7 @@ class Phone extends Model
     protected $fillable = [
         'type',
         'number',
+        'note',
         'phoneable_type',
         'phoneable_id'
     ];

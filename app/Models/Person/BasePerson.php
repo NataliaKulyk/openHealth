@@ -9,6 +9,7 @@ use App\Models\Relations\AuthenticationMethod;
 use App\Models\Relations\ConfidantPerson;
 use App\Models\Relations\Document;
 use App\Models\Relations\Phone;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -41,6 +42,18 @@ class BasePerson extends Model
     protected $casts = [
         'emergency_contact' => 'array'
     ];
+
+    /**
+     * Get the person's full name.
+     *
+     * @return Attribute
+     */
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => trim($this->last_name . ' ' . $this->first_name . ' ' . $this->second_name)
+        );
+    }
 
     public function address(): MorphOne
     {

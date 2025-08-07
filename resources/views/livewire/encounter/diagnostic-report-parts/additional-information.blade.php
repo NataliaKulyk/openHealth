@@ -53,9 +53,7 @@
                     >
                         <option value="" selected>{{ __('forms.select') }}</option>
                         @foreach($this->dictionaries['eHealth/report_origins'] as $key => $reportOrigin)
-                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                {{ $reportOrigin }}
-                            </option>
+                            <option value="{{ $key }}">{{ $reportOrigin }}</option>
                         @endforeach
                     </select>
 
@@ -92,20 +90,21 @@
         </div>
     @endif
 
+    {{-- Result interpreter --}}
     <div class="form-row-2">
         <div class="form-group group">
-            <input x-model="modalDiagnosticReport.resultsInterpreter.text"
-                   type="text"
-                   name="resultsInterpreterText"
-                   id="resultsInterpreterText"
-                   class="input-select peer"
-                   placeholder=" "
-                   required
-                   autocomplete="off"
+            <select x-model="modalDiagnosticReport.resultsInterpreter.reference.identifier.value"
+                    id="resultsInterpreter"
+                    class="input-select peer"
+                    type="text"
             >
-            <label for="resultsInterpreterText" class="label">
-                {{ __('patients.the_doctor_who_interpreted_the_results') }}
-            </label>
+                <option value="" selected>
+                    {{ __('forms.select') }} {{ mb_strtolower(__('patients.the_doctor_who_interpreted_the_results')) }}
+                </option>
+                @foreach($employees as $key => $employee)
+                    <option value="{{ $employee['uuid'] }}">{{ $employee['name'] }}</option>
+                @endforeach
+            </select>
         </div>
     </div>
 

@@ -2,17 +2,19 @@
 
 <div class="relative"> {{-- This required for table overflow scrolling --}}
     <fieldset class="fieldset"
-              {{-- Binding ReasonReference to Alpine, it will be re-used in the modal.
+              {{-- Binding evidence detail to Alpine, it will be re-used in the modal.
                 Note that it's necessary for modal to work properly --}}
               x-data="{
                   openModal: false,
-                  modalReasonReference: new ReasonReference(),
-                  newReasonReference: false,
-                  item: 0
+                  modalEvidenceDetail: new EvidenceDetail(),
+                  newEvidenceDetail: false,
+                  item: 0,
+                  searchResults: [],
+                  selectedEvidenceDetailIds: []
               }"
     >
         <legend class="legend">
-            <h2>{{ __('patients.reason_for_performing') }}</h2>
+            <h2>{{ __('patients.evidence_observations') }}</h2>
         </legend>
 
         <table class="table-input w-inherit">
@@ -24,16 +26,16 @@
             </tr>
             </thead>
             <tbody>
-            <template x-for="(reasonReference, index) in modalProcedure.reasonReferences">
+            <template x-for="(detail, index) in modalCondition.conditions.evidences[0].details">
                 <tr>
                     <td class="td-input"
-                        x-text="new Date(reasonReference.inserted_at).toLocaleDateString('uk-UA')"
+                        x-text="new Date(detail.inserted_at).toLocaleDateString('uk-UA')"
                     ></td>
                     <td class="td-input"
-                        x-text="`${ reasonReference.code.coding[0].code } - ${
-                            $wire.dictionaries['eHealth/LOINC/observation_codes'][reasonReference.code.coding[0].code] ||
-                            $wire.dictionaries['eHealth/ICF/classifiers'][reasonReference.code.coding[0].code] ||
-                            $wire.dictionaries['eHealth/ICPC2/condition_codes'][reasonReference.code.coding[0].code]
+                        x-text="`${ detail.code.coding[0].code } - ${
+                            $wire.dictionaries['eHealth/LOINC/observation_codes'][detail.code.coding[0].code] ||
+                            $wire.dictionaries['eHealth/ICF/classifiers'][detail.code.coding[0].code] ||
+                            $wire.dictionaries['eHealth/ICPC2/condition_codes'][detail.code.coding[0].code]
                         }`"
                     ></td>
                     <td class="td-input">
@@ -93,9 +95,10 @@
                                     <button @click="
                                                 openModal = true; {{-- Open the modal --}}
                                                 item = index; {{-- Identify the item we are corrently editing --}}
-                                                {{-- Replace the previous reasonReference with the current, don't assign object directly (modalReasonReference = reasonReference) to avoid reactiveness --}}
-                                                modalReasonReference = new ReasonReference(reasonReference);
-                                                newReasonReference = false; {{-- This reasonReference is already created --}}
+                                                {{-- Replace the previous detail with the current, don't assign object directly (modalEvidenceDetail = detail) to avoid reactiveness --}}
+                                                modalEvidenceDetail = new EvidenceDetail(detail);
+                                                newEvidenceDetail = false; {{-- This detail is already created --}}
+                                                searchResults = modalCondition.conditions.evidences[0].details;
                                             "
                                             @click.prevent
                                             class="dropdown-button"
@@ -103,7 +106,7 @@
                                         {{ __('forms.edit') }}
                                     </button>
 
-                                    <button @click.prevent="modalProcedure.reasonReferences.splice(index, 1); close($refs.button);"
+                                    <button @click.prevent="modalCondition.conditions.evidences[0].details.splice(index, 1); close($refs.button);"
                                             class="dropdown-button dropdown-delete"
                                     >
                                         {{ __('forms.delete') }}
@@ -121,8 +124,10 @@
             {{-- Button to trigger the modal --}}
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
-                        newReasonReference = true; {{-- We are adding a new reasonReference --}}
-                        modalReasonReference = new ReasonReference(); {{-- Replace the data of the previous reasonReference with a new one--}}
+                        newEvidenceDetail = true; {{-- We are adding a new evidence detail --}}
+                        modalEvidenceDetail = new EvidenceDetail(); {{-- Replace the data of the previous evidence detail with a new one--}}
+                        searchResults = [];  {{-- Clear the search results --}}
+                        selectedEvidenceDetailIds = []; {{-- Clear the selected evidence detail IDs --}}
                     "
                     class="item-add my-5"
             >
@@ -158,11 +163,11 @@
                             <h3 class="modal-header" :id="$id('modal-title')">{{ __('forms.add') }}</h3>
 
                             {{-- Content --}}
-                            <form x-data="{ selectedProcedureReasonIds: [] }">
+                            <form>
                                 {{-- Episode info in which the search happens --}}
-                                <div class="form-row-modal" x-data="{ selectedEpisodeId: '' }">
+                                <div class="form-row-modal">
                                     <div class="form-group group">
-                                        <select id="episodeId" class="input-modal peer" x-model="selectedEpisodeId">
+                                        <select id="episodeId" class="input-modal peer" x-model="modalEvidenceDetail.selectedEpisodeId">
                                             <option value="" selected>
                                                 {{ __('forms.select') }} {{ mb_strtolower(__('patients.episode')) }}
                                             </option>
@@ -177,9 +182,13 @@
 
                                     {{-- Search button --}}
                                     <div>
-                                        <button @click.prevent="$wire.searchConditionsAndObservations(selectedEpisodeId)"
+                                        <button @click.prevent="
+                                                $wire.searchEvidenceDetails(modalEvidenceDetail.selectedEpisodeId).then(() => {
+                                                    searchResults = JSON.parse(JSON.stringify($wire.evidenceDetails));
+                                                    selectedEvidenceDetailIds = [];
+                                                })"
                                                 class="flex items-center gap-2 button-primary"
-                                                :disabled="!selectedEpisodeId"
+                                                :disabled="!modalEvidenceDetail.selectedEpisodeId"
                                         >
                                             <svg width="16" height="16">
                                                 <use xlink:href="#svg-search"></use>
@@ -192,48 +201,47 @@
                                 </div>
 
                                 {{-- A table that shows the results of the found data --}}
-                                <template x-if="$wire.conditionsAndObservations.length > 0">
+                                <template x-if="searchResults.length > 0">
                                     <div class="table-container">
                                         <div class="overflow-visible">
                                             <table class="table-base">
                                                 <thead class="table-header">
                                                 <tr>
                                                     <th scope="col" class="th-input">{{ __('patients.date') }}</th>
-                                                    <th scope="col"
-                                                        class="th-input">{{ __('patients.code_and_name') }}</th>
+                                                    <th scope="col" class="th-input">
+                                                        {{ __('patients.code_and_name') }}
+                                                    </th>
                                                     <th scope="col" class="th-input">{{ __('forms.action') }}</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                <template x-for="procedureReason in $wire.conditionsAndObservations"
-                                                          :key="procedureReason.id"
-                                                >
+                                                <template x-for="condition in searchResults" :key="condition.id">
                                                     <tr class="border-b dark:border-gray-700">
                                                         <th scope="row" class="table-cell-primary">
                                                             <div class="text-base"
-                                                                 x-text="new Date(procedureReason.inserted_at).toLocaleDateString('uk-UA')"
+                                                                 x-text="new Date(condition.inserted_at).toLocaleDateString('uk-UA')"
                                                             ></div>
                                                         </th>
                                                         <td class="td-input"
-                                                            x-text="`${ procedureReason.code.coding[0].code } - ${
-                                                                $wire.dictionaries['eHealth/LOINC/observation_codes'][procedureReason.code.coding[0].code] ||
-                                                                $wire.dictionaries['eHealth/ICF/classifiers'][procedureReason.code.coding[0].code] ||
-                                                                $wire.dictionaries['eHealth/ICPC2/condition_codes'][procedureReason.code.coding[0].code]
+                                                            x-text="`${ condition.code.coding[0].code } - ${
+                                                                $wire.dictionaries['eHealth/LOINC/observation_codes'][condition.code.coding[0].code] ||
+                                                                $wire.dictionaries['eHealth/ICF/classifiers'][condition.code.coding[0].code] ||
+                                                                $wire.dictionaries['eHealth/ICPC2/condition_codes'][condition.code.coding[0].code]
                                                             }`"
                                                         ></td>
                                                         <td class="td-input">
                                                             <button @click.prevent="
-                                                                        const id = procedureReason.id;
-                                                                        const index = selectedProcedureReasonIds.indexOf(id);
+                                                                        const id = condition.id;
+                                                                        const index = selectedEvidenceDetailIds.indexOf(id);
 
                                                                         if (index === -1) {
-                                                                            selectedProcedureReasonIds.push(id);
+                                                                            selectedEvidenceDetailIds.push(id);
                                                                         } else {
-                                                                            selectedProcedureReasonIds.splice(index, 1); // toggle off
+                                                                            selectedEvidenceDetailIds.splice(index, 1); // toggle off
                                                                         }
                                                                     "
                                                                     class="button-primary w-28"
-                                                                    x-text="selectedProcedureReasonIds.includes(procedureReason.id)
+                                                                    x-text="selectedEvidenceDetailIds.includes(condition.id)
                                                                         ? '{{ __('patients.added') }}'
                                                                         : '{{ __('forms.add') }}'"
                                                             >
@@ -247,7 +255,7 @@
                                     </div>
                                 </template>
 
-                                <template x-if="$wire.conditionsAndObservations.length <= 0">
+                                <template x-if="searchResults.length <= 0">
                                     <p class="default-p">{{ __('forms.nothing_found') }}</p>
                                 </template>
 
@@ -263,16 +271,24 @@
 
                                     <button @click.prevent
                                             @click="
-                                                {{-- Return only the needed data --}}
-                                                modalProcedure.reasonReferences = $wire.conditionsAndObservations
-                                                    .filter(reason => selectedProcedureReasonIds.includes(reason.id))
-                                                    .map(reason => ({
-                                                        id: reason.id,
-                                                        inserted_at: reason.inserted_at,
-                                                        code: reason.code
+                                                const existingIds = modalCondition.conditions.evidences[0].details.map(detail => detail.id);
+
+                                                {{-- Get only the new fidnings that are not already in the array --}}
+                                                const newEvidenceDetails = searchResults
+                                                    .filter(detail => selectedEvidenceDetailIds.includes(detail.id) && !existingIds.includes(detail.id))
+                                                    .map(detail => ({
+                                                        id: detail.id,
+                                                        inserted_at: detail.inserted_at,
+                                                        code: detail.code,
+                                                        type: detail.type,
+                                                        selectedEpisodeId: modalEvidenceDetail.selectedEpisodeId
                                                     }));
 
+                                                {{-- Add them to the array --}}
+                                                modalCondition.conditions.evidences[0].details = modalCondition.conditions.evidences[0].details.concat(newEvidenceDetails);
+
                                                 openModal = false;
+                                                searchResults = [];
                                             "
                                             class="button-primary"
                                     >
@@ -290,9 +306,11 @@
 
 <script>
     /**
-     * Representation of the user's personal ReasonReference
+     * Representation of the user's personal EvidenceDetail
      */
-    class ReasonReference {
+    class EvidenceDetail {
+        selectedEpisodeId = '';
+
         constructor(obj = null) {
             if (obj) {
                 Object.assign(this, JSON.parse(JSON.stringify(obj)));

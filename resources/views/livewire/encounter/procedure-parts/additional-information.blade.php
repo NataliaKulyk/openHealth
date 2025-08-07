@@ -70,9 +70,7 @@
                 >
                     <option selected>{{ __('forms.select') }} {{ mb_strtolower(__('patients.source_link')) }} *</option>
                     @foreach($this->dictionaries['eHealth/report_origins'] as $key => $reportOrigin)
-                        <option value="{{ $key }}" wire:key="{{ $key }}">
-                            {{ $reportOrigin }}
-                        </option>
+                        <option value="{{ $key }}">{{ $reportOrigin }}</option>
                     @endforeach
                 </select>
             </div>

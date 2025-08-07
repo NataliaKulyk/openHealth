@@ -139,14 +139,14 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         // Routes related to legal entity licenses; primary license can't be edited
         Route::prefix('license')->middleware(['permission:license:read|license:write'])->group(function () {
 
-            Route::get('/', LicenseIndex::class)->name('license.index')->middleware('permission:license:read');
-            Route::get('/create', LicenseCreate::class)->name('license.create')->middleware('permission:license:write');
+            Route::get('/', LicenseIndex::class)->name('license.index')->can('viewAny', License::class);
+            Route::get('/create', LicenseCreate::class)->name('license.create')->can('create', License::class);
 
-            Route::middleware(['can:access,license'])->prefix('{license}')->whereNumber('license')->group(function () {
+            Route::middleware(['can:view,license'])->prefix('{license}')->whereNumber('license')->group(function () {
                 Route::get('/', function (LegalEntity $legalEntity, License $license) {
-                    if (Gate::allows('write', [$license, $legalEntity]) && !$license->isPrimary) {
+                    if (Gate::allows('update', [$license, $legalEntity]) && !$license->isPrimary) {
                         return App::call(LicenseEdit::class, [$legalEntity, $license]);
-                    } elseif (Gate::allows('access', [$license, $legalEntity])) {
+                    } elseif (Gate::allows('view', [$license, $legalEntity])) {
                         return App::call(LicenseView::class, [$legalEntity, $license]);
                     }
                 })->name('license.view');

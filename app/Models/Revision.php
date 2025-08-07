@@ -44,4 +44,18 @@ class Revision extends Model
     {
         return $this->morphTo();
     }
+
+        public function setApplied(): void
+    {
+        $this->status = RevisionStatus::APPLIED;
+        $this->save();
+        $this->delete();
+    }
+
+    public function setOutdated(): void
+    {
+        $this->status = RevisionStatus::OUTDATED;
+        $this->save();
+        $this->delete();
+    }
 }

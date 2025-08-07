@@ -176,7 +176,7 @@
                         {{ __('forms.select') }} {{ mb_strtolower(__('forms.category')) }} *
                     </option>
                     @foreach($this->dictionaries['eHealth/procedure_categories'] as $key => $category)
-                        <option value="{{ $key }}" wire:key="{{ $key }}">{{ $category }}</option>
+                        <option value="{{ $key }}">{{ $category }}</option>
                     @endforeach
                 </select>
             </div>
@@ -229,7 +229,7 @@
                         {{ __('forms.select') }} {{ mb_strtolower(__('patients.outcome_result')) }}
                     </option>
                     @foreach($this->dictionaries['eHealth/procedure_outcomes'] as $key => $outcome)
-                        <option value="{{ $key }}" wire:key="{{ $key }}">{{ $outcome }}</option>
+                        <option value="{{ $key }}">{{ $outcome }}</option>
                     @endforeach
                 </select>
             </div>

@@ -74,9 +74,8 @@ class ClinicalImpressionRepository extends BaseRepository
 
                     if (isset($datum['findings'])) {
                         foreach ($datum['findings'] as $problem) {
-                            $identifier = Repository::identifier()->store(
-                                $problem['itemReference']['identifier']['value']
-                            );
+                            $identifier = Repository::identifier()
+                                ->store($problem['itemReference']['identifier']['value']);
                             Repository::codeableConcept()->attach($identifier, $problem['itemReference']);
 
                             ClinicalImpressionFinding::create([
