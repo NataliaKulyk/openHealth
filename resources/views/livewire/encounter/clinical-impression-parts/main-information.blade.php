@@ -1,6 +1,6 @@
 <fieldset class="fieldset">
     <legend class="legend">
-        {{ __('patients.main_information') }}
+        {{ __('forms.main_information') }}
     </legend>
 
     {{-- Code --}}

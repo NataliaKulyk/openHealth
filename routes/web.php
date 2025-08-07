@@ -9,6 +9,7 @@ use App\Livewire\Auth\VerifyEmail;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\EHealthLoginController;
+use App\Livewire\Declaration\DeclarationCreate;
 use App\Livewire\Employee\EmployeeEdit;
 use App\Livewire\Employee\EmployeeShow;
 use App\Livewire\Employee\EmployeeIndex;
@@ -111,7 +112,7 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {
             Route::get('/', EmployeeIndex::class)->name('index');
 
-            Route::get('/{employee}',EmployeeShow::class)
+            Route::get('/{employee}', EmployeeShow::class)
                 ->name('show')->middleware('can:view,employee');
 
             Route::get('/{employee}/edit', EmployeeEdit::class)
@@ -126,7 +127,7 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/{employee_request}', EmployeeRequestShow::class)
                 ->name('show')->middleware('can:view,employee_request');
 
-            Route::get('/{employee_request}/edit',EmployeeRequestEdit::class)
+            Route::get('/{employee_request}/edit', EmployeeRequestEdit::class)
                 ->name('edit')->middleware('can:update,employee_request');
         });
 
@@ -152,14 +153,15 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             });
         });
 
-        Route::prefix('declaration')->group(function () {
-            Route::get('/', DeclarationIndex::class)->name('declaration.index');
-        });
+        Route::get('/declaration', DeclarationIndex::class)->name('declaration.index');
 
         Route::group(['middleware' => ['role:OWNER|ADMIN|DOCTOR']], static function () {
             Route::prefix('patient')->group(static function () {
                 Route::get('/', PatientIndex::class)->name('patient.index');
                 Route::get('/create/{id?}', PatientComponent::class)->name('patient.form');
+
+                Route::get('/{patientId}/declaration/create', DeclarationCreate::class)->name('declaration.create')->whereNumber('id');
+
                 Route::get('/{patientId}/patient-data', PatientData::class)->name('patient.patient-data');
                 Route::get('/{patientId}/summary', PatientSummary::class)->name('patient.summary');
                 Route::get('/{patientId}/episodes', PatientEpisodes::class)->name('patient.episodes');

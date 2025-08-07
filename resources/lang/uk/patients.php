@@ -10,7 +10,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | The following language lines are for various messages related to patients,
-    | e.g., patient search, patient-related API request messages, etc,
+    | e.g., patient search, patient-related API request messages, etc.,
     |
     */
 
@@ -35,7 +35,6 @@ return [
     'source_link' => 'Посилання на джерело',
     'body_part' => 'Частина тіла',
     'diagnostic_reports' => 'Діагностичні звіти',
-    'main_information' => 'Основна інформація',
     'notes' => 'Нотатки',
     'author' => 'Автор',
     'division_name' => 'Місце надання послуг',
@@ -86,6 +85,7 @@ return [
     'continue_registration' => 'Продовжити реєстрацію',
     'view_record' => 'Переглянути карту',
     'create_diagnostic_report' => 'Створити діагностичний звіт',
+    'sign_declaration' => 'Укласти декларацію',
 
     // Create patient
     'patient_information' => 'Інформація про пацієнта',
@@ -97,7 +97,6 @@ return [
     'incapacitated' => 'Недієздатний пацієнт або дитина до 14 років',
     'search_for_confidant' => 'Шукати представника',
     'confidant_person_documents_relationship' => 'Документи, що підтверджують законність представництва',
-    'authentication' => 'Автентифікація',
     'alias' => 'Роль',
     'leaflet' => "Пам’ятка",
     'print_leaflet_for_patient' => "Роздрукувати пам’ятку для ознайомлення пацієнтом",
@@ -118,7 +117,6 @@ return [
     'passport_data' => 'Паспортні дані',
     'confidant_person_not_exist' => 'Законний представник не був вказаний.',
     'authentication_methods' => 'Методи автентифікації',
-    'auth_method' => 'Метод автентифікації',
 
     // Summary record
     'summary' => 'Зведені дані',

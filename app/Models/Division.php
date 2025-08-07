@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Casts\Division\Location;
 use App\Casts\Division\WorkingHours;
 use App\Models\Relations\Address;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -16,8 +17,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  */
 class Division extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'uuid',
         'external_id',

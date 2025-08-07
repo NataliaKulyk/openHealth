@@ -17,10 +17,14 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class PatientIndex extends Component
 {
+    use WithPagination;
+
     /**
      * List of founded person.
      * @var array
@@ -42,17 +46,65 @@ class PatientIndex extends Component
      */
     public bool $searchPerformed = false;
 
+    /**
+     * Active filter for patients.
+     *
+     * @var string
+     */
+    public string $activeFilter = 'all';
+
     public function mount(LegalEntity $legalEntity): void
     {
 
     }
 
+    /**
+     * Reset pagination when filters are updated.
+     */
+    public function updated($property): void
+    {
+        if (in_array($property, ['activeFilter'])) {
+            $this->resetPage();
+        }
+    }
+
+    /**
+     * Reset all filters to default values.
+     */
+    public function resetFilters(): void
+    {
+        $this->activeFilter = 'all';
+        $this->resetPage();
+    }
+
+    /**
+     * Get paginated patients with filtering.
+     */
+    #[Computed]
+    public function paginatedPatients(): LengthAwarePaginator
+    {
+        $collection = collect($this->patients);
+
+        // Filter by active filter
+        if ($this->activeFilter !== 'all') {
+            $collection = $collection->filter(function ($patient) {
+                return $patient['status'] === $this->activeFilter;
+            });
+        }
+
+        return new LengthAwarePaginator(
+            $collection->forPage($this->getPage(), 10),
+            $collection->count(),
+            10,
+            $this->getPage()
+        );
+    }
+
     public function render(): View
     {
-        $paginatedPatients = $this->createPaginator($this->patients);
-
         return view('livewire.patient.index', [
-            'paginatedPatients' => $paginatedPatients
+            'paginatedPatients' => $this->paginatedPatients,
+            'activeFilter' => $this->activeFilter
         ]);
     }
 
@@ -114,20 +166,20 @@ class PatientIndex extends Component
      * @param  array  $patientData  The associative array containing patient details.
      * @return void
      */
-    public function redirectToRecord(array $patientData): void
+    public function redirectToRecord(int $patientId): void
     {
-        $this->handleRedirect($patientData, 'patient.patient-data');
+        $this->redirectRoute('patient.patient-data', [legalEntity(), 'patientId' => $patientId]);
     }
 
     /**
      * Redirect to create encounter route.
      *
-     * @param  array  $patientData  The associative array containing patient details.
+     * @param  int  $patientId  The patient ID.
      * @return void
      */
-    public function redirectToEncounter(array $patientData): void
+    public function redirectToEncounter(int $patientId): void
     {
-        $this->handleRedirect($patientData, 'encounter.create');
+        $this->redirectRoute('encounter.create', [legalEntity(), 'patientId' => $patientId]);
     }
 
     /**
@@ -139,7 +191,10 @@ class PatientIndex extends Component
     public function removeApplication(int $id): void
     {
         PersonRequest::destroy($id);
-        $this->dispatch('patientRemoved', $id);
+        $this->dispatch('flashMessage', [
+            'message' => 'Заявку успішно видалено.',
+            'type' => 'success'
+        ]);
     }
 
     /**
@@ -229,26 +284,6 @@ class PatientIndex extends Component
 
             return null;
         }
-    }
-
-    /**
-     * Creates a pagination instance for the given array of items.
-     *
-     * @param  array  $items  The array of items to paginate
-     * @param  int  $perPage  Number of items per page
-     * @return LengthAwarePaginator
-     */
-    private function createPaginator(array $items, int $perPage = 5): LengthAwarePaginator
-    {
-        $currentPage = LengthAwarePaginator::resolveCurrentPage() ?? 1;
-        $collection = collect($items);
-
-        return new LengthAwarePaginator(
-            $collection->forPage($currentPage, $perPage),
-            $collection->count(),
-            $perPage,
-            $currentPage
-        );
     }
 
     /**

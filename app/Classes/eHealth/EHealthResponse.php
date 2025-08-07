@@ -22,6 +22,11 @@ class EHealthResponse extends Response
     public const string URGENT_PATH = 'urgent';
 
     /**
+     * The path to the error data in the response.
+     */
+    public const string ERROR_PATH = 'error';
+
+    /**
      * The path to the paging information in the response, i.e. page_number, page_size, total_entries, total_pages.
      */
     public const string PAGING_PATH = 'paging';
@@ -65,6 +70,14 @@ class EHealthResponse extends Response
     public function getUrgent(): array
     {
         return $this->json(self::URGENT_PATH, []);
+    }
+
+    /**
+     * @return array eHealth response actual urgent
+     */
+    public function getError(): array
+    {
+        return $this->json(self::ERROR_PATH, []);
     }
 
     /**

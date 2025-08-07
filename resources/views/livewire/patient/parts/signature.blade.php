@@ -111,7 +111,7 @@
                     <button type="button"
                             wire:click.prevent="resendSms"
                             x-data="{
-                                cooldown: @entangle('resendCooldown'),
+                                cooldown: $wire.entangle('resendCooldown'),
                                 interval: null,
                                 startCooldown() {
                                     if (this.interval) {
@@ -134,7 +134,7 @@
                             x-effect="startCooldown()"
                             :disabled="cooldown > 0"
                             :class="{ 'cursor-not-allowed': cooldown > 0 }"
-                            class="light-button px-3 flex items-center gap-2 w-full"
+                            class="button-minor gap-2 w-full"
                     >
                         <svg width="16" height="17">
                             <use xlink:href="#svg-mail"></use>

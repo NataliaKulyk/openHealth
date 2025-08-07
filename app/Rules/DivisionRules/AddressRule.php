@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules\DivisionRules;
 
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -8,11 +10,11 @@ use Closure;
 
 class AddressRule implements ValidationRule
 {
-    const ALLOWED_LEGAL_ENTITY_TYPES = ['PRIMARY_CARE', 'MSP', 'MSP_PHARMACY'];
+    public const ALLOWED_LEGAL_ENTITY_TYPES = ['PRIMARY_CARE', 'MSP', 'MSP_PHARMACY'];
 
-    const ALLOWED_DIVISION_TYPES = ['CLINIC', 'AMBULANT_CLINIC', 'FAP'];
+    public const ALLOWED_DIVISION_TYPES = ['CLINIC', 'AMBULANT_CLINIC', 'FAP'];
 
-    const ADDRESS_RULES_LIST = [
+    public const ADDRESS_RULES_LIST = [
         'checkAddressType',
         'checkSettlementType',
         'checkStreetType',
@@ -69,7 +71,7 @@ class AddressRule implements ValidationRule
      */
     protected function checkAddressType(): bool
     {
-        $addressType= $this->division['addresses']['type'];
+        $addressType = $this->division['addresses']['type'];
 
         if (!in_array($addressType, array_keys($this->dictionaries['ADDRESS_TYPE']))) {
             $this->setMessage(__('validation.attributes.healthcareService.error.division.address.type'));
@@ -105,7 +107,7 @@ class AddressRule implements ValidationRule
      */
     protected function checkStreetType(): bool
     {
-        $streetType= $this->division['addresses']['streetType'];
+        $streetType = $this->division['addresses']['streetType'];
 
         if (!in_array($streetType, array_keys($this->dictionaries['STREET_TYPE']))) {
             $this->setMessage(__('validation.attributes.healthcareService.error.division.address.streetType'));
@@ -141,9 +143,9 @@ class AddressRule implements ValidationRule
      */
     protected function checkMapping(): bool
     {
-        $legalEntityType =auth()->user()->legalEntity->type;
-        $divisionType= $this->division['type'];
-        $addressType= $this->division['addresses']['type'];
+        $legalEntityType = legalEntity()->type;
+        $divisionType = $this->division['type'];
+        $addressType = $this->division['addresses']['type'];
 
         if (in_array($divisionType, self::ALLOWED_DIVISION_TYPES) &&
             in_array($legalEntityType, self::ALLOWED_LEGAL_ENTITY_TYPES) &&

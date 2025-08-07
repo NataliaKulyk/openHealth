@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -139,6 +141,11 @@ return [
             'level' => 'error'
         ],
 
+        'e_health_errors' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/e_health_errors.log'),
+            'level' => 'error'
+        ],
     ],
 
 ];

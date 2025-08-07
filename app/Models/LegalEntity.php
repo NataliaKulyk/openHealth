@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Models\Relations\Phone;
@@ -15,15 +17,13 @@ use App\Casts\LegalEntityAccreditationCast;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * @mixin IdeHelperLegalEntity
  */
 class LegalEntity extends Model
 {
-    use HasCamelCasing,
-        HasFactory;
+    use HasCamelCasing;
 
     public const string TYPE_PRIMARY_CARE = 'PRIMARY_CARE';
 

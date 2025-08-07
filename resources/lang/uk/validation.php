@@ -166,7 +166,7 @@ return [
         ],
         'owner_date_mismatch' => 'Вказана дата народження не співпадає з наявною датою для цього користувача',
         'wrong_tax_id' => 'Для даного співробітника має бути вказаний його ІПН',
-        'missed_tax_if' =>'Для даного співробітника не вказаний його ІПН'
+        'missed_tax_if' => 'Для даного співробітника не вказаний його ІПН'
     ],
 
     /*
@@ -240,7 +240,6 @@ return [
         'doctor.educations' => __('forms.education'),
         'doctor.qualifications' => __('forms.qualifications'),
         'doctor.scienceDegrees' => __('forms.science_degree'),
-
 
         'divisionId' => __('forms.division'),
         'patient' => [
@@ -616,5 +615,8 @@ return [
             'division.identifier.value' => 'місце надання послуг',
             'outcome.coding.*.code' => 'результат проведення'
         ],
+
+        // Declaration
+        'authorizeWith' => 'метод автентифікації'
     ]
 ];

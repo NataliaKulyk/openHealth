@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Declaration\forms;
+namespace App\Livewire\Declaration\Forms;
 
 use App\Classes\eHealth\Api\DeclarationApi;
 

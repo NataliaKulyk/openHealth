@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules\DivisionRules;
 
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -8,11 +10,11 @@ use Closure;
 
 class TypeRule implements ValidationRule
 {
-    const ALLOWED_LEGAL_ENTITY_TYPES = ['PRIMARY_CARE', 'MSP', 'MSP_PHARMACY'];
+    public const ALLOWED_LEGAL_ENTITY_TYPES = ['PRIMARY_CARE', 'MSP', 'MSP_PHARMACY'];
 
-    const ALLOWED_DIVISION_TYPES = ['CLINIC', 'AMBULANT_CLINIC', 'FAP'];
+    public const ALLOWED_DIVISION_TYPES = ['CLINIC', 'AMBULANT_CLINIC', 'FAP'];
 
-    const DIVISION_TYPE_RULES_LIST = [
+    public const DIVISION_TYPE_RULES_LIST = [
         'checkDivisionType',
         'checkMapping'
     ];
@@ -66,7 +68,7 @@ class TypeRule implements ValidationRule
      */
     protected function checkDivisionType(): bool
     {
-        $divisionType= $this->division['type'];
+        $divisionType = $this->division['type'];
         $dictionary = dictionary()->getDictionary('DIVISION_TYPE');
 
         if (!in_array($divisionType, array_keys($dictionary))) {
@@ -85,8 +87,8 @@ class TypeRule implements ValidationRule
      */
     protected function checkMapping(): bool
     {
-        $legalEntityType =auth()->user()->legalEntity->type;
-        $divisionType= $this->division['type'];
+        $legalEntityType = legalEntity()->type;
+        $divisionType = $this->division['type'];
 
         if (in_array($divisionType, self::ALLOWED_DIVISION_TYPES) &&
             in_array($legalEntityType, self::ALLOWED_LEGAL_ENTITY_TYPES)
