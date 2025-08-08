@@ -4,15 +4,15 @@
 
     if ($position instanceof \App\Models\Employee\Employee) {
         if (
-            $user->can('view', $position) ||
-            $user->can('update', $position) ||
-            $user->can('dismiss', $position)
+            $user->can('view', 'view', $position) ||
+            $user->can('update', 'update', $position) ||
+            $user->can('deactivate', $position)
         ) {
             $hasActions = true;
         }
     } elseif ($position instanceof \App\Models\Employee\EmployeeRequest) {
         if (
-            $user->can('view', $position) ||
+            $user->can('view', 'view', $position) ||
             $user->can('update', 'update', $position) ||
             $user->can('delete', $position)
         ) {
@@ -23,7 +23,6 @@
 
 @if ($hasActions)
     <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-        {{-- Клік по кнопці тепер просто відкриває/закриває меню --}}
         <button
             @click="open = !open"
             class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-white" type="button">
@@ -32,7 +31,6 @@
             </svg>
         </button>
 
-        {{-- Меню показується/ховається за допомогою Alpine.js --}}
         <div x-show="open" x-transition class="absolute right-0 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600" style="display: none;">
 
             @if($position instanceof \App\Models\Employee\Employee)
@@ -54,7 +52,8 @@
                         </li>
                     @endcan
                 </ul>
-                @can('dismiss', $position)
+
+                @can('deactivate', $position)
                     @if($position->status?->value === 'APPROVED')
                         <div class="py-1" @click="open = false">
                             <button type="button" wire:click="showModalDeactivate({{ $position->id }})" class="flex items-center gap-2 w-full py-2 px-4 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600">

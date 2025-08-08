@@ -4,42 +4,62 @@ namespace App\Policies;
 
 use App\Models\Employee\EmployeeRequest;
 use App\Models\User;
-use App\Policies\Concerns\HasUniversalEmployeePermissions;
+use Illuminate\Auth\Access\Response;
 
 class EmployeeRequestPolicy
 {
-    use HasUniversalEmployeePermissions;
-
-    private function belongsToEntity(EmployeeRequest $employeeRequest): bool
+    public function viewAny(User $user): Response
     {
-        return (int)$employeeRequest->legal_entity_id === (int)legalEntity()->id;
+        return $user->can('employee_request:read')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.view_any_denied'));
     }
 
-    private function isEditable(EmployeeRequest $employeeRequest): bool
+    public function view(User $user, EmployeeRequest $employeeRequest): Response
     {
-        return $this->belongsToEntity($employeeRequest) && is_null($employeeRequest->uuid);
+        if ((int)$employeeRequest->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        return $user->can('employee_request:details')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.view_denied'));
     }
 
-    public function view(User $user, EmployeeRequest $employeeRequest): bool
+    public function create(User $user): Response
     {
-        return $this->belongsToEntity($employeeRequest)
-            && $this->checkPermission($user, 'employee_request:read');
+        return $user->can('employee_request:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.create_denied'));
     }
 
-    public function create(User $user): bool
+    public function update(User $user, EmployeeRequest $employeeRequest): Response
     {
-        return $this->checkPermission($user, 'employee_request:write');
+        if ((int)$employeeRequest->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        if (!is_null($employeeRequest->uuid)) {
+            return Response::deny(__('employees.policy.req.processed_no_edit'));
+        }
+
+        return $user->can('employee_request:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.update_denied'));
     }
 
-    public function update(User $user, EmployeeRequest $employeeRequest): bool
+    public function delete(User $user, EmployeeRequest $employeeRequest): Response
     {
-        return $this->isEditable($employeeRequest)
-            && $this->checkPermission($user, 'employee_request:write');
-    }
+        if ((int)$employeeRequest->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
 
-    public function delete(User $user, EmployeeRequest $employeeRequest): bool
-    {
-        return $this->isEditable($employeeRequest)
-            && $this->checkPermission($user, 'employee_request:write');
+        if (!is_null($employeeRequest->uuid)) {
+            return Response::deny(__('employees.policy.req.processed_no_delete'));
+        }
+
+        return $user->can('employee_request:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.delete_denied'));
     }
 }

@@ -4,32 +4,47 @@ namespace App\Policies;
 
 use App\Models\Employee\Employee;
 use App\Models\User;
-use App\Policies\Concerns\HasUniversalEmployeePermissions;
+use Illuminate\Auth\Access\Response;
 
 class EmployeePolicy
 {
-    use HasUniversalEmployeePermissions;
-
-    private function belongsToEntity(Employee $employee): bool
+    public function viewAny(User $user): Response
     {
-        return (int)$employee->legal_entity_id === (int)legalEntity()->id;
+        return $user->can('employee:read')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.view_any_denied'));
     }
 
-    public function view(User $user, Employee $employee): bool
+    public function view(User $user, Employee $employee): Response
     {
-        return $this->belongsToEntity($employee)
-            && $this->checkPermission($user, 'employee:details');
+        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        return $user->can('employee:details')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.view_denied'));
     }
 
-    public function update(User $user, Employee $employee): bool
+    public function update(User $user, Employee $employee): Response
     {
-        return $this->belongsToEntity($employee)
-            && $this->checkPermission($user, 'employee:write');
+        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        return $user->can('employee:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.update_denied'));
     }
 
-    public function deactivate(User $user, Employee $employee): bool
+    public function deactivate(User $user, Employee $employee): Response
     {
-        return $this->belongsToEntity($employee)
-            && $this->checkPermission($user, 'employee:deactivate');
+        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        return $user->can('employee:deactivate')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.deactivate_denied'));
     }
 }

@@ -47,13 +47,15 @@
                         </button>
                     </div>
 
-                    <div class="flex items-center space-x-2 pt-5 ml-auto transform translate-x-[55px]">
-                        <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
-                           class="button-primary">{{ __('forms.new_employee') }}</a>
-                        <button wire:click="syncEmployees" type="button" class="button-sync">
-                            {{ __('forms.synchronise_with_eHealth') }}
-                        </button>
-                    </div>
+                    @can('create', \App\Models\Employee\EmployeeRequest::class)
+                        <div class="flex items-center space-x-2 pt-5 ml-auto transform translate-x-[55px]">
+                            <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
+                               class="button-primary">{{ __('forms.new_employee') }}</a>
+                            <button wire:click="sync" type="button" class="button-sync">
+                                {{ __('forms.synchronise_with_eHealth') }}
+                            </button>
+                        </div>
+                    @endcan
                 </div>
 
                 <div x-show="showFilter" x-transition class="pt-4 mt-4">
@@ -234,13 +236,15 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                               class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                    <span
-                                        class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
-                            </a>
-                        </div>
+                        @can('create', \App\Models\Employee\EmployeeRequest::class)
+                            <div class="flex items-center space-x-3">
+                                <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                   class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                        <span
+                                            class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
+                                </a>
+                            </div>
+                        @endcan
                     </div>
                     <div class="flow-root mt-4">
                         <div class="max-w-screen-xl">
@@ -282,13 +286,7 @@
 
                                         <td class="td-input text-center">
                                             @include('livewire.employee.parts.actions-dropdown', [
-                                                'position' => $positionToShow,
-                                                'canViewEmployeeDetails' => $canViewEmployeeDetails,
-                                                'canUpdateEmployee' => $canUpdateEmployee,
-                                                'canDismissEmployee' => $canDismissEmployee,
-                                                'canViewEmployeeRequest' => $canViewEmployeeRequest,
-                                                'canUpdateEmployeeRequest' => $canUpdateEmployeeRequest,
-                                                'canDeleteEmployeeRequest' => $canDeleteEmployeeRequest,
+                                                'position' => $positionToShow
                                             ])
                                         </td>
                                     </tr>
