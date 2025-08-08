@@ -110,7 +110,10 @@ input:-webkit-autofill:active {
 }
 
 .input-select {
-    @apply input text-gray-500 dark:text-gray-400 dark:border-gray-700 dark:focus:border-blue-500 dark:bg-gray-800
+    @apply input dark:border-gray-700 dark:focus:border-blue-500 dark:bg-gray-800
+}
+.input-select option {
+    @apply py-4 px-6 text-lg leading-relaxed
 }
 
 .input-error {
@@ -418,7 +421,31 @@ input:-webkit-autofill ~ .label {
 }
 
 .steps-header_index {
-    @apply hidden sm:inline mx-2.5 flex items-center justify-center w-3.5 h-3.5 sm:w-4 sm:h-4 text-xs font-bold border rounded-full shrink-0 dark:border-blue-500 firefox-fix
+    @apply flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full font-semibold text-sm transition-all duration-300;
+}
+
+.steps-header_index.step-completed-color {
+    @apply text-green-700 border border-green-600 bg-green-100
+}
+
+.steps-header_index.step-incomplete-color {
+    @apply text-gray-600 border border-gray-400 bg-white
+}
+
+.steps-header_index.text-red-500 {
+    @apply text-white bg-red-500 border border-red-500
+}
+
+.dark .steps-header_index.step-completed-color {
+    @apply text-white bg-green-600 border border-green-500 shadow
+}
+
+.dark .steps-header_index.step-incomplete-color {
+    @apply text-gray-300 border border-gray-500 bg-transparent
+}
+
+.dark .steps-header_index.text-red-500 {
+    @apply text-white bg-red-600 border border-red-600
 }
 
 .steps-header_title {
@@ -453,9 +480,9 @@ input:-webkit-autofill ~ .label {
     @apply text-blue-600 dark:text-blue-500 hover:underline
 }
 
-.step-completed-color {
+/*.step-completed-color {
     @apply step-header-completed-blue
-}
+}*/
 
 .step-active-color {
     @apply text-blue-600 dark:text-blue-500 cursor-default
@@ -478,11 +505,6 @@ input:-webkit-autofill ~ .label {
 .main-header {
     position: relative;
     z-index: 50;
-}
-
-@utility step-header-completed-blue {
-    border-color: #4CAF50;
-    color: #4CAF50;
 }
 
 /* Change autocomplete behavior for Google Chrome */

@@ -43,7 +43,7 @@
                     id="accreditationСategory"
                     wire:model="legalEntityForm.accreditation.category"
                     aria-describedby="{{ $hasAccreditationCategoryError ? 'accreditationCategoryErrorHelp' : '' }}"
-                    class="input-select text-gray-800 {{ $hasAccreditationCategoryError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+                    class="input-select {{ $hasAccreditationCategoryError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 >
                     <option value="_placeholder_" selected hidden>-- {{ __('forms.select') }} --</option>
 

@@ -1,11 +1,12 @@
 <div>
     <x-section-navigation x-data="{ showFilter: false }" class="">
-        <x-slot name="title">{{ __('Зарееструвати заклад ') }}</x-slot>
+        <x-slot name="title">{{ __('Зареєструвати заклад ') }}</x-slot>
     </x-section-navigation>
 
     <section class="section-form">
         <div
             x-data="{
+
                 activeStep: {{ $activeStep }},
                 isEdit: @json($isEdit),
                 headers: [],
@@ -57,11 +58,13 @@
                             <template x-if="!isActive">
                                 <span x-text="header.index"
                                     class="steps-header_index"
-                                    :class="{
-                                        'step-completed-color': header.complete && !isActive && !isValidationError,
-                                        'step-incomplete-color': !isActive && !header.complete && !isValidationError,
-                                        'text-red-500': isValidationError
-                                    }"></span>
+                                      :class="{
+                                          'step-completed-color': header.complete && !isActive && !isValidationError,
+                                          'step-incomplete-color': !header.complete && !isActive && !isValidationError,
+                                          'text-red-500': isValidationError,
+                                          'scale-110 ring ring-green-300 dark:ring-green-700': isActive
+                                        }"
+                                ></span>
                             </template>
 
                             <template x-if="isActive">
