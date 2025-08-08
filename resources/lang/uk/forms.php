@@ -37,7 +37,7 @@ return [
     'withTerms' => 'з умовами використання',
     'accreditationShow' => 'Наявна акредитація',
 
-    
+
     'selectLevel' => 'Оберіть ступінь',
     'selectDocumentType' => 'Оберіть тип документа',
     'selectQualificationType' => 'Оберіть тип кваліфікіції',
@@ -220,6 +220,11 @@ return [
     'add_role' => 'Додати роль',
     'role_choose' => 'Обрати роль',
     'start_date_work' => 'Дата початку роботи',
+    'division' => 'Підрозділ',
+    'division_search' => 'Пошук місць надання послуг',
+    'select_division' => 'Обрати підрозділ',
+    'full_name_division' => 'Повна Назва',
+    'external_id' => 'Зовнішній ідентифікатор',
     'employee_type' => 'Тип працівника',
 
     // Doctor Specific
