@@ -50,7 +50,7 @@ class LegalEntityPolicy
             return Response::allow();
         }
 
-        return Response::deny('This action is unauthorized.');
+        return Response::denyWithStatus(403, 'This action is unauthorized.');
     }
 
     public function edit(User $user): Response
@@ -59,6 +59,6 @@ class LegalEntityPolicy
             return Response::allow();
         }
 
-        return Response::deny('This action is unauthorized.');
+        return Response::denyWithStatus(403, 'This action is unauthorized.');
     }
 }

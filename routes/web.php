@@ -92,18 +92,19 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         Route::get('/', Dashboard::class)->name('dashboard');
 
         Route::get('/legal-entities/create', CreateLegalEntity::class)
-            ->middleware(['can:create,' . LegalEntity::class])
+            ->can('create',  LegalEntity::class)
             ->name('legal-entity.new.create');
     });
     Route::middleware(['can:access,legalEntity'])->prefix('/dashboard/{legalEntity}')->whereNumber('legalEntity')->group(function () {
 
         Route::get('/', Dashboard::class)->name('dashboard');
 
-        Route::get('/edit', EditLegalEntity::class)->name('legal-entity.edit');
+        Route::get('/edit', EditLegalEntity::class)
+            ->can('edit',  LegalEntity::class)
+            ->name('legal-entity.edit');
 
-        // TODO: Should determine if this need to be implemented!
         Route::get('/create', CreateLegalEntity::class)
-            ->middleware(['can:create,' . LegalEntity::class])
+            ->can('create',  LegalEntity::class)
             ->name('legal-entity.create');
 
         Route::prefix('division')->group(function () {
