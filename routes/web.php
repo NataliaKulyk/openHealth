@@ -88,10 +88,13 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
     Route::get('/select-legal-entity', SelectLegalEntity::class)->name('legalEntity.select');
 
-    Route::get('/dashboard/legal-entities/create', CreateLegalEntity::class)
-        ->middleware(['auth:web', 'can:create,' . LegalEntity::class])
-        ->name('legal-entity.new.create');
+    Route::middleware(['auth:web'])->prefix('/dashboard')->group(function() {
+        Route::get('/', Dashboard::class)->name('dashboard');
 
+        Route::get('/legal-entities/create', CreateLegalEntity::class)
+            ->middleware(['can:create,' . LegalEntity::class])
+            ->name('legal-entity.new.create');
+    });
     Route::middleware(['can:access,legalEntity'])->prefix('/dashboard/{legalEntity}')->whereNumber('legalEntity')->group(function () {
 
         Route::get('/', Dashboard::class)->name('dashboard');
