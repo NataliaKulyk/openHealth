@@ -16,7 +16,7 @@
 /* Svg in inputs require specific styling. Assuming svg, input and label are siblings */
 select[required] ~ label:after,
 input[required] ~ label:after {
-    content: "*";
+    content: " *";
 }
 
 /* Acts like React's <fragment> counterpart */

@@ -226,6 +226,11 @@ return [
     'full_name_division' => 'Повна Назва',
     'external_id' => 'Зовнішній ідентифікатор',
     'employee_type' => 'Тип працівника',
+    'basic_data' => 'Основні дані',
+    'housing' => 'Корпус',
+    'mountainous_status' => 'Має статус гірського',
+    'add_work_schedule' => 'Додати графік роботи',
+    'work_schedule' => 'Графік роботи',
 
     // Doctor Specific
     'education' => 'Освіта',
@@ -274,6 +279,9 @@ return [
     'building' => 'Будинок',
     'apartment' => 'Квартира',
     'zip_code' => 'Поштовий індекс',
+    'latitude' => 'Широта',
+    'house_number' => 'Номер будинку',
+    'longitude' => 'Довгота',
 
     // Signature & Auth
     'signature' => 'Підписання',
