@@ -242,7 +242,7 @@ class PatientComponent extends Component
      */
     public function createPerson(): void
     {
-        if (!Auth::user()?->can('createPerson', Person::class)) {
+        if (Auth::user()?->cannot('createPerson', Person::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення пацієнта.',
                 'type' => 'error'
@@ -314,7 +314,7 @@ class PatientComponent extends Component
      */
     public function createApplication(): void
     {
-        if (!Auth::user()?->can('create', PersonRequest::class)) {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення пацієнта.',
                 'type' => 'error'
@@ -456,7 +456,7 @@ class PatientComponent extends Component
      */
     public function resendSms(): void
     {
-        if (!Auth::user()?->can('create', PersonRequest::class)) {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на повторну відправку СМС.',
                 'type' => 'error'
@@ -535,7 +535,7 @@ class PatientComponent extends Component
      */
     public function sign(): void
     {
-        if (!Auth::user()?->can('create', PersonRequest::class)) {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення підписаного пацієнта.',
                 'type' => 'error'
@@ -745,7 +745,7 @@ class PatientComponent extends Component
      */
     private function approvePersonRequest(array $requestData = []): void
     {
-        if (!Auth::user()?->can('create', PersonRequest::class)) {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на підтвердження пацієнта.',
                 'type' => 'error'

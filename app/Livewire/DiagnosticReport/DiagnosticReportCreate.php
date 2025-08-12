@@ -6,6 +6,7 @@ namespace App\Livewire\DiagnosticReport;
 
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
+use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Core\Arr;
 use App\Repositories\MedicalEvents\Repository;
 use Exception;
@@ -25,6 +26,15 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
      */
     public function save(array $data): void
     {
+        if (Auth::user()?->cannot('create', DiagnosticReport::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на створення діагностичного звіту.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         $formattedData = $this->prepareFormattedData($data);
 
         if (!$this->validateFormatted($formattedData)) {
@@ -50,6 +60,15 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
      */
     public function sign(array $data): void
     {
+        if (Auth::user()?->cannot('create', DiagnosticReport::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на створення діагностичного звіту.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         $formattedData = $this->prepareFormattedData($data);
 
         if (!$this->validateFormatted($formattedData)) {

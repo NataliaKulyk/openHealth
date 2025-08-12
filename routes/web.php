@@ -25,6 +25,9 @@ use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Procedure\ProcedureCreate;
 use App\Models\LegalEntity;
+use App\Models\MedicalEvents\Sql\DiagnosticReport;
+use App\Models\MedicalEvents\Sql\Encounter;
+use App\Models\MedicalEvents\Sql\Procedure;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -170,12 +173,20 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/{patientId}/summary', PatientSummary::class)->name('patient.summary');
                 Route::get('/{patientId}/episodes', PatientEpisodes::class)->name('patient.episodes');
 
-                Route::get('/{patientId}/encounter/create', EncounterCreate::class)->name('encounter.create');
-                Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
+                Route::can('create' . Encounter::class)->group(static function () {
+                    Route::get('/{patientId}/encounter/create', EncounterCreate::class)->name('encounter.create');
+                    Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
+                });
 
-                Route::get('/{patientId}/diagnostic-report/create', DiagnosticReportCreate::class)->name('diagnostic-report.create');
+                Route::whereNumber('patientId')->group(static function () {
+                    Route::get('{patientId}/diagnostic-report/create', DiagnosticReportCreate::class)
+                        ->can('create', DiagnosticReport::class)
+                        ->name('diagnostic-report.create');
 
-                Route::get('/{patientId}/procedure/create', ProcedureCreate::class)->name('procedure.create');
+                    Route::get('{patientId}/procedure/create', ProcedureCreate::class)
+                        ->can('create', Procedure::class)
+                        ->name('procedure.create');
+                });
             });
         });
     });

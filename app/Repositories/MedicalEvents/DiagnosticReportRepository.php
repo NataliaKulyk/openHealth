@@ -129,13 +129,14 @@ class DiagnosticReportRepository extends BaseRepository
                         Repository::codeableConcept()->attach($encounter, $datum['encounter']);
                     }
 
-                    $managingOrganization = Repository::identifier()->store(
-                        $datum['managingOrganization']['identifier']['value']
-                    );
+                    $managingOrganization = Repository::identifier()
+                        ->store($datum['managingOrganization']['identifier']['value']);
                     Repository::codeableConcept()->attach($managingOrganization, $datum['managingOrganization']);
 
-                    $division = Repository::identifier()->store($datum['division']['identifier']['value']);
-                    Repository::codeableConcept()->attach($division, $datum['division']);
+                    if (isset($datum['division'])) {
+                        $division = Repository::identifier()->store($datum['division']['identifier']['value']);
+                        Repository::codeableConcept()->attach($division, $datum['division']);
+                    }
 
                     if (isset($datum['reportOrigin'])) {
                         $reportOrigin = Repository::codeableConcept()->store($datum['reportOrigin']);
@@ -154,7 +155,7 @@ class DiagnosticReportRepository extends BaseRepository
                         'encounter_id' => $encounter->id ?? null,
                         'primary_source' => $datum['primarySource'],
                         'managing_organization_id' => $managingOrganization->id,
-                        'division_id' => $division->id,
+                        'division_id' => $division->id ?? null,
                         'report_origin_id' => $reportOrigin->id ?? null
                     ]);
 
@@ -178,9 +179,8 @@ class DiagnosticReportRepository extends BaseRepository
 
                     if (isset($datum['performer'])) {
                         if (isset($datum['performer']['reference'])) {
-                            $reference = Repository::identifier()->store(
-                                $datum['performer']['reference']['identifier']['value']
-                            );
+                            $reference = Repository::identifier()
+                                ->store($datum['performer']['reference']['identifier']['value']);
                             Repository::codeableConcept()->attach($reference, $datum['performer']['reference']);
                         }
 
@@ -193,9 +193,8 @@ class DiagnosticReportRepository extends BaseRepository
 
                     if (isset($datum['resultsInterpreter'])) {
                         if (isset($datum['resultsInterpreter']['reference'])) {
-                            $reference = Repository::identifier()->store(
-                                $datum['resultsInterpreter']['reference']['identifier']['value']
-                            );
+                            $reference = Repository::identifier()
+                                ->store($datum['resultsInterpreter']['reference']['identifier']['value']);
                             Repository::codeableConcept()->attach(
                                 $reference,
                                 $datum['resultsInterpreter']['reference']

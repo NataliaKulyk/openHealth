@@ -10,6 +10,7 @@ use App\Core\Arr;
 use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
 use App\Models\LegalEntity;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
+use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Episode;
 use App\Models\MedicalEvents\Sql\Procedure;
 use App\Repositories\MedicalEvents\Repository;
@@ -40,6 +41,15 @@ class EncounterCreate extends EncounterComponent
      */
     public function save(): void
     {
+        if (Auth::user()?->cannot('create', Encounter::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на створення взаємодії.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         $formattedData = $this->prepareFormattedData();
 
         $this->validateFormatted($formattedData);
@@ -54,6 +64,15 @@ class EncounterCreate extends EncounterComponent
      */
     public function sign(): void
     {
+        if (Auth::user()?->cannot('create', Encounter::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на створення взаємодії.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         $formattedData = $this->prepareFormattedData();
 
         $this->validateFormatted($formattedData);
