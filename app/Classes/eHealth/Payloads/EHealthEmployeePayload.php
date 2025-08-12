@@ -8,10 +8,56 @@ use Illuminate\Support\Carbon;
 class EHealthEmployeePayload
 {
     /**
+     * Карта відповідності локальних ключів (camelCase) до ключів API (snake_case).
+     * Це "словник", який ми будемо використовувати для розумного перекладу помилок від EHealth.
+     * @return array
+     */
+    public static function getKeyMap(): array
+    {
+        return [
+            // З employee_request_data
+            'position' => 'position',
+            'employeeType' => 'employee_type',
+            'legalEntityId' => 'legal_entity_id',
+            'startDate' => 'start_date',
+            'divisionId' => 'division_id',
+            'endDate' => 'end_date',
+
+            // З party
+            'firstName' => 'first_name',
+            'lastName' => 'last_name',
+            'secondName' => 'second_name',
+            'birthDate' => 'birth_date',
+            'gender' => 'gender',
+            'noTaxId' => 'no_tax_id',
+            'taxId' => 'tax_id',
+            'email' => 'email',
+            'workingExperience' => 'working_experience',
+            'aboutMyself' => 'about_myself',
+            'phones' => 'phones',
+            'documents' => 'documents',
+
+            // З doctor
+            'educations' => 'educations',
+            'qualifications' => 'qualifications',
+            'specialities' => 'specialities',
+            'scienceDegrees' => 'science_degree',
+        ];
+    }
+
+    /**
+     * Повертає перевернуту карту для перекладу помилок (API key => local key).
+     * @return array
+     */
+    public static function getReverseKeyMap(): array
+    {
+        return array_flip(self::getKeyMap());
+    }
+
+
+    /**
      * Prepares, formats, and normalizes data for the eHealth employee request.
-     *
-     * @param array $revisionData The raw data from the local revision.
-     * @return array The normalized payload ready for signing.
+     * THIS METHOD REMAINS UNCHANGED.
      */
     public static function prepare(array $revisionData): array
     {
@@ -25,6 +71,7 @@ class EHealthEmployeePayload
 
     /**
      * Formats data from a revision into the structure required by the eHealth API.
+     * THIS METHOD REMAINS UNCHANGED.
      */
     public static function format(array $revisionData): array
     {

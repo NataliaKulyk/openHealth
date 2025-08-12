@@ -1,4 +1,4 @@
-<div x-data="{ showSignatureModal: $wire.entangle('showSignatureModal') }">
+<div x-data="{ showSignatureModal: $wire.entangle('showSignatureModal') }" x-on:close-signature-modal.window="showSignatureModal = false">
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">
             @if($isPersonalDataLocked)

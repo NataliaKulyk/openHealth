@@ -4,6 +4,7 @@ namespace App\Livewire\Employee\Forms;
 
 use App\Core\Arr;
 use App\Models\Employee\BaseEmployee;
+use App\Rules\Cyrillic;
 use Livewire\Form;
 use App\Rules\Name;
 use App\Rules\TaxId;
@@ -97,7 +98,7 @@ class EmployeeForm extends Form
             'party.noTaxId' => ['boolean'],
             'party.email' => ['nullable', 'present', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
             'party.workingExperience' => ['nullable', 'present', 'integer', 'min:0'],
-            'party.aboutMyself' => ['required', 'present', 'string'],
+            'party.aboutMyself' => ['nullable', 'present', 'string'],
         ];
     }
 
@@ -113,8 +114,7 @@ class EmployeeForm extends Form
     }
 
     /**
-     * Defines validation rules for doctor-related data (now nested under 'doctor').
-     * Updated scienceDegrees and qualifications to be nullable.
+     * Defines validation rules for doctor-related data.
      *
      * @return array
      */
@@ -123,58 +123,58 @@ class EmployeeForm extends Form
         $doctorTypes = config('ehealth.doctors_type');
         $isDoctor = in_array($this->employeeType, $doctorTypes, true);
 
-        $educationRules = ['nullable', 'array'];
-        $specialitiesRules = ['nullable', 'array'];
+    $educationRules = ['nullable', 'array'];
+    $specialitiesRules = ['nullable', 'array'];
 
-        if ($isDoctor) {
-            $educationRules[] = 'required';
-            $educationRules[] = 'min:1';
-            $specialitiesRules[] = 'required';
-            $specialitiesRules[] = 'min:1';
-        }
-
-        $scienceDegreesRules = ['nullable', 'array'];
-        $qualificationsRules = ['nullable', 'array'];
-
-        return [
-            'doctor.educations' => $educationRules,
-            'doctor.educations.*.country' => ['required', 'string', 'max:255'],
-            'doctor.educations.*.city' => ['required', 'string', 'max:255'],
-            'doctor.educations.*.institutionName' => ['required', 'string', 'max:255'],
-            'doctor.educations.*.issuedDate' => ['nullable', 'date'],
-            'doctor.educations.*.diplomaNumber' => ['required', 'string', 'max:255'],
-            'doctor.educations.*.degree' => ['required', 'string', 'max:255'],
-            'doctor.educations.*.speciality' => ['required', 'string', 'max:255'],
-
-            'doctor.specialities' => $specialitiesRules,
-            'doctor.specialities.*.speciality' => ['required', 'string', 'max:255'],
-            'doctor.specialities.*.specialityOfficio' => ['required', 'boolean'],
-            'doctor.specialities.*.level' => ['required', 'string', 'max:255'],
-            'doctor.specialities.*.qualificationType' => ['required', 'string'],
-            'doctor.specialities.*.attestationName' => ['required', 'string', 'max:255'],
-            'doctor.specialities.*.attestationDate' => ['required', 'date'],
-            'doctor.specialities.*.validToDate' => ['nullable', 'date'],
-            'doctor.specialities.*.certificateNumber' => ['required', 'string', 'max:255'],
-
-            'doctor.scienceDegrees' => $scienceDegreesRules,
-            'doctor.scienceDegrees.*.country' => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.city' => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.degree' => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.institutionName' => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.diplomaNumber' => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.speciality' => ['required', 'string', 'max:255'],
-            'doctor.scienceDegrees.*.issuedDate' => ['nullable', 'date'],
-
-            'doctor.qualifications' => $qualificationsRules,
-            'doctor.qualifications.*.type' => ['required', 'string', 'max:255'],
-            'doctor.qualifications.*.institutionName' => ['required', 'string', 'max:255'],
-            'doctor.qualifications.*.speciality' => ['required', 'string', 'max:255'],
-            'doctor.qualifications.*.issuedDate' => ['required', 'date'],
-            'doctor.qualifications.*.certificateNumber' => ['required', 'string', 'max:255'],
-            'doctor.qualifications.*.validTo' => ['nullable', 'date', 'after_or_equal:doctor.qualifications.*.issuedDate'],
-            'doctor.qualifications.*.additionalInfo' => ['nullable', 'string'],
-        ];
+    if ($isDoctor) {
+        $educationRules[] = 'required';
+        $educationRules[] = 'min:1';
+        $specialitiesRules[] = 'required';
+        $specialitiesRules[] = 'min:1';
     }
+
+    $scienceDegreesRules = ['nullable', 'array'];
+    $qualificationsRules = ['nullable', 'array'];
+
+    return [
+        'doctor.educations' => $educationRules,
+        'doctor.educations.*.country' => ['required', 'string', 'max:255'],
+        'doctor.educations.*.city' => ['required', 'string', 'max:255', new Cyrillic()],
+        'doctor.educations.*.institutionName' => ['required', 'string', 'max:255', new Cyrillic()],
+        'doctor.educations.*.issuedDate' => ['nullable', 'date'],
+        'doctor.educations.*.diplomaNumber' => ['required', 'string', 'max:255'],
+        'doctor.educations.*.degree' => ['required', 'string', 'max:255'],
+        'doctor.educations.*.speciality' => ['required', 'string', 'max:255'],
+
+        'doctor.specialities' => $specialitiesRules,
+        'doctor.specialities.*.speciality' => ['required', 'string', 'max:255'],
+        'doctor.specialities.*.specialityOfficio' => ['required', 'boolean'],
+        'doctor.specialities.*.level' => ['required', 'string', 'max:255'],
+        'doctor.specialities.*.qualificationType' => ['required', 'string'],
+        'doctor.specialities.*.attestationName' => ['required', 'string', 'max:255', new Cyrillic()],
+        'doctor.specialities.*.attestationDate' => ['required', 'date'],
+        'doctor.specialities.*.validToDate' => ['nullable', 'date'],
+        'doctor.specialities.*.certificateNumber' => ['required', 'string', 'max:255'],
+
+        'doctor.scienceDegrees' => $scienceDegreesRules,
+        'doctor.scienceDegrees.*.country' => ['required', 'string', 'max:255'],
+        'doctor.scienceDegrees.*.city' => ['required', 'string', 'max:255', new Cyrillic()],
+        'doctor.scienceDegrees.*.degree' => ['required', 'string', 'max:255'], // Словник
+        'doctor.scienceDegrees.*.institutionName' => ['required', 'string', 'max:255', new Cyrillic()],
+        'doctor.scienceDegrees.*.diplomaNumber' => ['required', 'string', 'max:255'],
+        'doctor.scienceDegrees.*.speciality' => ['required', 'string', 'max:255'],
+        'doctor.scienceDegrees.*.issuedDate' => ['nullable', 'date'],
+
+        'doctor.qualifications' => $qualificationsRules,
+        'doctor.qualifications.*.type' => ['required', 'string', 'max:255'], // Словник
+        'doctor.qualifications.*.institutionName' => ['required', 'string', 'max:255', new Cyrillic()],
+        'doctor.qualifications.*.speciality' => ['required', 'string', 'max:255'], // Словник
+        'doctor.qualifications.*.issuedDate' => ['required', 'date'],
+        'doctor.qualifications.*.certificateNumber' => ['required', 'string', 'max:255'],
+        'doctor.qualifications.*.validTo' => ['nullable', 'date', 'after_or_equal:doctor.qualifications.*.issuedDate'],
+        'doctor.qualifications.*.additionalInfo' => ['nullable', 'string', new Cyrillic()],
+    ];
+}
 
     /**
      * The single "smart" method to populate the form from any data source.

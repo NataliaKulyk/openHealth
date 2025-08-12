@@ -1,5 +1,5 @@
 <div class="overflow-x-auto relative">
-    <fieldset class="fieldset"
+    <fieldset class="fieldset" id="section-doctor-science-degree"
               x-data="{
                   scienceDegrees: $wire.entangle('form.doctor.scienceDegrees'),
                   openModal: false,
@@ -14,6 +14,10 @@
         <legend class="legend">
             <h2>{{ __('forms.science_degree') }}</h2>
         </legend>
+
+        @error('form.doctor.science_degree')
+        <p class="text-error -mt-2 mb-4">{{ $message }}</p>
+        @enderror
 
         <table class="table-input w-full">
             <thead class="thead-input">

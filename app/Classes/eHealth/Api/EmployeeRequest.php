@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -28,23 +30,20 @@ class EmployeeRequest extends EHealthRequest
      */
     public function create(string $signedContent): array
     {
-        $requestBody = [
-            'signed_content' => $signedContent,
-            'signed_content_encoding' => 'base64',
-        ];
-
+        $requestBody = [ 'signed_content' => $signedContent, 'signed_content_encoding' => 'base64' ];
         $response = $this->post(self::ENDPOINT, $requestBody);
 
-        if (! $response->successful()) {
-            $errorBody = $response->json();
-            $errorMessage = 'eHealth API Error (422): '.($errorBody['error']['message'] ?? $response->reason());
-
-            Log::channel('e_health_errors')->error('EHealth Create EmployeeRequest Error', [
-                'status' => $response->status(),
-                'body' => $errorBody,
+        if (!$response->successful()) {
+            $errorBody = $response->json() ?? [];
+            Log::channel('e_health_errors')->error('EHealth API Error', [
+                'status' => $response->status(), 'body' => $errorBody,
             ]);
 
-            throw new RuntimeException($errorMessage);
+            if ($response->status() === 422 && !empty($errorBody['error']['invalid'])) {
+                throw new EHealthValidationException($errorBody['error']['invalid']);
+            }
+
+            throw new EHealthResponseException($response);
         }
 
         return $response->json('data', []);

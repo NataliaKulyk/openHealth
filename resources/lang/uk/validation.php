@@ -230,6 +230,23 @@ return [
         'documents.*.number' => __('forms.document_number'),
         'documents.*.issuedBy' => __('forms.document_issued_by'),
         'documents.*.issuedAt' => __('forms.document_issued_at'),
+        'form.documents.min' => 'Необхідно додати хоча б один документ, що посвідчує особу.',
+        'form.doctor.educations.min' => 'Для ролі лікаря необхідно заповнити розділ "Освіта".',
+        'form.doctor.specialities.min' => 'Для ролі лікаря необхідно заповнити розділ "Спеціальності".',
+        'form.party.email.unique' => 'Користувач з такою поштою вже зареєстрований у цій мед. організації.',
+        'form.documents' => __('forms.documents'),
+        'form.doctor.educations' => __('forms.education'),
+        'form.doctor.specialities' => __('forms.specialities'),
+        'form.doctor.qualifications' => __('forms.qualifications'),
+        'form.doctor.scienceDegrees' => __('forms.science_degree'),
+
+        // Поля всередині розділу "Освіта"
+        'doctor.educations.*.city' => __('forms.city'),
+        'doctor.educations.*.institutionName' => __('forms.institutionName'),
+
+        // Поля всередині розділу "Спеціальності"
+        'doctor.specialities.*.attestationName' => __('forms.issued_by'),
+        'doctor.specialities.*.level' => __('forms.speciality_level'),
 
         // Position
         'position' => __('forms.position'),

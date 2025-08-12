@@ -6,73 +6,84 @@ use Closure;
 use App\Models\User;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 class TaxId implements ValidationRule, DataAwareRule
 {
     /**
-     * All the data under validation.
+     * The entire data array under validation.
      * @var array
      */
     protected array $data = [];
 
-    protected bool $noTaxId;
-
-    protected ?string $email;
-
-    public function __construct()
-    {
-    }
+    /**
+     * Flag indicating if the ID is a passport/national ID instead of a tax ID.
+     * @var bool
+     */
+    protected bool $noTaxId = false;
 
     /**
-     * Set the data under validation.
-     * @param  array  $data
+     * The email associated with the person, used for additional checks.
+     * @var string|null
+     */
+    protected ?string $email = null;
+
+    /**
+     * Set the data under validation and determine the context.
      *
+     * @param  array  $data
      * @return $this
      */
     public function setData(array $data): static
     {
-        // Employee Part
-        if (!empty($data['party'])) {
-            $this->noTaxId = $this->data['party']['noTaxId'] ?? false;
-            $this->email = $this->data['party']['email'] ?? null;
+        $this->data = $data;
+
+        $contextData = null;
+
+        if (!empty($data['party']) && is_array($data['party'])) {
+            $contextData = $data['party'];
         }
 
-        // Legal Entity part
-        if (!empty($data['owner'])) {
-            $this->noTaxId = $this->data['owner']['noTaxId'] ?? false;
-            $this->email = $this->data['owner']['email'] ?? '';
+        elseif (!empty($data['owner']) && is_array($data['owner'])) {
+            $contextData = $data['owner'];
+        }
+
+        if ($contextData) {
+            $this->noTaxId = (bool)($contextData['noTaxId'] ?? false);
+            $this->email = $contextData['email'] ?? null;
         }
 
         return $this;
     }
 
+    /**
+     * Run the validation rule.
+     *
+     * @param  \Closure(string): PotentiallyTranslatedString  $fail
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->noTaxId) {
-            if (!preg_match('/^([0-9]{9}|[А-ЯЁЇIЄҐ]{2}\\d{6})$/u', $value)) {
+
+            if (!preg_match('/^([0-9]{9}|[А-ЯЁЇIЄҐ]{2}\d{6})$/u', $value)) {
                 $fail(__('validation.attributes.errors.invalidNationalId'));
             }
-        } else {
+        }
+
+        else {
+            // Стандартний ІПН (10 цифр).
             if (!preg_match('/^[0-9]{10}$/', $value)) {
                 $fail(__('validation.attributes.errors.invalidTaxId'));
             }
 
             if ($this->email) {
-               $user = User::where('email', $this->email)->first();
+                $user = User::where('email', $this->email)->first();
 
-                /*
-                * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
-                * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
-                */
                 if ($user?->party && $value !== $user->party->taxId) {
                     $fail(__('validation.employee.wrong_tax_id'));
                 }
 
-                /*
-                * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
-                * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
-                */
-                if ($user?->party && $user->party->taxId && !$value) {
+                if ($user?->party && $user?->party->taxId && !$value) {
                     $fail(__('validation.employee.missed_tax_id'));
                 }
             }

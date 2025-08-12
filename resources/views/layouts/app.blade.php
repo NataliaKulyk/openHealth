@@ -53,5 +53,37 @@
 
             @yield('scripts')
         </div>
+
+        <script>
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('validation-failed-scroll', (event) => {
+                    setTimeout(() => {
+                        const firstErrorKey = event.firstErrorKey;
+                        if (!firstErrorKey) return;
+
+                        let elementToScrollTo = null;
+
+                        elementToScrollTo = document.querySelector(`[wire\\:model\\.live='${firstErrorKey}']`) ||
+                            document.querySelector(`[wire\\:model='${firstErrorKey}']`);
+
+                        if (!elementToScrollTo) {
+                            const baseKey = firstErrorKey.replace(/\.\d+\..*$/, '');
+
+                            const sectionId = 'section-' + baseKey.replace('form.', '').replace(/\./g, '-');
+
+                            elementToScrollTo = document.getElementById(sectionId);
+                        }
+
+                        if (elementToScrollTo) {
+                            elementToScrollTo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                            if (elementToScrollTo.tagName === 'INPUT' || elementToScrollTo.tagName === 'SELECT') {
+                                elementToScrollTo.focus({ preventScroll: true });
+                            }
+                        }
+                    }, 150);
+                });
+            });
+        </script>
     </body>
 </html>

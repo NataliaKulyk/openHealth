@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Livewire\Employee\Traits;
 
+use App\Classes\eHealth\Api\EmployeeRequest as EHealthEmployeeRequest;
 use App\Classes\eHealth\Payloads\EHealthEmployeePayload;
 use App\Core\Arr;
 use App\Enums\Employee\RequestStatus;
 use App\Enums\Employee\RevisionStatus;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\EmployeeRequest;
-use App\Classes\eHealth\Api\EmployeeRequest as EHealthEmployeeRequest;
 use App\Models\Revision;
 use App\Repositories\Repository;
 use Exception;
@@ -37,19 +39,10 @@ trait ManagesEmployeeForm
     public function save(): void
     {
         try {
-            $this->form->validate($this->form->rulesForSave());
-            $preparedDataForDb = $this->form->getPreparedData();
-
-            $this->employeeRequest = $this->getEmployeeRequestForSave();
-
-            if ($this->employeeRequest && is_null($this->employeeRequest->uuid)) {
-                DB::transaction(fn() => $this->updateExistingDraft($preparedDataForDb));
-            } else {
-                DB::transaction(fn() => $this->createNewDraft($preparedDataForDb));
-            }
-
+            DB::transaction(fn() => $this->saveOrUpdateDraft());
             $this->dispatch('flashMessage', ['message' => __('forms.employee_request_saved_successfully'), 'type' => 'success']);
-
+        } catch (ValidationException $e) {
+            $this->handleValidationException($e);
         } catch (Exception $e) {
             $this->handleException($e);
             throw $e;
@@ -57,47 +50,25 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * A self-contained SIGN method. It controls the entire process of updating,
-     * signing, and finalizing a draft within a single database transaction.
-     * It does NOT call the generic save() method to avoid logical conflicts.
-     *
-     * @throws Exception
+     * A self-contained SIGN method. It controls the entire process of validating,
+     * saving, signing, and finalizing a draft within a single database transaction.
      */
     public function sign()
     {
-        // Start a database transaction to ensure atomicity.
         DB::beginTransaction();
-
         try {
-            // Step 1: Validate the form data first.
-            $this->form->validate($this->form->rulesForSave());
-            $preparedDataForDb = $this->form->getPreparedData();
+            // Step 1: Use the unified method to validate and save/update the draft.
+            $requestToSign = $this->saveOrUpdateDraft();
 
-            // Step 2: Forcefully load the draft we are working on.
-            $requestToSign = EmployeeRequest::with('revision')->find($this->employeeRequestId);
-            if (!$requestToSign) {
-                throw new \RuntimeException('Employee Request draft not found for signing.');
-            }
-            if ($requestToSign->uuid) {
-                throw new \RuntimeException('This request has already been signed and sent to eHealth.');
-            }
+            // Step 2: Validate KEP-specific fields.
+            $this->form->validate($this->form->rulesForKepOnly());
 
-            // Step 3: Update the draft and its revision with the latest data from the form.
-            $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
-            $requestToSign->fill($requestAttributes)->save();
+            // Step 3: Proceed with signing.
+            $requestToSign->load('revision');
+            $nestedDataForRevision = $requestToSign->revision->data;
 
-            $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-            if ($requestToSign->revision) {
-                $requestToSign->revision->update(['data' => $nestedDataForRevision]);
-            } else {
-                $this->saveRevisionForRequest($requestToSign, $nestedDataForRevision);
-            }
-
-            // Step 4: Prepare the data payload for eHealth using the updated revision data.
-            // We call the dedicated Payload class for this.
             $payloadToSign = EHealthEmployeePayload::prepare($nestedDataForRevision);
 
-            // Step 5: Sign the prepared payload.
             $signedContent = signatureService()->signData(
                 $payloadToSign,
                 $this->form->password,
@@ -107,40 +78,48 @@ trait ManagesEmployeeForm
                 $nestedDataForRevision['party']['tax_id']
             );
 
-            // Step 6: Send the signed request to eHealth via our API class.
+            // Step 4: Send to eHealth API.
             $ehealthData = new EHealthEmployeeRequest()->create($signedContent);
-
-            // Step 7: Finalize local records with data from the eHealth response.
             $validatedData = new EHealthEmployeeRequest()->validateCreateResponseFromArray($ehealthData);
 
-            $requestToSign->update(
-                [
-                    'uuid'   => $validatedData['uuid'],
-                    'status' => RequestStatus::SIGNED,
-                ]
-            );
+            // Step 5: Update local records with eHealth response.
+            $requestToSign->update(['uuid' => $validatedData['uuid'], 'status' => RequestStatus::SIGNED]);
+            $requestToSign->revision->update(['ehealth_response' => $ehealthData, 'status' => RevisionStatus::SENT]);
 
-            $requestToSign->revision->update(
-                [
-                    'ehealth_response' => $ehealthData,
-                    'status'           => RevisionStatus::SENT,
-                ]
-            );
-
-            // If everything is successful, commit the transaction.
             DB::commit();
 
-            // Step 8: Provide feedback to the user and redirect.
-            session()?->flash('success', 'Request has been successfully signed and sent to eHealth.');
+            session()?->flash('success', __('employees.sign_success'));
             $this->resetSignatureFields();
             return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
 
-        } catch (Exception $e) {
-            // If anything fails, roll back the entire transaction.
+        } catch (EHealthValidationException $e) {
+            DB::rollBack();
+            $this->handleEHealthValidationError($e);
+        } catch (EHealthResponseException $e) {
             DB::rollBack();
             $this->handleException($e);
-            return null;
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            $this->handleValidationException($e);
+        } catch (Exception $e) {
+            DB::rollBack();
+            // Special handling for signature-related errors (e.g., wrong password)
+            if (str_contains(strtolower($e->getMessage()), 'password') || str_contains(strtolower($e->getMessage()), 'key')) {
+                // Add an error specifically to the password field to show it inside the modal.
+                $this->addError('form.password', $e->getMessage());
+            } else {
+                // For all other unexpected errors, use the general handler.
+                $this->handleException($e);
+            }
         }
+    }
+
+    /**
+     * Resets only the fields related to the digital signature form inputs.
+     */
+    public function resetSignatureFields(): void
+    {
+        $this->form->reset('keyContainerUpload', 'password', 'knedp');
     }
 
     /**
@@ -150,9 +129,7 @@ trait ManagesEmployeeForm
     {
         $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
         $this->employeeRequest->fill($requestAttributes)->save();
-
         $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-
         if ($this->employeeRequest?->revision()) {
             $this->employeeRequest?->revision()->update(['data' => $nestedDataForRevision]);
         } else {
@@ -162,26 +139,57 @@ trait ManagesEmployeeForm
 
     /**
      * Creates a new draft request and its associated revision.
-     *
-     * @throws Exception
      */
     protected function createNewDraft(array $preparedDataForDb): void
     {
-        $newRequest = Repository::employee()->store(
-            $preparedDataForDb,
-            legalEntity(),
-            new EmployeeRequest(),
-            null,
-            true
-        );
-
+        $newRequest = Repository::employee()->store($preparedDataForDb, legalEntity(), new EmployeeRequest(), null, true);
         $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
         $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
-
         $this->employeeRequest = $newRequest;
         if (property_exists($this, 'employeeRequestId')) {
             $this->employeeRequestId = $newRequest->id;
         }
+    }
+
+    /**
+     * Handles a detailed validation error from the eHealth API.
+     */
+    protected function handleEHealthValidationError(EHealthValidationException $e): void
+    {
+        $reverseKeyMap = EHealthEmployeePayload::getReverseKeyMap();
+
+        $errorList = collect($e->getDetails())->map(function ($detail) use ($reverseKeyMap) {
+            $param = $detail['entry'] ?? ($detail['param'] ?? 'unknown');
+            $param = str_replace(['$.', 'employee_request.'], '', $param);
+
+            $localKey = strtr($param, $reverseKeyMap);
+            $fieldName = __('validation.attributes.' . $localKey);
+
+            if ($fieldName === ('validation.attributes.' . $localKey)) {
+                $fieldName = $localKey; // Fallback to technical name if translation not found
+            }
+
+            $message = $detail['rules'][0]['description'] ?? ($detail['msg'] ?? 'Invalid value');
+            return "<b>{$fieldName}:</b> {$message}";
+        });
+
+        $header = __('forms.ehealth_validation_error_header');
+        $fullMessage = "<p class='mb-2'>{$header}</p><ul class='list-disc list-inside text-left'>" .
+            $errorList->map(fn($item) => "<li>{$item}</li>")->implode('') .
+            "</ul>";
+
+        $this->dispatch('close-signature-modal');
+        $this->dispatch('flashMessage', ['message' => $fullMessage, 'type' => 'error', 'persistent' => true]);
+    }
+
+    /**
+     * A centralized exception handler for generic, non-validation errors.
+     */
+    private function handleException(Exception $e): void
+    {
+        Log::error('Process failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+        $this->dispatch('close-signature-modal');
+        $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
     }
 
     /**
@@ -194,7 +202,6 @@ trait ManagesEmployeeForm
         $documentsChunk = $flatData['documents'] ?? [];
         $phonesChunk = $flatData['phones'] ?? [];
         $doctorChunk = $flatData['doctor'] ?? [];
-
         return [
             'employee_request_data' => $employeeChunk,
             'party' => $partyChunk,
@@ -216,27 +223,79 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Resets only the fields related to the digital signature form inputs.
+     * The single source of truth for creating or updating a draft.
+     * This method contains the core logic for validation and persistence.
+     *
+     * @return EmployeeRequest The saved or updated request instance.
+     * @throws ValidationException
      */
-    public function resetSignatureFields(): void
+    private function saveOrUpdateDraft(): EmployeeRequest
     {
-        $this->form->reset('keyContainerUpload', 'password', 'knedp');
+        $this->form->validate($this->form->rulesForSave());
+
+        $preparedDataForDb = $this->form->getPreparedData();
+        $this->employeeRequest = $this->getEmployeeRequestForSave();
+
+        if ($this->employeeRequest && is_null($this->employeeRequest->uuid)) {
+            $this->updateExistingDraft($preparedDataForDb);
+        } else {
+            $this->createNewDraft($preparedDataForDb);
+        }
+
+        return $this->employeeRequest;
     }
 
     /**
-     * A centralized exception handler for the trait.
+     * Handles ValidationException by dispatching events for user feedback and scrolling.
+     *
+     * @param ValidationException $e
+     * @throws ValidationException
      */
-    private function handleException(Exception $e): void
+    private function handleValidationException(ValidationException $e): void
     {
-        Log::error('Process failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+        $validator = $e->validator;
 
-        $message = $e instanceof ValidationException
-            ? __('forms.validation_failed_check_form')
-            : $e->getMessage();
+        $errorKeys = collect($validator->errors()->keys());
+        $sections = [
+            'form.documents',
+            'form.doctor.educations',
+            'form.doctor.specialities',
+            'form.doctor.qualifications',
+            'form.doctor.scienceDegrees',
+        ];
 
-        $this->dispatch('flashMessage', [
-            'message' => $message,
-            'type' => 'error',
-        ]);
+        foreach ($sections as $sectionPrefix) {
+            if ($errorKeys->contains(fn($key) => str_starts_with($key, $sectionPrefix . '.'))) {
+                $validator->errors()->add(
+                    $sectionPrefix,
+                    __('forms.section_contains_errors') // Використовуємо єдиний ключ перекладу
+                );
+            }
+        }
+
+        $errors = $validator->errors()->keys();
+        $firstErrorKey = $errors[0] ?? null;
+
+        $isKepError = collect($errors)->contains(fn ($key) => str_starts_with($key, 'form.password') || str_starts_with($key, 'form.keyContainerUpload') || str_starts_with($key, 'form.knedp'));
+
+        if ($isKepError) {
+            throw $e;
+        }
+
+        $fieldNames = collect($errors)
+            ->map(fn($key) => $validator->getDisplayableAttribute($key))
+            ->unique()
+            ->implode(', ');
+
+        $flashMessage = __('forms.validation_fix_fields', ['fields' => $fieldNames]);
+
+        $this->dispatch('close-signature-modal');
+        $this->dispatch('flashMessage', ['message' => $flashMessage, 'type' => 'error', 'persistent' => true]);
+
+        if ($firstErrorKey) {
+            $this->dispatch('validation-failed-scroll', firstErrorKey: $firstErrorKey);
+        }
+
+        throw $e;
     }
 }

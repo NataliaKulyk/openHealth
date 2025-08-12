@@ -37,14 +37,18 @@ class CipherApi
         string $password,
         string $base64File,
         string $knedp,
+        string $signatoryInitiator,
         string $taxId,
         ?string $edrpou = null
-    ): array|string
-    {
+    ): array|string {
         $this->dataSignature = base64_encode($dataSignature);
         $this->password = $password;
         $this->base64File = $base64File;
         $this->knedp = $knedp;
+
+        if (!in_array($signatoryInitiator, [self::SIGNATORY_INITIATOR_BUSINESS, self::SIGNATORY_INITIATOR_PERSON])) {
+            throw new \InvalidArgumentException('Invalid signatory initiator provided.');
+        }
 
         try {
             $this->createSession();
@@ -200,6 +204,7 @@ class CipherApi
 
         // Compare the provided taxId with the one in the key
         if ($inKeyDrfou !== $taxId) {
+            dd($inKeyDrfou, $taxId);
             ErrorHandler::throwError(
                 [
                     'message'      => __('validation.custom.cipher.drfouDiffer'),

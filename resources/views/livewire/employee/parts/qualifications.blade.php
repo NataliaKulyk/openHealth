@@ -1,5 +1,5 @@
 <div class="overflow-x-auto relative">
-    <fieldset class="fieldset"
+    <fieldset class="fieldset" id="section-doctor-qualifications"
               {{-- Binding documents to Alpine, it will be re-used in the modal.
                 Note that it's necessary for modal to work properly --}}
               x-data="{
@@ -15,6 +15,10 @@
         <legend class="legend">
             <h2>{{ __('forms.qualifications') }}</h2>
         </legend>
+
+        @error('form.doctor.qualifications')
+        <p class="text-error -mt-2 mb-4">{{ $message }}</p>
+        @enderror
 
         <table class="table-input w-inherit">
             <thead class="thead-input">

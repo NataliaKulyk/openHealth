@@ -218,6 +218,7 @@ return [
 
     // Doctor Specific
     'education' => 'Освіта',
+    'educations' => 'Освіти',
     'add_education' => 'Додати освіту',
     'education_type' => 'Тип освіти',
     'add_education_type' => 'Додати тип освіти',
@@ -376,6 +377,10 @@ return [
 
     // Notifications & Errors
     'no_actions_available' => 'У вас немає дозволених дій для цього розділу.',
+    'validation_fix_fields' => 'Будь ласка, виправте помилки в полях: :fields.',
+    'ehealth_validation_error_header' => 'eHealth відхилив запит через невірні дані. Будь ласка, виправте:',
+    'invalid_kep_password' => 'Невірний пароль до ключа або ключ пошкоджено. Будь ласка, перевірте дані та спробуйте ще раз.',
+    'section_contains_errors' => 'Будь ласка, перевірте помилки в цьому розділі.',
     'signature_validation_error' => 'Помилка під час підписання',
     'validation_failed_check_form' => 'Помилка при заповнені форми',
     'errors' => [
