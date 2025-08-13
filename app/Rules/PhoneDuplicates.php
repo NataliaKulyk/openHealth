@@ -3,8 +3,8 @@
 namespace App\Rules;
 
 use Closure;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Translation\PotentiallyTranslatedString;
 
 class PhoneDuplicates implements ValidationRule
@@ -37,12 +37,20 @@ class PhoneDuplicates implements ValidationRule
             return;
         }
 
+        // Check if the $phonesToValidate is array of phones or single phone
+        $isMultiPhone = isset($phonesToValidate[0]) && is_array($phonesToValidate[0]);
+
+        if (!$isMultiPhone) {
+            // For single phone further checking not necessary
+            return;
+        }
+
         $types = Arr::pluck($phonesToValidate, 'type');
         $typeCounts = array_count_values($types);
 
         foreach ($typeCounts as $type => $count) {
             if ($count > 1) {
-                $fail(__('validation.phone.duplicates'));
+                $fail(__('validation.phone.dublicates'));
                 return;
             }
         }

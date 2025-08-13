@@ -4,7 +4,7 @@ namespace App\Rules\DivisionRules\HealthcareRules;
 
 use Closure;
 use App\Models\Division;
-
+use App\Models\LegalEntity;
 
 class CategoryInPharmacyRule extends HealthcareRule
 {
@@ -26,7 +26,7 @@ class CategoryInPharmacyRule extends HealthcareRule
     protected function checkRule($data = null): bool
     {
         foreach($this->division->healthcareService as $healthcare_service) {
-            if ($healthcare_service->getHealthcareCategoryAttribute() === 'PHARMACY') {
+            if ($healthcare_service->getHealthcareCategoryAttribute() === LegalEntity::TYPE_PHARMACY) {
                 return true;
             }
         }

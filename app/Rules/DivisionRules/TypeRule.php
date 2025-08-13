@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace App\Rules\DivisionRules;
 
-use Illuminate\Contracts\Validation\ValidationRule;
-use App\Exceptions\CustomValidationException;
 use Closure;
+use App\Models\Division;
+use App\Exceptions\CustomValidationException;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 class TypeRule implements ValidationRule
 {
-    public const ALLOWED_LEGAL_ENTITY_TYPES = ['PRIMARY_CARE', 'MSP', 'MSP_PHARMACY'];
-
-    public const ALLOWED_DIVISION_TYPES = ['CLINIC', 'AMBULANT_CLINIC', 'FAP'];
-
-    public const DIVISION_TYPE_RULES_LIST = [
+    /**
+     * List of division type rule method names to be checked during validation.
+     *
+     * Each method in this list should return a boolean indicating whether the rule passes.
+     * Used in the validate() method to sequentially check all division type rules.
+     *
+     * @var array
+     */
+    public const array DIVISION_TYPE_RULES_LIST = [
         'checkDivisionType',
         'checkMapping'
     ];
@@ -46,16 +51,39 @@ class TypeRule implements ValidationRule
         }
     }
 
+    /**
+     * Throw a custom validation exception with the current error message.
+     *
+     * This method is called when a division type rule fails validation.
+     *
+     * @return void
+     *
+     * @throws CustomValidationException
+     */
     protected function throwError(): void
     {
         throw new CustomValidationException($this->message(), 'custom');
     }
 
+    /**
+     * Set the custom error message for the validation rule.
+     *
+     * This message will be used when throwing a validation exception.
+     *
+     * @param string $message The error message to set.
+     *
+     * @return void
+     */
     protected function setMessage(string $message): void
     {
         $this->message = $message;
     }
 
+    /**
+     * Get the current error message for the validation rule.
+     *
+     * @return string The error message.
+     */
     protected function message(): string
     {
         return $this->message;
@@ -90,8 +118,8 @@ class TypeRule implements ValidationRule
         $legalEntityType = legalEntity()->type;
         $divisionType = $this->division['type'];
 
-        if (in_array($divisionType, self::ALLOWED_DIVISION_TYPES) &&
-            in_array($legalEntityType, self::ALLOWED_LEGAL_ENTITY_TYPES)
+        if (in_array($divisionType, Division::getValidDivisionTypes()) &&
+            in_array($legalEntityType, Division::getValidLegalEntityTypes())
         ) {
             return true;
         }

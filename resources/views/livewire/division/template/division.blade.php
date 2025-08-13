@@ -1,30 +1,48 @@
+@php
+    $readonly = $action === 'show';
+
+    // Determine an appropriate HTTP-method
+    $httpMethod = match ($action) {
+        'show'   => 'GET',
+        'update'   => 'PATCH',
+        'store' => 'POST',
+        default  => 'GET'
+    };
+@endphp
+
 <div>
     <x-messages />
 
-    @php
-        $mode = $mode === 'edit' ? 'update' : 'store';
-    @endphp
-
     <x-section-navigation x-data="{ showFilter: false }" class=''>
         <x-slot name='title'>
-            {{ $mode === 'store' ? __('Додати місце надання послуг') : __('Редагувати місце надання послуг') }}
+            @yield('title')
         </x-slot>
-        @nonempty($currentDivision)
-        <x-slot name="description">{{ $currentDivision['type'] }} '{{ $currentDivision['name'] }}'</x-slot>
-        @endnonempty
+
+        <x-slot name="description">
+            @yield('description')
+        </x-slot>
     </x-section-navigation>
 
-    <div class='inline-block min-w-full align-middle'>
-        <x-forms.forms-section submit="{{ $mode }}">
-            <x-slot name='form'>
+    <section class="section-form">
+         <div class="form-row" x-data="{ isDisabled: @json($readonly) }">
+            {{-- <form submit="{{ $action }}"> --}}
+                <form submit="{{ $action }}">
+
+                @if (!in_array(strtoupper($httpMethod), ['GET', 'POST']))
+                    @method($httpMethod)
+                @endif
+
                 <div class='flex bg-white p-6 flex-col'>
                     <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
+                        <!-- Personal Data Fieldset -->
                         <div class='py-4'>
                             <h3 class='font-medium text-2xl	text-black dark:text-white'>
-                                {{ __('Особисті дані') }}
+                                {{ __('forms.main_information') }}
                             </h3>
                         </div>
+
                         <div class='grid grid-cols-4 gap-6'>
+                            <!-- Division Name -->
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='name' class='default-label'>
@@ -34,12 +52,13 @@
                                 <x-slot name='input'>
                                     <x-forms.input
                                         class='default-input'
-                                        wire:model='formService.division.name'
+                                        wire:model='divisionForm.division.name'
                                         type='text'
                                         id='name'
+                                        x-bind:disabled="isDisabled"
                                     />
                                 </x-slot>
-                                @error('formService.division.name')
+                                @error('divisionForm.division.name')
                                     <x-slot name='error'>
                                         <x-forms.error>
                                             {{ $message }}
@@ -48,6 +67,7 @@
                                 @enderror
                             </x-forms.form-group>
 
+                            <!-- Division Email -->
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='email' class='default-label'>
@@ -57,12 +77,13 @@
                                 <x-slot name='input'>
                                     <x-forms.input
                                         class='default-input'
-                                        wire:model='formService.division.email'
+                                        wire:model='divisionForm.division.email'
                                         type='text'
                                         id='email'
+                                        x-bind:disabled="isDisabled"
                                     />
                                 </x-slot>
-                                @error('formService.division.email')
+                                @error('divisionForm.division.email')
                                     <x-slot name='error'>
                                         <x-forms.error>
                                             {{ $message }}
@@ -71,6 +92,7 @@
                                 @enderror
                             </x-forms.form-group>
 
+                            <!-- Division Type -->
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='type' class='default-label'>
@@ -80,10 +102,10 @@
                                 <x-slot name='input'>
                                     <x-forms.select
                                         class='default-input'
-                                        wire:model='formService.division.type'
+                                        wire:model='divisionForm.division.type'
                                         type='text'
                                         id='type'
-                                        x-bind:disabled="{{ $mode === 'update' ? 'true' : 'false' }}"
+                                        x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show' ? 'true' : 'false' }}"
                                     >
                                         <x-slot name='option'>
                                             <option>{{ __('forms.type') }}</option>
@@ -93,7 +115,7 @@
                                         </x-slot>
                                     </x-forms.select>
                                 </x-slot>
-                                @error('formService.division.type')
+                                @error('divisionForm.division.type')
                                     <x-slot name='error'>
                                         <x-forms.error>
                                             {{ $message }}
@@ -102,6 +124,7 @@
                                 @enderror
                             </x-forms.form-group>
 
+                            <!-- Division External ID -->
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='external_id' class='default-label'>
@@ -111,13 +134,13 @@
                                 <x-slot name='input'>
                                     <x-forms.input
                                         class='default-input'
-                                        wire:model='formService.division.external_id'
+                                        wire:model='divisionForm.division.external_id'
                                         type='text'
                                         id='external_id'
-                                        x-bind:disabled="{{ $mode === 'update' ? 'true' : 'false' }}"
+                                        x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show'? 'true' : 'false' }}"
                                     />
                                 </x-slot>
-                                @error('formService.division.external_id')
+                                @error('divisionForm.division.external_id')
                                     <x-slot name='error'>
                                         <x-forms.error>
                                             {{ $message }}
@@ -126,6 +149,7 @@
                                 @enderror
                             </x-forms.form-group>
 
+                            <!-- PHONE TYPE -->
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='phone_type' class='default-label'>
@@ -134,9 +158,10 @@
                                 </x-slot>
                                 <x-slot name='input'>
                                     <x-forms.select
-                                        wire:model.defer='formService.division.phones.type'
+                                        wire:model.defer='divisionForm.division.phones.type'
                                         class='default-select'
                                         id="phone_type"
+                                        x-bind:disabled="isDisabled"
                                     >
                                         <x-slot name='option'>
                                             <option>{{ __('forms.type_mobile') }} *</option>
@@ -147,15 +172,15 @@
                                             @endforeach
                                         </x-slot>
                                     </x-forms.select>
-                                    @error('formService.division.phones.type')
+                                    @error('divisionForm.division.phones.type')
                                         <x-forms.error>
                                             {{ $message }}
                                         </x-forms.error>
                                     @enderror
                                 </x-slot>
-
                             </x-forms.form-group>
 
+                            <!-- PHONES -->
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='phone' class='default-label'>
@@ -167,10 +192,11 @@
                                         id='phone'
                                         class='default-input'
                                         x-mask='+380999999999'
-                                        wire:model='formService.division.phones.number'
+                                        wire:model='divisionForm.division.phones.number'
                                         type='text'
+                                        x-bind:disabled="isDisabled"
                                     />
-                                    @error('formService.division.phones.number')
+                                    @error('divisionForm.division.phones.number')
                                         <x-forms.error>
                                             {{ $message }}
                                         </x-forms.error>
@@ -189,10 +215,11 @@
                                         id='longitude'
                                         class='default-input'
                                         x-mask='99.999999'
-                                        wire:model='formService.division.location.longitude'
+                                        wire:model='divisionForm.division.location.longitude'
                                         type='text'
+                                        x-bind:disabled="isDisabled"
                                     />
-                                    @error('formService.division.location.longitude')
+                                    @error('divisionForm.division.location.longitude')
                                         <x-forms.error>
                                             {{ $message }}
                                         </x-forms.error>
@@ -211,10 +238,11 @@
                                         id='latitude'
                                         class='default-input'
                                         x-mask='99.999999'
-                                        wire:model='formService.division.location.latitude'
+                                        wire:model='divisionForm.division.location.latitude'
                                         type='text'
+                                        x-bind:disabled="isDisabled"
                                     />
-                                    @error('formService.division.location.latitude')
+                                    @error('divisionForm.division.location.latitude')
                                         <x-forms.error>
                                             {{ $message }}
                                         </x-forms.error>
@@ -237,6 +265,7 @@
                             :districts="$districts"
                             :settlements="$settlements"
                             :streets="$streets"
+                            :readonly="$readonly"
                             class='mb-4 flex justify-between wrap flex-col flex-wrap gap-6 xl:flex-row'
                         />
                     </div>
@@ -253,7 +282,7 @@
                                 >
                                 </button>
                             </h3>
-                            @if($mode === 'store')
+                            @if($action === 'store')
                                 <p x-show='working' x-cloak class="pt-4 text-xs italic text-orange-500">{{ __('forms.schedule_note') }}</p>
                             @endif
                         </div>
@@ -262,8 +291,8 @@
                             <div x-show='working' class='grid grid-cols-2 gap-6 w-full'>
                                 @foreach ($weekdays as $key => $day)
                                     <div :key={{ $key }} x-data="{
-                                            shift: @json(count($formService->getDivisionParam('working_hours')[$key]) > 1),
-                                            show_work: @json(!empty($formService->getDivisionParam('working_hours')[$key][0]) || $mode === 'store'),
+                                            shift: @json(count($divisionForm->getDivisionParam('working_hours')[$key]) > 1),
+                                            show_work: @json(!empty($divisionForm->getDivisionParam('working_hours')[$key][0]) || $action === 'store'),
                                             checkShift() {
                                                 this.shift = !this.show_work;
                                             }
@@ -281,6 +310,7 @@
                                                             wire:click="notWorking('{{ $key }}', show_work); show_work = !show_work;"
                                                             type='checkbox'
                                                             x-bind:checked="!show_work"
+                                                            x-bind:disabled="isDisabled"
                                                             x-on:click="checkShift()"
                                                         />
                                                         <label class='ms-2 text-sm font-medium text-gray-900 dark:text-gray-300'>
@@ -295,18 +325,20 @@
                                                                     wire:click="noShift('{{ $key }}', shift); shift = !shift;"
                                                                     type='checkbox'
                                                                     x-bind:checked="shift"
+                                                                    x-bind:disabled="isDisabled"
                                                                 />
                                                                 <label class='ms-2 text-xs font-medium text-gray-900 dark:text-gray-300'>
                                                                     {{ __('forms.by_shift') }}
                                                                 </label>
                                                             </div>
 
-                                                            @if (count($formService->getDivisionParam('working_hours')[$key]) < 4)
+                                                            @if (count($divisionForm->getDivisionParam('working_hours')[$key]) < 4)
                                                                 <x-button
                                                                     x-show='shift'
                                                                     class='font-semibold text-[10px] text-left text-gray-500 uppercase hover:text-gray-900 active:text-gray-900'
                                                                     @click.prevent=''
                                                                     wire:click="addAvailableShift('{{ $key }}')"
+                                                                    x-bind:disabled="isDisabled"
                                                                 >
                                                                     {{ __('forms.add_shift') }}
                                                                 </x-button>
@@ -316,9 +348,9 @@
                                                 </x-slot>
                                             </x-forms.form-group>
 
-                                            @if($mode === 'store' || !empty($formService->getDivisionParam('working_hours')[$key]))
+                                            @if($action === 'store' || !empty($divisionForm->getDivisionParam('working_hours')[$key]))
                                             <div class='flex items-center flex-col flex-wrap gap-2 mb-4 w-full'>
-                                            @foreach ($formService->getDivisionParam('working_hours')[$key] as $shift => $shift_hours)
+                                            @foreach ($divisionForm->getDivisionParam('working_hours')[$key] as $shift => $shift_hours)
                                                 <div class='flex  justify-between gap-4 mb-4 w-full w-1/4'>
                                                     <x-forms.form-group
                                                         x-show="show_work"
@@ -335,10 +367,11 @@
                                                         <x-slot name='input'>
                                                             <x-forms.input-time
                                                                 id="opened_by-{{ $key }}-{{ $shift }}"
-                                                                wire:model="formService.division.working_hours.{{ $key }}.{{ $shift }}.0"
+                                                                wire:model="divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.0"
+                                                                x-bind:disabled="isDisabled"
                                                             />
                                                         </x-slot>
-                                                        @error("formService.division.working_hours.{{ $key }}.{{ $shift }}.0")
+                                                        @error("divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.0")
                                                             <x-forms.error>
                                                                 {{ $message }}
                                                             </x-forms.error>
@@ -359,10 +392,11 @@
                                                         <x-slot name='input'>
                                                             <x-forms.input-time
                                                                 id="closed_by-{{ $key }}-{{ $shift }}"
-                                                                wire:model="formService.division.working_hours.{{ $key }}.{{ $shift }}.1"
+                                                                wire:model="divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.1"
+                                                                x-bind:disabled="isDisabled"
                                                             />
                                                         </x-slot>
-                                                        @error("formService.division.working_hours.{{ $key }}.{{ $shift }}.1")
+                                                        @error("divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.1")
                                                             <x-forms.error>
                                                                 {{ $message }}
                                                             </x-forms.error>
@@ -371,7 +405,7 @@
 
                                                     <div class="self-center pt-6" x-data="{ isShift: {{ $shift > 0 ? 'true' : 'false' }} }">
                                                         <x-button
-                                                            x-show="shift && isShift && show_work"
+                                                            x-show="shift && isShift && show_work && isDisabled"
                                                             @click.prevent=''
                                                             wire:click="deleteShift('{{ $key }}', '{{ $shift }}')"
                                                             class="px-2 py-1  text-red-500 text-2xl font-bold rounded"
@@ -391,23 +425,12 @@
                         @endif
                     </div>
 
-                    <div class='mb-4.5 mt-6 flex flex-col gap-6 xl:flex-row justify-between items-center'>
-                        <x-secondary-button>
-                            <div>
-                                <a href="{{ route('division.index', [legalEntity()]) }}">
-                                    {{ __('forms.back') }}
-                                </a>
-                            </div>
-                        </x-secondary-button>
-                        <div class='xl:w-1/4 text-right'>
-                            <x-button type='submit' class="button-primary">
-                                @if($mode === 'store')
-                                    {{ __('forms.create') }}
-                                @else
-                                    {{ __('forms.update') }}
-                                @endif
-                            </x-button>
-                        </div>
+                    <div class='mb-4.5 mt-6 flex flex-col gap-6 xl:flex-row justify-left items-center'>
+                        <a role="button" class="alternative-button cursor-pointer" href="javascript:history.back()">
+                            {{ __('forms.back') }}
+                        </a>
+
+                        @yield('additional-buttons')
                     </div>
 
                     <div
@@ -433,7 +456,7 @@
                         </svg>
                     </div>
                 </div>
-            </x-slot>
-        </x-forms.forms-section>
-    </div>
+            </form>
+        </div>
+    </section>
 </div>

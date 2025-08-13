@@ -10,6 +10,7 @@ use App\Classes\eHealth\Api\AdressesApi;
 
 class AddressesSearch extends Component
 {
+    public bool $readonly;
     public array $address = [];
 
     public ?array $regions = [];
@@ -27,8 +28,10 @@ class AddressesSearch extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct($address, $districts, $settlements, $streets, $class)
+    public function __construct($address, $districts, $settlements, $streets, $class, $readonly = false)
     {
+        $this->readonly = $readonly;
+
         $this->address = $address;
 
         $this->regions = AdressesApi::_regions()['data'] ?? [];

@@ -7,11 +7,12 @@ namespace App\Livewire\Division\Forms;
 use Log;
 use App\Rules\Email;
 use App\Traits\FormTrait;
-use App\Repositories\Repository;
+use App\Rules\PhoneNumber;
+use App\Rules\InDictionary;
+use App\Rules\PhoneDuplicates;
 use App\Classes\eHealth\EHealth;
 use Livewire\Attributes\Validate;
 use App\Rules\DivisionRules\TypeRule;
-use App\Rules\DivisionRules\PhoneRule;
 use App\Repositories\AddressRepository;
 use App\Rules\DivisionRules\AddressRule;
 use App\Rules\DivisionRules\LocationRule;
@@ -32,8 +33,6 @@ class DivisionForm extends Form
         'division.name' => 'required|min:6|max:255',
         'division.type' => 'required',
         'division.email' => ['required', 'email', new Email()],
-        'division.phones.number' => 'required|string',
-        'division.phones.type' => 'required',
         'division.addresses' => 'required',
     ])]
     public ?array $division = [];
@@ -43,71 +42,79 @@ class DivisionForm extends Form
         $this->addressRepository = $addressRepository;
     }
 
+    /**
+     * Get the current division form data as an array.
+     *
+     * @return array The division form data.
+     */
     public function getDivision(): array
     {
         return $this->division;
     }
 
+    /**
+     * Set the division's form data.
+     * Replaces the current division's form data with the provided array.
+     *
+     * @param array $division The division data to set in the form.
+     *
+     * @return void
+     */
     public function setDivision(array $division)
     {
         $this->division = $division;
     }
 
+    /**
+     * Returns the value of the specified parameter from the division's array,
+     * or an empty string if the parameter does not exist.
+     *
+     * @param string $param The parameter name to retrieve.
+     *
+     * @return mixed The value of the parameter, or an empty string if not set.
+     */
     public function getDivisionParam(string $param): mixed
     {
         return $this->division[$param] ?? '';
     }
 
+    /**
+     * Assigns the given value to the specified parameter in the division array.
+     *
+     * @param string $param The parameter name to set.
+     * @param mixed $value The value to assign to the parameter.
+     *
+     * @return void
+     */
     public function setDivisionParam(string $param, mixed $value): void
     {
         $this->division[$param] = $value;
     }
 
-    // It mostly concerns to the 'work_hours' value
+    /**
+     * Check if the specified division parameter exists and its value is null or empty.
+     *
+     * This is mostly used for parameters 'work_hours' to determine if the key is present
+     * in the division's array and its value is considered "empty" (null, empty string, or empty array).
+     *
+     * @param string $paramName
+     *
+     * @return bool
+     */
     public function isDivisionParamExistAndNull(string $paramName): bool
     {
         return array_key_exists($paramName, $this->division) && !$this->division[$paramName];
     }
 
+    /**
+     * Remove the given parameter from the division's array if it exists.
+     *
+     * @param string $paramName
+     * @return void
+     */
     public function unsetDivisionParam(string $paramName)
     {
         unset($this->division[$paramName]);
-    }
-
-    protected function customRules()
-    {
-        return [
-            // Check that legal entity is in ‘ACTIVE’ or ‘SUSPENDED’ status
-            new LegalEntityStatusRule(),
-            // Check that location exists in request for legal entity with type PHARMACY
-            new LocationRule($this->division),
-            // Check that all bunch of the address' data is correct and valid
-            new AddressRule($this->division),
-            // Check that working hours schedule is correct
-            new WorkingHoursRule($this->division),
-            // Check that phone type exists in dictionaries and valid accordingly to international rules
-            new PhoneRule($this->division),
-            // Check that Division type exists in dictionaries
-            new TypeRule($this->division),
-        ];
-    }
-
-    /**
-     * Rules for business-logic validation
-     *
-     * @return string
-     */
-    protected function customRulesValidation(): string
-    {
-        foreach ($this->customRules() as $rule) {
-            try {
-                $rule->validate('', '', fn () => null);
-            } catch (CustomValidationException $e) {
-                return $e->getMessage();
-            }
-        }
-
-        return '';
     }
 
     /**
@@ -148,7 +155,14 @@ class DivisionForm extends Form
         return [
             'division.external_id' => 'nullable|integer|gt:0',
             'division.location.longitude' => 'nullable|numeric|required_with:division.location.latitude',
-            'division.location.latitude' => 'nullable|numeric|required_with:division.location.longitude'
+            'division.location.latitude' => 'nullable|numeric|required_with:division.location.longitude',
+            'division.phones.number' => ['required', 'string', new PhoneNumber()],
+            'division.phones.type' => [
+                'required',
+                'string',
+                new InDictionary('PHONE_TYPE'),
+                new PhoneDuplicates($this->division['phones'])
+            ],
         ];
     }
 
@@ -182,48 +196,6 @@ class DivisionForm extends Form
         }
 
         $this->division['working_hours'] = $arr;
-    }
-
-    /**
-     * Modify the data of existent Division
-     * Note: all the data should be present into $this->division property up to now
-     *
-     * @return array
-     */
-    public function updateDivision(): array|null
-    {
-        $uuid = $this->division['uuid'];
-        $division = removeEmptyKeys($this->division);
-
-        $division['addresses'] = $this->convertArrayKeysToSnakeCase($division['addresses']);
-
-        try {
-            return EHealth::division()->update(uuid: $uuid, data: $division)->validate();
-        } catch (\Exception $err) {
-            Log::error(self::class . ':updateDivision', ['error' => $err->getMessage()]);
-        }
-
-        return null;
-    }
-
-    /**
-     * Create the new Division
-     * Note: all the data should be present into $this->division property up to now
-     *
-     * @return array
-     */
-    public function createDivision(): array|null
-    {
-        $division = removeEmptyKeys($this->division);
-        $division['addresses'] = $this->convertArrayKeysToSnakeCase($division['addresses']);
-
-        try {
-            return EHealth::division()->create(data: $division)->validate();
-        } catch (\Exception $err) {
-            Log::error(self::class . ':updateDivision', ['error' => $err->getMessage()]);
-        }
-
-        return null;
     }
 
     /**
@@ -293,5 +265,51 @@ class DivisionForm extends Form
                 }
             }
         }
+    }
+
+    /**
+     * Get the list of custom validation rules for the division form.
+     *
+     * These rules cover business logic validation such as:
+     * - Legal entity status
+     * - Location requirements for certain division types
+     * - Address data validity
+     * - Working hours schedule correctness
+     * - Division type existence in dictionaries
+     *
+     * @return array An array of custom validation rule instances.
+     */
+    protected function customRules()
+    {
+        return [
+            // Check that legal entity is in ‘ACTIVE’ or ‘SUSPENDED’ status
+            new LegalEntityStatusRule(),
+            // Check that location exists in request for legal entity with type PHARMACY
+            new LocationRule($this->division),
+            // Check that all bunch of the address' data is correct and valid
+            new AddressRule($this->division),
+            // Check that working hours schedule is correct
+            new WorkingHoursRule($this->division),
+            // Check that Division type exists in dictionaries
+            new TypeRule($this->division),
+        ];
+    }
+
+    /**
+     * Rules for business-logic validation
+     *
+     * @return string
+     */
+    protected function customRulesValidation(): string
+    {
+        foreach ($this->customRules() as $rule) {
+            try {
+                $rule->validate('', '', fn () => null);
+            } catch (CustomValidationException $e) {
+                return $e->getMessage();
+            }
+        }
+
+        return '';
     }
 }

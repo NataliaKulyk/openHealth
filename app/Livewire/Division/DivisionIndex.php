@@ -4,57 +4,25 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
-use App\Classes\eHealth\EHealth;
 use Exception;
-use Livewire\Component;
 use App\Models\Division;
-use App\Traits\FormTrait;
-use App\Models\LegalEntity;
-use Livewire\Attributes\On;
 use Livewire\WithPagination;
+use App\Classes\eHealth\EHealth;
 use App\Repositories\Repository;
+use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Client\ConnectionException;
 
-class DivisionIndex extends Component
+class DivisionIndex extends DivisionComponent
 {
     use WithPagination;
-    use FormTrait;
 
-    public ?array $working_hours = [
-        'mon' => 'Понеділок',
-        'tue' => 'Вівторок',
-        'wed' => 'Середа',
-        'thu' => 'Четвер',
-        'fri' => 'П’ятниця',
-        'sat' => 'Субота',
-        'sun' => 'Неділя',
-    ];
-
-    public ?array $tableHeaders = [];
-
-    public string $mode = 'default';
-
-    public array $dictionaryNames = [
-        'DIVISION_TYPE'
-    ];
-
-    public function mount(LegalEntity $legalEntity): void
+    #[Computed]
+    public function tableHeaders(): array
     {
-        $this->tableHeaders();
-        $this->getDictionary();
-    }
-
-    #[On('refreshPage')]
-    public function refreshPage(): void
-    {
-        $this->dispatch('$refresh');
-    }
-
-    public function tableHeaders(): void
-    {
-        $this->tableHeaders = [
+        return [
             __('ID E-health '),
             __('forms.name'),
             __('forms.type'),
@@ -69,6 +37,8 @@ class DivisionIndex extends Component
      * Synchronize all the Divisisons with stored on the eHealths side
      *
      * @return void
+     *
+     * @throws Exception|ConnectionException
      */
     public function sync(): void
     {
@@ -77,10 +47,17 @@ class DivisionIndex extends Component
         try {
             $response = EHealth::division()->getMany();
 
-        } catch (Exception $err) {
-            Log::error(self::class . ':activate:', ['message' => $err->getMessage()]);
+            if (! $response->successful()) {
+                $this->logEHealthError($response,  'EHealth\'s Request response_error');
+
+                throw new ConnectionException('Cannot retrieve divisions list. See errors message upper...');
+            }
+        } catch (ConnectionException $err) {
+            Log::channel('e_health_errors')->error(static::class . ':activate:', ['message' => $err->getMessage()]);
 
             session()->flash('error', _('Помилка при обробці запиту до сервера'));
+
+            return;
         }
 
         $divisions = $response->validate();
@@ -110,6 +87,8 @@ class DivisionIndex extends Component
      * @param \App\Models\Division $division
      *
      * @return void
+     *
+     * @throws Exception|ConnectionException
      */
     public function activate(Division $division): void
     {
@@ -123,12 +102,16 @@ class DivisionIndex extends Component
             $response = EHealth::division()->activate($division->uuid);
 
             if (! $response->successful()) {
-                throw new Exception('response_error ' . $response->body());
+                $this->logEHealthError($response,  'EHealth\'s Request response_error');
+
+                throw new ConnectionException('Wrong activation request. See errors message upper...');
             }
-        } catch (Exception $err) {
-            Log::error(self::class . ':activate:', ['message' => $err->getMessage()]);
+        } catch (ConnectionException $err) {
+            Log::channel('e_health_errors')->error(static::class . ':activate:', ['message' => $err->getMessage()]);
 
             session()->flash('error', _('Помилка при обробці запиту до сервера'));
+
+            return;
         }
 
         $responseData = $response->getData();
@@ -136,7 +119,7 @@ class DivisionIndex extends Component
         try {
             Repository::division()->setAction($division, $responseData['status']);
         } catch (Exception $err) {
-            Log::error(self::class . ':activate:', ['message' => $err->getMessage()]);
+            Log::error(static::class . ':activate:', ['message' => $err->getMessage()]);
 
             session()->flash('error', _('Це місце надання послуг не вдалось активувати'));
         }
@@ -148,6 +131,8 @@ class DivisionIndex extends Component
      * @param \App\Models\Division $division
      *
      * @return void
+     *
+     * @throws Exception|ConnectionException
      */
     public function deactivate(Division $division): void
     {
@@ -161,12 +146,16 @@ class DivisionIndex extends Component
             $response = EHealth::division()->deactivate($division->uuid);
 
             if (! $response->successful()) {
-                throw new Exception('response_error ' . $response->body());
+                $this->logEHealthError($response,  'EHealth\'s Request response_error');
+
+                throw new ConnectionException('Wrong deactivation request. See errors message upper...');
             }
-        } catch (Exception $err) {
-            Log::error(self::class . ':activate:', ['message' => $err->getMessage()]);
+        } catch (ConnectionException $err) {
+            Log::channel('e_health_errors')->error(static::class . ':activate:', ['message' => $err->getMessage()]);
 
             session()->flash('error', _('Помилка при обробці запиту до сервера'));
+
+            return;
         }
 
         $responseData = $response->getData();
@@ -174,17 +163,20 @@ class DivisionIndex extends Component
         try {
             Repository::division()->setAction($division, $responseData['status']);
         } catch (Exception $err) {
-            Log::error(self::class . ':deactivate:', ['message' => $err->getMessage()]);
+            Log::error(static::class . ':deactivate:', ['message' => $err->getMessage()]);
 
             session()->flash('error', _('Це місце надання послуг не вдалось деактивувати'));
         }
     }
 
+    /**
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
     public function render(): View
     {
         $perPage = config('pagination.per_page');
         $divisions = legalEntity()?->divisions()->orderBy('uuid')->paginate($perPage);
 
-        return view('livewire.division.division-form', compact('divisions'));
+        return view('livewire.division.division-index', compact('divisions'));
     }
 }
