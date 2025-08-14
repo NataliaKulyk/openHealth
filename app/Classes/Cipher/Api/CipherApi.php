@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Classes\Cipher\Api;
 
 use App\Classes\Cipher\Exceptions\ApiException;
@@ -10,26 +12,21 @@ use Carbon\Carbon;
 
 class CipherApi
 {
-    const string SIGNATORY_INITIATOR_BUSINESS = 'Business';
-    const string SIGNATORY_INITIATOR_PERSON   = 'Person';
-
     private string $ticketUuid = '';
     private string $base64File = '';
     private string $password = '';
     private string $dataSignature;
     private string $knedp;
 
-
     /**
      * Send request to create session and subsequently upload KEYP.
      *
-     * @param string $dataSignature Base64 encoded signed data.
-     * @param string $password      Password for KEYP creation.
-     * @param string $base64File    KEYP file in base64 format.
-     * @param string $knedp         Certificate Authority Identifier (KNEPD).
-     * @param string $initiator
-     * @param string $taxId
-     *
+     * @param  string  $dataSignature  Base64 encoded signed data.
+     * @param  string  $password  Password for KEYP creation.
+     * @param  string  $base64File  KEYP file in base64 format.
+     * @param  string  $knedp  Certificate Authority Identifier (KNEPD).
+     * @param  string  $taxId
+     * @param  string|null  $edrpou
      * @return array|string Returns KEYP in base64 format.
      */
     public function sendSession(
@@ -39,8 +36,7 @@ class CipherApi
         string $knedp,
         string $taxId,
         ?string $edrpou = null
-    ): array|string
-    {
+    ): array|string {
         $this->dataSignature = base64_encode($dataSignature);
         $this->password = $password;
         $this->base64File = $base64File;
@@ -54,6 +50,7 @@ class CipherApi
             $this->verifyWithFileContainer($taxId, $edrpou);
             $this->createKeyp();
             $this->getKeypCreator();
+
             return $this->getKeyp();
         } catch (ApiException $e) {
             return $e->getErrors();
@@ -97,12 +94,13 @@ class CipherApi
     {
         $status = $this->sendRequest('get', "/ticket/{$this->ticketUuid}/ds/creator");
 
-        if ($status['status'] == 202 && $retryCount < $maxRetries) {
+        if ($status['status'] === 202 && $retryCount < $maxRetries) {
             sleep(2);
+
             return $this->getKeypCreator($retryCount + 1, $maxRetries);
         }
 
-        return $status['status'] == 200 ? $status : null;
+        return $status['status'] === 200 ? $status : null;
     }
 
     private function getKeyp(): string
@@ -131,7 +129,7 @@ class CipherApi
     {
         $status = $this->sendRequest('get', "/ticket/{$this->ticketUuid}/decryptor");
 
-        if ($status['status'] == 202 && $retryCount < $maxRetries) {
+        if ($status['status'] === 202 && $retryCount < $maxRetries) {
             return $this->getDecodingFileContainerResultData($retryCount + 1, $maxRetries);
         }
 
@@ -171,7 +169,7 @@ class CipherApi
         if (!$cipherResponse['canBeUsed']) {
             ErrorHandler::throwError(
                 [
-                    'message'      => __('validation.custom.cipher.kepNotValid'),
+                    'message' => __('validation.custom.cipher.kepNotValid'),
                     'failureCause' => '',
                 ]
             );
@@ -192,7 +190,7 @@ class CipherApi
         if ($expirationDate <= Carbon::now()) {
             ErrorHandler::throwError(
                 [
-                    'message'      => __('validation.custom.cipher.kepTimeExpired'),
+                    'message' => __('validation.custom.cipher.kepTimeExpired'),
                     'failureCause' => '',
                 ]
             );
@@ -202,7 +200,7 @@ class CipherApi
         if ($inKeyDrfou !== $taxId) {
             ErrorHandler::throwError(
                 [
-                    'message'      => __('validation.custom.cipher.drfouDiffer'),
+                    'message' => __('validation.custom.cipher.drfouDiffer'),
                     'failureCause' => '',
                 ]
             );
@@ -216,7 +214,7 @@ class CipherApi
             if ($inKeyEdrpou !== $edrpou) {
                 ErrorHandler::throwError(
                     [
-                        'message'      => __('validation.custom.cipher.edrpouDiffer'),
+                        'message' => __('validation.custom.cipher.edrpouDiffer'),
                         'failureCause' => '',
                     ]
                 );

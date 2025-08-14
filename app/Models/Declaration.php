@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\Declaration\DeclarationStatus;
@@ -15,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Declaration extends Model
 {
-    use HasFactory,FormTrait;
+    use HasFactory;
+    use FormTrait;
 
     public $timestamps = false;
 
@@ -129,7 +132,8 @@ class Declaration extends Model
      * @return string
      */
 
-    public function getDoctorFullNameAttribute(): string {
+    public function getDoctorFullNameAttribute(): string
+    {
         return ($this->employee['party']['first_name'] ?? '') . ' ' . ($this->employee['party']['last_name'] ?? '') . ' ' . ($this->employee['party']['second_name'] ?? '');
     }
 
@@ -138,4 +142,3 @@ class Declaration extends Model
         return ($this->person['phones'][0]['number'] ?? '');
     }
 }
-

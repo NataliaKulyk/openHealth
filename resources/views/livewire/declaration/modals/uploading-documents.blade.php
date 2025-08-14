@@ -35,7 +35,7 @@
                                 </div>
 
                                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
-                                    {{ __('Розмір завантажуваного файлу не більше 10МБ у форматі jpeg') }}
+                                    {{ __('forms.max_file_size_and_format') }}
                                 </p>
 
                                 @error("form.uploadedDocuments.$key")
@@ -52,7 +52,7 @@
                                 class="button-primary flex items-center gap-2 mt-8"
                                 type="button"
                         >
-                            {{ __('Відправити файли') }}
+                            {{ __('forms.send_files') }}
                             <svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true"
                                  xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                  viewBox="0 0 24 24">

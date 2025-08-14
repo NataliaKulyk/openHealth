@@ -22,7 +22,7 @@
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label for="verificationCode" class="label-modal">
-                                    {{ __('Код підтвердження з СМС') }}
+                                    {{ __('declarations.confirmation_code_from_SMS') }}
                                 </label>
                                 <input wire:model="form.verificationCode"
                                        id="verificationCode"
@@ -52,10 +52,9 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <button type="button"
-                                        wire:click.prevent="resendSms"
-                                        @click="resetCooldown(); startCooldown()"
                                         x-data="{
                                             cooldown: 60,
+                                            sentOnce: $wire.entangle('smsResent'),
                                             interval: null,
                                             modalOpened: false,
                                             startCooldown() {
@@ -87,12 +86,18 @@
                                         }"
                                         x-init=""
                                         x-effect="if (showAuthModal && !modalOpened) { modalOpened = true; startCooldown(); }"
-                                        :disabled="cooldown > 0"
-                                        :class="{ 'cursor-not-allowed': cooldown > 0 }"
+                                        wire:click.prevent="resendSms"
+                                        @click="if (!sentOnce) {
+                                            resetCooldown();
+                                            startCooldown();
+                                        }"
+                                        :disabled="cooldown > 0 || sentOnce"
+                                        :class="{ 'cursor-not-allowed': cooldown > 0 || sentOnce }"
                                         class="button-minor gap-2"
                                 >
                                     <svg class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 16 17" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
+                                         xmlns="http://www.w3.org/2000/svg"
+                                    >
                                         <path fill="currentColor"
                                               d="M1.60254 5.20715L8.00014 8.40555L14.3977 5.20715C14.3741 4.79951 14.1954 4.41634 13.8984 4.13613C13.6014 3.85592 13.2085 3.69988 12.8001 3.69995H3.20014C2.79181 3.69988 2.3989 3.85592 2.10188 4.13613C1.80487 4.41634 1.62622 4.79951 1.60254 5.20715V5.20715Z"
                                         />
@@ -101,7 +106,7 @@
                                         />
                                     </svg>
                                     <span
-                                        x-text="cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : 'Відправити ще раз'">
+                                        x-text="sentOnce ? 'СМС вже відправлено' : (cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : 'Відправити ще раз')">
                                     </span>
                                 </button>
                             </div>

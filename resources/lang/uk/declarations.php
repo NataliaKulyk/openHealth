@@ -13,10 +13,14 @@ return [
     | e.g., declaration search, declaration-related API request messages, etc.,
     |
     */
+    'application_for_registration_of_declaration' => 'Заявка на реєстрацію декларації',
     'patient_full_name' => 'ПІБ пацієнта',
     'doctor_full_name' => 'ПІБ лікаря',
     'create_an_application' => 'Створити заявку',
-    'confirmation_of_application_for_registration_of_declaration' => 'Підтвердження заявки на реєстрацію декларації',
+    'confirmation_code_from_SMS' => 'Код підтвердження з СМС',
     'confirmation_of_patient_signature_on_declaration_application' => 'Підтвердження підписання заявки на декларацію пацієнтом',
+    'print_declaration_instruction' => 'Роздрукуйте заявку на декларацію в двох екземплярах з метою перевірки та підписання пацієнтом або його законним представником',
     'print_application' => 'Надрукувати заявку',
+    'declaration_signed_confirmation' => 'Підтвердіть, що заявка на декларацію підписана пацієнтом або його законним представником',
+    'patient_signed_declaration' => 'Декларація про вибір лікаря, який надає первинну медичну допомогу підписана пацієнтом',
 ];

@@ -34,8 +34,6 @@ return [
     'name' => 'Назва',
     'withTerms' => 'з умовами використання',
     'accreditationShow' => 'Наявна акредитація',
-
-    
     'selectLevel' => 'Оберіть ступінь',
     'selectDocumentType' => 'Оберіть тип документа',
     'selectQualificationType' => 'Оберіть тип кваліфікіції',
@@ -94,6 +92,10 @@ return [
     'goToEdit' => 'Перейти до редагування',
     'requestSignedAndSentToEHealth' => 'Запит успішно підписано та надіслано до ЕСОЗ',
     'viewEmployee' => 'Перегляд співробітника',
+    'patient_has_no_auth_methods' => 'У пацієнта відсутні методи автентифікації',
+    'new_auth_method' => 'Новий метод автентифікації',
+    'send_files' => 'Відправити файли',
+    'max_file_size_and_format' => 'Розмір завантажуваного файлу не більше 10МБ у форматі jpeg',
 
     // Legal Entity
     'legal_entity_name' => 'Медична організація',
@@ -376,6 +378,7 @@ return [
     'get_link' => 'Отримати посилання',
     'return_to_login' => 'Повернутись на сторінку входу',
     'secure_page_description' => 'Здійснюється вхід на захищену сторінку. Будь ласка, підтвердіть пароль',
+    'send_for_approval' => 'Відправити на затвердження',
 
     // Notifications & Errors
     'no_actions_available' => 'У вас немає дозволених дій для цього розділу.',

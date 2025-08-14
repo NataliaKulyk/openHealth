@@ -192,7 +192,6 @@ return [
         'contact.phones.*.number' => 'Телефон',
         'contact.phones.*.type' => 'Тип Номера',
         'contact.email' => 'E-mail',
-        '*.type' => 'Тип спеціальності',
         'type' => 'Тип спеціальності',
         'owner' => [
             'firstName' => 'Ім’я',
@@ -272,6 +271,8 @@ return [
             'value' => 'законний представник пацієнта',
             'alias' => 'роль'
         ],
+
+        'authenticationMethod.type' => 'тип автентифікації',
 
         'addresses' => [
             'area' => 'область',

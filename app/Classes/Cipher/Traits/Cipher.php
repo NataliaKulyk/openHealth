@@ -44,7 +44,7 @@ trait Cipher
      *
      * @param  array  $data
      * @param  string  $taxId
-     * @param  string  $signatoryInitiator
+     * @param  string|null  $edrpou
      * @return string|array
      */
     protected function sendEncryptedData(

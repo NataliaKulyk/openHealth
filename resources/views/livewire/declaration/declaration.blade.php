@@ -1,7 +1,7 @@
 <section class="section-form">
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">
-            {{ __('Заявка на реєстрацію декларації') }} - {{ $patientFullName }}
+            {{ __('declarations.application_for_registration_of_declaration') }} - {{ $patientFullName }}
         </x-slot>
     </x-section-navigation>
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Declaration\Forms;
 
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Form;
 
 class DeclarationForm extends Form
@@ -22,6 +23,12 @@ class DeclarationForm extends Form
 
     public array $uploadedDocuments;
 
+    public string $knedp;
+
+    public TemporaryUploadedFile $keyContainerUpload;
+
+    public string $password;
+
     public function rulesForCreating(): array
     {
         return [
@@ -35,15 +42,20 @@ class DeclarationForm extends Form
 
     public function rulesForApproving(): array
     {
-        return [
-            'verificationCode' => ['required', 'digits:4']
-        ];
+        return ['verificationCode' => ['required', 'digits:4']];
     }
 
     public function rulesForUploadingDocuments(): array
     {
+        return ['uploadedDocuments.*' => ['required', 'file', 'mimes:jpeg,jpg', 'max:10000']];
+    }
+
+    public function rulesForSigning(): array
+    {
         return [
-            'uploadedDocuments.*' => ['required', 'file', 'mimes:jpeg,jpg', 'max:10000']
+            'knedp' => ['required', 'string'],
+            'password' => ['required', 'string'],
+            'keyContainerUpload' => ['required', 'file', 'extensions:dat,pfx,pk8,zs2,jks,p7s'],
         ];
     }
 }

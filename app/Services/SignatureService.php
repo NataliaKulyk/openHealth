@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Classes\Cipher\Api\CipherApi;
@@ -7,7 +9,6 @@ use App\Classes\Cipher\Exceptions\ApiException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 
 class SignatureService
 {
@@ -19,35 +20,46 @@ class SignatureService
     }
 
     /**
-     * Sends data for signing using Cipher API.
-     * The file processing logic is now handled inside this service.
+     * Sends data for signing.
+     * On success, returns the signed content string.
+     * On failure, returns the error message string.
+     *
+     * @return string The signed content or an error message.
      */
     public function signData(
         array $dataToSign,
         string $password,
         string $knedp,
         ?UploadedFile $keyFile,
-        string $signatoryInitiator,
         string $taxId
-    ): string|array {
+    ): string {
         try {
             $base64FileContent = $this->getBase64KepFileContent($keyFile);
 
-            return $this->cipherApi->sendSession(
+            $signedContent = $this->cipherApi->sendSession(
                 json_encode($dataToSign, JSON_THROW_ON_ERROR),
                 $password,
                 $base64FileContent,
                 $knedp,
-                $signatoryInitiator,
                 $taxId
             );
+
+            if (empty($signedContent) || !is_string($signedContent)) {
+                return __('employees.errors.signature_failed_unexpected');
+            }
+
+            return $signedContent;
+
         } catch (ApiException $e) {
+
             $errors = $e->getErrors();
-            $errorMessage = collect($errors)->flatten()->first() ?? __('forms.invalid_kep_password_or_file');
-            throw ValidationException::withMessages(['form.password' => $errorMessage]);
+
+            return collect($errors)->flatten()->first() ?? __('forms.invalid_kep_password_or_file');
+
         } catch (\Exception $e) {
             Log::error('Unexpected error in SignatureService: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            throw ValidationException::withMessages(['form.password' => __('api.cipher.unexpected_error_short')]);
+
+            return __('api.cipher.unexpected_error_short');
         }
     }
 
@@ -82,9 +94,11 @@ class SignatureService
                 return $this->cipherApi->getCertificateAuthorityApi();
             } catch (ApiException $e) {
                 Log::error("Error fetching certificate authorities from Cipher API: " . $e->getMessage(), ['errors' => $e->getErrors()]);
+
                 return [];
             } catch (\Exception $e) {
                 Log::error("General error fetching certificate authorities: " . $e->getMessage(), ['exception' => $e]);
+
                 return [];
             }
         });

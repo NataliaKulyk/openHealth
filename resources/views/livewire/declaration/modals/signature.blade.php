@@ -36,7 +36,10 @@
                                             <option value="">{{__('forms.select')}}</option>
                                             @foreach(signatureService()->getCertificateAuthorities() as $certificateType)
                                                 <option value="{{ $certificateType['id'] }}"
-                                                        wire:key="{{ $certificateType['id'] }}">{{ $certificateType['name'] }}</option>
+                                                        wire:key="{{ $certificateType['id'] }}"
+                                                >
+                                                    {{ $certificateType['name'] }}
+                                                </option>
                                             @endforeach
                                         </x-slot>
                                     </x-forms.select>

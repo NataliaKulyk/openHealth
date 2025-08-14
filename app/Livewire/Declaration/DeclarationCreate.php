@@ -7,12 +7,12 @@ namespace App\Livewire\Declaration;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Livewire\Declaration\Forms\DeclarationForm as Form;
+use App\Models\DeclarationRequest;
 use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
 use App\Models\Person\Person;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -47,12 +47,6 @@ class DeclarationCreate extends DeclarationComponent
     public array $authMethods;
 
     /**
-     * Patient UUID, used for eHeath request.
-     * @var string
-     */
-    protected string $patientUuid;
-
-    /**
      * UUID of created declaration request.
      * @var string
      */
@@ -62,11 +56,27 @@ class DeclarationCreate extends DeclarationComponent
 
     public array $employeesInfo;
 
+    public bool $smsResent = false;
+
     /**
      * Content that formatted by eHealth that we propose to print.
      * @var string
      */
     public string $printableContent;
+
+    /**
+     * Check is patient sign form.
+     * @var bool
+     */
+    public bool $isSigned = true;
+
+    public array $dataToBeSigned;
+
+    /**
+     * Patient UUID, used for eHeath request.
+     * @var string
+     */
+    protected string $patientUuid;
 
     public function mount(LegalEntity $legalEntity, int $patientId): void
     {
@@ -82,13 +92,7 @@ class DeclarationCreate extends DeclarationComponent
         $this->setEmployeesInfo();
 
         $this->form->personId = $this->patientUuid;
-        $this->authMethods = $this->getAuthMethods();
-    }
-
-    public function openSignatureModal(): void
-    {
-        $this->showSignModal = false;
-        $this->showSignatureModal = true;
+        $this->authMethods = $this->getPersonAuthMethods();
     }
 
     /**
@@ -98,6 +102,15 @@ class DeclarationCreate extends DeclarationComponent
      */
     public function create(): void
     {
+        if (Auth::user()?->cannot('create', DeclarationRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на створення заявки на подання декларації.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         if (empty($this->form->divisionId)) {
             $this->form->divisionId = optional(
                 collect($this->employeesInfo)->firstWhere('employeeId', $this->form->employeeId)
@@ -219,6 +232,15 @@ class DeclarationCreate extends DeclarationComponent
      */
     public function resendSms(): void
     {
+        if ($this->smsResent) {
+            $this->dispatch('flashMessage', [
+                'message' => __('СМС вже відправлено повторно. Виконати повторне надсилання можна лише разово.'),
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         try {
             $response = EHealth::declarationRequest()->resendAuthOtp($this->declarationRequestUuid);
 
@@ -236,6 +258,7 @@ class DeclarationCreate extends DeclarationComponent
         }
 
         if ($response->getData()['status'] === 'new') {
+            $this->smsResent = true;
             $this->dispatch('flashMessage', [
                 'message' => __('SMS успішно надіслано!'),
                 'type' => 'success'
@@ -250,6 +273,15 @@ class DeclarationCreate extends DeclarationComponent
      */
     public function approve(): void
     {
+        if (Auth::user()?->cannot('approve', DeclarationRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на підтвердження заявки на подання декларації.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         try {
             $validated = $this->form->validate($this->form->rulesForApproving());
         } catch (ValidationException $e) {
@@ -274,6 +306,7 @@ class DeclarationCreate extends DeclarationComponent
 
             if ($response->getStatusCode() === 200) {
                 $this->printableContent = $response->getData()['data_to_be_signed']['content'];
+                $this->dataToBeSigned = $response->getData()['data_to_be_signed'];
                 $this->showAuthModal = false;
                 $this->showSignModal = true;
             }
@@ -285,9 +318,75 @@ class DeclarationCreate extends DeclarationComponent
         }
     }
 
+    public function openSignatureModal(): void
+    {
+        $this->showSignModal = false;
+        $this->showSignatureModal = true;
+    }
+
+    /**
+     * Sign declaration request with Cipher and then send to EHealth.
+     *
+     * @return void
+     */
     public function sign(): void
     {
-        //
+        if (Auth::user()?->cannot('sign', DeclarationRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на підписання заявки на подання декларації.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
+        try {
+            $validated = $this->form->validate($this->form->rulesForSigning());
+        } catch (ValidationException $e) {
+            $this->dispatch('flashMessage', [
+                'message' => $e->validator->errors()->first(),
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
+        $dataToSign = $this->dataToBeSigned;
+        $dataToSign['person']['patient_signed'] = $this->isSigned;
+
+        $signedContent = signatureService()->signData(
+            $dataToSign,
+            $validated['password'],
+            $validated['knedp'],
+            $validated['keyContainerUpload'],
+            Auth::user()->party->taxId
+        );
+
+        try {
+            $response = EHealth::declarationRequest()->sign(
+                $this->declarationRequestUuid,
+                ['signed_declaration_request' => $signedContent]
+            );
+
+            if (!$response->successful()) {
+                $this->logEHealthError($response, 'Error while signing declaration request');
+                $this->flashGeneralError();
+
+                return;
+            }
+
+            if ($response->getStatusCode() === 200) {
+                to_route('declaration.index', [legalEntity()])->with('flashMessage', [
+                    'message' => 'Декларація підписана',
+                    'type' => 'success'
+                ]);
+            }
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error while signing declaration request');
+            $this->flashGeneralError();
+
+            return;
+        }
     }
 
     /**
@@ -317,7 +416,7 @@ class DeclarationCreate extends DeclarationComponent
      *
      * @return array
      */
-    protected function getAuthMethods(): array
+    protected function getPersonAuthMethods(): array
     {
         try {
             $response = EHealth::person()->getAuthMethods($this->patientUuid);
@@ -349,6 +448,15 @@ class DeclarationCreate extends DeclarationComponent
      */
     protected function approveUploadedFiles(): void
     {
+        if (Auth::user()?->cannot('approve', DeclarationRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на створення заявки на подання декларації.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         try {
             $response = EHealth::declarationRequest()->approve($this->declarationRequestUuid);
 
@@ -361,8 +469,9 @@ class DeclarationCreate extends DeclarationComponent
 
             if ($response->getStatusCode() === 200) {
                 $this->printableContent = $response->getData()['data_to_be_signed']['content'];
+                $this->dataToBeSigned = $response->getData()['data_to_be_signed'];
                 $this->showUploadingDocumentsModal = false;
-                $this->showSignatureModal = true;
+                $this->showSignModal = true;
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error while approving declaration request after sending files');

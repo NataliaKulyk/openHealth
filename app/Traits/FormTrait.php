@@ -239,14 +239,16 @@ trait FormTrait
      */
     public function logEHealthError(EHealthResponse $response, string $message): void
     {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? [];
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $caller = collect($trace)
+            ->first(static fn (array $frame) => isset($frame['file']) && !str_contains($frame['file'], '/vendor/'));
 
         Log::channel('e_health_errors')->error($message, [
             'status' => $response->getStatusCode(),
             'error' => $response->getError(),
-            'file' => $trace['file'] ?? 'unknown',
-            'line' => $trace['line'] ?? 'unknown',
-            'function' => $trace['function'] ?? 'unknown'
+            'file' => $caller['file'] ?? 'unknown',
+            'line' => $caller['line'] ?? 'unknown',
+            'function' => $caller['function'] ?? 'unknown'
         ]);
     }
 

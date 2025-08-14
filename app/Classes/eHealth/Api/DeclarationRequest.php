@@ -11,7 +11,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
-use stdClass;
 
 class DeclarationRequest extends Request
 {
@@ -43,10 +42,8 @@ class DeclarationRequest extends Request
         return $this->post(self::URL . "/$id/actions/resend_otp", $data);
     }
 
-
     /**
      * Upload to the (Signed URL's). All links are generated for one one-page document.
-     *
      *
      * @param  string  $uploadUrl
      * @param  UploadedFile  $document
@@ -74,6 +71,32 @@ class DeclarationRequest extends Request
      */
     public function approve(string $id, array $data = []): PromiseInterface|EHealthResponse
     {
-        return $this->patch(self::URL . "/$id/actions/approve", $data ?: new stdClass());
+        return $this->patch(self::URL . "/$id/actions/approve", $data ?: (object)$data);
+    }
+
+    /**
+     * Sign Declaration Request.
+     *
+     * @param  string  $id
+     * @param  array  $data
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException
+     */
+    public function sign(string $id, array $data = []): PromiseInterface|EHealthResponse
+    {
+        return $this->patch(self::URL . "/$id/actions/sign", $data);
+    }
+
+    /**
+     * Reject previously created Declaration Request.
+     *
+     * @param  string  $id
+     * @param  array  $data
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException
+     */
+    public function reject(string $id, array $data = []): PromiseInterface|EHealthResponse
+    {
+        return $this->patch(self::URL . "/$id/actions/reject", $data);
     }
 }
