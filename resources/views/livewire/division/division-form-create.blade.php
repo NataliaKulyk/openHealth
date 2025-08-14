@@ -143,7 +143,7 @@
             <div class="form-group mb-4">
                 <button
                     @click.prevent="working = !working"
-                    x-text="working ? '{{ __('Закрити') }}' : '{{ __('forms.add_work_schedule') }}'"
+                    x-text="working ? '{{ __('forms.remove_work_schedule') }}' : '{{ __('forms.add_work_schedule') }}'"
                     class="item-add"
                 >
                     {{ __('add_work_schedule') }}
@@ -169,28 +169,20 @@
                     @foreach ($weekdays as $key => $day)
                         <div class="p-6 min-h-[220px] {{ $loop->iteration % 2 == 0 ? '' : 'border-r border-gray-200 dark:border-gray-700' }} {{ $loop->last ? '' : 'border-b border-gray-200 dark:border-gray-700' }} ">
                             <div x-data="{
-                          shift: @json(count($formService->getDivisionParam('working_hours')[$key]) > 1),
-                          show_work: @json(!empty($formService->getDivisionParam('working_hours')[$key][0]) || $mode === 'store')
-                        }">
+                      shift: @json(count($formService->getDivisionParam('working_hours')[$key]) > 1),
+                      show_work: @json(!empty($formService->getDivisionParam('working_hours')[$key][0]) || $mode === 'store')
+                    }">
 
                                 <div class="mb-4">
                                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $day }}</h3>
                                 </div>
 
-                                <div class="flex items-center gap-6 mb-2">
+                                <div class="flex items-center gap-8 mb-4">
                                     <label class="inline-flex items-center cursor-pointer">
                                         <input type="checkbox" class="sr-only peer"
                                                x-model="show_work"
                                                @change="$wire.notWorking('{{ $key }}', !show_work)">
-                                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer
-                                             peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300
-                                             dark:bg-gray-700 dark:peer-focus:ring-blue-800
-                                             after:content-[''] after:absolute after:top-[2px] after:start-[2px]
-                                             after:bg-white after:border-gray-300 after:border after:rounded-full
-                                             after:w-5 after:h-5 after:transition-all
-                                             peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600
-                                             peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full">
-                                        </div>
+                                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:bg-gray-700 dark:peer-focus:ring-blue-800 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"></div>
                                         <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
                                               x-text="show_work ? '{{ __('Працює') }}' : '{{ __('Не працює') }}'"></span>
                                     </label>
@@ -199,15 +191,7 @@
                                         <input type="checkbox" class="sr-only peer"
                                                x-model="shift"
                                                @change="$wire.noShift('{{ $key }}', !shift)">
-                                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer
-                                             peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300
-                                             dark:bg-gray-700 dark:peer-focus:ring-blue-800
-                                             after:content-[''] after:absolute after:top-[2px] after:start-[2px]
-                                             after:bg-white after:border-gray-300 after:border after:rounded-full
-                                             after:w-5 after:h-5 after:transition-all
-                                             peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600
-                                             peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full">
-                                        </div>
+                                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:bg-gray-700 dark:peer-focus:ring-blue-800 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"></div>
                                         <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('Позмінно') }}</span>
                                     </label>
                                 </div>
@@ -217,7 +201,7 @@
 
                                         @if($mode === 'store' || !empty($formService->getDivisionParam('working_hours')[$key]))
                                             @foreach ($formService->getDivisionParam('working_hours')[$key] as $shiftIndex => $shift_hours)
-                                                <div class="space-y-2">
+                                                <div class="space-y-4">
                                                     <template x-if="shift">
                                                         <div class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
                                                             <span class="w-2 h-2 rounded-full bg-blue-600"></span>
@@ -225,7 +209,7 @@
                                                         </div>
                                                     </template>
 
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div class="flex items-end gap-4">
                                                         <div class="form-group w-full">
                                                             <label for="opened_by-{{ $key }}-{{ $shiftIndex }}"
                                                                    class="label !text-xs !text-gray-500 dark:!text-gray-400">
@@ -258,24 +242,24 @@
                                                             @enderror
                                                         </div>
 
-                                                        <div class="md:col-span-2" x-show="shift && {{ $shiftIndex > 0 ? 'true' : 'false' }}">
-                                                            <button type="button"
-                                                                    wire:click="deleteShift('{{ $key }}', '{{ $shiftIndex }}')">
-                                                                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
-                                                                </svg>
-                                                            </button>
-                                                        </div>
+                                                        <button type="button"
+                                                                x-show="shift && {{ $shiftIndex > 0 ? 'true' : 'false' }}"
+                                                                wire:click="deleteShift('{{ $key }}', '{{ $shiftIndex }}')"
+                                                                class="h-10 text-gray-800 dark:text-gray-500 hover:text-gray-600">
+                                                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+                                                            </svg>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             @endforeach
                                         @endif
-                                            @if (count($formService->getDivisionParam('working_hours')[$key]) < 4)
-                                                <button x-show="shift" type="button" wire:click="addAvailableShift('{{ $key }}')"
-                                                        class="item-add text-sm">
-                                                    {{ __('Додати зміну') }}
-                                                </button>
-                                            @endif
+                                        @if (count($formService->getDivisionParam('working_hours')[$key]) < 4)
+                                            <button x-show="shift" type="button" wire:click="addAvailableShift('{{ $key }}')"
+                                                    class="item-add text-sm">
+                                                {{ __('Додати зміну') }}
+                                            </button>
+                                        @endif
                                     </div>
                                 </template>
                             </div>

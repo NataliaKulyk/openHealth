@@ -233,6 +233,7 @@ return [
     'work_schedule' => 'Графік роботи',
     'open' => 'Відчиняється:',
     'closing' => 'Зачиняється:',
+    'remove_work_schedule' => 'Прибрати графік роботи',
 
     // Doctor Specific
     'education' => 'Освіта',

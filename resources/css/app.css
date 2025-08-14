@@ -63,7 +63,7 @@ input[required] ~ label:after {
 }
 
 .fieldset {
-    @apply p-4 sm:p-8 sm:pb-10 mb-16 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700
+    @apply p-4 sm:p-8 sm:pb-10 mb-16 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1120px];
 }
 
 .fieldset-table {

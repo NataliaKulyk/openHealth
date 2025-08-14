@@ -32,7 +32,7 @@
             </x-forms.form-group>
         </div>
         <div class="flex items-center gap-4">
-            <a href="{{ route('division.form', [legalEntity()]) }}"
+            <a href="{{ route('division.create', [legalEntity()]) }}"
                type="button"
                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                 {{ __('Додати місце надання послуг') }}
@@ -124,7 +124,7 @@
                                     >
                                         @if ($division->status == 'ACTIVE')
                                             <a
-                                                href="{{ route('division.form', [legalEntity(), $division]) }}"
+                                                href="{{ route('division.edit', [legalEntity(), $division]) }}"
                                                 class="flex items-center gap-2 w-full first-of-type:rounded-t-md px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
                                             >
                                                 <svg class="w-5 h-5 text-gray-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
