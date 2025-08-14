@@ -48,8 +48,8 @@
                     </div>
 
                     @can('create', \App\Models\Employee\EmployeeRequest::class)
-                        <div class="flex items-center space-x-2 pt-5 ml-auto transform translate-x-[55px]">
-                            <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
+                        <div class="ml-auto flex items-center gap-2 self-start -mt-14 translate-x-7">
+                        <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
                                class="button-primary">{{ __('forms.new_employee') }}</a>
                             <button wire:click="sync" type="button" class="button-sync">
                                 {{ __('forms.synchronise_with_eHealth') }}

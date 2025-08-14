@@ -12,7 +12,7 @@
             <div class="form-group">
                 <input wire:model="form.party.order_no" type="text" name="order_no" id="order_no" class="peer input" placeholder=" " required />
                 <label for="order_no" class="label">{{__('forms.license.order_no')}}</label>
-                @error('form.party.order_no') <p class="text-error">{{$message}}</p> @enderror
+                @error('form.party.order_no') <p class'="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row" x-data="{
