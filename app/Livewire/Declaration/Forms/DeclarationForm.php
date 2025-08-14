@@ -20,6 +20,8 @@ class DeclarationForm extends Form
 
     public ?int $verificationCode = null;
 
+    public array $uploadedDocuments;
+
     public function rulesForCreating(): array
     {
         return [
@@ -35,6 +37,13 @@ class DeclarationForm extends Form
     {
         return [
             'verificationCode' => ['required', 'digits:4']
+        ];
+    }
+
+    public function rulesForUploadingDocuments(): array
+    {
+        return [
+            'uploadedDocuments.*' => ['required', 'file', 'mimes:jpeg,jpg', 'max:10000']
         ];
     }
 }

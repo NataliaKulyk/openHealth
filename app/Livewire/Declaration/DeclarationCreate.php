@@ -12,6 +12,7 @@ use App\Models\LegalEntity;
 use App\Models\Person\Person;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -27,9 +28,11 @@ class DeclarationCreate extends DeclarationComponent
     public int $patientId;
 
     public bool $showAuthModal = false;
-    public bool $showApproveModal = false;
     public bool $showSignModal = false;
     public bool $showSignatureModal = false;
+    public bool $showUploadingDocumentsModal = false;
+
+    public $uploadedDocuments;
 
     /**
      * Patient full name.
@@ -43,6 +46,10 @@ class DeclarationCreate extends DeclarationComponent
      */
     public array $authMethods;
 
+    /**
+     * Patient UUID, used for eHeath request.
+     * @var string
+     */
     protected string $patientUuid;
 
     /**
@@ -55,6 +62,10 @@ class DeclarationCreate extends DeclarationComponent
 
     public array $employeesInfo;
 
+    /**
+     * Content that formatted by eHealth that we propose to print.
+     * @var string
+     */
     public string $printableContent;
 
     public function mount(LegalEntity $legalEntity, int $patientId): void
@@ -65,10 +76,8 @@ class DeclarationCreate extends DeclarationComponent
         $patient = Person::select(['uuid', 'first_name', 'last_name', 'second_name'])
             ->where('id', $this->patientId)
             ->firstOrFail();
-        // TODO: після мержа іншого ПР зробити $patient->fullName
-        $this->patientFullName = $patient->first_name . ' ' . $patient->last_name;
+        $this->patientFullName = $patient->fullName;
         $this->patientUuid = $patient->uuid;
-        //        dd($this->patientUuid);
 
         $this->setEmployeesInfo();
 
@@ -76,7 +85,7 @@ class DeclarationCreate extends DeclarationComponent
         $this->authMethods = $this->getAuthMethods();
     }
 
-    public function openSignatureModal()
+    public function openSignatureModal(): void
     {
         $this->showSignModal = false;
         $this->showSignatureModal = true;
@@ -118,13 +127,88 @@ class DeclarationCreate extends DeclarationComponent
 
             if ($response->getStatusCode() === 200) {
                 $this->declarationRequestUuid = $response->getData()['id'];
-                $this->showAuthModal = true;
+
+                if ($response->getUrgent()['authentication_method_current']['type'] === 'OFFLINE') {
+                    $this->uploadedDocuments = $response->getUrgent()['documents'];
+                    $this->showUploadingDocumentsModal = true;
+                }
+
+                if ($response->getUrgent()['authentication_method_current']['type'] === 'OTP') {
+                    $this->showAuthModal = true;
+                }
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error while creating declaration request');
             $this->flashGeneralError();
 
             return;
+        }
+    }
+
+    /**
+     * Validate uploaded files.
+     *
+     * @param  string  $field
+     * @return void
+     */
+    public function updated(string $field): void
+    {
+        if (str_starts_with($field, 'form.uploadedDocuments')) {
+            $this->form->validate($this->form->rulesForUploadingDocuments());
+        }
+    }
+
+    /**
+     * Upload patient files to the appropriate URL.
+     *
+     * @return void
+     * @throws ValidationException
+     */
+    public function sendFiles(): void
+    {
+        try {
+            $this->form->validate($this->form->rulesForUploadingDocuments());
+        } catch (ValidationException $e) {
+            $this->dispatch('flashMessage', [
+                'message' => $e->validator->errors()->first(),
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
+        $totalFiles = count($this->form->uploadedDocuments);
+        // Check that all provided files were uploaded
+        if ($totalFiles !== count($this->uploadedDocuments)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'Будь ласка завантажте всі файли!',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
+        $successCount = 0;
+        foreach ($this->form->uploadedDocuments as $key => $document) {
+            try {
+                $response = EHealth::declarationRequest()->uploadDocument(
+                    $this->uploadedDocuments[$key]['url'],
+                    $document
+                );
+
+                if ($response->getStatusCode() === 200) {
+                    $successCount++;
+                } else {
+                    $this->flashGeneralError();
+                }
+            } catch (ConnectionException) {
+                $this->flashGeneralError();
+            }
+        }
+
+        // Approve if all files were uploaded successfully
+        if ($successCount === $totalFiles) {
+            $this->approveUploadedFiles();
         }
     }
 
@@ -136,7 +220,7 @@ class DeclarationCreate extends DeclarationComponent
     public function resendSms(): void
     {
         try {
-            $response = EHealth::declarationRequest()->resendAuthOtp('$this->declarationRequestUuid');
+            $response = EHealth::declarationRequest()->resendAuthOtp($this->declarationRequestUuid);
 
             if (!$response->successful()) {
                 $this->logEHealthError($response, 'Error while resending auth OTP on declaration request');
@@ -188,10 +272,10 @@ class DeclarationCreate extends DeclarationComponent
                 return;
             }
 
-            if ($response->getStatusCode() === 201) {
+            if ($response->getStatusCode() === 200) {
                 $this->printableContent = $response->getData()['data_to_be_signed']['content'];
                 $this->showAuthModal = false;
-                $this->showApproveModal = true;
+                $this->showSignModal = true;
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error while approving declaration request');
@@ -255,6 +339,36 @@ class DeclarationCreate extends DeclarationComponent
             $this->flashGeneralError();
 
             return [];
+        }
+    }
+
+    /**
+     * Send approve request if all files were uploaded successfully
+     *
+     * @return void
+     */
+    protected function approveUploadedFiles(): void
+    {
+        try {
+            $response = EHealth::declarationRequest()->approve($this->declarationRequestUuid);
+
+            if (!$response->successful()) {
+                $this->logEHealthError($response, 'Error while approving declaration request after sending files');
+                $this->flashGeneralError();
+
+                return;
+            }
+
+            if ($response->getStatusCode() === 200) {
+                $this->printableContent = $response->getData()['data_to_be_signed']['content'];
+                $this->showUploadingDocumentsModal = false;
+                $this->showSignatureModal = true;
+            }
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error while approving declaration request after sending files');
+            $this->flashGeneralError();
+
+            return;
         }
     }
 }

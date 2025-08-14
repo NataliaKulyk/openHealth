@@ -110,10 +110,11 @@ input:-webkit-autofill:active {
 }
 
 .input-select {
-    @apply input dark:border-gray-700 dark:focus:border-blue-500 dark:bg-gray-800
+    @apply input dark:border-gray-700 dark:focus:border-blue-500 dark:bg-gray-800;
 }
+
 .input-select option {
-    @apply py-4 px-6 text-lg leading-relaxed
+    @apply py-4 px-6 leading-relaxed;
 }
 
 .input-error {

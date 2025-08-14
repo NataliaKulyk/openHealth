@@ -8,6 +8,10 @@ use App\Classes\eHealth\EHealthRequest as Request;
 use App\Classes\eHealth\EHealthResponse;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use stdClass;
 
 class DeclarationRequest extends Request
 {
@@ -39,6 +43,27 @@ class DeclarationRequest extends Request
         return $this->post(self::URL . "/$id/actions/resend_otp", $data);
     }
 
+
+    /**
+     * Upload to the (Signed URL's). All links are generated for one one-page document.
+     *
+     *
+     * @param  string  $uploadUrl
+     * @param  UploadedFile  $document
+     * @return PromiseInterface|Response
+     * @throws ConnectionException
+     */
+    public function uploadDocument(string $uploadUrl, UploadedFile $document): PromiseInterface|Response
+    {
+        $filePath = $document->getRealPath();
+        $fileMime = $document->getMimeType();
+        $fileContents = file_get_contents($filePath);
+
+        return Http::withHeaders(['Content-Type' => $fileMime])
+            ->withBody($fileContents, $fileMime)
+            ->put(trim($uploadUrl));
+    }
+
     /**
      * Approve previously created Declaration Request.
      *
@@ -49,6 +74,6 @@ class DeclarationRequest extends Request
      */
     public function approve(string $id, array $data = []): PromiseInterface|EHealthResponse
     {
-        return $this->patch(self::URL . "/$id/actions/approve", $data);
+        return $this->patch(self::URL . "/$id/actions/approve", $data ?: new stdClass());
     }
 }

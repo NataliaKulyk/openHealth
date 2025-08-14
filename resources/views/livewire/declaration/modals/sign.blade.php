@@ -58,7 +58,7 @@
 
                         {{-- Action buttons --}}
                         <div class="flex justify-center gap-4 mt-16">
-                            <button type="button" @click="showSignModal = false" class="button-danger">
+                            <button type="button" @click="showSignModal = false" class="button-minor">
                                 {{__('forms.cancel')}}
                             </button>
                             <button wire:click="openSignatureModal"

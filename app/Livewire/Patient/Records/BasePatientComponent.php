@@ -14,11 +14,11 @@ abstract class BasePatientComponent extends Component
     #[Locked]
     public string $patientId;
 
-    public string $firstName;
-
-    public string $lastName;
-
-    public ?string $secondName = null;
+    /**
+     * Patient full name.
+     * @var string
+     */
+    public string $patientFullName;
 
     public string $verificationStatus;
 
@@ -46,14 +46,11 @@ abstract class BasePatientComponent extends Component
     {
         $patient = Person::select(['uuid', 'first_name', 'last_name', 'second_name', 'verification_status'])
             ->where('id', $this->patientId)
-            ->first()
-            ?->toArray();
+            ->firstOrFail();
 
-        $this->firstName = $patient['first_name'];
-        $this->lastName = $patient['last_name'];
-        $this->secondName = $patient['second_name'] ?? null;
-        $this->verificationStatus = $patient['verification_status'];
-        $this->uuid = $patient['uuid'];
+        $this->patientFullName = $patient->fullName;
+        $this->verificationStatus = $patient->verification_status;
+        $this->uuid = $patient->uuid;
     }
 
     /**

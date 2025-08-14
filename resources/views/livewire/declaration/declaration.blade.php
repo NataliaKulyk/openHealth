@@ -10,8 +10,8 @@
         @include('livewire.declaration.parts.authentication')
 
         <div class="flex gap-8">
-            <button type="submit" class="button-minor">
-                {{ __('forms.delete') }}
+            <button type="submit" class="button-minor" onclick="window.history.back()">
+                {{ __('forms.cancel') }}
             </button>
             <button wire:click.prevent="create" type="submit" class="button-primary">
                 {{ __('declarations.create_an_application') }}
@@ -22,8 +22,8 @@
             @include('livewire.declaration.modals.authentication')
         @endif
 
-        @if($showApproveModal)
-            @include('livewire.declaration.modals.approve')
+        @if($showUploadingDocumentsModal)
+            @include('livewire.declaration.modals.uploading-documents')
         @endif
 
         @if($showSignModal)
