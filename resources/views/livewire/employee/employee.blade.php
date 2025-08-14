@@ -42,7 +42,7 @@
             </template>
 
             {{-- Action Buttons --}}
-            <div class="form-button-group mt-6 flex justify-between items-center border-t border-gray-200 pt-6">
+            <div class="mt-6 flex flex-row items-center gap-4 border-t border-gray-200 pt-6">
                 <div class="flex items-center space-x-4">
                     <a href="{{ route('employee.index', ['legalEntity' => legalEntity()->id]) }}" class="button-minor">
                         {{__('forms.cancel')}}
