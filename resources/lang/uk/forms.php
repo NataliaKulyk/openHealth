@@ -231,6 +231,8 @@ return [
     'mountainous_status' => 'Має статус гірського',
     'add_work_schedule' => 'Додати графік роботи',
     'work_schedule' => 'Графік роботи',
+    'open' => 'Відчиняється:',
+    'closing' => 'Зачиняється:',
 
     // Doctor Specific
     'education' => 'Освіта',
