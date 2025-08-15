@@ -1,20 +1,30 @@
+<div>
+    <x-section-navigation x-data="{ showFilter: false }" class="">
+        <x-slot name="title">{{ __('Ліцензії') }}</x-slot>
 
-<div class="bg-white dark:bg-gray-800 min-h-screen">
-    <div class="max-w-7xl mx-auto px-4 py-6">
-        <div class="table-nav">
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white mt-6">{{ __('Ліцензії') }}</h1>
-            <div class="button-group">
-                <button type="button" class="button-primary">
-                    <a href="{{ route('license.create', [legalEntity()]) }}">
-                        Нова ліцензія
-                    </a>
-                </button>
-                <button wire:click="sync" class="button-sync">
-                    Синхронізувати з ЕСОЗ
-                </button>
+        <x-slot name="navigation">
+            <div class="flex flex-col">
+                <div class="flex flex-wrap items-end justify-between gap-4" style="max-width: var(--container-6xl);">
+                    <div class="flex items-end gap-4">
+                    </div>
+                    <div class="ml-auto flex items-center gap-2 self-start -mt-16 translate-x-20">
+                        <button type="button" class="button-primary">
+                            <a href="{{ route('license.create', [legalEntity()]) }}">
+                                Нова ліцензія
+                            </a>
+                        </button>
+                        <button wire:click="sync" class="button-sync">
+                            Синхронізувати з ЕСОЗ
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
-        <table class="table-input w-inherit">
+        </x-slot>
+
+    </x-section-navigation>
+
+    <div class="max-w-7xl mx-auto">
+        <table class="table-input w-full">
             <thead class="thead-input">
             <tr>
                 <th scope="col" class="th-input">{{__('forms.license.type')}}</th>
@@ -28,7 +38,7 @@
             <tbody>
             @foreach($licensesPagination as $license)
                 <tr>
-                <td class="td-input">{{ $dictionaries['LICENSE_TYPE'][$license->type] ?? $license->type }}</td>
+                    <td class="td-input">{{ $dictionaries['LICENSE_TYPE'][$license->type] ?? $license->type }}</td>
                     <td class="td-input">{{ $license->start_date ?? '—' }}</td>
                     <td class="td-input">{{ $license->end_date ?? '—' }}</td>
                     <td class="td-input">{{ $license->what_licensed ?? '—' }}</td>
@@ -87,29 +97,6 @@
                     </td>
                 </tr>
             @endforeach
-            <tr>
-                <td class="td-input">Продаж наркотичних препаратів</td>
-                <td class="td-input">2025-02-06</td>
-                <td class="td-input">2026-02-06</td>
-                <td class="td-input">напрям діяльності</td>
-                <td class="td-input">
-                    <span class="badge-yellow">Додаткова</span>
-                </td>
-                <td class="td-input">
-                    <a href="{{ route('license.view', [legalEntity(), 999]) }}"
-                       class="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white"
-                       title="Редагувати">
-                        <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 svg-hover-action" aria-hidden="true"
-                             xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                             fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2"
-                                  d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0
-             3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069
-             6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"/>
-                        </svg>
-                    </a>
-                </td>
-            </tr>
             </tbody>
         </table>
     </div>
