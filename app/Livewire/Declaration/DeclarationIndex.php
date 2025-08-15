@@ -9,10 +9,10 @@ use App\Models\Employee;
 use App\Models\LegalEntity;
 use Database\Seeders\DeclarationSeeder;
 use Illuminate\Support\Facades\DB;
-use Livewire\Component;
+use Illuminate\View\View;
 use Livewire\WithPagination;
 
-class DeclarationIndex extends Component
+class DeclarationIndex extends DeclarationComponent
 {
     use WithPagination;
 
@@ -62,7 +62,7 @@ class DeclarationIndex extends Component
 
     protected $listeners = ['searchUpdated'];
 
-    public function mount(LegalEntity $legalEntity)
+    public function mount(LegalEntity $legalEntity): void
     {
         $this->tableHeaders();
     }
@@ -204,7 +204,7 @@ class DeclarationIndex extends Component
         return null; // Return null if the employee is not found or doesn't havE
     }
 
-    public function render()
+    public function render(): View
     {
         $declarations = $this->getDeclarations();
 

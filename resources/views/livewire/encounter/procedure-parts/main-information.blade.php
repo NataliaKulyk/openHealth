@@ -1,6 +1,6 @@
 <fieldset class="fieldset">
     <legend class="legend">
-        {{ __('patients.main_information') }}
+        {{ __('forms.main_information') }}
     </legend>
 
     <div>
@@ -176,7 +176,7 @@
                         {{ __('forms.select') }} {{ mb_strtolower(__('forms.category')) }} *
                     </option>
                     @foreach($this->dictionaries['eHealth/procedure_categories'] as $key => $category)
-                        <option value="{{ $key }}" wire:key="{{ $key }}">{{ $category }}</option>
+                        <option value="{{ $key }}">{{ $category }}</option>
                     @endforeach
                 </select>
             </div>
@@ -200,12 +200,10 @@
         <div class="form-row-2">
             <div class="form-group group">
                 <select x-model="modalProcedure.division.identifier.value"
-                        x-init="
+                        @if(count($divisions) === 1)
                             {{-- Set division by default if only one exist --}}
-                            if ({{ count($divisions) === 1 }}) {
-                                modalProcedure.division.identifier.value = '{{ $divisions[0]['uuid'] }}';
-                            }
-                        "
+                            x-init="modalProcedure.division.identifier.value = '{{ $divisions[0]['uuid'] }}';"
+                        @endif
                         id="divisionNames"
                         class="input-select peer"
                 >
@@ -231,7 +229,7 @@
                         {{ __('forms.select') }} {{ mb_strtolower(__('patients.outcome_result')) }}
                     </option>
                     @foreach($this->dictionaries['eHealth/procedure_outcomes'] as $key => $outcome)
-                        <option value="{{ $key }}" wire:key="{{ $key }}">{{ $outcome }}</option>
+                        <option value="{{ $key }}">{{ $outcome }}</option>
                     @endforeach
                 </select>
             </div>

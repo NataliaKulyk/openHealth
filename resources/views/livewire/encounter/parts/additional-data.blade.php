@@ -86,9 +86,11 @@
                     id="divisionNames"
                     class="input-select peer @error('form.encounter.division.identifier.value') input-error @enderror"
             >
-                <option selected>{{ __('forms.select') }} {{ mb_strtolower(__('patients.division_name')) }}</option>
+                <option selected value="">
+                    {{ __('forms.select') }} {{ mb_strtolower(__('patients.division_name')) }}
+                </option>
                 @foreach($divisions as $key => $division)
-                    <option value="{{ $division['uuid'] }}" wire:key="{{ $key }}">{{ $division['name'] }}</option>
+                    <option value="{{ $division['uuid'] }}">{{ $division['name'] }}</option>
                 @endforeach
             </select>
 
@@ -109,7 +111,7 @@
             >
                 <option selected>{{ __('forms.select') }} {{ mb_strtolower(__('patients.priority')) }}</option>
                 @foreach($this->dictionaries['eHealth/encounter_priority'] as $key => $encounterPriority)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">{{ $encounterPriority }}</option>
+                    <option value="{{ $key }}">{{ $encounterPriority }}</option>
                 @endforeach
             </select>
 

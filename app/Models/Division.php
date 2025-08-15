@@ -1,14 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Casts\Division\Location;
 use App\Casts\Division\WorkingHours;
+use App\Enums\Status;
+use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\Relations\Address;
+use App\Models\Relations\Phone;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
@@ -16,8 +23,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  */
 class Division extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'uuid',
         'external_id',
@@ -25,7 +30,6 @@ class Division extends Model
         'type',
         'mountain_group',
         'location',
-        'phones',
         'email',
         'working_hours',
         'is_active',
@@ -37,20 +41,35 @@ class Division extends Model
     protected $casts = [
         'location' => Location::class,
         'healthcare_services' => 'array',
-        'phones' => 'array',
         'working_hours' => WorkingHours::class,
         'is_active' => 'boolean',
+        'status' => Status::class
     ];
 
-    public $attributes = [
+    protected $attributes = [
         'is_active' => false,
         'mountain_group' => false,
         'uuid' => 'string'
     ];
 
-    public function legalEntity(): HasOne
+    protected $with = [
+        'employees',
+        'legalEntity'
+    ];
+
+    public function legalEntity(): BelongsTo
     {
-        return $this->hasOne(LegalEntity::class);
+        return $this->belongsTo(LegalEntity::class);
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    public function employeeRequests(): HasMany
+    {
+        return $this->hasMany(EmployeeRequest::class);
     }
 
     public function healthcareService(): HasMany
@@ -61,5 +80,10 @@ class Division extends Model
     public function address(): MorphOne
     {
         return $this->morphOne(Address::class, 'addressable');
+    }
+
+    public function phones(): MorphMany
+    {
+        return $this->morphMany(Phone::class, 'phoneable');
     }
 }

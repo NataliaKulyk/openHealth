@@ -13,6 +13,13 @@ abstract class EHealthRequest extends PendingRequest
 {
     public const string QUERY_PARAM_PAGE_SIZE = 'page_size';
 
+    /**
+     * The HTTP request timeout in seconds.
+     * This is specifically needed to load dictionaries
+     * TODO load dictionaries during first-run or similar installation process
+     */
+    public const int TIMEOUT = 100;
+
     protected ?Closure $validator = null;
 
     public function __construct(?Factory $factory = null, $middleware = [])
@@ -41,9 +48,9 @@ abstract class EHealthRequest extends PendingRequest
      * Set a Callable validator for the response, which accepts an EHealthResponse instance as an argument.
      * See EHealthResponse::validate().
      *
-     * @param Callable $validator
+     * @param callable $validator
      */
-    protected function setValidator(Callable $validator): void
+    protected function setValidator(callable $validator): void
     {
         $this->validator = $validator;
     }

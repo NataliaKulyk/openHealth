@@ -6,6 +6,7 @@ namespace App\Livewire\Encounter;
 
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
+use App\Core\Arr;
 use App\Models\LegalEntity;
 use App\Repositories\MedicalEvents\Repository;
 use Carbon\CarbonImmutable;
@@ -50,6 +51,8 @@ class EncounterEdit extends EncounterComponent
 
         $this->form->procedures = Repository::procedure()->get($this->encounterId);
         $this->form->procedures = Repository::procedure()->formatForView($this->form->procedures);
+
+        $this->form->clinicalImpressions = Repository::clinicalImpression()->get($this->encounterId);
 
         $this->setDefaultDate();
     }
@@ -105,7 +108,7 @@ class EncounterEdit extends EncounterComponent
                 $this->form->encounter['episode']['identifier']['value']
             );
 
-            Repository::episode()->store($this->convertArrayKeysToCamelCase($episodeData), $this->encounterId);
+            Repository::episode()->store(Arr::toCamelCase($episodeData), $this->encounterId);
 
             return Repository::episode()->get($this->encounterId);
         } catch (ApiException|Throwable) {

@@ -52,11 +52,18 @@ class AvailableTimeRule extends HealthcareRule
     {
         $dayOfWeek = $day['days_of_week'];
 
-        $startTime = Carbon::createFromFormat('H:i', $day['available_start_time']);
-        $endTime = Carbon::createFromFormat('H:i', $day['available_end_time']);
+        try {
+            $startTime = Carbon::parse($day['available_start_time']);
+            $endTime = Carbon::parse($day['available_end_time']);
 
-        if ($startTime->gte($endTime)) {
-            $this->wrongTimeMessage = '[' . __(get_day_name($dayOfWeek)) .'] ' . $this->wrongTimeMessage ;
+            if ($startTime->gte($endTime)) {
+                $this->wrongTimeMessage = '[' . __(get_day_name($dayOfWeek)) .'] ' . $this->wrongTimeMessage;
+
+                return false;
+            }
+
+        } catch (\Exception $err) {
+            $this->wrongTimeMessage = '[' . __(get_day_name($dayOfWeek)) .'] Invalid time format: ' . $err->getMessage();
 
             return false;
         }

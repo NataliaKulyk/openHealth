@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Jobs\UpdateICD10TableJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -24,5 +25,6 @@ Artisan::command('first-run', function () {
     $this->call('key:generate');
     $this->call('migrate');
     $this->call('db:seed', ['--class' => 'DatabaseSeeder']);
+    UpdateICD10TableJob::dispatchSync();
     //    $this->call('permission:create-role', ['name' => 'Owner']);
 })->purpose('Completes the first run of the application');

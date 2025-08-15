@@ -50,7 +50,7 @@ trait Cipher
     protected function sendEncryptedData(
         array $data,
         string $taxId,
-        string $signatoryInitiator = CipherApi::SIGNATORY_INITIATOR_PERSON
+        ?string $edrpou = null,
     ): string|array {
         $this->validate($this->rules());
 
@@ -59,8 +59,8 @@ trait Cipher
             $this->password,
             $this->convertFileToBase64(),
             $this->knedp,
-            $signatoryInitiator,
-            $taxId
+            $taxId,
+            $edrpou
         );
     }
 

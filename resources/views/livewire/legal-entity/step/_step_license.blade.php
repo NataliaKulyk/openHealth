@@ -31,7 +31,7 @@
                 id="licenseType"
                 wire:model.defer="legalEntityForm.license.type"
                 aria-describedby="{{ $hasLicenseTypeError ? 'licenseTypeErrorHelp' : '' }}"
-                class="input-select text-gray-800 {{ $hasLicenseTypeError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+                class="input-select  {{ $hasLicenseTypeError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 :class="isDisabled ? 'text-gray-400 border-gray-200 dark:text-gray-500' : 'text-gray-900 border-gray-300'"
                 :disabled="isDisabled"
             >
@@ -57,7 +57,7 @@
 
         <div class="form-group group">
             <input
-                type="text"
+                type="number"
                 placeholder=" "
                 id="licenseNumber"
                 wire:model="legalEntityForm.license.licenseNumber"
@@ -171,9 +171,9 @@
             />
 
             @if($hasLicenseExpirationDateError)
-                <p id="licenseExpirationDateErrorHelp" class="text-error">
+                {{--<p id="licenseExpirationDateErrorHelp" class="text-error">
                     {{ $errors->first('legalEntityForm.license.expiryDate') }}
-                </p>
+                </p>--}}
             @endif
 
             <label for="licenseExpiryDate" class="label z-10">

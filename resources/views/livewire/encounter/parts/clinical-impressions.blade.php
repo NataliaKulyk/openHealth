@@ -1,12 +1,9 @@
-{{-- Component to input values to the table through the Modal, built with Alpine --}}
-<div class="overflow-x-auto relative"
-     id="clinical-impressions-section"> {{-- This required for table overflow scrolling --}}
+<div class="overflow-x-auto relative" id="clinical-impressions-section">
     <fieldset class="fieldset"
               {{-- Binding ClinicalImpression to Alpine, it will be re-used in the modal.
                 Note that it's necessary for modal to work properly --}}
               x-data="{
                   clinicalImpressions: $wire.entangle('form.clinicalImpressions'),
-                  openModal: false,
                   modalClinicalImpression: new ClinicalImpression(),
                   newClinicalImpression: false,
                   item: 0,
@@ -31,7 +28,7 @@
                     <td class="td-input"
                         x-text="`${ clinicalImpression.code.coding[0].code } - ${ dictionary[clinicalImpression.code.coding[0].code] }`"
                     ></td>
-                    <td class="td-input"></td>
+                    <td class="td-input" x-text="clinicalImpression.effectivePeriodStartDate"></td>
                     <td class="td-input">
                         {{-- That all that is needed for the dropdown --}}
                         <div x-data="{
@@ -54,7 +51,7 @@
                                  }
                              }"
                              @keydown.escape.prevent.stop="close($refs.button)"
-                             @focusin.window="! $refs.panel.contains($event.target) && close()"
+                             @focusin.window="!$refs.panel.contains($event.target) && close()"
                              x-id="['dropdown-button']"
                              class="relative"
                         >
@@ -90,11 +87,16 @@
                                 >
 
                                     <button @click.prevent="
-                                                openModal = true; {{-- Open the modal --}}
                                                 item = index; {{-- Identify the item we are corrently editing --}}
                                                 {{-- Replace the previous clinicalImpression with the current, don't assign object directly (modalClinicalImpression = clinicalImpression) to avoid reactiveness --}}
                                                 modalClinicalImpression = JSON.parse(JSON.stringify(clinicalImpressions[index]));
                                                 newClinicalImpression = false; {{-- This clinical impression is already created --}}
+
+                                                $nextTick(() => {
+                                                    const drawer = document.getElementById('clinical-impression-drawer-right');
+                                                    drawer.classList.remove('translate-x-full'); {{-- Open manually --}}
+                                                    drawer.scrollTop = 0; {{-- Move scroll to the top --}}
+                                                });
                                             "
                                             class="dropdown-button"
                                     >
@@ -118,75 +120,67 @@
         <div>
             {{-- Button to trigger the modal --}}
             <button @click.prevent="
-                        openModal = true; {{-- Open the Modal --}}
                         newClinicalImpression = true; {{-- We are adding a new clinicalImpression --}}
                         modalClinicalImpression = new ClinicalImpression(); {{-- Replace the data of the previous clinicalImpression with a new one--}}
+                        $wire.problems = [];
+                        $wire.findings = [];
+
+                        $nextTick(() => {
+                            const drawer = document.getElementById('clinical-impression-drawer-right');
+                            drawer.scrollTop = 0; {{-- Move scroll to the top --}}
+                        });
                     "
                     class="item-add my-5"
+                    data-drawer-target="clinical-impression-drawer-right"
+                    data-drawer-show="clinical-impression-drawer-right"
+                    data-drawer-placement="right"
+                    data-drawer-body-scrolling="false"
+                    aria-controls="clinical-impression-drawer-right"
             >
                 {{ __('forms.add') }}
             </button>
 
             {{-- Modal --}}
             <template x-teleport="body"> {{-- This moves the modal at the end of the body tag --}}
-                <div x-show="openModal"
-                     style="display: none"
-                     @keydown.escape.prevent.stop="openModal = false"
-                     role="dialog"
-                     aria-modal="true"
-                     x-id="['modal-title']"
-                     :aria-labelledby="$id('modal-title')" {{-- This associates the modal with unique ID --}}
-                     class="modal"
+                <div id="clinical-impression-drawer-right"
+                     class="fixed top-0 right-0 z-40 h-screen pt-20 p-4 overflow-y-auto transition-transform translate-x-full bg-white w-4/5 dark:bg-gray-800"
+                     tabindex="-1"
+                     aria-labelledby="clinical-impression-drawer-right"
+                     wire:ignore
                 >
+                    {{-- Title --}}
+                    <h3 class="modal-header" :id="$id('modal-title')">{{ __('patients.clinical_impression') }}</h3>
 
-                    {{-- Overlay --}}
-                    <div x-show="openModal" x-transition.opacity class="fixed inset-0 bg-black/25"></div>
+                    {{-- Content --}}
+                    <form>
+                        @include('livewire.encounter.clinical-impression-parts.main-information')
+                        @include('livewire.encounter.clinical-impression-parts.problems')
+                        @include('livewire.encounter.clinical-impression-parts.findings')
+                        @include('livewire.encounter.clinical-impression-parts.supporting-info')
+                        @include('livewire.encounter.clinical-impression-parts.additional-information')
 
-                    {{-- Panel --}}
-                    <div x-show="openModal"
-                         x-transition
-                         @click="openModal = false"
-                         class="relative flex min-h-screen items-center justify-center p-4"
-                    >
-                        <div @click.stop
-                             x-trap.noscroll.inert="openModal"
-                             class="modal-content h-fit w-full lg:max-w-4xl"
-                        >
-                            {{-- Title --}}
-                            <h3 class="modal-header" :id="$id('modal-title')">
-                                {{ __('patients.clinical_impression') }}
-                            </h3>
+                        <div class="mt-6 flex justify-between space-x-2">
+                            <button type="button"
+                                    class="button-minor"
+                                    data-drawer-hide="clinical-impression-drawer-right"
+                                    aria-controls="clinical-impression-drawer-right"
+                            >
+                                {{ __('forms.cancel') }}
+                            </button>
 
-                            {{-- Content --}}
-                            <form>
-                                @include('livewire.encounter.clinical-impression-parts.main-information')
-                                @include('livewire.encounter.clinical-impression-parts.problems')
-                                @include('livewire.encounter.clinical-impression-parts.findings')
-
-                                <div class="mt-6 flex justify-between space-x-2">
-                                    <button type="button"
-                                            @click="openModal = false"
-                                            class="button-minor"
-                                    >
-                                        {{ __('forms.cancel') }}
-                                    </button>
-
-                                    <button @click.prevent="
-                                                newClinicalImpression !== false
-                                                    ? clinicalImpressions.push(modalClinicalImpression)
-                                                    : clinicalImpressions[item] = modalClinicalImpression;
-
-                                                openModal = false;
-                                            "
-                                            class="button-primary"
-                                            :disabled="!modalClinicalImpression.code.coding[0].code.trim()"
-                                    >
-                                        {{ __('forms.save') }}
-                                    </button>
-                                </div>
-                            </form>
+                            <button @click.prevent="
+                                        newClinicalImpression !== false
+                                            ? clinicalImpressions.push(modalClinicalImpression)
+                                            : clinicalImpressions[item] = modalClinicalImpression;
+                                    "
+                                    class="button-primary"
+                                    data-drawer-hide="clinical-impression-drawer-right"
+                                    :disabled="!modalClinicalImpression.code.coding[0].code.trim()"
+                            >
+                                {{ __('forms.save') }}
+                            </button>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </template>
         </div>
@@ -202,8 +196,36 @@
             coding: [{ system: 'eHealth/clinical_impression_patient_categories', code: '' }],
             text: ''
         };
+        assessor = {
+            identifier: {
+                type: {
+                    coding: [{ system: 'eHealth/resources', code: 'employee' }],
+                    text: ''
+                }
+            }
+        };
+        previousList = [];
         problems = [];
         findings = [];
+        supportingInfo = [];
+        supportingInfoEpisodes = [];
+
+        // Create date
+        #now = new Date();
+        #endTime = new Date(this.#now.getTime() + 15 * 60 * 1000); // add 15 minutes
+
+        effectivePeriodStartDate = this.#now.toISOString().split('T')[0];
+        effectivePeriodStartTime = this.#now.toLocaleTimeString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        effectivePeriodEndDate = this.#endTime.toISOString().split('T')[0];
+        effectivePeriodEndTime = this.#endTime.toLocaleTimeString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
 
         constructor(obj = null) {
             if (obj) {

@@ -10,7 +10,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | The following language lines are for various messages related to patients,
-    | e.g., patient search, patient-related API request messages, etc,
+    | e.g., patient search, patient-related API request messages, etc.,
     |
     */
 
@@ -35,7 +35,6 @@ return [
     'source_link' => 'Посилання на джерело',
     'body_part' => 'Частина тіла',
     'diagnostic_reports' => 'Діагностичні звіти',
-    'main_information' => 'Основна інформація',
     'notes' => 'Нотатки',
     'author' => 'Автор',
     'division_name' => 'Місце надання послуг',
@@ -54,6 +53,22 @@ return [
         'unzr' => 'УНЗР',
         'birth_certificate' => 'Свідоцтво про народження',
         'birth_certificate_foreign' => 'Свідоцтво про народження іноземного зразку',
+        'child_birth_certificate' => 'Свідоцтво про народження дитини',
+        'child_birth_certificate_foreign' => 'Свідоцтво про народження дитини іноземного зразку',
+        'complementary_protection_certificate' => 'Посвідчення особи, яка потребує додаткового захисту',
+        'court_decision_divorce' => 'Рішення суду про розірвання шлюбу',
+        'court_decision_legal_capacity' => 'Рішення суду про надання особі повної цивільної дієздатності',
+        'divorce_certificate' => 'Свідоцтво про розірвання шлюбу',
+        'employment_contract' => 'Трудовий договір',
+        'guardianship_decision_legal_capacity' => 'Рішення органу опіки та піклування про надання особі повної цивільної дієздатності',
+        'legal_capacity_document' => 'Документ про набуття повної цивільної дієздатності',
+        'marriage_certificate' => 'Свідоцтво про шлюб',
+        'national_id' => 'Біометричний паспорт громадянина України',
+        'passport' => 'Паспорт',
+        'permanent_residence_permit' => 'Посвідка на постійне проживання в Україні',
+        'state_register_extract' => 'Виписка або витяг з Єдиного державного реєстру юридичних осіб, фізичних осіб – підприємців та громадських формувань',
+        'temporary_certificate' => 'Посвідка на тимчасове проживання',
+        'temporary_passport' => 'Тимчасове посвідчення громадянина України',
         'confidant_certificate' => 'Посвідчення опікуна',
         'court_decision' => 'Рішення суду',
         'document' => 'Документ'
@@ -70,6 +85,7 @@ return [
     'continue_registration' => 'Продовжити реєстрацію',
     'view_record' => 'Переглянути карту',
     'create_diagnostic_report' => 'Створити діагностичний звіт',
+    'sign_declaration' => 'Укласти декларацію',
 
     // Create patient
     'patient_information' => 'Інформація про пацієнта',
@@ -81,7 +97,6 @@ return [
     'incapacitated' => 'Недієздатний пацієнт або дитина до 14 років',
     'search_for_confidant' => 'Шукати представника',
     'confidant_person_documents_relationship' => 'Документи, що підтверджують законність представництва',
-    'authentication' => 'Автентифікація',
     'alias' => 'Роль',
     'leaflet' => "Пам’ятка",
     'print_leaflet_for_patient' => "Роздрукувати пам’ятку для ознайомлення пацієнтом",
@@ -102,7 +117,6 @@ return [
     'passport_data' => 'Паспортні дані',
     'confidant_person_not_exist' => 'Законний представник не був вказаний.',
     'authentication_methods' => 'Методи автентифікації',
-    'auth_method' => 'Метод автентифікації',
 
     // Summary record
     'summary' => 'Зведені дані',
@@ -154,6 +168,7 @@ return [
 
     // Evidences
     'evidence_conditions' => 'Докази - стани',
+    'evidence_observations' => 'Докази - медичні стани',
     'condition' => 'Стан',
 
     // Additional data
@@ -236,5 +251,10 @@ return [
     'set_of_rule_engines' => 'Набір механізмів правил',
     'previous_clinical_impression' => 'Попередня клінічна оцінка',
     'appropriate_patient_assessment' => 'Відповідна оцінка стану пацієнта',
-    'what_was_identified' => 'Що було ідентифіковано'
+    'what_was_identified' => 'Що було ідентифіковано',
+    'supporting_medical_information' => 'Підтверджуючі медичні дані',
+    'medical_records_type' => 'тип медичних записів',
+    'employee_who_created' => 'Співробітник, який створив',
+    'description' => 'Опис',
+    'medical_record' => 'медичний запис',
 ];

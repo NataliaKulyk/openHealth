@@ -3,10 +3,13 @@
 namespace App\Livewire\Auth;
 
 use App\Models\User;
+use Exception;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 
 #[Layout('layouts.guest')]
@@ -29,17 +32,31 @@ class Register extends Component
             'passwordConfirmation' => ['required', 'string', 'same:password']
         ]);
 
-        $user = new User();
-        $user->password = Hash::make($userData['password']);
-        $user->email = $userData['email'];
-        $user->save();
-        $user->refresh();
+        try {
+            $user = DB::transaction(function() use($userData) {
+                $user = new User();
+                $user->password = Hash::make($userData['password']);
+                $user->email = $userData['email'];
+                $user->save();
+                $user->refresh();
 
-        event(new Registered($user));
+                return $user;
+            });
 
-        session()->flash('success', __('auth.login.success.new_user_create'));
+            event(new Registered($user));
 
-        $this->redirect(route('login', absolute: false), navigate: true);
+            session()->flash('success', __('auth.login.success.new_user_create'));
+
+            $this->redirect(route('login', absolute: false), navigate: true);
+
+        } catch (Exception $err) {
+            Log::error('Register: ', ['error' => $err->getMessage()]);
+
+            session()->flash('error', __('Помилка при створенні користувача. Зверніться до адміністратора'));
+
+            // Stay on the Register page even if an error(s) occur
+            $this->redirect(request()->header('Referer'), navigate: true);
+        }
     }
 
     public function messages(): array

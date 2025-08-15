@@ -59,6 +59,7 @@ trait AddressSearch
             $this->address['region'] = '';
             $this->address['settlement'] = 'Київ';
             $this->address['settlementType'] = 'CITY';
+            $this->address['streetType'] = 'STREET';
             $this->address['settlementId'] = 'adaa4abf-f530-461c-bcbf-a0ac210d955b';
         }
     }

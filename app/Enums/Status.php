@@ -11,15 +11,33 @@ enum Status: string
     case REJECTED = 'REJECTED';
     case SIGNED = 'SIGNED';
     case DISMISSED = 'DISMISSED';
+    case ACTIVE = 'ACTIVE';
+    case INACTIVE = 'INACTIVE';
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 
     public function label(): string
     {
         return match ($this) {
-            self::NEW => 'Новий',
-            self::APPROVED => 'Підтверджено',
-            self::REJECTED => 'Відхилено',
-            self::SIGNED => 'Підписано',
-            self::DISMISSED => 'Звільнено',
+            self::NEW => __('forms.status.new'),
+            self::APPROVED => __('forms.status.approved'),
+            self::REJECTED => __('forms.status.rejected'),
+            self::SIGNED => __('forms.status.signed'),
+            self::DISMISSED => __('forms.status.dismissed'),
+            self::ACTIVE => __('forms.status.active'),
+            self::INACTIVE => __('forms.status.non_active'),
         };
+    }
+
+    public static function only(array $names): array
+    {
+        return collect(self::cases())
+            ->filter(fn($case) => in_array($case->name, $names))
+            ->map(fn($case) => $case->value)
+            ->values()
+            ->all();
     }
 }

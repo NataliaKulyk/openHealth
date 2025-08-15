@@ -1,48 +1,55 @@
 <?php
 
-/**
- * Checks the birthdate according to the ezdorovya specification: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583402887/Create+employee+request+v2
- */
-
 namespace App\Rules;
 
-use App\Models\User;
 use Closure;
+use App\Models\User;
+use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Translation\PotentiallyTranslatedString;
 
-class TaxId implements ValidationRule
+class TaxId implements ValidationRule, DataAwareRule
 {
+    /**
+     * All the data under validation.
+     * @var array
+     */
+    protected array $data = [];
+
     protected bool $noTaxId;
 
-    protected string $email;
+    protected ?string $email;
 
-    /**
-     * Check taxId value (IPN).
-     * You can pass the noTaxId value.
-     * If the noTaxId is passed, the document number must match number of the National Passport or the Passport ID.
-     *
-     * @param array $dates // 'startDate' - the date of start
-     */
-    public function __construct(string $email, bool $noTaxId = false)
+    public function __construct()
     {
-        $this->email = $email;
-        $this->noTaxId = $noTaxId;
     }
 
     /**
-     * Run the validation rule.
+     * Set the data under validation.
+     * @param  array  $data
      *
-     * @param  string  $attribute  The name of the attribute being validated
-     * @param  mixed  $value  The value of the attribute being validated
-     * @param  Closure(string): PotentiallyTranslatedString  $fail  The callback to invoke if validation fails
-     *
-     * @return void
+     * @return $this
      */
+    public function setData(array $data): static
+    {
+        // Employee Part
+        if (!empty($data['party'])) {
+            $this->noTaxId = $this->data['party']['noTaxId'] ?? false;
+            $this->email = $this->data['party']['email'] ?? null;
+        }
+
+        // Legal Entity part
+        if (!empty($data['owner'])) {
+            $this->noTaxId = $this->data['owner']['noTaxId'] ?? false;
+            $this->email = $this->data['owner']['email'] ?? '';
+        }
+
+        return $this;
+    }
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->noTaxId) {
-            if (!preg_match('/^([0-9]{10}|[А-ЯЁЇIЄҐ]{2}\\d{6})$/u', $value)) {
+            if (!preg_match('/^([0-9]{9}|[А-ЯЁЇIЄҐ]{2}\\d{6})$/u', $value)) {
                 $fail(__('validation.attributes.errors.invalidNationalId'));
             }
         } else {
@@ -50,22 +57,24 @@ class TaxId implements ValidationRule
                 $fail(__('validation.attributes.errors.invalidTaxId'));
             }
 
-            $user = User::where('email', $this->email)->first();
+            if ($this->email) {
+               $user = User::where('email', $this->email)->first();
 
-            /*
-             * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
-             * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
-             */
-            if ($user?->party && $value !== $user->party->taxId) {
-                $fail(__('validation.employee.wrong_tax_id'));
-            }
+                /*
+                * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
+                * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
+                */
+                if ($user?->party && $value !== $user->party->taxId) {
+                    $fail(__('validation.employee.wrong_tax_id'));
+                }
 
-            /*
-             * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
-             * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
-             */
-            if ($user?->party && $user->party->taxId && !$value) {
-                $fail(__('validation.employee.missed_tax_id'));
+                /*
+                * Check that OWNER's tax_id from request is equal to party tax_id for OWNER's employee_id
+                * see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583403638/Create+Update+Legal+Entity+V2
+                */
+                if ($user?->party && $user->party->taxId && !$value) {
+                    $fail(__('validation.employee.missed_tax_id'));
+                }
             }
         }
     }

@@ -96,7 +96,7 @@ return [
     'phone.dublicates' => 'Дозволяється лише один телефонний номер типу \':type\'',
     'present' => 'Поле :attribute повинне бути присутнє.',
     'regex' => 'Поле :attribute має хибний формат.',
-    'required' => "Поле :attribute є обов'язковим для заповнення.",
+    'required' => "Поле ':attribute' є обов'язковим для заповнення.",
     'required_if' => "Поле :attribute є обов'язковим для заповнення, коли :other є рівним :value.",
     'required_unless' => "Поле :attribute є обов'язковим, якщо :other не вказано у :values.",
     'prohibited' => 'Поле :attribute заборонено.',
@@ -166,7 +166,7 @@ return [
         ],
         'owner_date_mismatch' => 'Вказана дата народження не співпадає з наявною датою для цього користувача',
         'wrong_tax_id' => 'Для даного співробітника має бути вказаний його ІПН',
-        'missed_tax_if' =>'Для даного співробітника не вказаний його ІПН'
+        'missed_tax_if' => 'Для даного співробітника не вказаний його ІПН'
     ],
 
     /*
@@ -208,22 +208,40 @@ return [
                 'number' => 'Серія/номер документа'
             ]
         ],
-        'party' => [
-            'firstName' => 'Ім’я',
-            'lastName' => 'Прізвище',
-            'secondName' => 'По батькові',
-            'birthDate' => 'Дата народження',
-            'email' => 'E-mail',
-            'gender' => 'Стать',
-            'position' => 'Посада керівника НМП',
-            'taxId' => 'РНОКПП',
-            'employeeType' => 'Роль',
-        ],
-        'party.phones.*.type' => 'Тип телефону',
-        'party.phones.*.number' => 'Номер телефону',
-        'party.documents.*.type' => 'Тип документа',
+        // Party
+        'party.lastName' => __('forms.last_name'),
+        'party.firstName' => __('forms.first_name'),
+        'party.secondName' => __('forms.second_name'),
+        'party.gender' => __('forms.gender'),
+        'party.birthDate' => __('forms.birth_date'),
+        'party.taxId' => __('forms.tax_id'),
+        'party.email' => __('forms.email'),
+        'party.workingExperience' => __('forms.working_experience'),
+        'party.aboutMyself' => __('forms.about_myself'),
+
+        // Phones (nested under party)
+        'party.phones' => __('forms.phones'),
+        'party.phones.*.type' => __('forms.phone_type'),
+        'party.phones.*.number' => __('forms.phone_number'),
+
         'party.documents.*.number' => 'Серія/номер документа',
-        'position' => 'Посада',
+
+        'documents.*.type' => __('forms.document_type'),
+        'documents.*.number' => __('forms.document_number'),
+        'documents.*.issuedBy' => __('forms.document_issued_by'),
+        'documents.*.issuedAt' => __('forms.document_issued_at'),
+
+        // Position
+        'position' => __('forms.position'),
+        'employeeType' => __('forms.employee_type'),
+
+        // Doctor Specific
+        'doctor.specialities' => __('forms.specialities'),
+        'doctor.educations' => __('forms.education'),
+        'doctor.qualifications' => __('forms.qualifications'),
+        'doctor.scienceDegrees' => __('forms.science_degree'),
+
+        'divisionId' => __('forms.division'),
         'patient' => [
             'firstName' => 'ім’я',
             'lastName' => 'прізвище',
@@ -352,7 +370,12 @@ return [
                 'division' => [
                     'commonError' => 'Місце надання послуг: загальна помилка',
                     'status' => 'Місце надання послуг має неактивний статус. Створення послуги неможливо.',
-                    'location' => 'Для даного типу медичного закладу заповнення полів Location - обов\'язкове',
+                    'external_id' => "Поле 'Зовнішній ідeнтифікатор' має містити ціле число",
+                    'location' => [
+                        'required_type' => 'Для даного типу медичного закладу заповнення полів Location - обов\'язкове',
+                        'longitude_required' => 'Якщо введено широту, довгота також обов\'язкова',
+                        'latitude_required' => 'Якщо введено довготу, широта також обов\'язкова'
+                    ],
                     'type' => 'Не вірний тип місця надання послуг',
                     'mapping' => 'Вказаний тип місця надання послуг не дозволяється для поточного закладу',
                     'workingHours' => [
@@ -368,9 +391,15 @@ return [
                         'zip' => 'Неправильний формат індексу',
                         'mapping' => 'Вказаний тип адреси не дозволяється для даного типу місця надання послуг і поточного закладу',
                     ],
+                    'email' => [
+                        'required' => 'Поле E-mail є обов’язковим',
+                        'wrong' => 'Введіть дійсну адресу електронної пошти'
+                    ],
                     'phone' => [
                         'commonError' => 'Помилка заповнення телефонного номеру',
+                        'type_required' => "Поле 'Тип номера' є обов’язковим",
                         'type' => 'Невірний тип телефонного зв\'язку',
+                        'number_required' => "Поле 'Номер телефону' є обов’язковим",
                         'number' => 'Невірно вказаний телефонний номер'
                     ]
                 ],
@@ -389,7 +418,7 @@ return [
                 'time' => [
                     'available' => 'Закінчення часу доступності менше часу початку',
                     'notAvailable' => 'Кінцева дата часу недоступності менше початкової'
-                ]
+                ],
             ]
         ],
         'license' => [
@@ -497,7 +526,7 @@ return [
                 'code' => 'тип епізоду'
             ]
         ],
-        'immunizations.*' => [
+        'immunizations' => [
             'primarySource' => 'джерело інформації',
             'performer' => 'виконавець',
             'reportOrigin' => 'пацієнт',
@@ -515,11 +544,11 @@ return [
             'site.coding.*.code' => 'частина тіла',
             'route' => 'шлях введення',
             'route.coding.*.code' => 'шлях введення',
-            'vaccinationProtocols.doseSequence' => 'порядковий номер дози',
-            'vaccinationProtocols.authority' => 'автор протоколу',
-            'vaccinationProtocols.series' => 'етап імунізації',
-            'vaccinationProtocols.seriesDoses' => 'кількість доз по протоколу',
-            'vaccinationProtocols.targetDiseases' => 'протидія загрозам',
+            'vaccinationProtocols.*.doseSequence' => 'порядковий номер дози',
+            'vaccinationProtocols.*.authority' => 'автор протоколу',
+            'vaccinationProtocols.*.series' => 'етап імунізації',
+            'vaccinationProtocols.*.seriesDoses' => 'кількість доз по протоколу',
+            'vaccinationProtocols.*.targetDiseases' => 'протидія загрозам',
             'explanation.reasonsNotGiven' => 'причини не проведення',
             'date' => 'дата вакцинації',
             'time' => 'час вакцинації',
@@ -544,6 +573,8 @@ return [
             'invalidTaxId' => 'Ідентифікаційний номер повинен містити рівно 10 цифр',
             'date_iso' => 'Дата має бути в форматі ISO 8601',
             'wrongFieldFormat' => 'Поле має хибний формат',
+            'wrongSymbols' => 'Поле містить недопустимі символи',
+            'nonEmpty' => 'Наразі поле не може бути пустим',
             'minLen2' => 'Мінімальна довжина - 2 символи',
             'minLen3' => 'Мінімальна довжина - 3 символи',
             'onlyNumeric' => 'Дозволено лише цифри',
@@ -597,5 +628,8 @@ return [
             'division.identifier.value' => 'місце надання послуг',
             'outcome.coding.*.code' => 'результат проведення'
         ],
+
+        // Declaration
+        'authorizeWith' => 'метод автентифікації'
     ]
 ];

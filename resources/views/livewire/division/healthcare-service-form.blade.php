@@ -1,6 +1,8 @@
 <div>
+    <x-messages />
+
     <x-section-navigation x-data="{ showFilter: false }" class="">
-        <x-slot name="title">{{ __('Послуги') }}</x-slot>
+        <x-slot name="title">{{ __('forms.services') }}</x-slot>
         <x-slot name="description">{{ $currentDivision['type'] }} '{{ $currentDivision['name'] }}'</x-slot>
         <x-slot name="navigation">
             <div class="rounded-sm border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -15,10 +17,10 @@
                         wire:click="create"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
                     >
-                        {{ __('Додати Послугу') }}
+                        {{ __('forms.add_healthcare_service') }}
                     </button>
 
-                    <button wire:click="syncHealthcareServices" class="button-sync">
+                    <button wire:click="sync" class="button-sync">
                         {{ __('forms.synchronise_with_eHealth') }}
                     </button>
                 </div>
@@ -61,10 +63,10 @@
                                         </td>
 
                                         <td class="p-4 text-sm font-normal text-center text-gray-500 whitespace-nowrap dark:text-gray-400">
-                                            @if ($service->status == 'DEACTIVATED')
-                                                <span class="rejected text-meta-1">{{ __('Не активний') }}</span>
+                                            @if ($service->status == \App\Enums\Status::INACTIVE)
+                                                <span class="rejected text-meta-1">{{ \App\Enums\Status::INACTIVE->label() }}</span>
                                             @else
-                                                <span class="approved text-meta-3">{{ __('Активний') }}</span>
+                                                <span class="approved text-meta-3">{{ \App\Enums\Status::ACTIVE->label() }}</span>
                                             @endif
                                         </td>
 
@@ -101,7 +103,7 @@
                                                             :aria-expanded="open"
                                                             :aria-controls="$id('dropdown-button')"
                                                             type="button"
-                                                            class="hover:text-primary"
+                                                            class="hover:text-primary cursor-pointer"
                                                         >
                                                             <svg
                                                                 class="fill-current"
@@ -129,7 +131,7 @@
                                                             style="display: none;"
                                                             class="absolute right-0 mt-2 w-40 rounded-md bg-white shadow-md z-50"
                                                         >
-                                                            @if ($service->status == 'ACTIVE')
+                                                            @if ($service->status == \App\Enums\Status::ACTIVE)
                                                                 <a
                                                                     wire:click="edit({{ $service }}); toggle()"
                                                                     href="#"
@@ -164,7 +166,7 @@
                             <tr>
                                 <td class="text-black w-full p-4 border-gray-200 text-center dark:bg-gray-800 dark:border-gray-700 dark:text-white" colspan="7">
                                     <p >
-                                        {{ __('Нічого не знайдено') }}
+                                        {{ __('forms.nothing_found') }}
                                     </p>
                                 </td>
                             </tr>
@@ -180,7 +182,7 @@
     <div class="footer flex flex-start border-stroke px-7 py-2 my-4">
         <x-secondary-button>
             <a href="{{ route('division.index', legalEntity()) }}">
-                {{ __('Назад') }}
+                {{ __('forms.back') }}
             </a>
         </x-secondary-button>
     </div>

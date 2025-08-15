@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\LegalEntity;
@@ -9,16 +11,28 @@ use Illuminate\Auth\Access\Response;
 
 class LicensePolicy
 {
-    /*
+    /**
+     * User can view the list of licenses
+     */
+    public function viewAny(User $user): Response
+    {
+        if ($user->cannot('license:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * User can read the license
      */
-    public function access(User $user, License $currentLicense, ?LegalEntity $currentLegalEntity = null): Response
+    public function view(User $user, License $currentLicense, ?LegalEntity $currentLegalEntity = null): Response
     {
         if (is_null($currentLegalEntity)) {
             $currentLegalEntity = legalEntity();
         }
 
-        // Should belogn to the same legal entity
+        // Should belong to the same legal entity
         if ($currentLicense->legalEntity->id !== $currentLegalEntity->id) {
             return Response::denyWithStatus(404);
         }
@@ -31,9 +45,21 @@ class LicensePolicy
     }
 
     /**
+     * User can create the license
+     */
+    public function create(User $user): Response
+    {
+        if ($user->cannot('license:write')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * User can edit the license
      */
-    public function write(User $user, License $currentLicense, ?LegalEntity $currentLegalEntity = null): Response
+    public function update(User $user, License $currentLicense, ?LegalEntity $currentLegalEntity = null): Response
     {
         if (is_null($currentLegalEntity)) {
             $currentLegalEntity = legalEntity();

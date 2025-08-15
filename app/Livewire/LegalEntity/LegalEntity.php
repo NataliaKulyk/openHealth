@@ -14,23 +14,17 @@ use App\Traits\FormTrait;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use App\Traits\AddressSearch;
-use App\Livewire\Actions\Logout;
 use App\Models\Employee\Employee;
-use Illuminate\Support\Facades\DB;
-use App\Mail\OwnerCredentialsMail;
+use App\Events\LegalEntityCreate;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Classes\Cipher\Traits\Cipher;
-use App\Classes\Cipher\Api\CipherApi;
 use Illuminate\Support\Facades\Cache;
 use App\Repositories\PhoneRepository;
-use Illuminate\Auth\Events\Registered;
 use App\Repositories\AddressRepository;
 use App\Classes\eHealth\Api\EmployeeApi;
 use App\Models\Employee\EmployeeRequest;
 use App\Repositories\EmployeeRepository;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 use App\Models\LegalEntity as LegalEntityModel;
 use App\Livewire\LegalEntity\Forms\LegalEntitiesForms;
@@ -163,6 +157,8 @@ abstract class LegalEntity extends Component
                 unset($modelData['licenses']);
             }
 
+            $modelData['website'] ??= '';
+
             $this->legalEntityForm->fill($modelData);
 
             return true;
@@ -263,7 +259,7 @@ abstract class LegalEntity extends Component
         $taxId = $this->legalEntityForm->owner['taxId'];
 
         // Sending encrypted data
-        $base64Data = $this->sendEncryptedData($data, $taxId, CipherApi::SIGNATORY_INITIATOR_BUSINESS);
+        $base64Data = $this->sendEncryptedData($data, $taxId, $data['edrpou']);
 
         // Handle errors from encrypted data
         if (isset($base64Data['errors'])) {
@@ -345,9 +341,10 @@ abstract class LegalEntity extends Component
             'data.phones' => 'required|array',
             'data.phones.*.type' => 'required|string',
             'data.phones.*.number' => 'required|string|size:13',
-            'data.receiver_funds_code' => 'sometimes|string',
-            'data.beneficiary' => 'sometimes|string',
-            'data.website' => 'sometimes|string',
+            'data.phones.*.note' => 'sometimes|string',
+            'data.receiver_funds_code' => 'nullable|string',
+            'data.beneficiary' => 'nullable|string',
+            'data.website' => 'nullable|string',
             'data.email' => 'required|string',
             'data.nhs_verified' => 'required|boolean',
             'data.nhs_reviewed' => 'required|boolean',
@@ -365,25 +362,24 @@ abstract class LegalEntity extends Component
             'data.residence_address.building' => 'sometimes|string',
             'data.residence_address.apartment' => 'sometimes|string',
             'data.residence_address.zip' => 'sometimes|string',
-            'data.accreditation' => 'sometimes|array',
-            'data.accreditation.category' => 'required|string',
+            'data.accreditation' => 'nullable|array',
+            'data.accreditation.category' => 'required_if:data.accreditation,array|string',
             'data.accreditation.issued_date' => 'sometimes|string',
             'data.accreditation.expiry_date' => 'sometimes|string',
-            'data.accreditation.order_no' => 'required|string',
-            'data.accreditation.order_date' => 'required_unless:data.accreditation.category,NO_ACCREDITATION|string',
-            'data.license' => 'required|array',
+            'data.accreditation.order_no' => 'required_with:data.accreditation.category|string',
+            'data.license' => 'nullable|array',
             'data.license.id' => 'sometimes|string',
-            'data.license.type' => 'required|string',
+            'data.license.type' => 'sometimes|string',
             'data.license.license_number' => 'sometimes|string',
-            'data.license.issued_by' => 'required|string',
-            'data.license.issued_date' => 'required|string',
-            'data.license.expiry_date' => 'sometimes|string',
-            'data.license.active_from_date' => 'required|string',
-            'data.license.what_licensed' => 'required|string',
-            'data.license.order_no' => 'required|string',
-            'data.archive' => 'sometimes|array',
-            'data.archive.*.date' => 'required_with:data.archive|string',
-            'data.archive.*.place' => 'required_with:data.archive|string',
+            'data.license.issued_by' => 'sometimes|string',
+            'data.license.issued_date' => 'sometimes|string',
+            'data.license.expiry_date' => 'nullable|string',
+            'data.license.active_from_date' => 'sometimes|string',
+            'data.license.what_licensed' => 'sometimes|string',
+            'data.license.order_no' => 'sometimes|string',
+            'data.archive' => 'nullable|array',
+            'data.archive.*.date' => 'required_if:data.archive,array|string',
+            'data.archive.*.place' => 'required_if:data.archive,array|string',
             'data.inserted_by' => 'nullable|string',
             'data.inserted_at' => 'nullable|string',
             'data.updated_by' => 'nullable|string',
@@ -394,6 +390,16 @@ abstract class LegalEntity extends Component
             'urgent.security.client_secret' => 'required|string',
             'urgent.security.client_id' => 'required|string',
         ]);
+
+        // If "category" has value "NO_ACCREDITATION" then data.accreditation.order_date should be null
+        $validator->sometimes(
+            'data.accreditation.order_date',
+            'required_unless:data.accreditation.category,NO_ACCREDITATION|string',
+            fn($input) => isset(
+                    $input->data['accreditation']) &&
+                    is_array($input->data['accreditation']) &&
+                    array_key_exists('category', $input->data['accreditation']
+        ));
 
         if ($validator->fails()) {
             Log::error('Legal Entity Response Schema:', ['errors' => $validator->errors()]);
@@ -477,7 +483,11 @@ abstract class LegalEntity extends Component
 
         Arr::forget($data, ['archivation_show', 'accreditation_show']);
 
-        return removeEmptyKeys($data);
+        $data = removeEmptyKeys($data);
+
+        $data['website'] ??= "";
+
+        return $data;
     }
 
     /**
@@ -531,16 +541,10 @@ abstract class LegalEntity extends Component
         ]);
     }
 
-    /**
-     * Handle success response from API request.
-     *
-     * @param array $response The response from the API request
-     * @return void
-     */
-    protected function handleSuccessResponse(array $response, array $requestData = [])
+    protected function filterUnprovidedFields(array $response, array $requestData): array
     {
         /**
-         * This need to check beacuse it's not always present.
+         * This need to check because it's not always present.
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
@@ -549,7 +553,7 @@ abstract class LegalEntity extends Component
         }
 
         /**
-         * This need to check beacuse it's not always present.
+         * This need to check because it's not always present.
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
@@ -557,50 +561,7 @@ abstract class LegalEntity extends Component
             unset($response['data']['archive']);
         }
 
-        try {
-            DB::transaction(function() use($response, $requestData) {
-
-                $this->createOrUpdateLegalEntity($response);
-
-                setPermissionsTeamId($this->legalEntity->id);
-
-                $this->createLicense($response['data']['license']);
-
-                try {
-                    $user = $this->createUser();
-                } catch (Exception $err) {
-                    throw new Exception('Error: create User: ' . $err->getMessage(), 2);
-                }
-
-                $user->unsetRelation('roles');
-
-                try {
-                    $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id'], $user?->id ?? null);
-                } catch (Exception $err) {
-                    throw new Exception('Error: createEmployeeRequest: ' . $err->getMessage(), $err->getCode());
-                }
-
-                if (Cache::has($this->entityCacheKey)) {
-                    Cache::forget($this->entityCacheKey);
-                }
-
-                if (Cache::has($this->ownerCacheKey)) {
-                    Cache::forget($this->ownerCacheKey);
-                }
-
-                if (Cache::has($this->stepCacheKey)) {
-                    Cache::forget($this->stepCacheKey);
-                }
-            });
-
-            app(Logout::class)();
-
-            return Redirect::route('login') ?? null;
-        } catch (Exception $err) {
-            Log::error(__('Сталася помилка під час обробки запиту'), ['error' => $err->getMessage()]);
-
-            throw new Exception(__('Сталася помилка під час обробки запиту.' . ' Код помилки: ' . $err->getCode()));
-        }
+        return $response;
     }
 
     /**
@@ -685,7 +646,7 @@ abstract class LegalEntity extends Component
      *
      * @return void
      */
-    protected function createOrUpdateLegalEntity(array $data): LegalEntityModel|null
+    protected function persistLegalEntity(array $data): array
     {
         // Get the UUID from the data, if it exists
         $uuid = $data['data']['id'] ?? '';
@@ -697,7 +658,7 @@ abstract class LegalEntity extends Component
 
         $phones = $data['data']['phones'];
         unset($data['data']['phones']);
-        unset($data['data']['license']); // UNset this because it already set if create or present and dany to modify if edit
+        unset($data['data']['license']); // Do unset this because it already set if create or present and deny to modify if edit
 
         try {
             // Find or create a new LegalEntity object by UUID
@@ -723,9 +684,38 @@ abstract class LegalEntity extends Component
             // Save or update the object in the database
             $this->legalEntity->save();
 
-            $this->addressRepository->addAddresses($this->legalEntity, $addressData);
+        } catch (Exception $err) {
+            throw new Exception('LegalEntity Create Error: ' . $err->getMessage());
+        }
 
-            $this->phoneRepository->syncPhones($this->legalEntity, $phones);
+        return ['addressData' => $addressData, 'phones' => $phones];
+    }
+
+    protected function createNewLegalEntity(array $data): LegalEntityModel|null
+    {
+        $legalEntityData = $this->persistLegalEntity($data);
+
+        try {
+            $this->addressRepository->addAddresses($this->legalEntity, $legalEntityData['addressData']);
+
+            $this->phoneRepository->addPhones($this->legalEntity, $legalEntityData['phones']);
+
+            $this->legalEntity->refresh();
+        } catch (Exception $err) {
+            throw new Exception('LegalEntity Create Error: ' . $err->getMessage());
+        }
+
+        return $this->legalEntity;
+    }
+
+    protected function modifyLegalEntity(array $data): LegalEntityModel|null
+    {
+        $legalEntityData = $this->persistLegalEntity($data);
+
+        try {
+            $this->addressRepository->syncAddresses($this->legalEntity, $legalEntityData['addressData']);
+
+            $this->phoneRepository->syncPhones($this->legalEntity, $legalEntityData['phones']);
 
             $this->legalEntity->refresh();
         } catch (Exception $err) {
@@ -761,32 +751,21 @@ abstract class LegalEntity extends Component
         $authenticatedUser = Auth::user();
 
         // Retrieve the email address of the legal entity owner from the form or set it to null
-        $email = $this->legalEntityForm->owner['email'] ?? null;
+        $ownerEmail = $this->legalEntityForm->owner['email'] ?? null;
 
         // Generate a random password
         $password = Str::random(10);
 
         // Check if a user with the provided email already exists
-        $user = User::where('email', $email)->first();
-
-        // If the authenticated user claim self as the owner of the Legal Entity, use them as the user
-        $isOwner = isset($authenticatedUser->email) && strtolower($authenticatedUser->email) === $email;
-
-        if ($isOwner) {
-            // If the authenticated user is the LegalEntity owner, use them as the user
-            $user = $authenticatedUser;
-        } elseif (!$user) {
-            // If no user exists with that email, create a new user (new owner)
-            $user = User::create([
-                'email'    => $email,
+        $owner = User::where('email', $ownerEmail)->first() ?? User::create([
+                'email'    => $ownerEmail,
                 'password' => Hash::make($password),
-            ]);
-        }
+            ]);;
 
         try{
-            $user->save();
+            $owner->save();
 
-            $user->refresh();
+            $owner->refresh();
         } catch (Exception $e) {
             $this->dispatchErrorMessage(__('Сталася помилка під час обробки запиту'), ['error' => $e->getMessage()]);
 
@@ -796,21 +775,16 @@ abstract class LegalEntity extends Component
         auth()->shouldUse('web');
 
         // Assign the 'OWNER' role to the user authenticated via web guad
-        $user->assignRole('OWNER');
+        $owner->assignRole('OWNER');
 
         auth()->shouldUse('ehealth');
 
         // Assign the 'OWNER' role to the user authenticaed via ehealth guard
-        $user->assignRole('OWNER');
+        $owner->assignRole('OWNER');
 
-        if (!$isOwner) {
-            event(new Registered($user));
+        // Send credentials and email verification link
+        event(new LegalEntityCreate($authenticatedUser, $owner, $password));
 
-            // Send an email with the owner credentials to the user
-            Mail::to($user->email)->send(new OwnerCredentialsMail($user->email, $password));
-            Mail::to($authenticatedUser->email)->send(new OwnerCredentialsMail( '', '', __('Нового користувача зареєстровано в системі. На вказану адресу ' . $user->email . ' надіслано дані для входу в систему')));
-        }
-
-        return $user;
+        return $owner;
     }
 }

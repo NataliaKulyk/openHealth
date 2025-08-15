@@ -22,7 +22,7 @@ return [
         'queueTimeout' => 60,
         'cooldown' => 300,
         'retries' => 10,
-        'page_size' => 300,
+        'page_size' => env('EHEALTH_PAGE_SIZE', 300),
     ],
 
     'auth' => [
@@ -173,6 +173,19 @@ return [
     'expiration_date_exists' => [
         'NATIONAL_ID', 'COMPLEMENTARY_PROTECTION_CERTIFICATE', 'PERMANENT_RESIDENCE_PERMIT', 'REFUGEE_CERTIFICATE',
         'TEMPORARY_CERTIFICATE', 'TEMPORARY_PASSPORT'
+    ],
+    // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17999299028/Person+documents+configurable+parameters#Person-documents-configurable-parameters
+    'self_auth_age_document_types' => [
+        'COMPLEMENTARY_PROTECTION_CERTIFICATE', 'NATIONAL_ID', 'PASSPORT', 'PERMANENT_RESIDENCE_PERMIT',
+        'REFUGEE_CERTIFICATE', 'TEMPORARY_CERTIFICATE', 'TEMPORARY_PASSPORT'
+    ],
+    'person_legal_capacity_document_types' => [
+        'DIVORCE_CERTIFICATE', 'MARRIAGE_CERTIFICATE', 'STATE_REGISTER_EXTRACT', 'COURT_DECISION_LEGAL_CAPACITY',
+        'COURT_DECISION_DIVORCE', 'GUARDIANSHIP_DECISION_LEGAL_CAPACITY', 'LEGAL_CAPACITY_DOCUMENT'
+    ],
+    'person_registration_document_types' => [
+        'BIRTH_CERTIFICATE', 'BIRTH_CERTIFICATE_FOREIGN', 'COMPLEMENTARY_PROTECTION_CERTIFICATE', 'NATIONAL_ID',
+        'PASSPORT', 'PERMANENT_RESIDENCE_PERMIT', 'REFUGEE_CERTIFICATE', 'TEMPORARY_CERTIFICATE', 'TEMPORARY_PASSPORT'
     ],
     // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17678041168/Observation+dictionaries+and+configurations#observation_categories-vs-observation_codes
     'observation_category_codes' => [
@@ -408,7 +421,8 @@ return [
     // Set the test environment
     'test' => [
         'client_id' => env('TEST_CLIENT_ID'),
-        'client_secret' => env('TEST_CLIENT_SECRET')
+        'client_secret' => env('TEST_CLIENT_SECRET'),
+        'emails' => env('TEST_CLIENT_EMAILS') ? explode(',', env('TEST_CLIENT_EMAILS')) : [],
     ],
 
     'roles' => [
@@ -933,5 +947,10 @@ return [
             'person_verification:details',
             'person_verification:write',
         ]
+    ],
+
+    'emailers' => [
+        'credentialsQueueTimeout' => 60,
+        'failCredentialsTries' => 3
     ]
 ];

@@ -31,4 +31,38 @@ class AddressRepository
             }
         }
     }
+
+    /**
+     * Sync Addresses data to currant ($addresses) state.
+     * If $addresses is empty the existent data just will delete.
+     *
+     * @param  object  $model
+     * @param  array  $phones
+     *
+     * @return void
+     */
+    public function syncAddresses(object $model, array $addresses): void
+    {
+        //Remove all phones records belongs to the $model
+        Address::where([
+                    'addressable_type' => get_class($model),
+                    'addressable_id' => $model->id
+                ])
+                ->delete();
+
+        if (empty($addresses)) {
+            return;
+        }
+
+        foreach ($addresses as $addressData) {
+            $address = Address::updateOrCreate([
+                'addressable_type' => get_class($model),
+                'addressable_id' => $model->id
+            ],
+                $addressData
+            );
+
+            $model->address()->save($address);
+        }
+    }
 }

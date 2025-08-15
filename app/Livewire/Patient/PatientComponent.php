@@ -7,7 +7,9 @@ namespace App\Livewire\Patient;
 use App\Classes\Cipher\Traits\Cipher;
 use App\Classes\eHealth\Api\PersonApi;
 use App\Classes\eHealth\Api\PersonRequestApi;
+use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\Exceptions\ApiException;
+use App\Core\Arr;
 use App\Livewire\Patient\Forms\Api\PatientRequestApi;
 use App\Livewire\Patient\Forms\PatientForm as Form;
 use App\Models\LegalEntity;
@@ -18,7 +20,11 @@ use App\Traits\AddressSearch;
 use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -43,6 +49,7 @@ class PatientComponent extends Component
     public int $patientId;
 
     public string $mode = 'create';
+
     public Form $form;
 
     /**
@@ -51,6 +58,10 @@ class PatientComponent extends Component
      */
     public array $confidantPerson = [];
 
+    /**
+     * List of uploaded documents.
+     * @var array
+     */
     public array $uploadedDocuments = [];
 
     /**
@@ -72,6 +83,10 @@ class PatientComponent extends Component
      */
     public ?string $selectedConfidantPatientId = null;
 
+    /**
+     * Show different frontend base on mode.
+     * @var string
+     */
     public string $viewState = 'default';
 
     /**
@@ -215,7 +230,7 @@ class PatientComponent extends Component
 
         $buildSearchRequest = PatientRequestApi::buildSearchForPerson($this->form->patientsFilter);
 
-        $this->confidantPerson = $this->convertArrayKeysToCamelCase(PersonApi::searchForPersonByParams($buildSearchRequest));
+        $this->confidantPerson = Arr::toCamelCase(PersonApi::searchForPersonByParams($buildSearchRequest));
         $this->searchPerformed = true;
     }
 
@@ -223,11 +238,11 @@ class PatientComponent extends Component
      * Send API request 'Create Person v2' and show the next page if data is validated.
      *
      * @return void
-     * @throws ApiException|Throwable
+     * @throws ValidationException
      */
     public function createPerson(): void
     {
-        if (!Auth::user()?->can('createPerson', Person::class)) {
+        if (Auth::user()?->cannot('createPerson', Person::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення пацієнта.',
                 'type' => 'error'
@@ -239,36 +254,54 @@ class PatientComponent extends Component
         $this->preparePersonRequest();
         $this->validatePersonRequest(['patient', 'documents', 'documentsRelationship']);
 
-        $response = $this->sendPersonRequest(removeEmptyKeys($this->form->toArray()));
+        $formatted = $this->formatPersonRequest(removeEmptyKeys($this->form->toArray()));
 
-        if ($response['meta']['code'] !== 201) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Виникла помилка, зверніться до адміністратора.',
-                'type' => 'error'
+        try {
+            $response = EHealth::personRequest()->create(data: $formatted);
+            $responseData = $response->getData();
+            $responseStatusCode = $response->getStatusCode();
+        } catch (ConnectionException $e) {
+            Log::channel('e_health_errors')->error('Error while creating person request', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
+            $this->flashGeneralError();
+
+            return;
         }
 
-        if ($response['meta']['code'] === 201) {
+        if ($responseStatusCode !== 201) {
+            $this->flashGeneralError();
+        }
+
+        if ($responseStatusCode === 201) {
             if (isset($this->patientId)) {
-                $response['data']['dbId'] = $this->patientId;
+                $responseData['dbId'] = $this->patientId;
             }
 
-            if (isset($response['data']['person']['confidant_person'])) {
-                $response['data']['person']['confidant_person']['confidantPersonInfo'] = $this->convertArrayKeysToSnakeCase($this->confidantPerson[0]);
+            if (isset($responseData['person']['confidant_person'])) {
+                $responseData['person']['confidant_person']['confidantPersonInfo'] = Arr::toSnakeCase(
+                    $this->confidantPerson[0]
+                );
             }
+
             // save in DB
-            $personSaved = PersonRepository::savePersonResponseData($response['data'], PersonRequest::class);
-            if (!$personSaved) {
-                $this->dispatch('flashMessage', [
-                    'message' => 'Виникла помилка, зверніться до адміністратора.',
-                    'type' => 'error',
+            try {
+                PersonRepository::savePersonResponseData($responseData, PersonRequest::class);
+            } catch (Throwable $e) {
+                Log::channel('db_errors')->error('Failed to store person request', [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
                 ]);
+                $this->flashGeneralError();
 
                 return;
             }
 
-            $this->form->patient['id'] = $response['data']['id'];
-            $this->uploadedDocuments = $response['urgent']['documents'];
+            $this->form->patient['id'] = $responseData['id'];
+            $this->uploadedDocuments = $response->getUrgent()['documents'];
             $this->viewState = 'new';
         }
     }
@@ -277,11 +310,11 @@ class PatientComponent extends Component
      * Create data about person request in DB.
      *
      * @return void
-     * @throws Throwable
+     * @throws ValidationException
      */
     public function createApplication(): void
     {
-        if (!Auth::user()?->can('createApplication', PersonRequest::class)) {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення пацієнта.',
                 'type' => 'error'
@@ -293,16 +326,18 @@ class PatientComponent extends Component
         $this->preparePersonRequest();
         $this->validatePersonRequest(['patient', 'documents', 'documentsRelationship']);
 
-        $response = PersonRepository::savePersonResponseData(
-            removeEmptyKeys($this->convertArrayKeysToSnakeCase($this->form->toArray())),
-            PersonRequest::class
-        );
-
-        if ($response === false) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Виникла помилка, зверніться до адміністратора.',
-                'type' => 'error'
+        try {
+            PersonRepository::savePersonResponseData(
+                removeEmptyKeys(Arr::toSnakeCase($this->form->toArray())),
+                PersonRequest::class
+            );
+        } catch (Throwable $e) {
+            Log::channel('db_errors')->error('Failed to store person request', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
+            $this->flashGeneralError();
 
             return;
         }
@@ -362,29 +397,26 @@ class PatientComponent extends Component
         $successCount = 0;
         foreach ($this->form->uploadedDocuments as $key => $document) {
             try {
-                $requestData = PatientRequestApi::buildUploadFileRequest($document);
-                $uploadResponse = PersonRequestApi::uploadFileRequest(
-                    trim($this->uploadedDocuments[$key]['url']),
-                    $requestData
-                );
+                $filePath = $document->getRealPath();
+                $fileMime = $document->getMimeType();
+                $fileContents = file_get_contents($filePath);
+                $uploadUrl = trim($this->uploadedDocuments[$key]['url']);
 
-                if (isset($uploadResponse['status']) && $uploadResponse['status'] === 200) {
+                $uploadResponse = Http::withHeaders([
+                    'Content-Type' => $fileMime,
+                ])->withBody($fileContents, $fileMime)->put($uploadUrl);
+
+                if ($uploadResponse->getStatusCode() === 200) {
                     $successCount++;
 
                     $this->uploadedFiles[$key] = true;
                 } else {
-                    $this->dispatch('flashMessage', [
-                        'message' => 'Виникла помилка, зверніться до адміністратора',
-                        'type' => 'error',
-                    ]);
+                    $this->flashGeneralError();
 
                     $this->uploadedFiles[$key] = false;
                 }
             } catch (Exception) {
-                $this->dispatch('flashMessage', [
-                    'message' => 'Виникла помилка, зверніться до адміністратора',
-                    'type' => 'error',
-                ]);
+                $this->flashGeneralError();
 
                 $this->uploadedFiles[$key] = false;
             }
@@ -399,23 +431,58 @@ class PatientComponent extends Component
                 'type' => 'success',
             ]);
         }
+
+        // Approve if auth type method is offline
+        if ($this->form->patient['authenticationMethods'][0]['type'] === 'OFFLINE') {
+            $this->approvePersonRequest();
+        }
+    }
+
+    /**
+     * Show translated documents name.
+     *
+     * @param  array  $document
+     * @return string
+     */
+    public function getDocumentLabel(array $document): string
+    {
+        return __('patients.documents.' . Str::lower(Str::afterLast($document['type'], '.')));
     }
 
     /**
      * Resend SMS with confirmation code.
      *
      * @return void
-     * @throws ApiException
      */
     public function resendSms(): void
     {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на повторну відправку СМС.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
         if ($this->resendCooldown > 0) {
             return;
         }
 
-        $response = PersonRequestApi::resendAuthorizationSms($this->form->patient['id']);
+        try {
+            $response = EHealth::personRequest()->resendAuthOtp($this->form->patient['id']);
+        } catch (ConnectionException $e) {
+            Log::channel('e_health_errors')->error('Error while resending sms to person request', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            $this->flashGeneralError();
 
-        if ($response['status'] === 'new') {
+            return;
+        }
+
+        if ($response->getData()['status'] === 'new') {
             $this->dispatch('flashMessage', [
                 'message' => __('SMS успішно надіслано!'),
                 'type' => 'success'
@@ -429,46 +496,19 @@ class PatientComponent extends Component
      * Build and send API request 'Approve Person v2' and show the next page if data is validated.
      *
      * @return void
-     * @throws Throwable
+     * @throws ValidationException
      */
     public function approvePerson(): void
     {
-        try {
-            $this->form->rulesForModelValidate('verificationCode');
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Помилка валідації.',
-                'type' => 'error'
-            ]);
+        $this->form->rulesForModelValidate('verificationCode');
 
-            throw $e;
-        }
-
-        $preRequest = [
-            'verification_code' => (int) $this->form->verificationCode
-        ];
+        $preRequest = ['verification_code' => (int)$this->form->verificationCode];
         $requestData = schemaService()
             ->setDataSchema($preRequest, app(PersonRequestApi::class))
             ->requestSchemaNormalize('approveSchemaRequest')
             ->getNormalizedData();
 
-        $response = PersonRequestApi::approvePersonRequest($this->form->patient['id'], $requestData);
-
-        if ($response['status'] !== 'APPROVED') {
-            $this->dispatch('flashMessage', [
-                'message' => 'Виникла помилка, зверніться до адміністратора.',
-                'type' => 'error'
-            ]);
-        }
-
-        if ($response['status'] === 'APPROVED') {
-            PersonRepository::updatePersonRequestStatusByUuid($response);
-            $this->isApproved = true;
-
-            // save a leaflet and open the modal
-            $this->leafletContent = $response['content'];
-            $this->openModal('patientLeaflet');
-        }
+        $this->approvePersonRequest($requestData);
     }
 
     /**
@@ -492,59 +532,84 @@ class PatientComponent extends Component
      * Build and send API request 'Sign Person v2' and redirect to page if data is validated.
      *
      * @return void
-     * @throws ApiException|Throwable
      */
-    public function signPerson(): void
+    public function sign(): void
     {
-        $getPatientById = PersonRequestApi::getCreatedPersonById($this->form->patient['id']);
-        unset($getPatientById['meta'], $getPatientById['urgent']);
-        $getPatientById['data']['patient_signed'] = $this->isInformed;
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на створення підписаного пацієнта.',
+                'type' => 'error'
+            ]);
 
-        // encrypt data
+            return;
+        }
+
+        try {
+            $approvedPersonRequest = EHealth::personRequest()->getById($this->form->patient['id']);
+            $personRequestData = $approvedPersonRequest->getData();
+        } catch (ConnectionException $e) {
+            Log::channel('e_health_errors')->error('Error while getting person request by ID', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            $this->flashGeneralError();
+
+            return;
+        }
+        $personRequestData['patient_signed'] = $this->isInformed;
+
+        // Encrypt data
         $encryptedRequestData = schemaService()
-            ->setDataSchema($getPatientById['data'], app(PersonRequestApi::class))
+            ->setDataSchema($personRequestData, app(PersonRequestApi::class))
             ->requestSchemaNormalize('encryptSignSchemaRequest')
             ->getNormalizedData();
 
-        $base64EncryptedData = $this->sendEncryptedData($encryptedRequestData, Auth::user()->tax_id);
+        $base64EncryptedData = $this->sendEncryptedData($encryptedRequestData, Auth::user()->party->taxId);
 
         // sign person request
-        $preRequest = [
-            'signed_content' => $base64EncryptedData
-        ];
+        $preRequest = ['signed_content' => $base64EncryptedData];
         $signRequestData = schemaService()
             ->setDataSchema($preRequest, app(PersonRequestApi::class))
             ->requestSchemaNormalize('signSchemaRequest')
             ->getNormalizedData();
 
-        $signResponse = PersonRequestApi::singPersonRequest(
-            $this->form->patient['id'],
-            $signRequestData,
-            Auth::user()->tax_id
-        );
-
-        if ($signResponse['status'] !== 'SIGNED') {
-            $this->dispatch('flashMessage', [
-                'message' => 'Виникла помилка, зверніться до адміністратора.',
-                'type' => 'error',
+        try {
+            $signResponse = EHealth::personRequest()
+                ->withHeaders([
+                    'msp_drfo' => Auth::user()->party->taxId
+                ])
+                ->signed($this->form->patient['id'], $signRequestData);
+            $responseData = $signResponse->getData();
+            $responseStatus = $signResponse->getStatusCode();
+        } catch (ConnectionException $e) {
+            Log::channel('e_health_errors')->error('Error while getting person request by ID', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
+            $this->flashGeneralError();
+
+            return;
         }
 
-        if ($signResponse['status'] === 'SIGNED') {
+        if ($responseStatus === 200) {
             // create related person, update status
-            $personSaved = PersonRepository::savePersonResponseData(
-                $getPatientById['data'],
-                Person::class,
-                $signResponse['person_id']
-            );
-            $statusUpdated = PersonRepository::updatePersonRequestStatusByUuid($signResponse);
-            $relationCreated = PersonRepository::createRelation($signResponse);
-
-            if (!$personSaved || !$statusUpdated || !$relationCreated) {
-                $this->dispatch('flashMessage', [
-                    'message' => 'Виникла помилка, зверніться до адміністратора.',
-                    'type' => 'error'
+            try {
+                PersonRepository::savePersonResponseData(
+                    $personRequestData,
+                    Person::class,
+                    $responseData['person_id']
+                );
+                PersonRepository::updatePersonRequestStatusByUuid($responseData);
+                PersonRepository::createRelation($responseData);
+            } catch (Exception|Throwable $e) {
+                Log::channel('db_errors')->error('Failed to finalize person creation', [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
                 ]);
+                $this->flashGeneralError();
 
                 return;
             }
@@ -576,10 +641,25 @@ class PatientComponent extends Component
     protected function getPatient(): void
     {
         if (isset($this->patientId)) {
-            $patientData = PersonRequest::showPersonRequest($this->patientId);
-            $this->form->fill($patientData);
-            $this->address = $patientData['address'];
-            $this->confidantPerson = $patientData['confidantPerson'] ?? [];
+            $patientData = PersonRequest::showPersonRequest($this->patientId)->first();
+
+            // Format data
+            $result = [
+                'patient' => array_merge($patientData->toArray(), [
+                    'phones' => count($patientData->phones) === 0
+                        ? [['type' => null, 'number' => null]]
+                        : $patientData->phones->toArray(),
+                    'authentication_methods' => $patientData->authenticationMethod->toArray()
+                ]),
+                'documents' => $patientData->documents->toArray(),
+                'address' => $patientData->address->toArray(),
+                'confidantPerson' => $patientData->confidantPerson?->toArray() ?? []
+            ];
+
+            $result = Arr::toCamelCase($result);
+            $this->form->fill($result);
+            $this->address = $result['address'];
+            $this->confidantPerson = $result['confidantPerson'] ?? [];
         }
     }
 
@@ -595,13 +675,12 @@ class PatientComponent extends Component
     }
 
     /**
-     * Build and send API request for create person.
+     * Build API request for create person.
      *
      * @param  array  $patientData
      * @return array
-     * @throws ApiException
      */
-    protected function sendPersonRequest(array $patientData): array
+    protected function formatPersonRequest(array $patientData): array
     {
         $patientData['patient']['documents'] = $patientData['documents'];
         $patientData['patient']['addresses'][] = $patientData['addresses'];
@@ -623,7 +702,7 @@ class PatientComponent extends Component
         $preRequest['patient_signed'] = $this->isInformed;
         $preRequest['process_disclosure_data_consent'] = true;
 
-        return PersonRequestApi::createPersonRequest($preRequest);
+        return $preRequest;
     }
 
     /**
@@ -655,6 +734,58 @@ class PatientComponent extends Component
             ]);
 
             throw $e;
+        }
+    }
+
+    /**
+     * Approve person request.
+     *
+     * @param  array  $requestData
+     * @return void
+     */
+    private function approvePersonRequest(array $requestData = []): void
+    {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => 'У вас немає дозволу на підтвердження пацієнта.',
+                'type' => 'error'
+            ]);
+
+            return;
+        }
+
+        try {
+            $response = EHealth::personRequest()->approve($this->form->patient['id'], $requestData);
+            $responseData = $response->getData();
+            $responseStatus = $response->getStatusCode();
+        } catch (ConnectionException $e) {
+            Log::channel('e_health_errors')->error('Error while approving person request', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            $this->flashGeneralError();
+
+            return;
+        }
+
+        if ($responseStatus === 200) {
+            try {
+                PersonRepository::updatePersonRequestStatusByUuid($responseData);
+            } catch (Exception $e) {
+                Log::channel('db_errors')->error('Failed to update person request status', [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                $this->flashGeneralError();
+
+                return;
+            }
+
+            $this->isApproved = true;
+            $this->leafletContent = $responseData['content'];
+            $this->openModal('patientLeaflet');
         }
     }
 

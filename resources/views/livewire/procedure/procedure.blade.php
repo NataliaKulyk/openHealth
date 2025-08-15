@@ -9,7 +9,7 @@
 <section class="section-form">
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">
-            {{ __('patients.procedures') }} - {{ $lastName }} {{ $firstName }}  {{ $secondName ?? '' }}
+            {{ __('patients.procedures') }} - {{ $patientFullName }}
         </x-slot>
     </x-section-navigation>
 

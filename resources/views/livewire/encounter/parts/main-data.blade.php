@@ -62,7 +62,7 @@
                 <option selected>{{ __('forms.select') }} {{ mb_strtolower(__('patients.interaction_class')) }}*
                 </option>
                 @foreach($this->dictionaries['eHealth/encounter_classes'] as $key => $encounterClass)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">{{ $encounterClass }}</option>
+                    <option value="{{ $key }}">{{ $encounterClass }}</option>
                 @endforeach
             </select>
 
@@ -82,7 +82,7 @@
                 <option selected>{{ __('forms.select') }} {{ mb_strtolower(__('patients.interaction_type'))  }}*
                 </option>
                 @foreach($this->dictionaries['eHealth/encounter_types'] as $key => $encounterType)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">{{ $encounterType }}</option>
+                    <option value="{{ $key }}">{{ $encounterType }}</option>
                 @endforeach
             </select>
 
@@ -157,7 +157,7 @@
                         <option selected>{{ __('forms.select') }} {{ mb_strtolower(__('patients.episode_type')) }}*
                         </option>
                         @foreach($this->dictionaries['eHealth/episode_types'] as $key => $episodeType)
-                            <option value="{{ $key }}" wire:key="{{ $key }}">{{ $episodeType }}</option>
+                            <option value="{{ $key }}">{{ $episodeType }}</option>
                         @endforeach
                     </select>
 
@@ -180,7 +180,7 @@
                     >
                         <option value="" selected>{{ __('forms.select') }}</option>
                         @foreach($episodes as $key => $episode)
-                            <option value="{{ $episode['id'] }}" wire:key="{{ $key }}">{{ $episode['name'] }}</option>
+                            <option value="{{ $episode['id'] }}">{{ $episode['name'] }}</option>
                         @endforeach
                     </select>
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use App\Classes\eHealth\EHealthResponse;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 
@@ -224,6 +227,42 @@ trait FormTrait
         $this->dispatch('flashMessage', [
             'message' => __('Виникла помилка. Зверніться до адміністратора.'),
             'type' => 'error',
+        ]);
+    }
+
+    /**
+     * Log not successful messages from EHealth response.
+     *
+     * @param  EHealthResponse  $response
+     * @param  string  $message
+     * @return void
+     */
+    public function logEHealthError(EHealthResponse $response, string $message): void
+    {
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? [];
+
+        Log::channel('e_health_errors')->error($message, [
+            'status' => $response->getStatusCode(),
+            'error' => $response->getError(),
+            'file' => $trace['file'] ?? 'unknown',
+            'line' => $trace['line'] ?? 'unknown',
+            'function' => $trace['function'] ?? 'unknown'
+        ]);
+    }
+
+    /**
+     * Log error messages if connection exception occur during EHealth request.
+     *
+     * @param  ConnectionException  $exception
+     * @param  string  $message
+     * @return void
+     */
+    public function logConnectionError(ConnectionException $exception, string $message): void
+    {
+        Log::channel('e_health_errors')->error($message, [
+            'message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine()
         ]);
     }
 }

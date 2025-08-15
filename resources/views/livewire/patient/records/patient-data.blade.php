@@ -2,7 +2,7 @@
 
 @php $svgSprite = file_get_contents(resource_path('images/sprite.svg')); @endphp
 
-<x-layouts.patient :id="$patientId" :firstName="$firstName" :lastName="$lastName" :secondName="$secondName">
+<x-layouts.patient :id="$patientId" :patientFullName="$patientFullName">
     <div aria-hidden="true" class="hidden">
         {!! $svgSprite !!}
     </div>
@@ -191,7 +191,7 @@
                     @foreach($authenticationMethods as $key => $authenticationMethod)
                         <div class="form-row-4 items-baseline">
                             <div class="form-group group">
-                                <p>{{ __('patients.auth_method') }}</p>
+                                <p>{{ __('forms.auth_method') }}</p>
                             </div>
                             <div>
                                 <input wire:model="authenticationMethods.{{ $key }}.type"

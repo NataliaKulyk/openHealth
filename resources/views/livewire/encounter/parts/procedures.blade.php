@@ -2,7 +2,6 @@
     <fieldset class="fieldset"
               x-data="{
                   procedures: $wire.entangle('form.procedures'),
-                  openModal: false,
                   modalProcedure: new Procedure(),
                   newProcedure: false,
                   item: 0
@@ -25,7 +24,7 @@
                 <tr>
                     <td class="td-input"
                         x-text="(() => {
-                            const service = Object.values($wire.dictionaries['custom/services']).find(s => s.id === procedure.code.identifier.value);
+                            const service = Object.values($wire.dictionaries['custom/services']).find(service => service.id === procedure.code.identifier.value);
                             return service ? `${service.code} / ${service.name}` : '';
                         })()"
                     ></td>
@@ -86,7 +85,6 @@
                                 >
 
                                     <button @click.prevent="
-                                                openModal = true; {{-- Open the modal --}}
                                                 item = index; {{-- Identify the item we are corrently editing --}}
                                                 {{-- Replace the previous procedure with the current, don't assign object directly (modalProcedure = procedure) to avoid reactiveness --}}
                                                 modalProcedure = JSON.parse(JSON.stringify(procedures[index]));
@@ -159,7 +157,6 @@
 
                         <div class="mt-6 flex justify-between space-x-2">
                             <button type="button"
-                                    @click="openModal = false"
                                     class="button-minor"
                                     data-drawer-hide="procedure-drawer-right"
                                     aria-controls="procedure-drawer-right"
@@ -171,8 +168,6 @@
                                         newProcedure !== false
                                             ? procedures.push(modalProcedure)
                                             : procedures[item] = modalProcedure;
-
-                                        openModal = false;
                                     "
                                     class="button-primary"
                                     data-drawer-hide="procedure-drawer-right"

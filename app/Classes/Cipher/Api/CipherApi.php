@@ -37,8 +37,8 @@ class CipherApi
         string $password,
         string $base64File,
         string $knedp,
-        string $initiator,
-        string $taxId
+        string $taxId,
+        ?string $edrpou = null
     ): array|string
     {
         $this->dataSignature = base64_encode($dataSignature);
@@ -51,7 +51,7 @@ class CipherApi
             $this->loadData();
             $this->setSessionParameters();
             $this->uploadFile();
-            $this->verifyWithFileContainer($taxId, $initiator);
+            $this->verifyWithFileContainer($taxId, $edrpou);
             $this->createKeyp();
             $this->getKeypCreator();
             return $this->getKeyp();
@@ -162,7 +162,7 @@ class CipherApi
      *
      * @return void
      */
-    public function verifyWithFileContainer(string $taxId, string $initiator): void
+    public function verifyWithFileContainer(string $taxId, ?string $edrpou = null): void
     {
         // Get needed data contains into the key
         $cipherResponse = $this->getFileContainerInfo($this->password)['signature'];
@@ -182,9 +182,6 @@ class CipherApi
         // Get value of 'edrpou' field for key's owner {string|null}
         $inKeyEdrpou = $keyData['edrpou']['value'] ?? '';
 
-        // Check if the certificate belongs to the organization
-        $isBusinessKey = !empty($inKeyEdrpou);
-
         // Get value of 'drfou' (IPN) field for key's owner {string|null}
         $inKeyDrfou = $keyData['drfou']['value'] ?? '';
 
@@ -201,43 +198,25 @@ class CipherApi
             );
         }
 
-        if ($initiator === self::SIGNATORY_INITIATOR_BUSINESS) {
-            // Check if key is not a personal key
-            if (!$isBusinessKey) {
-                ErrorHandler::throwError(
-                    [
-                        'message'      => __('validation.custom.cipher.initiator_differ_business'),
-                        'failureCause' => '',
-                    ]
-                );
-            }
+        // Compare the provided taxId with the one in the key
+        if ($inKeyDrfou !== $taxId) {
+            ErrorHandler::throwError(
+                [
+                    'message'      => __('validation.custom.cipher.drfouDiffer'),
+                    'failureCause' => '',
+                ]
+            );
+        }
 
-            // Check for EDRPOU value match between key and form ones
-            if ($inKeyEdrpou !== $taxId) {
+        /**
+         * If EDRPOU is provided, check the key's EDRPOU value. Empty value in the key might be associated with the FOP key,
+         * this will be determined later by the service provider response
+         */
+        if ($edrpou && !empty($inKeyEdrpou)) {
+            if ($inKeyEdrpou !== $edrpou) {
                 ErrorHandler::throwError(
                     [
                         'message'      => __('validation.custom.cipher.edrpouDiffer'),
-                        'failureCause' => '',
-                    ]
-                );
-            }
-        } else {
-            // Check if key is a personal key
-            if ($isBusinessKey) {
-                ErrorHandler::throwError(
-                    [
-                        'message'      => __('validation.custom.cipher.initiator_differ_person'),
-                        'failureCause' => '',
-                    ]
-                );
-            }
-
-            // Check for DRFOU value match between key and form ones
-            //TODO refactor  && $isBusinessKey cause it locking sign createEmployee request by personal ESign
-            if ($inKeyDrfou !== $taxId && $initiator !== self::SIGNATORY_INITIATOR_PERSON) {
-                ErrorHandler::throwError(
-                    [
-                        'message'      => __('validation.custom.cipher.drfouDiffer'),
                         'failureCause' => '',
                     ]
                 );

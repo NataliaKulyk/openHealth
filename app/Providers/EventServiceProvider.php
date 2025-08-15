@@ -4,9 +4,12 @@ namespace App\Providers;
 
 use App\Events\ApplyUserTeamId;
 use App\Listeners\ApplyUserTeamIdListener;
+use App\Listeners\EmailVerification;
 use App\Listeners\LogLockout;
+use App\Events\LegalEntityCreate;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Registered;
+use App\Listeners\SendUserCredentialsListener;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -19,11 +22,11 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         Registered::class => [
-            SendEmailVerificationNotification::class,
+            EmailVerification::class,
         ],
         Lockout::class => [
             LogLockout::class
-        ]
+        ],
     ];
 
     /**
@@ -39,6 +42,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function shouldDiscoverEvents(): bool
     {
-        return false;
+        return true;
     }
 }

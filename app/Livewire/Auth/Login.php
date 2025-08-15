@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Auth;
 
 use App\Models\User;
+use Illuminate\Support\Facades\App;
 use Livewire\Component;
 use App\Models\LegalEntity;
 use Illuminate\Support\Str;
@@ -97,13 +98,20 @@ class Login extends Component
 
         if (!$user) {
             $this->addError('email', __('auth.login.error.validation.auths'));
+
             return back();
+        }
+
+        // Save user's email into the session, required to check whether we can allow access on the test server
+        if (App::isLocal()) {
+            session()->put('selected_email', $this->email);
         }
 
         if (!$user->hasVerifiedEmail()) {
             // Save user's id to send a verification link again (if needed)
             session()->put('unverified_user_id', $user->id);
-            $this->redirect(route('verification.notice'), navigate: true);
+
+            return redirect(route('verification.notice'));
         }
 
         if (!$this->isLocalAuth) {
@@ -112,6 +120,7 @@ class Login extends Component
                 session()->put('selected_legal_entity_uuid_for_ehealth', $this->legalEntityUUID);
             } else {
                 Log::error("Legal entity hasn't been choose for email {$user->email}");
+
                 return back();
             }
 
@@ -122,7 +131,9 @@ class Login extends Component
 
         if (!Auth::attempt($credentials)) {
             RateLimiter::hit($key, config('ehealth.auth.decay_seconds'));
+
             $this->addError('email', __('auth.login.error.validation.credentials'));
+
             return back();
         }
 

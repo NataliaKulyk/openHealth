@@ -42,7 +42,7 @@
                     class="input-select peer @error('form.patient.authenticationMethods.*.type') input-error @enderror"
                     required
             >
-                <option selected>
+                <option selected value="">
                     {{ __('forms.select') }} {{ __('patients.authentication') }} *
                 </option>
                 <template x-for="method in availableAuthMethods" :key="method.value">

@@ -36,6 +36,18 @@
         <div
             class='form-row-3'
             x-show="showAccreditation"
+            x-data="{
+                category: $wire.entangle('legalEntityForm.accreditation.category'),
+                clearFields() {
+                    if (this.category === 'NO_ACCREDITATION') {
+                        // Clear the values in the fields
+                        this.$refs.orderDate.value = '';
+                        this.$refs.issuedDate.value = '';
+                        this.$refs.expiryDate.value = '';
+                    }
+                }
+            }"
+            x-init="$watch('category', () => clearFields())"
         >
             <div class="form-group group">
                 <select
@@ -43,7 +55,7 @@
                     id="accreditationСategory"
                     wire:model="legalEntityForm.accreditation.category"
                     aria-describedby="{{ $hasAccreditationCategoryError ? 'accreditationCategoryErrorHelp' : '' }}"
-                    class="input-select text-gray-800 {{ $hasAccreditationCategoryError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+                    class="input-select {{ $hasAccreditationCategoryError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 >
                     <option value="_placeholder_" selected hidden>-- {{ __('forms.select') }} --</option>
 
@@ -96,10 +108,12 @@
                 </svg>
 
                 <input
+                    :disabled="category === 'NO_ACCREDITATION'"
                     type="text"
                     placeholder=" "
                     x-mask="9999-99-99"
                     id="accreditationIssuedDate"
+                    x-ref="issuedDate"
                     wire:model="legalEntityForm.accreditation.issuedDate"
                     class="input datepicker-input peer"
                 />
@@ -115,10 +129,12 @@
                 </svg>
 
                 <input
+                    :disabled="category === 'NO_ACCREDITATION'"
                     type="text"
                     placeholder=" "
                     x-mask="9999-99-99"
                     id="accreditationExpiryDate"
+                    x-ref="expiryDate"
                     wire:model="legalEntityForm.accreditation.expiryDate"
                     class="input datepicker-input peer"
                     aria-describedby="{{ $hasAccreditationExpiryDateError ? 'accreditationExpiryDateErrorHelp' : '' }}"
@@ -141,9 +157,11 @@
                 </svg>
 
                 <input
-                    required
+                    :required="category !== 'NO_ACCREDITATION'"
+                    :disabled="category === 'NO_ACCREDITATION'"
                     type="text"
                     placeholder=" "
+                    x-ref="orderDate"
                     id="accreditationOrderDate"
                     wire:model="legalEntityForm.accreditation.orderDate"
                     aria-describedby="{{ $hasAccreditationOrderDateError ? 'accreditationOrderDateErrorHelp' : '' }}"

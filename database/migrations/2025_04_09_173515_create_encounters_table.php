@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('type_id')->constrained('codeable_concepts');
             $table->foreignId('priority_id')->nullable()->constrained('codeable_concepts');
             $table->foreignId('performer_id')->constrained('identifiers');
-            $table->foreignId('division_id')->constrained('identifiers');
+            $table->foreignId('division_id')->nullable()->constrained('identifiers');
             $table->timestamps();
         });
 

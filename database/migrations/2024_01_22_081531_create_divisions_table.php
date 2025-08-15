@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Status;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,20 +14,18 @@ return new class extends Migration
     {
         Schema::create('divisions', function (Blueprint $table) {
                 $table->id();
-                $table->uuid('uuid')->nullable();
+                $table->uuid('uuid')->unique();
                 $table->string('external_id')->nullable();
                 $table->string('name');
                 $table->string('type')->nullable();
                 $table->boolean('mountain_group');
                 $table->jsonb('location')->nullable();
-                $table->jsonb('phones');
                 $table->string('email');
                 $table->jsonb('working_hours')->nullable();
                 $table->boolean('is_active')->default(false);
                 $table->uuid('legal_entity_uuid')->nullable();
-                $table->foreignId('legal_entity_id');
-                $table->foreign('legal_entity_id')->references('id')->on('legal_entities');
-                $table->string('status')->nullable();
+                $table->foreignId('legal_entity_id')->constrained('legal_entities')->cascadeOnDelete()->cascadeOnUpdate();
+                $table->enum('status', Status::only(['ACTIVE', 'INACTIVE']))->nullable();
                 $table->timestamps();
         });
     }

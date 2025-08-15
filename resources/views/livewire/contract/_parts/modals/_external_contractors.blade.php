@@ -171,7 +171,7 @@
                         <x-forms.form-group class=''>
                             <x-slot name='label'>
                                 <x-forms.label for='division_external_contractors_medical_service" class="default-label'>
-                                    {{ __('forms.medicalService') }} *
+                                    {{ __('forms.medical_service') }} *
                                 </x-forms.label>
                             </x-slot>
                             <x-slot name='input'>

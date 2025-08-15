@@ -1,4 +1,6 @@
 <div>
+    <x-messages />
+
     @php
         $mode = $mode === 'edit' ? 'update' : 'store';
     @endphp
@@ -26,7 +28,7 @@
                             <x-forms.form-group>
                                 <x-slot name='label'>
                                     <x-forms.label for='name' class='default-label'>
-                                        {{ __('forms.fullNameDivision') }} *
+                                        {{ __('forms.full_name_division') }} *
                                     </x-forms.label>
                                 </x-slot>
                                 <x-slot name='input'>
@@ -226,7 +228,7 @@
                     <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
                         <div class='py-4'>
                             <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('Адреса') }}
+                                {{ __('forms.address') }}
                             </h3>
                         </div>
 
@@ -243,17 +245,16 @@
                     <div x-data="{ working: false }" class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
                         <div class='py-4'>
                             <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('Графік роботи') }}
+                                {{ __('forms.schedule') }}
                                 <button
                                     @click.prevent="working = !working"
-                                    x-text="working ? 'Закрити' : 'Відкрити'"
-                                    class='block flex items-center justify-center py-2 font-semibold text-xs text-gray-500 uppercase tracking-widest hover:text-gray-900 active:text-gray-900 transition ease-in-out duration-150'
+                                    x-text="working ? '{{ __('forms.close') }}' : '{{ __('forms.open') }}'"
+                                    class='flex items-center justify-center py-2 font-semibold text-xs text-gray-500 uppercase tracking-widest hover:text-gray-900 active:text-gray-900 transition ease-in-out duration-150 cursor-pointer'
                                 >
-                                    {{ __('Відкрити') }}
                                 </button>
                             </h3>
                             @if($mode === 'store')
-                                <p x-show='working' x-cloak class="pt-4 text-xs italic text-orange-500">{{ __("ВАЖЛИВО: Всі дні з незаповненими даними автоматично отримують статус 'Не працює'") }}</p>
+                                <p x-show='working' x-cloak class="pt-4 text-xs italic text-orange-500">{{ __('forms.schedule_note') }}</p>
                             @endif
                         </div>
 
@@ -296,7 +297,7 @@
                                                                     x-bind:checked="shift"
                                                                 />
                                                                 <label class='ms-2 text-xs font-medium text-gray-900 dark:text-gray-300'>
-                                                                    {{ __('Позмінно') }}
+                                                                    {{ __('forms.by_shift') }}
                                                                 </label>
                                                             </div>
 
@@ -307,9 +308,10 @@
                                                                     @click.prevent=''
                                                                     wire:click="addAvailableShift('{{ $key }}')"
                                                                 >
-                                                                    {{ __('Додати зміну') }}
+                                                                    {{ __('forms.add_shift') }}
                                                                 </x-button>
                                                             @endif
+                                                        </div>
                                                     </template>
                                                 </x-slot>
                                             </x-forms.form-group>
@@ -391,18 +393,18 @@
 
                     <div class='mb-4.5 mt-6 flex flex-col gap-6 xl:flex-row justify-between items-center'>
                         <x-secondary-button>
-                            <div class='xl:w-1/4 text-left'>
+                            <div>
                                 <a href="{{ route('division.index', [legalEntity()]) }}">
                                     {{ __('forms.back') }}
                                 </a>
                             </div>
                         </x-secondary-button>
                         <div class='xl:w-1/4 text-right'>
-                            <x-button type='submit' class='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800'>
+                            <x-button type='submit' class="button-primary">
                                 @if($mode === 'store')
-                                    {{ __('Створити') }}
+                                    {{ __('forms.create') }}
                                 @else
-                                    {{ __('Оновити') }}
+                                    {{ __('forms.update') }}
                                 @endif
                             </x-button>
                         </div>

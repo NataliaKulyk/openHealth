@@ -156,7 +156,7 @@ class DictionaryService
             try {
                 $params = EncounterRequestApi::buildGetServicesDictionary(pageSize: 300);
 
-                return ServiceApi::getServiceDictionary($params);
+                return ServiceApi::getServiceDictionary($params)['data'];
             } catch (Exception $e) {
                 Log::channel('e_health_errors')->error('Failed to fetch service dictionary', [
                     'message' => $e->getMessage(),
@@ -182,6 +182,11 @@ class DictionaryService
     protected function flattenServiceItem(array $item): array
     {
         $result = [];
+
+        // Remove unactive elements
+        if (isset($item['is_active']) && $item['is_active'] === false) {
+            return [];
+        }
 
         $result[] = [
             'code' => $item['code'],

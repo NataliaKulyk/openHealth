@@ -1,7 +1,5 @@
 <div class="overflow-x-auto relative">
     <fieldset class="fieldset"
-              {{-- Binding documents to Alpine, it will be re-used in the modal.
-                Note that it's necessary for modal to work properly --}}
               x-data="{
                   documents: $wire.entangle('form.documents'),
                   openModal: false,
@@ -18,11 +16,11 @@
         <table class="table-input w-inherit">
             <thead class="thead-input">
             <tr>
-                <th scope="col" class="th-input">{{ __('forms.document_type') }}</th>
-                <th scope="col" class="th-input">{{ __('forms.number') }} </th>
-                <th scope="col" class="th-input">{{ __('forms.issued_by') }}</th>
-                <th scope="col" class="th-input">{{ __('forms.issued_at') }}</th>
-                <th scope="col" class="th-input">{{ __('forms.actions') }}</th>
+                <th scope="col" class="td-input">{{ __('forms.document_type') }}</th>
+                <th scope="col" class="td-input">{{ __('forms.number') }} </th>
+                <th scope="col" class="td-input">{{ __('forms.issued_by') }}</th>
+                <th scope="col" class="td-input">{{ __('forms.issued_at') }}</th>
+                <th scope="col" class="td-input">{{ __('forms.actions') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -32,11 +30,48 @@
                     <td class="td-input" x-text="document.number"></td>
                     <td class="td-input" x-text="document.issuedBy"></td>
                     <td class="td-input" x-text="document.issuedAt"></td>
-                    <td class="td-input relative absolute right-0 top-full mt-2 z-10 w-48 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                        <x-dropdown-button
-                            :editAction="'openModal = true; item = index; modalDocument = new Doc(document); newDocument = false; close($refs.button)'"
-                            :deleteAction="'documents.splice(index, 1); close($refs.button)'"
-                        />
+                    <td class="td-input">
+
+                        <div x-data="{
+                                 openDropdown: false,
+                                 toggle() {
+                                     if (this.openDropdown) {
+                                         return this.close()
+                                     }
+
+                                     this.$refs.button.focus()
+
+                                     this.openDropdown = true
+                                 },
+                                 close(focusAfter) {
+                                     if (!this.openDropdown) return
+
+                                     this.openDropdown = false
+
+                                     focusAfter &amp;&amp; focusAfter.focus()
+                                 }
+                             }" @keydown.escape.prevent.stop="close($refs.button)" @focusin.window="! $refs.panel.contains($event.target) &amp;&amp; close()" x-id="['dropdown-button']" class="relative" bis_skin_checked="1">
+
+                            <button x-ref="button" @click="toggle()" :aria-expanded="openDropdown" :aria-controls="$id('dropdown-button')" type="button" class="cursor-pointer" aria-expanded="false" aria-controls="dropdown-button-1">
+                                <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 svg-hover-action" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2" d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"></path>
+                                </svg>
+                            </button>
+
+
+                            <div class="absolute" style="left: -120%" bis_skin_checked="1">
+                                <div x-ref="panel" x-show="openDropdown" x-transition.origin.top.left="" @click.outside="close($refs.button)" :id="$id('dropdown-button')" class="dropdown-panel relative" style="left: -50%; display: none;" id="dropdown-button-1" bis_skin_checked="1">
+
+                                <button @click.prevent="openModal = true; item = index; modalDocument = new Doc(document); newDocument = false; openDropdown = false;" class="dropdown-button">
+                                    {{ __('forms.edit') }}
+                                </button>
+
+                                    <button @click.prevent="documents.splice(index, 1); close($refs.button);" class="dropdown-button dropdown-delete">
+                                        Видалити
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             </template>
@@ -81,7 +116,7 @@
                     >
                         <div @click.stop
                              x-trap.noscroll.inert="openModal"
-                             class="modal-content h-fit w-full max-w-2xl rounded-2xl shadow-lg bg-white"
+                             class="modal-content h-fit w-full max-w-6xl rounded-2xl shadow-lg bg-white"
                         >
 
                             {{-- Title --}}
@@ -93,23 +128,19 @@
                             <form>
                                 <div class="form-row-modal">
                                     <div>
-                                        <label for="documentType"
-                                               class="label-modal">{{__('forms.document_type')}}
-                                        </label>
+                                        <label for="documentType" class="label-modal">{{__('forms.document_type')}}<span class="text-red-600"> *</span></label>
                                         <select x-model="modalDocument.type" id="documentType" class="input-modal"
                                                 type="text" required>
-                                            <option value="">{{__('forms.selectDocumentType')}}</option>
+                                            <option value="">{{__('forms.select_document_type')}}</option>
                                             @foreach($this->dictionaries['DOCUMENT_TYPE'] as $typeValue => $typeDescription)
                                                 <option value="{{$typeValue}}">{{$typeDescription}}</option>
                                             @endforeach
                                         </select>
-                                        <p class="text-error text-xs"
-                                           x-show="!Object.keys(dictionary).includes(modalDocument.type) || !modalDocument.type.trim().length">{{__('forms.field_empty')}}</p>
+
                                     </div>
 
                                     <div>
-                                        <label for="documentNumber"
-                                               class="label-modal">{{__('forms.document_number')}}</label>
+                                        <label for="documentNumber" class="label-modal">{{__('forms.document_number')}}<span class="text-red-600"> *</span></label>
                                         <input x-model="modalDocument.number" type="text" name="documentNumber"
                                                id="documentNumber" class="input-modal" required>
                                         <p class="text-error text-xs"
@@ -117,19 +148,20 @@
                                     </div>
 
                                     <div>
-                                        <label for="documentIssuedBy" class="label-modal">{{__('forms.document_issued_by')}} *</label>
+                                        <label for="documentIssuedBy" class="label-modal">{{__('forms.issued_by')}}<span class="text-red-600"> *</span></label>
                                         <input x-model="modalDocument.issuedBy" type="text" name="documentIssuedBy"
                                                id="documentIssuedBy" class="input-modal" required>
                                     </div>
 
-                                    <div>
-                                        <label for="documentIssuedAt" class="label-modal">{{__('forms.document_issued_at')}} *</label>
-                                        <input x-model="modalDocument.issuedAt" name="documentIssuedAt"
-                                               id="documentIssuedAt" class="input-modal datepicker-input"
-                                               autocomplete="off" required>
+                                    <div class="relative">
+                                        <svg class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M6 5V4a1 1 0 1 1 2 0v1h3V4a1 1 0 1 1 2 0v1h3V4a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v2H3V7a2 2 0 0 1 2-2h1ZM3 19v-8h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm5-6a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2H8Z" clip-rule="evenodd"/>
+                                            </svg>
+                                        <label for="documentIssuedAt" class="label-modal">{{__('forms.issued_at')}}<span class="text-red-600"> *</span></label>
+                                        <input x-model="modalDocument.issuedAt" type="text" name="documentIssuedAt" id="documentIssuedAt" class="input-modal datepicker-input" autocomplete="off">
                                     </div>
                                 </div>
-
+                                <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
                                             @click="openModal = false"

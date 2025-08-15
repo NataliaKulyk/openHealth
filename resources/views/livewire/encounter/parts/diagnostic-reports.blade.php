@@ -261,7 +261,17 @@
                 value: ''
             }
         };
-        resultsInterpreter = { text: '' };
+        resultsInterpreter = {
+            reference: {
+                identifier: {
+                    type: {
+                        coding: [{ system: 'eHealth/resources', code: 'employee' }],
+                        text: ''
+                    },
+                    value: ''
+                }
+            }
+        };
 
         // Create date
         #now = new Date();

@@ -143,28 +143,14 @@ class EditLegalEntity extends LegalEntity
             $this->dispatchBrowserEvent('scroll-to-error');
         }
 
-        $result = $this->signLegalEntity();
+        // TODO: until refactoring
+        if (! $result = $this->signLegalEntity()) {
+            return;
+        }
 
-        $response = $result['response'];
+
         $data = $result['request'];
-        
-        /**
-         * This need to check beacuse it's not always present.
-         * Only way to determine if it's present is to check if it's not empty.
-         * This mainly concerns the editing of the legal entity.
-         */
-        if(!isset($data['accreditation'])) {
-            unset($response['data']['accreditation']);
-        }
-
-        /**
-         * This need to check beacuse it's not always present.
-         * Only way to determine if it's present is to check if it's not empty.
-         * This mainly concerns the editing of the legal entity.
-         */
-        if(!isset($data['archive'])) {
-            unset($response['data']['archive']);
-        }
+        $response = $this->filterUnprovidedFields($result['response'], $data);
 
         try {
             /**
@@ -179,7 +165,7 @@ class EditLegalEntity extends LegalEntity
             $legalEntity->refresh();
 
             DB::transaction(function() use($response, $data) {
-                $this->createOrUpdateLegalEntity($response);
+                $this->modifyLegalEntity($response);
 
                 $user = Auth::user();
 
@@ -202,6 +188,10 @@ class EditLegalEntity extends LegalEntity
 
     public function render()
     {
-        return view('livewire.legal-entity.edit-legal-entity', ['isEdit' => true]);
+        $beneficiary = legalEntity()->beneficiary ?? null;
+        $receiverFundsCode = legalEntity()->receiverFundsCode ?? null;
+
+        return view('livewire.legal-entity.edit-legal-entity', ['isEdit' => true]
+        );
     }
 }

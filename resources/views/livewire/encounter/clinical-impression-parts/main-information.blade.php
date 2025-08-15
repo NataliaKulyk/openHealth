@@ -1,43 +1,35 @@
 <fieldset class="fieldset">
     <legend class="legend">
-        {{ __('patients.main_information') }}
+        {{ __('forms.main_information') }}
     </legend>
 
     {{-- Code --}}
     <div class="form-row-modal" x-data="{ openModal: false }">
-        <div>
-            <label for="code" class="label-modal">
-                {{ __('patients.code') }}
-            </label>
+        <div class="form-group group">
             <select x-model="modalClinicalImpression.code.coding[0].code"
                     id="code"
-                    class="input-modal"
+                    class="input-select peer"
                     type="text"
                     required
             >
-                <option selected value="">{{ __('forms.select') }}</option>
+                <option selected value="">
+                    {{ __('forms.select') }} {{ mb_strtolower(__('patients.code')) }} *
+                </option>
                 @foreach($this->dictionaries['eHealth/clinical_impression_patient_categories'] as $key => $clinicalImpressionPatientCategory)
-                    <option value="{{ $key }}" wire:key="{{ $key }}">
-                        {{ $clinicalImpressionPatientCategory }}
-                    </option>
+                    <option value="{{ $key }}">{{ $clinicalImpressionPatientCategory }}</option>
                 @endforeach
             </select>
-
-            {{-- Check if the picked value is the one from the dictionary --}}
-            <p class="text-error text-xs"
-               x-show="!Object.keys(dictionary).includes(modalClinicalImpression.code.coding[0].code)"
-            >
-                {{ __('forms.field_empty') }}
-            </p>
         </div>
 
         {{-- Rule engine rules --}}
-        <div class="flex items-start pt-[37px]">
-            <a @click.prevent="modalClinicalImpression.code.coding[0].code && (openModal = true)"
-               class="rule-engine-rules default-p"
-            >
-                {{ __('patients.set_of_rule_engines') }}
-            </a>
+        <div class="form-group group">
+            <div class="flex items-start pt-[10px]">
+                <a @click.prevent="modalClinicalImpression.code.coding[0].code && (openModal = true)"
+                   class="rule-engine-rules default-p"
+                >
+                    {{ __('patients.set_of_rule_engines') }}
+                </a>
+            </div>
         </div>
 
         <template x-teleport="body"> {{-- This moves the modal at the end of the body tag --}}
@@ -101,16 +93,17 @@
     {{-- Description --}}
     <div class="form-row-modal">
         <div class="form-group group">
-            <label for="description" class="label-modal">
-                {{ __('patients.conclusion') }}
-            </label>
             <input x-model="modalClinicalImpression.description"
                    type="text"
                    name="description"
                    id="description"
-                   class="input-modal"
+                   class="input peer"
+                   placeholder=" "
                    autocomplete="off"
             >
+            <label for="description" class="label">
+                {{ __('patients.conclusion') }}
+            </label>
         </div>
     </div>
 

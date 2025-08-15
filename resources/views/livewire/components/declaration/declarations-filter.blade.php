@@ -48,7 +48,7 @@
             <select name="status" id="status" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400"  {{--wire:model="form.status"--}}>
                 <option value="" disabled selected hidden>{{ __('forms.select_position') }}</option>
             </select>
-            <label for="status" class="label">{{ __('forms.status') }}</label>
+            <label for="status" class="label">{{ __('forms.status.label') }}</label>
             @error('form.position') <p class="text-error">{{ $message }}</p> @enderror
         </div>
     </div>

@@ -9,7 +9,7 @@
 <section class="section-form">
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">
-            {{ __('patients.interaction') }} - {{ $lastName }} {{ $firstName }} {{ $secondName ?? '' }}
+            {{ __('patients.interaction') }} - {{ $patientFullName }}
         </x-slot>
     </x-section-navigation>
 
@@ -17,7 +17,7 @@
         @include('livewire.encounter.parts.aside-navigation')
         @include('livewire.encounter.parts.main-data')
         @include('livewire.encounter.parts.reasons')
-        @include('livewire.encounter.parts.diagnoses')
+        @include('livewire.encounter.parts.conditions')
         @include('livewire.encounter.parts.actions')
         @include('livewire.encounter.parts.additional-data')
         @include('livewire.encounter.parts.immunizations')

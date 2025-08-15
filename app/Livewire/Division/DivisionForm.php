@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
-use App\Models\LegalEntity;
 use Livewire\Component;
 use App\Models\Division;
+use App\Models\LegalEntity;
 use App\Traits\AddressSearch;
+use App\Repositories\Repository;
 use App\Traits\WorkTimeUtilities;
-use App\Livewire\Division\Forms\DivisionFormRequest;
+use Illuminate\Http\RedirectResponse;
+use App\Livewire\Division\Forms\DivisionForm as DivisionFormRequest;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Features\SupportRedirects\Redirector;
 
 // TODO: divide this class onto three ones: Divisions as parent class and Division Create & DivisionUpdate extends Division
 class DivisionForm extends Component
@@ -26,10 +30,16 @@ class DivisionForm extends Component
     protected array $divisionAllowedPhoneTypeKeys = ['MOBILE','LAND_LINE'];
     protected array $divisionAllowedTypeKeys = ['CLINIC', 'AMBULANT_CLINIC', 'FAP'];
 
-    public function mount(LegalEntity $legalEntity, $id = '')
+    public function mount(LegalEntity $legalEntity, $id = null)
     {
         if (!empty($id)) {
-            $this->getDivision($id);
+            $division = Division::findOrFail($id);
+
+            if (Auth::user()->cannot('update', $division)) {
+                abort(403);
+            }
+
+            $this->getDivision($division);
             $this->mode = 'edit';
         }
 
@@ -46,27 +56,28 @@ class DivisionForm extends Component
         ];
     }
 
-    public function getDivision($id)
+    public function getDivision(Division $division)
     {
-        $division = Division::find($id);
-
         $this->formService->setDivision($division->toArray());
 
         $this->formService->setDivisionParam('addresses', $division->address->toArray());
 
         $this->address = $this->formService->getDivisionParam('addresses');
 
+        $this->formService->setDivisionParam('phones', $division->phones->toArray()[0]); // TODO: need refactor this to multiphone array
+
         if ($this->formService->isDivisionParamExistAndNull('working_hours')) {
             $this->formService->initWorkingHours($this->weekdays);
         }
     }
 
+    // Validate the data comning from the form(s)
     public function validateDivision(): bool
     {
         $error = $this->formService->doValidation();
 
         if ($error) {
-            $this->dispatch('flashMessage', ['message' => $error, 'type' => 'error']);
+            session()->flash('error', $error);
 
             return false;
         } else {
@@ -74,35 +85,54 @@ class DivisionForm extends Component
         }
     }
 
+    // Create new Division (depends on $this->mode value = 'create')
     public function store()
     {
+        if (Auth::user()->cannot('create', Division::class)) {
+            session()->flash('error', __('У вас немає дозволу на створення місця надання послуг'));
+
+            return;
+        }
+
         if ($this->validateDivision()) {
-            $this->updateOrCreate(new Division());
+            $this->updateOrCreate();
         }
     }
 
+    // Update/Moify the existent Division (depends on $this->mode value = 'edit')
     public function update(): void
     {
-        if ($this->validateDivision()) {
-            $division = Division::find($this->formService->getDivisionParam('id'));
+        if (Auth::user()->cannot('update', Division::find($this->formService->division['id']))) {
+            session()->flash('error', __('У вас немає дозволу на редагування цього місця надання послуг'));
 
-            $this->updateOrCreate($division);
+            return;
+        }
+
+        if ($this->validateDivision()) {
+            $this->updateOrCreate();
         }
     }
 
-    public function updateOrCreate(Division $division)
+    /**
+     * Combined method used both creation and modification Division's data
+     *
+     * @return Redirector|RedirectResponse|null
+     */
+    public function updateOrCreate(): Redirector|RedirectResponse|null
     {
         $response = $this->mode === 'edit'
             ? $this->formService->updateDivision()
             : $this->formService->createDivision();
 
         if ($response) {
-            $this->formService->saveDivision($division, $response);
+            Repository::division()->saveDivisionResponseData($response, legalEntity());
 
-            return redirect()->route('division.index', [legalEntity()]);
+            return redirect()->route('division.index', [legalEntity()])->with('success', __('Запит виконано успішно'));
         }
 
-        $this->dispatch('flashMessage', ['message' => __('Інформацію не оновлено'), 'type' => 'error']);
+        session()->flash('error', __('Помилка в процесі обробки запиту'));
+
+        return null;
     }
 
     /**

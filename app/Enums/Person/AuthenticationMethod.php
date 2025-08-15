@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Enums\Person;
 
-use Illuminate\Support\Facades\Lang;
-
 enum AuthenticationMethod: string
 {
     case OTP = 'OTP';
@@ -15,14 +13,14 @@ enum AuthenticationMethod: string
     public function label(): string
     {
         return match ($this) {
-            self::OTP => Lang::get('patients.authentication_method.otp'),
-            self::OFFLINE => Lang::get('patients.authentication_method.offline'),
-            self::THIRD_PERSON => Lang::get('patients.authentication_method.third_person'),
+            self::OTP => __('patients.authentication_method.otp'),
+            self::OFFLINE => __('patients.authentication_method.offline'),
+            self::THIRD_PERSON => __('patients.authentication_method.third_person')
         };
     }
 
     public static function getOptions(): array
     {
-        return array_map(static fn($case) => $case->label(), self::cases());
+        return array_map(static fn (self $case) => $case->label(), self::cases());
     }
 }

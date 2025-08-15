@@ -24,7 +24,7 @@
                 id="publicOfferKnedp"
                 wire:model="knedp"
                 aria-describedby="{{ $hasPublicOfferKnedpError ? 'publicOfferKnedpErrorHelp' : '' }}"
-                class="input-select text-gray-800 {{ $hasPublicOfferKnedpError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+                class="input-select {{ $hasPublicOfferKnedpError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
             >
                 <option value="_placeholder_" selected hidden>-- {{ __('forms.select') }} --</option>
 

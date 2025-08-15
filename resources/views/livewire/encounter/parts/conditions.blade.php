@@ -257,9 +257,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/diagnosis_roles'] as $key => $diagnosisRole)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $diagnosisRole }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $diagnosisRole }}</option>
                                         @endforeach
                                     </select>
 
@@ -299,9 +297,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/condition_clinical_statuses'] as $key => $clinicalStatus)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $clinicalStatus }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $clinicalStatus }}</option>
                                         @endforeach
                                     </select>
 
@@ -324,9 +320,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/condition_verification_statuses'] as $key => $verificationStatus)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $verificationStatus }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $verificationStatus }}</option>
                                         @endforeach
                                     </select>
 
@@ -443,9 +437,7 @@
                                     >
                                         <option selected>{{ __('forms.select') }}</option>
                                         @foreach($this->dictionaries['eHealth/condition_severities'] as $key => $conditionSeverity)
-                                            <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                {{ $conditionSeverity }}
-                                            </option>
+                                            <option value="{{ $key }}">{{ $conditionSeverity }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -517,9 +509,7 @@
                                             >
                                                 <option selected>{{ __('forms.select') }}</option>
                                                 @foreach($this->dictionaries['eHealth/report_origins'] as $key => $reportOrigin)
-                                                    <option value="{{ $key }}" wire:key="{{ $key }}">
-                                                        {{ $reportOrigin }}
-                                                    </option>
+                                                    <option value="{{ $key }}">{{ $reportOrigin }}</option>
                                                 @endforeach
                                             </select>
 
@@ -531,7 +521,8 @@
                                         </div>
                                     </div>
 
-                                    @include('livewire.encounter.parts.evidences')
+                                    @include('livewire.encounter.condition-parts.evidence-codes')
+                                    @include('livewire.encounter.condition-parts.evidence-details')
                                 </div>
                             </div>
 
@@ -585,9 +576,9 @@
                                         "
                                         class="button-primary justify-end"
                                         :disabled="!(
-                                            modalCondition.conditions.clinicalStatus.trim().length > 0 &&
-                                            modalCondition.conditions.verificationStatus.trim().length > 0 &&
-                                            modalCondition.conditions.code.coding[0].code.trim().length > 0 &&
+                                            modalCondition.conditions.clinicalStatus.trim() &&
+                                            modalCondition.conditions.verificationStatus.trim() &&
+                                            modalCondition.conditions.code.coding[0].code.trim() &&
                                             modalCondition.conditions.diagnoses.role.coding[0].code
                                         )"
                                 >
@@ -660,7 +651,8 @@
             },
             evidences: [
                 {
-                    codes: []
+                    codes: [],
+                    details: []
                 }
             ]
         };

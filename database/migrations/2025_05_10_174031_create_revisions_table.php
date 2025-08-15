@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Employee\RevisionStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,10 +14,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('revisions', function (Blueprint $table) {
+        Schema::create('revisions', static function (Blueprint $table) {
             $table->id();
             $table->json('data');
-            $table->enum('status', ['PENDING', 'APPLIED', 'OUTDATED']);
+            $table->jsonb('ehealth_response')->nullable();
+            $table->enum('status', array_column(RevisionStatus::cases(), 'value'))->default(RevisionStatus::PENDING->value);
             $table->morphs('revisionable');
             $table->softDeletes();
             $table->timestamps();

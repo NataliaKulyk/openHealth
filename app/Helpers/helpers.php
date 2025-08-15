@@ -6,7 +6,6 @@ use App\Classes\eHealth\Services\SchemaService;
 use App\Services\DictionaryService;
 use App\Services\SignatureService;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Str;
 use App\Models\LegalEntity;
 
 if (!function_exists("all_day")) {
@@ -31,6 +30,7 @@ if (!function_exists("get_day_key")) {
         if (isset($data[$k]) && $k >= 0) {
             return $data[$k]["key"];
         }
+
         return "";
     }
 }
@@ -42,6 +42,7 @@ if (!function_exists("get_day_value")) {
         if (isset($data[$k]) && $k >= 0) {
             return $data[$k]["value"];
         }
+
         return "";
     }
 }
@@ -106,6 +107,7 @@ if (!function_exists("checkAndConvertArrayToString")) {
         if (!is_array($value)) {
             return [$value];
         }
+
         return $value;
     }
 }
@@ -120,8 +122,10 @@ if (!function_exists("addSecondsToTime")) {
         }
         if ($dateTime !== false) {
             $dateTime->modify("+{$seconds} seconds");
+
             return $dateTime->format("H:i:s");
         }
+
         return $timeString; // Возврат исходного времени, если формат неверен
     }
 }
@@ -140,6 +144,7 @@ if (!function_exists("not_available")) {
                 "description" => $value["description"],
             ];
         }
+
         return removeEmptyKeys($not_available);
     }
 }
@@ -155,16 +160,6 @@ if (!function_exists('convertToISO8601')) {
     }
 }
 
-if (!function_exists('replacePhone')) {
-    function removeSpacePhones($phones): array
-    {
-        return collect($phones)->map(function ($phone) {
-            $phone['number'] = '+' . str_replace(' ', '', $phone['number']);
-            return $phone;
-        })->toArray();
-    }
-}
-
 if (!function_exists('hisBirthDate')) {
     function humanFormatDate($data = ''): string
     {
@@ -172,9 +167,11 @@ if (!function_exists('hisBirthDate')) {
         if (isset($data) && !empty($data)) {
             // Use Carbon to create a date object from the string
             $date = \Illuminate\Support\Carbon::parse($data);
+
             // Format the date and return it
             return $date->translatedFormat('j F Y');
         }
+
         // Return an empty string if the birth_date is missing or invalid
         return '';
     }
@@ -191,42 +188,6 @@ if (!function_exists('dictionary')) {
     function dictionary(): DictionaryService
     {
         return app(DictionaryService::class);
-    }
-}
-
-if (!function_exists('arrayKeysToCamel')) {
-    function arrayKeysToCamel(array $array): array
-    {
-        $result = [];
-
-        foreach ($array as $key => $value) {
-            $camelKey = Str::camel($key);
-
-            // If value is an array, recursively convert its keys
-            $result[$camelKey] = is_array($value)
-                ? arrayKeysToCamel($value)
-                : $value;
-        }
-
-        return $result;
-    }
-}
-
-if (!function_exists('arrayKeysToSnake')) {
-    function arrayKeysToSnake(array $array): array
-    {
-        $result = [];
-
-        foreach ($array as $key => $value) {
-            $snakeKey = Str::snake($key);
-
-            // If value is an array, recursively convert its keys
-            $result[$snakeKey] = is_array($value)
-                ? arrayKeysToSnake($value)
-                : $value;
-        }
-
-        return $result;
     }
 }
 

@@ -190,11 +190,23 @@
 
                                     <button @click.prevent="
                                                 const newImmunizationCode = modalImmunization.vaccineCode.coding[0]?.code;
-                                                const matchingImmunizationCodesCount = immunizations.filter(
-                                                    c => c.vaccineCode.coding[0]?.code === newImmunizationCode
-                                                ).length;
 
-                                                if (matchingImmunizationCodesCount >= 1) {
+                                                // Check for duplicates, excluding the current item when editing
+                                                let hasDuplicate = false;
+
+                                                if (newImmunization) {
+                                                    // For new immunization, check all existing ones
+                                                    hasDuplicate = immunizations.some(
+                                                        immunization => immunization.vaccineCode.coding[0]?.code === newImmunizationCode
+                                                    );
+                                                } else {
+                                                    // For editing, check all except the current item
+                                                    hasDuplicate = immunizations.some(
+                                                        (immunization, index) => index !== item && immunization.vaccineCode.coding[0]?.code === newImmunizationCode
+                                                    );
+                                                }
+
+                                                if (hasDuplicate) {
                                                     showDuplicateCodeWarning = true;
                                                     return;
                                                 }
@@ -207,9 +219,10 @@
                                                 openModal = false;
                                             "
                                             class="button-primary"
-                                            :disabled="!(modalImmunization.date.trim().length > 0 &&
-                                                modalImmunization.time.trim().length > 0 &&
-                                                (modalImmunization.explanation?.reasons?.[0]?.coding?.[0]?.code?.trim?.().length > 0 || modalImmunization.explanation?.reasonsNotGiven[0]?.coding?.[0]?.code?.trim?.().length > 0))
+                                            :disabled="!(
+                                                modalImmunization.date.trim() &&
+                                                modalImmunization.time.trim() &&
+                                                (modalImmunization.explanation?.reasons?.[0]?.coding?.[0]?.code?.trim?.() || modalImmunization.explanation?.reasonsNotGiven[0]?.coding?.[0]?.code?.trim?.()))
                                             "
                                     >
                                         {{ __('forms.save') }}

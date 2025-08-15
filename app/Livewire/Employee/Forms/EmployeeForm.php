@@ -3,15 +3,19 @@
 namespace App\Livewire\Employee\Forms;
 
 use App\Core\Arr;
-use App\Models\Employee\Employee;
-use App\Models\Employee\EmployeeRequest;
-use App\Models\Relations\Party;
-use App\Rules\BirthDate;
-use App\Rules\Name;
-use App\Rules\PhoneNumber;
-use App\Rules\UniqueEmailInLegalEntity;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Employee\BaseEmployee;
 use Livewire\Form;
+use App\Rules\Name;
+use App\Rules\TaxId;
+use App\Rules\BirthDate;
+use App\Rules\PhoneNumber;
+use App\Rules\PhoneDuplicates;
+use App\Models\Relations\Party;
+use Illuminate\Validation\Rule;
+use App\Models\Employee\Employee;
+use App\Rules\UniqueEmailInLegalEntity;
+use App\Models\Employee\EmployeeRequest;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EmployeeForm extends Form
 {
@@ -23,7 +27,7 @@ class EmployeeForm extends Form
     public ?string $divisionId = null;
 
     public ?string $knedp = null;
-    public $keyContainerUpload;
+    public ?TemporaryUploadedFile $keyContainerUpload = null;
     public ?string $password = null;
 
     public array $documents = [];
@@ -37,9 +41,10 @@ class EmployeeForm extends Form
         'taxId' => '',
         'noTaxId' => false,
         'email' => '',
-        'workingExperience' => null,
+        'workingExperience' => '',
         'aboutMyself' => '',
     ];
+
     public array $doctor = [
         'specialities' => [],
         'scienceDegrees' => [],
@@ -69,10 +74,10 @@ class EmployeeForm extends Form
     protected function rootFieldsRules(): array
     {
         return [
-            'position' => ['required', 'string'],
-            'employeeType' => ['required', 'string'],
-            'startDate' => ['required', 'date'],
-            'endDate' => ['nullable', 'date'],
+            'position' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['POSITION'] ?? []))],
+            'employeeType' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['EMPLOYEE_TYPE'] ?? []))],
+            'startDate' => ['required', 'date_format:Y-m-d'],
+            'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
             'divisionId' => ['nullable', 'string'],
         ];
     }
@@ -82,17 +87,17 @@ class EmployeeForm extends Form
         return [
             'party.lastName' => ['required', new Name()],
             'party.firstName' => ['required', new Name()],
-            'party.secondName' => ['nullable', new Name()],
-            'party.gender' => ['required', 'string'],
-            'party.birthDate' => ['required', 'date', new BirthDate()],
-            'party.phones' => ['required', 'array', 'min:1'],
+            'party.secondName' => ['nullable', 'present', new Name()],
+            'party.gender' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['GENDER'] ?? []))],
+            'party.birthDate' => ['required', 'date_format:Y-m-d', new BirthDate()],
+            'party.phones' => ['required', 'array', 'min:1', new PhoneDuplicates()],
             'party.phones.*.number' => ['required', new PhoneNumber()],
-            'party.phones.*.type' => ['required', 'string'],
-            'party.taxId' => ['required_if:party.noTaxId,false', 'string'],
+            'party.phones.*.type' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['PHONE_TYPE'] ?? []))],
+            'party.taxId' => ['required', 'string', new TaxId()],
             'party.noTaxId' => ['boolean'],
-            'party.email' => ['nullable', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
-            'party.workingExperience' => ['required', 'numeric', 'min:1'],
-            'party.aboutMyself' => ['nullable', 'string'],
+            'party.email' => ['nullable', 'present', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
+            'party.workingExperience' => ['nullable', 'present', 'integer', 'min:0'],
+            'party.aboutMyself' => ['required', 'present', 'string'],
         ];
     }
 
@@ -100,9 +105,9 @@ class EmployeeForm extends Form
     {
         return [
             'documents' => ['required', 'array', 'min:1'],
-            'documents.*.type' => ['required', 'string'],
+            'documents.*.type' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['DOCUMENT_TYPE'] ?? []))],
             'documents.*.number' => ['required', 'string'],
-            'documents.*.issuedBy' => ['required', 'string', 'min:1'],
+            'documents.*.issuedBy' => ['nullable', 'present', 'string', 'min:1'],
             'documents.*.issuedAt' => ['required', 'date_format:Y-m-d'],
         ];
     }
@@ -174,7 +179,7 @@ class EmployeeForm extends Form
     /**
      * The single "smart" method to populate the form from any data source.
      */
-    public function hydrate(Model|Party|null $source = null): void
+    public function hydrate(BaseEmployee|Party|null $source = null): void
     {
         $this->reset();
 
@@ -188,7 +193,6 @@ class EmployeeForm extends Form
             Party::class => $this->hydrateFromParty($source),
         };
     }
-
 
     /**
      * Resets only the fields related to a specific position/employment.
@@ -204,10 +208,9 @@ class EmployeeForm extends Form
     }
 
     /**
-     * FIX: Renamed back to `populateFromParty` as requested.
-     * This method is a helper for populating ONLY personal data from a Party model.
+     * This eliminates all code duplication.
      */
-    public function populateFromParty(Party $party): void
+    private function populatePartyData(Party $party): void
     {
         $party->loadMissing(['phones', 'documents']);
         $this->existingPartyId = $party->id;
@@ -224,37 +227,28 @@ class EmployeeForm extends Form
         $this->party['aboutMyself'] = $party->about_myself;
 
         $phones = $party->phones;
-
-        if ($phones->isNotEmpty()) {
-            $this->party['phones'] = $phones->map(function ($phone) {
-                return [
-                    'type' => $phone->type,
-                    'number' => $phone->number,
-                ];
-            })->toArray();
-        } else {
-
-            $this->party['phones'] = [['type' => 'MOBILE', 'number' => '']];
+        // Only overwrite phones if the form is empty
+        if ($phones->isNotEmpty() && empty($this->party['phones'][0]['number'])) {
+            $this->party['phones'] = $phones->map(fn($p) => ['type' => $p->type, 'number' => $p->number])->toArray();
         }
 
         $documents = $party->documents;
-        if ($documents->isNotEmpty()) {
+        // Only overwrite documents if the form is empty
+        if ($documents->isNotEmpty() && empty($this->documents)) {
             $this->documents = $documents->map(function ($doc) {
                 return [
                     'type' => $doc->type,
                     'number' => $doc->number,
                     'issuedBy' => $doc->issued_by,
-                    'issuedAt' => $doc->issued_at,
+                    'issuedAt' => $doc->issued_at?->format('Y-m-d'),
                 ];
             })->toArray();
-        } else {
-            $this->documents = [];
         }
     }
 
     private function hydrateFromEmployee(Employee $employee): void
     {
-        $employee->loadMissing(['party.phones', 'party.documents', 'educations', 'specialities', 'qualifications']);
+        $employee->loadMissing(['party.phones', 'party.documents', 'educations', 'specialities', 'qualifications', 'scienceDegrees']);
         if ($employee->party) {
             $this->populatePartyData($employee->party);
         }
@@ -266,87 +260,55 @@ class EmployeeForm extends Form
 
         $this->doctor['educations'] = $employee->educations->map(fn($edu) => Arr::toCamelCase($edu->toArray()))->toArray();
         $this->doctor['specialities'] = $employee->specialities->map(fn($spec) => Arr::toCamelCase($spec->toArray()))->toArray();
+        $this->doctor['qualifications'] = $employee->qualifications->map(fn($spec) => Arr::toCamelCase($spec->toArray()))->toArray();
+        $this->doctor['scienceDegrees'] = $employee->scienceDegrees->map(fn($spec) => Arr::toCamelCase($spec->toArray()))->toArray();
     }
 
+    /**
+     * Hydrates the form from an EmployeeRequest model.
+     */
     private function hydrateFromEmployeeRequest(EmployeeRequest $request): void
     {
         $request->loadMissing(['party', 'revision']);
-
         $revisionData = $request->revision->data ?? [];
 
-        // Populate form with revision data as the base
+        // 1. Populate from revision data first
         $this->position = $revisionData['employee_request_data']['position'] ?? '';
         $this->employeeType = $revisionData['employee_request_data']['employee_type'] ?? '';
         $this->startDate = $revisionData['employee_request_data']['start_date'] ?? '';
-        $this->documents = Arr::toCamelCase($revisionData['documents']);
-        $this->doctor = Arr::toCamelCase($revisionData['doctor']);
-        $this->party = array_merge($this->party, Arr::toCamelCase($revisionData['party']));
+        $this->documents = Arr::toCamelCase($revisionData['documents'] ?? []);
+        $this->doctor = Arr::toCamelCase($revisionData['doctor'] ?? []);
+        $this->party = array_merge($this->party, Arr::toCamelCase($revisionData['party'] ?? []));
         $this->party['phones'] = !empty($revisionData['phones']) ? Arr::toCamelCase($revisionData['phones']) : [['type' => 'MOBILE', 'number' => '']];
 
-
-        // Now, overwrite with live data from Party to ensure it's current
+        // 2. Overwrite with live data from the Party, but without overwriting documents
         if ($request->party) {
-            $this->party['lastName'] = $request->party->last_name;
-            $this->party['firstName'] = $request->party->first_name;
-            $this->party['secondName'] = $request->party->second_name;
-            $this->party['email'] = $request->party->email;
-            $this->existingPartyId = $request->party->id;
+            $this->populatePartyData($request->party);
         }
     }
 
     /**
-     * Hydrates the form from a Party model.
-     * Use case: "Add Position" for an existing person.
-     * This method now contains the full "smart" logic.
+     * Hydrates the form from a Party model (for "Add Position").
      */
     private function hydrateFromParty(Party $party): void
     {
-        // 1. First, populate with live data from the Party and its direct relations.
-        // This will correctly fill in name, email, and will try to fill phones/documents.
-        $this->populatePartyData($party);
+        // 1. Populate with live data from the Party and its direct relations.
+        $this->populatePartyData($party); // REUSE
 
-        // 2. Fallback logic: If documents or phones are still empty after the first step,
-        //    it means the Party might only have EmployeeRequests. Let's try to get
-        //    the data from the latest request's revision.
-        $needsRevisionCheck = empty($this->documents) || empty($this->party['phones'][0]['number']);
-
+        // 2. THE FIX: Fallback to revision if phones/documents are still empty.
+        $needsRevisionCheck = empty($this->documents);
         if ($needsRevisionCheck) {
             $latestRequest = $party->employeeRequests()->with('revision')->latest()->first();
-
             if ($latestRequest && $latestRequest->revision) {
-
-                // If phones are still empty, get them from the revision.
-                if (empty($this->party['phones'][0]['number']) && !empty($revisionData['phonesData'])) {
-                    $this->party['phones'] = Arr::toCamelCase($revisionData['phonesData']);
+                $revisionData = $latestRequest->revision->data;
+                if (empty($this->documents) && !empty($revisionData['documents'])) {
+                    $this->documents = Arr::toCamelCase($revisionData['documents']);
                 }
-
-                // If documents are still empty, get them from the revision.
-                if (empty($this->documents) && !empty($revisionData['documentsData'])) {
-                    $this->documents = Arr::toCamelCase($revisionData['documentsData']);
+                if (empty($this->party['phones'][0]['number']) && !empty($revisionData['phones'])) {
+                    $this->party['phones'] = Arr::toCamelCase($revisionData['phones']);
                 }
             }
         }
-    }
-
-    private function populatePartyData(Party $party): void
-    {
-        $party->loadMissing(['phones', 'documents']);
-        $this->existingPartyId = $party->id;
-        $this->party['lastName'] = $party->last_name;
-        $this->party['firstName'] = $party->first_name;
-        $this->party['secondName'] = $party->second_name;
-        $this->party['gender'] = $party->gender;
-        $this->party['birthDate'] = $party->birth_date?->format('Y-m-d');
-        $this->party['taxId'] = $party->tax_id;
-        $this->party['noTaxId'] = (bool)$party->no_tax_id;
-        $this->party['email'] = $party->email;
-        $this->party['workingExperience'] = $party->working_experience;
-        $this->party['aboutMyself'] = $party->about_myself;
-
-        $phones = $party->phones;
-        $this->party['phones'] = ($phones && $phones->isNotEmpty()) ? $phones->map(fn($p) => ['type' => $p->type, 'number' => $p->number])->toArray() : [['type' => 'MOBILE', 'number' => '']];
-        $documents = $party->documents;
-        $this->documents = ($documents && $documents->isNotEmpty()) ? $documents->map(fn($d) => Arr::toCamelCase($d->only(['type', 'number', 'issued_by', 'issued_at'])))->toArray() : [];
     }
 
     /**
@@ -373,29 +335,11 @@ class EmployeeForm extends Form
     /**
      * Resets the form to its default state.
      */
+    /**
+     * Resets the form to its default state.
+     */
     public function reset(...$properties): void
     {
         parent::reset(...$properties);
-
-        $this->position = '';
-        $this->employeeType = '';
-        $this->startDate = '';
-        $this->endDate = null;
-        $this->existingPartyId = null;
-
-        $this->knedp = null;
-        $this->keyContainerUpload = null;
-        $this->password = null;
-
-        $this->documents = [];
-        $this->party = [
-            'lastName' => '', 'firstName' => '', 'secondName' => '', 'gender' => '',
-            'birthDate' => '', 'phones' => [['type' => '', 'number' => '']],
-            'taxId' => '', 'noTaxId' => false, 'email' => '',
-            'workingExperience' => null, 'aboutMyself' => '',
-        ];
-        $this->doctor    = [
-            'scienceDegrees' => [], 'qualifications' => [],
-        ];
     }
 }

@@ -41,23 +41,23 @@
                                  openDropdown: false,
                                  toggle() {
                                      if (this.openDropdown) {
-                                         return this.close()
+                                         return this.close();
                                      }
 
-                                     this.$refs.button.focus()
+                                     this.$refs.button.focus();
 
-                                     this.openDropdown = true
+                                     this.openDropdown = true;
                                  },
                                  close(focusAfter) {
-                                     if (!this.openDropdown) return
+                                     if (!this.openDropdown) return;
 
-                                     this.openDropdown = false
+                                     this.openDropdown = false;
 
                                      focusAfter && focusAfter.focus()
                                  }
                              }"
                              @keydown.escape.prevent.stop="close($refs.button)"
-                             @focusin.window="! $refs.panel.contains($event.target) && close()"
+                             @focusin.window="!$refs.panel.contains($event.target) && close()"
                              x-id="['dropdown-button']"
                              class="relative"
                         >
@@ -120,7 +120,7 @@
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
                         newDocument = true; {{-- We are adding a new document --}}
-                        modalDocument = new Document() {{-- Replace the data of the previous document with a new one--}}
+                        modalDocument = new Document(); {{-- Replace the data of the previous document with a new one--}}
                     "
                     class="item-add my-5"
             >
@@ -158,6 +158,7 @@
                             {{-- Content --}}
                             <form>
                                 <div class="form-row-modal">
+                                    {{-- Type --}}
                                     <div>
                                         <label for="documentType" class="label-modal">
                                             {{ __('forms.type') }}
@@ -168,11 +169,12 @@
                                                 type="text"
                                                 required
                                         >
-                                            <option selected>{{ __('forms.select') }} *</option>
+                                            <option selected value="">{{ __('forms.select') }} *</option>
                                             @foreach($this->dictionaries['DOCUMENT_TYPE'] as $key => $documentType)
                                                 <option value="{{ $key }}">{{ $documentType }}</option>
                                             @endforeach
                                         </select>
+
                                         {{-- Check if the picked value is the one from the dictionary --}}
                                         <p class="text-error text-xs"
                                            x-show="!Object.keys(dictionary).includes(modalDocument.type)"
@@ -180,6 +182,8 @@
                                             {{ __('forms.field_empty') }}
                                         </p>
                                     </div>
+
+                                    {{-- Issue number --}}
                                     <div>
                                         <label for="documentNumber" class="label-modal">
                                             {{ __('forms.document_number') }}
@@ -192,10 +196,13 @@
                                                autocomplete="off"
                                                required
                                         >
-                                        <p class="text-error text-xs" x-show="!modalDocument.number.trim().length > 0">
+
+                                        <p class="text-error text-xs" x-show="!modalDocument.number.trim()">
                                             {{ __('forms.field_empty') }}
                                         </p>
                                     </div>
+
+                                    {{-- Authority which issued --}}
                                     <div>
                                         <label for="documentIssuedBy" class="label-modal">
                                             {{ __('forms.document_issued_by') }}
@@ -207,13 +214,20 @@
                                                class="input-modal"
                                                autocomplete="off"
                                         >
+
+                                        <p class="text-error text-xs" x-show="!modalDocument.issuedBy.trim()">
+                                            {{ __('forms.field_empty') }}
+                                        </p>
                                     </div>
+
+                                    {{-- The date when was issued --}}
                                     <div class="relative">
                                         <svg width="20" height="20"
-                                             class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none"
+                                             class="svg-input absolute left-1 !top-1/2 transform -translate-y-1/2 pointer-events-none"
                                         >
                                             <use xlink:href="#svg-calendar-week"></use>
                                         </svg>
+
                                         <label for="documentIssuedAt" class="label-modal">
                                             {{ __('forms.document_issued_at') }}
                                         </label>
@@ -225,13 +239,20 @@
                                                class="input-modal datepicker-input"
                                                autocomplete="off"
                                         >
+
+                                        <p class="text-error text-xs" x-show="!modalDocument.issuedAt.trim()">
+                                            {{ __('forms.field_empty') }}
+                                        </p>
                                     </div>
+
+                                    {{-- The date when expired --}}
                                     <div class="relative">
                                         <svg width="20" height="20"
                                              class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none"
                                         >
                                             <use xlink:href="#svg-calendar-week"></use>
                                         </svg>
+
                                         <label for="documentExpirationDate" class="label-modal">
                                             {{ __('forms.valid_until') }}
                                         </label>
@@ -246,6 +267,7 @@
                                     </div>
                                 </div>
 
+                                {{-- Action buttons --}}
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
                                             @click="openModal = false"
@@ -262,7 +284,12 @@
 
                                                 openModal = false;
                                             "
-                                            :disabled="!modalDocument.type.trim() || !modalDocument.number.trim()"
+                                            :disabled="
+                                                !modalDocument.type.trim() ||
+                                                !modalDocument.number.trim() ||
+                                                !modalDocument.issuedBy.trim() ||
+                                                !modalDocument.issuedAt.trim()
+                                            "
                                     >
                                         {{ __('forms.save') }}
                                     </button>

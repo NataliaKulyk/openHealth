@@ -1,6 +1,6 @@
 <x-dialog-modal maxWidth='2xl' class='w-3' wire:model.live='showModal'>
     <x-slot name='title'>
-        {{ __('Медична послуга') }}
+        {{ __('forms.medical_service') }}
     </x-slot>
 
     <x-slot name='content'>
@@ -186,7 +186,7 @@
                 </div>
                 {{-- TIME PART --}}
                 <div class='mb-4 mt-4'>
-                    <h3 class='text-sm font-bold dark:text-white mb-5'>{{ __('Час Доступності') }}</h3>
+                    <h3 class='text-sm font-bold dark:text-white mb-5'>{{ __('forms.available_time') }}</h3>
 
                     @nonempty($this->availableTime)
                         @foreach ($this->availableTime as $k => $a_time)
@@ -273,7 +273,7 @@
                             type='button'
                             wire:click="addAvailableTime({{ max(0, count($this->availableTime)) }})"
                         >
-                            {{ __('Додати Час') }}
+                            {{ __('forms.addTime') }}
                         </button>
                     @endif
                 </div>
@@ -340,7 +340,7 @@
                                         class='mb-1'
                                         wire:click="removeNotAvailable({{ $k }})"
                                     >
-                                        {{ __('forms.delete ') }}
+                                        {{ __('forms.delete') }}
                                     </x-danger-button>
                                 </div>
 
@@ -377,14 +377,14 @@
                         type='button'
                         wire:click='addNotAvailableTime'
                     >
-                        {{ __('Додати Час') }}
+                        {{ __('forms.addTime') }}
                     </button>
                 </div>
 
                 <div class='mt-6.5 flex flex-col gap-6 xl:flex-row justify-between items-center'>
                     <div class='xl:w-1/4 text-left'>
                         <x-secondary-button wire:click="closeModal()">
-                            {{ __('Закрити') }}
+                            {{ __('forms.close') }}
                         </x-secondary-button>
                     </div>
                     <div class='xl:w-1/4 text-right'>
@@ -395,9 +395,9 @@
                             x-bind:class="'{{ (!empty($formService->healthcare_service['status']) && $formService->healthcare_service['status'] !== 'ACTIVE') ? '' : 'bg-blue-700 hover:bg-blue-800' }}'"
                         >
                         @if($mode === 'store')
-                            {{ __('Створити') }}
+                            {{ __('forms.create') }}
                         @else
-                            {{ __('Оновити') }}
+                            {{ __('forms.update') }}
                         @endif
                         </x-button>
                     </div>

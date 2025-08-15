@@ -2,6 +2,7 @@
 
 namespace App\Rules\DivisionRules;
 
+use App\Enums\Status;
 use Closure;
 use App\Models\Division;
 use App\Exceptions\CustomValidationException;
@@ -24,7 +25,7 @@ class DivisionStatusRule implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         // CustomValidationException
-        if($this->division->status !== 'ACTIVE') {
+        if($this->division->status !== Status::ACTIVE) {
             throw new CustomValidationException($this->message(), 'custom');
         }
     }

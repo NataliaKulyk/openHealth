@@ -19,7 +19,7 @@
                     >
                         <x-slot name="option">
                             @foreach($getCertificateAuthority as $certificateType)
-                                <option value="{{ $certificateType['id'] }}" wire:key="{{ $certificateType['id'] }}">
+                                <option value="{{ $certificateType['id'] }}">
                                     {{ $certificateType['name'] }}
                                 </option>
                             @endforeach

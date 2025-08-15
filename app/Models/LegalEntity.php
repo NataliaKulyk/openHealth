@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\Status;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
 use App\Models\Employee\Employee;
@@ -15,15 +18,13 @@ use App\Casts\LegalEntityAccreditationCast;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * @mixin IdeHelperLegalEntity
  */
 class LegalEntity extends Model
 {
-    use HasCamelCasing,
-        HasFactory;
+    use HasCamelCasing;
 
     public const string TYPE_PRIMARY_CARE = 'PRIMARY_CARE';
 
@@ -82,7 +83,7 @@ class LegalEntity extends Model
         return $this->hasMany(Employee::class);
     }
 
-    public function employeesRequest(): HasMany
+    public function employeeRequests(): HasMany
     {
         return $this->hasMany(EmployeeRequest::class);
     }
@@ -97,7 +98,7 @@ class LegalEntity extends Model
         $this->attributes['kveds'] = json_encode($value);
     }
 
-    public function division(): HasMany
+    public function divisions(): HasMany
     {
         return $this->hasMany(Division::class);
     }
@@ -136,7 +137,7 @@ class LegalEntity extends Model
 
     public function getActiveDivisions(): Collection
     {
-        return $this->division()->has('healthcareService')->where('status', 'ACTIVE')->get();
+        return $this->division()->has('healthcareService')->where('status', Status::ACTIVE)->get();
     }
 
     public function getEdr(): array

@@ -35,4 +35,14 @@ final class Repository
     {
         return app(EmployeeRepository::class);
     }
+
+    public static function division(): DivisionRepository
+    {
+        return app(DivisionRepository::class);
+    }
+
+    public static function healthcareService(): HealthcareServiceRepository
+    {
+        return app(HealthcareServiceRepository::class);
+    }
 }

@@ -1,6 +1,6 @@
 <fieldset class="fieldset">
     <legend class="legend">
-        {{ __('patients.main_information') }}
+        {{ __('forms.main_information') }}
     </legend>
 
     <div>
@@ -17,9 +17,7 @@
                         {{ __('forms.select') }} {{ mb_strtolower(__('forms.category')) }} *
                     </option>
                     @foreach($this->dictionaries['eHealth/diagnostic_report_categories'] as $key => $category)
-                        <option value="{{ $key }}" wire:key="{{ $key }}">
-                            {{ $category }}
-                        </option>
+                        <option value="{{ $key }}">{{ $category }}</option>
                     @endforeach
                 </select>
             </div>

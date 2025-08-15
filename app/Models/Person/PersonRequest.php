@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Person;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -36,27 +37,10 @@ class PersonRequest extends BasePerson
         return $this->belongsTo(Person::class);
     }
 
-    public function scopeShowPersonRequest(Builder $query, int $id): array
+    #[Scope]
+    protected function showPersonRequest(Builder $query, int $id): Builder
     {
-        /** @var PersonRequest $patientData */
-        $patientData = $query->findOrFail($id);
-
-        $patient = $patientData->toArray() ?? [];
-
-        $patient['phones'] = $patientData->phones()->get()->toArray() ?? [];
-        $patient['authentication_methods'] = $patientData->authenticationMethod()->get()->toArray() ?? [];
-
-        $patientData->documents = $patientData->documents()->get()->toArray() ?? [];
-        $patientData->address = $patientData->address()->get()->toArray() ?? [];
-        $patientData->confidantPerson = $patientData->confidantPerson()->get()->toArray() ?? [];
-
-        $result = [
-            'patient' => $patient,
-            'documents' => $patientData->documents,
-            'address' => $patientData->address[0],
-            'confidantPerson' => $patientData->confidantPerson
-        ];
-
-        return arrayKeysToCamel($result);
+        return $query->with(['phones', 'authenticationMethod', 'documents', 'address', 'confidantPerson'])
+            ->where('id', $id);
     }
 }

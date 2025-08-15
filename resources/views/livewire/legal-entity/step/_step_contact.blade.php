@@ -67,6 +67,10 @@
             <label for="website" class="label z-10">
                 {{ __('forms.website') }}
             </label>
+
+            <span class="text-xs text-blue-600 mt-1">
+                {{ __('forms.website_hint') }}
+            </span>
         </div>
     </div>
 
@@ -83,12 +87,12 @@
                 x-data="{errors: [] }"
                 x-init="errors =@js($errors->getMessages())"
                 :class="{ 'mb-2': index == phones.length - 1 }"
-             >
+            >
                 <div class="form-group group">
                     <select
                         required
                         x-model="phones[index].type"
-                        class="input-select text-gray-800 peer";
+                        class="input-select peer"
                         :id="$id('phone', '_type' + index)"
                         :class="{ 'input-error border-red-500': errors[`legalEntityForm.phones.${index}.type`] }"
                     >
@@ -135,7 +139,7 @@
 
                 <template x-if="phones.length > 1 && index > 0">
                     <button x-on:click.prevent="phones.splice(index, 1)" {{-- Remove a phone if button is clicked --}}
-                        class="item-remove justify-self-start text-xs"
+                    class="item-remove justify-self-start text-xs"
                     >
                         {{__('forms.remove_phone')}}
                     </button>
@@ -144,7 +148,7 @@
         </template>
 
         <button x-on:click.prevent="phones.push({ type: '', number: '' })" {{-- Add new phone if button is clicked --}}
-                class="item-add"
+        class="item-add"
                 :class="{ 'lg:justify-self-start': index > 0 }" {{-- Apply this style only if it's not a first phone group --}}
         >
             {{__('forms.add_phone')}}

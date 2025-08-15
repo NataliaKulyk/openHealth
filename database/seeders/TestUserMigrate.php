@@ -188,8 +188,7 @@ class TestUserMigrate extends Seeder
 
                 $this->command->info("\tINFO: A new License entry has been successfully inserted into the database");
 
-                $ownerUser = User::create([
-                    'id' => 1,
+                $ownerUserId = User::insertGetId([
                     'uuid' => '82d1f518-23c9-4c6c-868b-6f7ab26c6da8',
                     'email' => 'vitaliybezsh@gmail.com',
                     'password' => Hash::make(Str::random()),
@@ -213,7 +212,7 @@ class TestUserMigrate extends Seeder
                     DB::table('model_has_roles')->insert([
                         'role_id' => $ownerRoleId,
                         'model_type' => 'App\Models\User',
-                        'model_id' => $ownerUser->id,
+                        'model_id' => $ownerUserId,
                         'legal_entity_id' => $legalEntityId,
                     ]);
                 }
@@ -226,7 +225,7 @@ class TestUserMigrate extends Seeder
                     'email' => 'vitaliybezsh@gmail.com',
                     'birth_date' => new Carbon('1987-10-02'),
                     'gender' => 'MALE',
-                    'user_id' => $ownerUser->id,
+                    'user_id' => $ownerUserId,
                     'tax_id' => '3139821559',
                     'no_tax_id' => false,
                     'about_myself' => null,
@@ -275,7 +274,7 @@ class TestUserMigrate extends Seeder
                     'status' => 'APPROVED',
                     'legal_entity_id' => $legalEntityId,
                     'division_id' => null,
-                    'user_id' => $ownerUser->id,
+                    'user_id' => $ownerUserId,
                     'party_id' => $partyId,
                     'created_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
                     'updated_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
@@ -296,7 +295,7 @@ class TestUserMigrate extends Seeder
                     'employee_id' => $employeeId,
                     'legal_entity_id' => $legalEntityId,
                     'division_id' => null,
-                    'user_id' => $ownerUser->id,
+                    'user_id' => $ownerUserId,
                     'party_id' => $partyId,
                     'applied_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
                     'created_at' => new Carbon('2024-11-14T10:37:35.000000Z'),

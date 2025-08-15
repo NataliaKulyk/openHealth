@@ -42,22 +42,10 @@ class ProcedureComponent extends Component
     public string $patientUuid;
 
     /**
-     * Patient first name.
+     * Patient full name.
      * @var string
      */
-    public string $firstName;
-
-    /**
-     * Patient last name.
-     * @var string
-     */
-    public string $lastName;
-
-    /**
-     * Patient second name.
-     * @var string|null
-     */
-    public ?string $secondName = null;
+    public string $patientFullName;
 
     /**
      * List of authorized user's divisions.
@@ -111,7 +99,7 @@ class ProcedureComponent extends Component
         $this->employeeFullName = $authUser->getEncounterWriterEmployee()->fullName;
 
         $this->setPatientData();
-        $this->divisions = legalEntity()->division->toArray();
+        $this->divisions = legalEntity()->divisions->toArray();
         $this->getDictionary();
         $this->getEpisodes();
 
@@ -191,9 +179,7 @@ class ProcedureComponent extends Component
             ->firstOrFail();
 
         $this->patientUuid = $patient->uuid;
-        $this->firstName = $patient->first_name;
-        $this->lastName = $patient->last_name;
-        $this->secondName = $patient->second_name;
+        $this->patientFullName = $patient->fullName;
     }
 
     /**
@@ -205,7 +191,7 @@ class ProcedureComponent extends Component
     {
         try {
             $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: legalEntity()->uuid);
-            $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params);
+            $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params)['data'];
         } catch (eHealthApiException) {
             $this->flashGeneralError();
         }

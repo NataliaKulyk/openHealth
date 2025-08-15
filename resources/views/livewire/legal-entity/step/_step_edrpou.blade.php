@@ -8,7 +8,7 @@
     x-data="{
         title: '{{ __('forms.edrpou') }}',
         index: 1,
-        isDisabled: @json(!empty(legalEntity()->id))
+        isDisabled: @json(!empty(legalEntity()->id) && $isEdit)
     }"
     x-init="typeof addHeader !== 'undefined' && addHeader(title, index)"
     x-show="activeStep === index || isEdit"

@@ -219,7 +219,7 @@
                 id="ownerPosition"
                 wire:model="legalEntityForm.owner.position"
                 aria-describedby="{{ $hasOwnerPosition ? 'ownerPositionErrorHelp' : '' }}"
-                class="input-select text-gray-800 {{ $hasOwnerPosition ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+                class="input-select {{ $hasOwnerPosition ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 :class="isDisabled ? 'text-gray-400 border-gray-200 dark:text-gray-500' : 'text-gray-900 border-gray-300'"
                 :disabled="isDisabled"
             >
@@ -262,7 +262,7 @@
                     <select
                         required
                         x-model="phones[index].type"
-                        class="input-select text-gray-800 peer";
+                        class="input-select peer"
                         :id="$id('phone', '_type' + index)"
                         :class="{ 'input-error border-red-500': errors[`legalEntityForm.owner.phones.${index}.type`] }"
                     >
@@ -401,7 +401,7 @@
                 id="documentType"
                 wire:model.defer="legalEntityForm.owner.documents.type"
                 aria-describedby="{{ $hasOwnerDocumentType ? 'ownerDocumentTypeErrorHelp' : '' }}"
-                class="input-select text-gray-800 {{ $hasOwnerDocumentType ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+                class="input-select {{ $hasOwnerDocumentType ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
             >
                 <option value="_placeholder_" selected hidden>-- {{ __('Обрати тип') }} --</option>
 

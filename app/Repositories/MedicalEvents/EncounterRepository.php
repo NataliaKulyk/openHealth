@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Repositories\MedicalEvents;
 
 use App\Classes\eHealth\Api\PatientApi;
+use App\Core\Arr;
 use App\Models\MedicalEvents\Mongo\Encounter as EncounterMongo;
+use App\Models\MedicalEvents\Sql\Condition;
 use App\Models\MedicalEvents\Sql\Encounter as EncounterSql;
 use App\Models\MedicalEvents\Sql\EncounterDiagnose;
 use Exception;
@@ -63,8 +65,10 @@ class EncounterRepository extends BaseRepository
                 $performer = Repository::identifier()->store($encounterData['performer']['identifier']['value']);
                 Repository::codeableConcept()->attach($performer, $encounterData['performer']);
 
-                $division = Repository::identifier()->store($encounterData['division']['identifier']['value']);
-                Repository::codeableConcept()->attach($division, $encounterData['division']);
+                if (isset($encounterData['division'])) {
+                    $division = Repository::identifier()->store($encounterData['division']['identifier']['value']);
+                    Repository::codeableConcept()->attach($division, $encounterData['division']);
+                }
 
                 /** @var EncounterSql|EncounterMongo $encounter */
                 $encounter = $this->model::create([
@@ -77,7 +81,7 @@ class EncounterRepository extends BaseRepository
                     'type_id' => $type->id,
                     'priority_id' => $priority->id ?? null,
                     'performer_id' => $performer->id,
-                    'division_id' => $division->id
+                    'division_id' => $division->id ?? null
                 ]);
 
                 $encounter->period()->create([
@@ -159,6 +163,32 @@ class EncounterRepository extends BaseRepository
     }
 
     /**
+     * Get the encounter for the clinical impression based on the provided UUID to display the selected supporting info.
+     *
+     * @param  string  $uuid
+     * @return array|null
+     */
+    public function getForClinicalImpression(string $uuid): ?array
+    {
+        $encounter = EncounterSql::whereUuid($uuid)
+            ->with(['period', 'diagnoses'])
+            ->first();
+
+        if (!$encounter || !data_get($encounter, 'diagnoses.0.condition.identifier.value')) {
+            return null;
+        }
+
+        $condition = Condition::whereUuid($encounter['diagnoses'][0]['condition']['identifier']['value'])
+            ->with('code.coding')
+            ->first();
+
+        return [
+            'periodStart' => $encounter->period->start,
+            'code' => $condition?->code
+        ];
+    }
+
+    /**
      * Format encounter data before request.
      *
      * @param  array  $encounter
@@ -176,7 +206,7 @@ class EncounterRepository extends BaseRepository
         }
 
         // add system if priority is provided or when it's required
-        if ($encounter['class']['code'] === 'INPATIENT' || $encounter['class']['code']) {
+        if (isset($encounter['priority'])) {
             $encounter['priority']['coding'][0]['system'] = 'eHealth/encounter_priority';
         }
 
@@ -194,7 +224,7 @@ class EncounterRepository extends BaseRepository
             return $diagnose['diagnoses'];
         }, $conditions);
 
-        if ($encounter['division']['identifier']['value']) {
+        if (isset($encounter['division']) && $encounter['division']['identifier']['value']) {
             $encounter['division']['identifier']['type']['coding'][0] = [
                 'system' => 'eHealth/resources',
                 'code' => 'division'
@@ -231,59 +261,75 @@ class EncounterRepository extends BaseRepository
     }
 
     /**
-     * Format Conditions data before request.
+     * Format conditions data before request.
      *
      * @param  array  $conditions
      * @return array
      */
     public function formatConditionsRequest(array $conditions): array
     {
-        $conditionForm = array_map(
-            function (array $condition, int $index) {
-                unset($condition['query']);
-                // set ID same as diagnose
-                $condition['id'] = $this->diagnoseUuids[$index];
+        $conditionForm = array_map(function (array $condition, int $index) {
+            unset($condition['query']);
+            // set ID same as diagnose
+            $condition['id'] = $this->diagnoseUuids[$index];
 
-                $condition['context']['identifier']['type']['coding'][0] = [
-                    'system' => 'eHealth/resources',
-                    'code' => 'encounter'
-                ];
-                $condition['context']['identifier']['value'] = $this->encounterUuid;
+            $condition['context']['identifier']['type']['coding'][0] = [
+                'system' => 'eHealth/resources',
+                'code' => 'encounter'
+            ];
+            $condition['context']['identifier']['value'] = $this->encounterUuid;
 
-                // Remove coding with empty code
-                $condition['code']['coding'] = array_values(
-                    array_filter(
-                        $condition['code']['coding'],
-                        static fn (array $coding) => !empty($coding['code']) && trim($coding['code']) !== ''
-                    )
-                );
+            // Remove coding with empty code
+            $condition['code']['coding'] = array_values(
+                array_filter(
+                    $condition['code']['coding'],
+                    static fn (array $coding) => !empty($coding['code']) && trim($coding['code']) !== ''
+                )
+            );
 
-                // unset if code not provided
-                if ($condition['severity']['coding'][0]['code'] === '') {
-                    unset($condition['severity']);
-                }
+            // unset if code not provided
+            if ($condition['severity']['coding'][0]['code'] === '') {
+                unset($condition['severity']);
+            }
 
-                if ($condition['primarySource']) {
-                    $condition['asserter']['identifier']['value'] = $this->employeeUuid;
+            if ($condition['primarySource']) {
+                $condition['asserter']['identifier']['value'] = $this->employeeUuid;
 
-                    unset($condition['reportOrigin']);
-                } else {
-                    unset($condition['asserter']);
-                }
+                unset($condition['reportOrigin']);
+            } else {
+                unset($condition['asserter']);
+            }
 
-                // convert dates
-                if (isset($condition['onsetTime'])) {
-                    $condition['onsetDate'] = convertToISO8601($condition['onsetDate'] . $condition['onsetTime']);
-                    $condition['assertedDate'] = convertToISO8601($condition['assertedDate'] . $condition['assertedTime']);
-                    unset($condition['onsetTime'], $condition['assertedTime'], $condition['diagnoses']);
-                }
+            // convert dates
+            if (isset($condition['onsetTime'])) {
+                $condition['onsetDate'] = convertToISO8601($condition['onsetDate'] . $condition['onsetTime']);
+                $condition['assertedDate'] = convertToISO8601($condition['assertedDate'] . $condition['assertedTime']);
+                unset($condition['onsetTime'], $condition['assertedTime'], $condition['diagnoses']);
+            }
 
-                if (empty($condition['evidences'][0]['codes'])) {
-                    unset($condition['evidences']);
-                }
+            if (!empty($condition['evidences'][0]['details'])) {
+                $condition['evidences'][0]['details'] = collect($condition['evidences'][0]['details'])
+                    ->map(static function (array $detail) {
+                        $data = [];
 
-                return $condition;
-            },
+                        Arr::set($data, 'identifier.type.coding', [
+                            [
+                                'system' => 'eHealth/resources',
+                                'code' => 'condition'
+                            ]
+                        ]);
+                        Arr::set($data, 'identifier.value', $detail['id']);
+
+                        return $data;
+                    })->toArray();
+            }
+
+            if (empty($condition['evidences'][0]['codes']) && empty($condition['evidences'][0]['details'])) {
+                unset($condition['evidences']);
+            }
+
+            return $condition;
+        },
             $conditions,
             array_keys($conditions)
         );
@@ -348,8 +394,7 @@ class EncounterRepository extends BaseRepository
                 $immunization['expirationDate'] = convertToISO8601($immunization['expirationDate'] . now()->format('H:i'));
             }
 
-            // remove key where value is null
-            return array_filter($immunization, static fn (mixed $value) => !is_null($value));
+            return removeEmptyKeys($immunization);
         }, $immunizations);
 
         return schemaService()
@@ -460,10 +505,10 @@ class EncounterRepository extends BaseRepository
      * Format diagnostic reports data before request.
      *
      * @param  array  $diagnosticReports
-     * @param  string  $divisionUuid
+     * @param  string|null  $divisionUuid
      * @return array
      */
-    public function formatDiagnosticReportsRequest(array $diagnosticReports, string $divisionUuid): array
+    public function formatDiagnosticReportsRequest(array $diagnosticReports, ?string $divisionUuid = null): array
     {
         $diagnosticReportForm = array_map(function (array $diagnosticReport) use ($divisionUuid) {
             // delete frontend properties
@@ -502,7 +547,7 @@ class EncounterRepository extends BaseRepository
                         'text' => ''
                     ],
                     'value' => $this->encounterUuid
-                ],
+                ]
             ];
 
             $diagnosticReport['managingOrganization'] = [
@@ -515,17 +560,13 @@ class EncounterRepository extends BaseRepository
                 ],
             ];
 
-            $diagnosticReport['division'] = [
-                'identifier' => [
-                    'type' => [
-                        'coding' => [['system' => 'eHealth/resources', 'code' => 'division']],
-                        'text' => ''
-                    ],
-                    'value' => $divisionUuid
-                ],
-            ];
+            if (is_null($divisionUuid)) {
+                unset($diagnosticReport['division']);
+            } else {
+                $diagnosticReport['division']['identifier']['value'] = $divisionUuid;
+            }
 
-            if (empty($diagnosticReport['resultsInterpreter']['text'])) {
+            if (empty($diagnosticReport['resultsInterpreter']['reference']['identifier']['value'])) {
                 unset($diagnosticReport['resultsInterpreter']);
             }
 
@@ -554,7 +595,7 @@ class EncounterRepository extends BaseRepository
             }
 
             // Delete frontend properties
-            unset($procedure['isReferralAvailable'],  $procedure['referralType']);
+            unset($procedure['isReferralAvailable'], $procedure['referralType']);
 
             $procedure['id'] = Str::uuid()->toString();
             $procedure['status'] = 'completed';
@@ -566,10 +607,14 @@ class EncounterRepository extends BaseRepository
                         'text' => ''
                     ],
                     'value' => $this->encounterUuid
-                ],
+                ]
             ];
 
             $procedure['recordedBy']['identifier']['value'] = $this->employeeUuid;
+
+            if (empty($procedure['division']['identifier']['value'])) {
+                unset($procedure['division']);
+            }
 
             if ($procedure['primarySource']) {
                 unset($procedure['reportOrigin']);
@@ -615,12 +660,12 @@ class EncounterRepository extends BaseRepository
                 unset($reasonReference);
             }
 
-            if ($procedure['outcome']['coding'][0]['code'] === '') {
+            if (empty($procedure['outcome'])) {
                 unset($procedure['outcome']);
             }
 
-            if ($procedure['usedCodes']['coding'][0]['code'] === '') {
-                unset($procedure['outcome']);
+            if (empty($procedure['usedCodes'])) {
+                unset($procedure['usedCodes']);
             }
 
             if (!empty($procedure['complicationDetails'])) {
@@ -645,6 +690,136 @@ class EncounterRepository extends BaseRepository
 
         return schemaService()
             ->setDataSchema(['procedures' => $procedureForm], app(PatientApi::class))
+            ->requestSchemaNormalize()
+            ->camelCaseKeys()
+            ->extractFirst()
+            ->getNormalizedData();
+    }
+
+    /**
+     * Format clinical impressions data before request.
+     *
+     * @param  array  $clinicalImpressions
+     * @return array
+     */
+    public function formatClinicalImpressionsRequest(array $clinicalImpressions): array
+    {
+        $clinicalImpressionForm = array_map(function (array $clinicalImpression) {
+            $clinicalImpression['id'] = Str::uuid()->toString();
+            $clinicalImpression['status'] = 'completed';
+
+            $clinicalImpression['encounter'] = [
+                'identifier' => [
+                    'type' => [
+                        'coding' => [['system' => 'eHealth/resources', 'code' => 'encounter']],
+                        'text' => ''
+                    ],
+                    'value' => $this->encounterUuid
+                ]
+            ];
+
+            $clinicalImpression['effectivePeriod']['start'] = convertToISO8601(
+                $clinicalImpression['effectivePeriodStartDate'] . $clinicalImpression['effectivePeriodStartTime']
+            );
+            unset($clinicalImpression['effectivePeriodStartDate'], $clinicalImpression['effectivePeriodStartTime']);
+
+            $clinicalImpression['effectivePeriod']['end'] = convertToISO8601(
+                $clinicalImpression['effectivePeriodEndDate'] . $clinicalImpression['effectivePeriodEndTime']
+            );
+            unset($clinicalImpression['effectivePeriodEndDate'], $clinicalImpression['effectivePeriodEndTime']);
+
+            $clinicalImpression['assessor']['identifier']['value'] = $this->employeeUuid;
+
+            // TODO: після створення, додати форматування попередньої клінічної оцінки, вона має бути тільки одна
+
+            if (!empty($clinicalImpression['problems'])) {
+                $clinicalImpression['problems'] = collect($clinicalImpression['problems'])
+                    ->map(static function (array $problem) {
+                        $data = [];
+
+                        Arr::set($data, 'identifier.type.coding', [
+                            [
+                                'system' => 'eHealth/resources',
+                                'code' => 'condition'
+                            ]
+                        ]);
+                        Arr::set($data, 'identifier.value', $problem['id']);
+
+                        return $data;
+                    })->toArray();
+            }
+
+            if (!empty($clinicalImpression['findings'])) {
+                $clinicalImpression['findings'] = collect($clinicalImpression['findings'])
+                    ->map(static function (array $finding) {
+                        $data = [];
+
+                        Arr::set($data, 'item_reference.identifier.type.coding', [
+                            [
+                                'system' => 'eHealth/resources',
+                                'code' => $finding['type']
+                            ]
+                        ]);
+                        Arr::set($data, 'item_reference.identifier.value', $finding['id']);
+
+                        return $data;
+                    })->toArray();
+            }
+
+            $clinicalImpression['supporting_info'] = [];
+
+            if (!empty($clinicalImpression['supportingInfoEpisodes'])) {
+                $supportingInfoEpisodes = collect($clinicalImpression['supportingInfoEpisodes'])
+                    ->map(static function (array $supportingInfoEpisode) {
+                        $data = [];
+
+                        Arr::set($data, 'identifier.type.coding', [
+                            [
+                                'system' => 'eHealth/resources',
+                                'code' => $supportingInfoEpisode['type']
+                            ]
+                        ]);
+                        Arr::set($data, 'identifier.value', $supportingInfoEpisode['id']);
+
+                        return $data;
+                    })->toArray();
+
+                $clinicalImpression['supporting_info'] = array_merge(
+                    $clinicalImpression['supporting_info'],
+                    $supportingInfoEpisodes
+                );
+            }
+
+            if (!empty($clinicalImpression['supportingInfo'])) {
+                $supportingInfo = collect($clinicalImpression['supportingInfo'])
+                    ->map(static function (array $supportingInfo) {
+                        $data = [];
+
+                        Arr::set($data, 'identifier.type.coding', [
+                            [
+                                'system' => 'eHealth/resources',
+                                'code' => $supportingInfo['type']
+                            ]
+                        ]);
+                        Arr::set($data, 'identifier.value', $supportingInfo['id']);
+
+                        return $data;
+                    })->toArray();
+
+                $clinicalImpression['supporting_info'] = array_merge(
+                    $clinicalImpression['supporting_info'],
+                    $supportingInfo
+                );
+            }
+
+            unset($clinicalImpression['supportingInfo'], $clinicalImpression['supportingInfoEpisodes']);
+
+            // Remove elements where the key is equal empty array
+            return array_filter($clinicalImpression, static fn ($value) => !is_array($value) || !empty($value));
+        }, $clinicalImpressions);
+
+        return schemaService()
+            ->setDataSchema(['clinical_impressions' => $clinicalImpressionForm], app(PatientApi::class))
             ->requestSchemaNormalize()
             ->camelCaseKeys()
             ->extractFirst()

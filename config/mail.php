@@ -44,6 +44,11 @@ return [
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
+            /*
+             * Setting source_ip to '0.0.0.0' forces the outgoing SMTP connection to use an available IPv4 interface on server.
+             * Symphony Mailer by default prefers IPv6, which leads to intermitted Gmail error: "421 4.7.0 Try again later, closing connection."
+             */
+            'source_ip' => '0.0.0.0'
         ],
 
         'ses' => [
