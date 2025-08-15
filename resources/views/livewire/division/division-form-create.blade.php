@@ -188,10 +188,11 @@
                                     </label>
 
                                     <label class="inline-flex items-center cursor-pointer" x-bind:class="!show_work && 'opacity-40 pointer-events-none'">
-                                        <input type="checkbox" class="sr-only peer"
+                                        <input type="checkbox"
                                                x-model="shift"
-                                               @change="$wire.noShift('{{ $key }}', !shift)">
-                                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:bg-gray-700 dark:peer-focus:ring-blue-800 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"></div>
+                                               @change="$wire.noShift('{{ $key }}', !shift)"
+                                               id="is_mountainous"
+                                               class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                                         <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('Позмінно') }}</span>
                                     </label>
                                 </div>
@@ -271,15 +272,11 @@
     </fieldset>
 
 
-    <div class='mb-4.5 mt-6 flex flex-col gap-6 xl:flex-row justify-between items-center'>
-    <x-secondary-button>
-        <div class='xl:w-1/4 text-left'>
-            <a href="{{ route('division.index', [legalEntity()]) }}">
-                {{ __('forms.back') }}
-            </a>
-        </div>
-    </x-secondary-button>
-    <div class='xl:w-1/4 text-right'>
+    <div class="mt-6 flex flex-row items-center gap-2 border-t border-gray-200 pt-6">
+        <x-secondary-button class="button-minor" tag="a" href="{{ route('division.index', [legalEntity()]) }}">
+            {{ __('forms.back') }}
+        </x-secondary-button>
+        <div class='text-right'>
         <x-button type='submit' class='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800'>
             @if($mode === 'store')
                 {{ __('Створити') }}
