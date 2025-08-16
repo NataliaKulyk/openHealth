@@ -158,6 +158,7 @@ abstract class LegalEntity extends Component
             }
 
             $modelData['website'] ??= '';
+            $modelData['accreditation'] = ($modelData['accreditation'] ?? []) + $this->legalEntityForm->accreditation;
 
             $this->legalEntityForm->fill($modelData);
 
@@ -187,16 +188,6 @@ abstract class LegalEntity extends Component
     protected function getLegalEntityFromCache(): ?LegalEntityModel
     {
         return Cache::get($this->entityCacheKey) ?? null;
-    }
-
-    /**
-     * Get the legal entity associated with the currently authenticated user.
-     *
-     * @return LegalEntityModel|null
-     */
-    protected function getLegalEntityFromAuth(): ?LegalEntityModel
-    {
-        return legalEntity() ?? null;
     }
 
     /**

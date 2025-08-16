@@ -57,7 +57,7 @@
 
         <div class="form-group group">
             <input
-                type="number"
+                type="text"
                 placeholder=" "
                 id="licenseNumber"
                 wire:model="legalEntityForm.license.licenseNumber"
@@ -171,9 +171,9 @@
             />
 
             @if($hasLicenseExpirationDateError)
-                {{--<p id="licenseExpirationDateErrorHelp" class="text-error">
+                <p id="licenseExpirationDateErrorHelp" class="text-error">
                     {{ $errors->first('legalEntityForm.license.expiryDate') }}
-                </p>--}}
+                </p>
             @endif
 
             <label for="licenseExpiryDate" class="label z-10">

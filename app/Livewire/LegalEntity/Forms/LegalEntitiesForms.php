@@ -43,7 +43,13 @@ class LegalEntitiesForms extends Form
 
     public bool $accreditationShow = false;
 
-    public ?array $accreditation = [];
+    public ?array $accreditation = [
+        'category' => null,
+        'orderNo' => null,
+        'orderDate' => null,
+        'issuedDate' => null,
+        'expiryDate' => null,
+    ];
 
     public array|null $license = [];
 
@@ -189,7 +195,7 @@ class LegalEntitiesForms extends Form
         ];
     }
 
-    public function onEditValidate()
+    public function allFieldsValidate()
     {
         $errors = [];
 

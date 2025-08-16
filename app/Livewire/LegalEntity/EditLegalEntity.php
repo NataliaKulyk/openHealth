@@ -137,7 +137,7 @@ class EditLegalEntity extends LegalEntity
 
     public function updateLegalEntity()
     {
-        $this->legalEntityForm->onEditValidate();
+        $this->legalEntityForm->allFieldsValidate();
 
         if ($this->getErrorBag()->isNotEmpty()) {
             $this->dispatchBrowserEvent('scroll-to-error');

@@ -3,6 +3,7 @@
     $hasAccreditationOrderNumberError = $errors->has('legalEntityForm.accreditation.orderNo');
     $hasAccreditationOrderDateError = $errors->has('legalEntityForm.accreditation.orderDate');
     $hasAccreditationExpiryDateError = $errors->has('legalEntityForm.accreditation.expiryDate');
+    $hasAccreditationissuedDateError = $errors->has('legalEntityForm.accreditation.issuedDate');
 @endphp
 
 <fieldset
@@ -38,22 +39,25 @@
             x-show="showAccreditation"
             x-data="{
                 category: $wire.entangle('legalEntityForm.accreditation.category'),
+                acdIssuedDate: $wire.entangle('legalEntityForm.accreditation.issuedDate'),
+                acdOrderDate: $wire.entangle('legalEntityForm.accreditation.orderDate'),
+                acdExpiryDate: $wire.entangle('legalEntityForm.accreditation.expiryDate'),
                 clearFields() {
                     if (this.category === 'NO_ACCREDITATION') {
                         // Clear the values in the fields
-                        this.$refs.orderDate.value = '';
-                        this.$refs.issuedDate.value = '';
-                        this.$refs.expiryDate.value = '';
+                        this.acdOrderDate = '';
+                        this.acdIssuedDate = '';
+                        this.acdExpiryDate = '';
                     }
                 }
             }"
-            x-init="$watch('category', () => clearFields())"
+            x-effect="if (category === 'NO_ACCREDITATION') clearFields()"
         >
             <div class="form-group group">
                 <select
                     required
                     id="accreditationСategory"
-                    wire:model="legalEntityForm.accreditation.category"
+                    x-model="category"
                     aria-describedby="{{ $hasAccreditationCategoryError ? 'accreditationCategoryErrorHelp' : '' }}"
                     class="input-select {{ $hasAccreditationCategoryError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 >
@@ -61,7 +65,7 @@
 
                     @isset($dictionaries['ACCREDITATION_CATEGORY'])
                             @foreach($dictionaries['ACCREDITATION_CATEGORY'] as $k => $category)
-                                <option {{ isset($legalEntityForm->accreditation['category']) == $k ? 'selected': ''}} value="{{ $k }}">
+                                <option {{ $legalEntityForm->accreditation['category'] === $k ? 'selected' : '' }} value="{{ $k }}">
                                     {{ $category }}
                                 </option>
                             @endforeach
@@ -113,10 +117,16 @@
                     placeholder=" "
                     x-mask="9999-99-99"
                     id="accreditationIssuedDate"
-                    x-ref="issuedDate"
-                    wire:model="legalEntityForm.accreditation.issuedDate"
-                    class="input datepicker-input peer"
+                    x-model="acdIssuedDate"
+                    aria-describedby="{{ $hasAccreditationissuedDateError ? 'accreditationIssuedDateErrorHelp' : '' }}"
+                    class="input datepicker-input {{ $hasAccreditationissuedDateError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 />
+
+                @if($hasAccreditationissuedDateError)
+                    <p id="accreditationIssuedDateErrorHelp" class="text-error">
+                        {{ $errors->first('legalEntityForm.accreditation.issuedDate') }}
+                    </p>
+                @endif
 
                 <label for="accreditationIssuedDate" class="label z-10">
                     {{ __('forms.accreditationIssuedDate') }}
@@ -134,8 +144,7 @@
                     placeholder=" "
                     x-mask="9999-99-99"
                     id="accreditationExpiryDate"
-                    x-ref="expiryDate"
-                    wire:model="legalEntityForm.accreditation.expiryDate"
+                    x-model="acdExpiryDate"
                     class="input datepicker-input peer"
                     aria-describedby="{{ $hasAccreditationExpiryDateError ? 'accreditationExpiryDateErrorHelp' : '' }}"
                 />
@@ -161,9 +170,8 @@
                     :disabled="category === 'NO_ACCREDITATION'"
                     type="text"
                     placeholder=" "
-                    x-ref="orderDate"
                     id="accreditationOrderDate"
-                    wire:model="legalEntityForm.accreditation.orderDate"
+                    x-model="acdOrderDate"
                     aria-describedby="{{ $hasAccreditationOrderDateError ? 'accreditationOrderDateErrorHelp' : '' }}"
                     class="input datepicker-input {{ $hasAccreditationOrderDateError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 />

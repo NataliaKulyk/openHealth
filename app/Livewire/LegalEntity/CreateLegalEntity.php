@@ -431,7 +431,7 @@ class CreateLegalEntity extends LegalEntity
         ];
 
         try {
-            $this->legalEntityForm->onEditValidate();
+            $this->legalEntityForm->allFieldsValidate();
         } catch (ValidationException $err) {
             $key= array_key_first($err->errors());
             $error = $err->errors()[$key][0];

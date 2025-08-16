@@ -45,16 +45,20 @@ class ExpiryDate implements ValidationRule
 
         $expirationDate = Carbon::parse($value);
 
+        if (!preg_match('/^(\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))?)?$/u', $value)) {
+            $fail(__('validation.attributes.errors.date_iso'));
+
+            return;
+        }
+
         if (!empty($this->startDate) && $expirationDate->lte($this->startDate)) {
             $fail(__('validation.attributes.errors.expiryDateLess'));
+
+            return;
         }
 
         if ($expirationDate->lte(Carbon::now())) {
-            $fail(__('validation.attributes.errors.expiryDateGreat'));
-        }
-
-        if (!preg_match('/^(\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))?)?$/u', $value)) {
-            $fail(__('validation.attributes.errors.date_iso'));
+            $fail(__('validation.attributes.errors.expiryDateLessNow'));
         }
     }
 }
