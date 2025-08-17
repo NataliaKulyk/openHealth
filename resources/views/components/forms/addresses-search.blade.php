@@ -21,6 +21,7 @@
             wire:model.live="address.area"
             aria-describedby="{{ $hasAreaError ? 'addressAreaErrorHelp' : '' }}"
             class="input-select text-gray-800 {{ $hasAreaError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+            :disabled="{{ $readonly}}"
         >
             <option value="_placeholder_" hidden>-- {{ __('forms.select') }} --</option>
             @nonempty($regions)
@@ -68,7 +69,7 @@
                 wire:model.live.debounce.400ms="address.region"
                 aria-describedby="{{ $hasRegionError ? 'addressRegionErrorHelp' : '' }}"
                 class="input {{ $hasRegionError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-                :disabled="{{ empty($address['area']) || (isset($address['area']) && $address['area']) === 'М.КИЇВ' ? 'true' : 'false' }}"
+                :disabled="{{ empty($address['area']) || (isset($address['area']) && $address['area']) === 'М.КИЇВ' || $readonly ? 'true' : 'false' }}"
             />
 
             <template x-if="showTo">
@@ -118,7 +119,7 @@
             wire:model.live="address.settlementType"
             aria-describedby="{{ $hasSettlementTypeError ? 'addressSettlementTypeErrorHelp' : '' }}"
             class="input-select text-gray-800 {{ $hasSettlementTypeError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-            :disabled="{{ empty($address['region']) ? 'true' : 'false' }}"
+            :disabled="{{ empty($address['region']) || $readonly ? 'true' : 'false' }}"
         >
             <option value="_placeholder_" selected hidden>-- {{ __('forms.select') }} --</option>
 
@@ -168,7 +169,7 @@
                 wire:model.live.debounce.400ms="address.settlement"
                 aria-describedby="{{ $hasSettlementError? 'addressSettlementErrorHelp' : '' }}"
                 class="input {{ $hasSettlementError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-                :disabled="{{ empty($address['settlementType']) || (isset($address['area']) && $address['area']) === 'М.КИЇВ' ? 'true' : 'false' }}"
+                :disabled="{{ empty($address['settlementType']) || (isset($address['area']) && $address['area']) === 'М.КИЇВ' || $readonly ? 'true' : 'false' }}"
             />
 
             <template x-if="showTo">
@@ -217,7 +218,7 @@
             wire:model.live="address.streetType"
             aria-describedby="{{ $hasStreetTypeError ? 'addressStreetTypeErrorHelp' : '' }}"
             class="input-select text-gray-800 {{ $hasStreetTypeError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-            :disabled="{{ empty($address['settlement']) ? 'true' : 'false' }}"
+            :disabled="{{ empty($address['settlement']) || $readonly ? 'true' : 'false' }}"
         >
             <option value="_placeholder_" selected hidden>-- {{ __('forms.select') }} --</option>
 
@@ -251,7 +252,7 @@
             wire:model.live.debounce.400ms="address.street"
             aria-describedby="{{ $hasStreetError ? 'addressStreetErrorHelp' : '' }}"
             class="input {{ $hasStreetError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-            :disabled="{{ empty($address['settlementType']) ? 'true' : 'false' }}"
+            :disabled="{{ empty($address['settlementType']) || $readonly ? 'true' : 'false' }}"
         />
 
         <div
@@ -272,6 +273,7 @@
                 x-show="showTo"
                 x-on:click.away="showTo = false"
                 class="absolute left-0 right-0 top-full bg-white border border-gray-300 rounded-bl-md rounded-br-md shadow-lg dark:bg-gray-800 dark:border-gray-500"
+                :disabled="{{ $readonly}}"
             >
                 <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownHoverButton">
                     @forelse ($streets as $street)
@@ -314,7 +316,7 @@
             wire:model="address.building"
             aria-describedby="{{ $hasBuildingError ? 'addressBuildingErrorHelp' : '' }}"
             class="input {{ $hasBuildingError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-            :disabled="{{ empty($address['settlement']) ? 'true' : 'false' }}"
+            :disabled="{{ empty($address['settlement']) || $readonly ? 'true' : 'false' }}"
         />
 
         @if($hasBuildingError)
@@ -337,7 +339,7 @@
             wire:model="address.apartment"
             aria-describedby="{{ $hasApartmentError ? 'addressApartmentErrorHelp' : '' }}"
             class="input {{ $hasApartmentError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-            :disabled="{{ empty($address['settlement']) ? 'true' : 'false' }}"
+            :disabled="{{ empty($address['settlement']) || $readonly ? 'true' : 'false' }}"
         />
 
         @if($hasApartmentError)
@@ -361,7 +363,7 @@
             wire:model="address.zip"
             aria-describedby="{{ $hasZipError ? 'addressZipErrorHelp' : '' }}"
             class="input {{ $hasZipError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-            :disabled="{{ empty($address['settlement']) ? 'true' : 'false' }}"
+            :disabled="{{ empty($address['settlement']) || $readonly ? 'true' : 'false' }}"
         />
 
         @if($hasZipError)

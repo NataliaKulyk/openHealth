@@ -11,13 +11,23 @@ use Illuminate\Support\Facades\Schema;
 
 class DivisionRepository
 {
+    /**
+     * Saves a list of divisions to the database.
+     *
+     * @param mixed $responseList The list of divisions to be saved
+     * @param LegalEntity|null $legalEntity Optional legal entity associated with the divisions
+     *
+     * @return void
+     *
+     * @throws \Exception
+     */
     public function saveDivisionsList($responseList, ?LegalEntity $legalEntity = null): void
     {
         $legalEntity ??= legalEntity();
 
         DB::transaction(function () use ($responseList, $legalEntity) {
             foreach ($responseList as $responseItem) {
-                $this->saveDivisionResponseData($responseItem, $legalEntity);
+                $this->saveDivisionData($responseItem, $legalEntity);
             }
         });
     }
@@ -28,9 +38,9 @@ class DivisionRepository
      * @param \App\Models\Division $division
      * @param string $status
      *
-     * @throws \Exception
-     *
      * @return void
+     *
+     * @throws \Exception
      */
     public function setAction(Division $division, string $status): void
     {
@@ -74,6 +84,23 @@ class DivisionRepository
         return $division;
     }
 
+
+    /**
+     * Saves raw division form data to the database.
+     *
+     * @param array $divisionData The raw form data containing division information
+     *
+     * @return void
+     *
+     * @throws \Exception If there is an error saving the data
+     */
+    public function saveRawFormData(array $divisionData): void
+    {
+        // TODO: in the next PR's realize this functionality (store data from the division's form to the DB)
+
+        return;
+    }
+
     /**
      * Create instance of Division model and save it's data to the DB (with all it's relations aka: Address, Phone and LegalEntity)
      *
@@ -82,7 +109,7 @@ class DivisionRepository
      *
      * @return Division
      */
-    public function saveDivisionResponseData(array $divisionData, LegalEntity $legalEntity): Division
+    public function saveDivisionData(array $divisionData, LegalEntity $legalEntity): Division
     {
         $division = $this->createOrUpdate($divisionData);
 
@@ -92,19 +119,58 @@ class DivisionRepository
 
         $division->refresh();
 
-        Repository::address()->addAddresses($division, $divisionData['addresses']);
+        Repository::address()->syncAddresses($division, $divisionData['addresses']);
 
         Repository::phone()->syncPhones($division, $divisionData['phones']);
 
         return $division;
     }
 
+    /**
+     * TODO: need more testing on further PRs
+     * Create instance of Division model and save it's data to the DB (with all it's relations aka: Address, Phone and LegalEntity)
+     *
+     * @param array $divisionData
+     * @param \App\Models\LegalEntity $legalEntity
+     *
+     * @return Division
+     */
+    public function syncDivisionData(array $divisionData, LegalEntity $legalEntity): Division
+    {
+        $division = $this->createOrUpdate($divisionData);
+
+        if ($division->update()) {
+            $division->refresh();
+        }
+
+        Repository::address()->syncAddresses($division, $divisionData['addresses']);
+
+        Repository::phone()->syncPhones($division, $divisionData['phones']);
+
+        return $division;
+    }
+
+    /**
+     * Creates a relation between a Division and a LegalEntity
+     *
+     * @param Division $division The division to create the relation for
+     * @param LegalEntity $legalEntity The legal entity to relate to the division
+     *
+     * @return Division Returns the updated Division instance
+     */
     public function createLegalEntityRelation(Division $division, LegalEntity $legalEntity): Division
     {
         return $division->legalEntity()->associate($legalEntity);
     }
 
-    // Create relations with such models as Employee, EmployeeRequest etc.
+    /**
+     * Creates a relation between a Division and such models as Employee, EmployeeRequest etc.
+     *
+     * @param Division $division The division entity to create relation for
+     * @param Object $model The model to create relation with
+     *
+     * @return void
+     */
     public function createRelationForDivision(Division $division, Object $model)
     {
         if (! $model) {

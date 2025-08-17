@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\License;
+use App\Models\LegalEntity;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
 use App\Livewire\Actions\Logout;
@@ -10,6 +12,9 @@ use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Http\Controllers\Auth\EHealthLoginController;
 use App\Livewire\Declaration\DeclarationCreate;
+use App\Livewire\Division\DivisionCreate;
+use App\Livewire\Division\DivisionEdit;
+use App\Livewire\Division\DivisionShow;
 use App\Livewire\Employee\EmployeeEdit;
 use App\Livewire\Employee\EmployeeShow;
 use App\Livewire\Employee\EmployeeIndex;
@@ -17,14 +22,12 @@ use App\Livewire\Employee\EmployeeCreate;
 use App\Livewire\Employee\EmployeePositionAdd;
 use App\Livewire\Employee\EmployeeRequestEdit;
 use App\Livewire\Employee\EmployeeRequestShow;
-use App\Models\License;
 use App\Livewire\License\LicenseEdit;
 use App\Livewire\License\LicenseView;
 use App\Livewire\License\LicenseCreate;
 use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Procedure\ProcedureCreate;
-use App\Models\LegalEntity;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Procedure;
@@ -33,7 +36,6 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Patient\PatientIndex;
 use App\Livewire\Contract\ContractForm;
-use App\Livewire\Division\DivisionForm;
 use App\Livewire\Auth\SelectLegalEntity;
 use App\Livewire\Contract\ContractIndex;
 use App\Http\Controllers\HomeController;
@@ -111,12 +113,12 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             ->can('create',  LegalEntity::class)
             ->name('legal-entity.create');
 
-        Route::prefix('division')->middleware(['permission:division:read'])->group(function () {
+        Route::prefix('division')->middleware(['permission:division:read|division:details'])->group(function () {
             Route::get('/', DivisionIndex::class)->name('division.index')->can('viewAny', Division::class);
 
-            Route::get('/create', DivisionForm::class)->name('division.create')->can('create', Division::class);
-            Route::get('/{id}/edit', DivisionForm::class)->name('division.edit')->whereNumber('division');
-
+            Route::get('/create', DivisionCreate::class)->name('division.create')->can('create', Division::class);
+            Route::get('/{division}', DivisionShow::class)->name('division.show')->can('viewAny', Division::class);
+            Route::get('/{division}/edit', DivisionEdit::class)->name('division.edit')->can( 'update','division');
 
             Route::get('/{division}/healthcare-service', HealthcareService::class)->name('healthcare_service.index');
         });

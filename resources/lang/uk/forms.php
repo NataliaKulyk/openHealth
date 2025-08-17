@@ -24,6 +24,7 @@ return [
     'delete' => 'Видалити',
     'dismiss' => 'Звільнити',
     'edit' => 'Редагувати',
+    'view' => 'Переглянути',
     'enter' => 'Вхід',
     'go_to_edit' => 'Перейти до редагування',
     'next' => 'Далі',
@@ -31,6 +32,7 @@ return [
     'open' => 'Відкрити',
     'save' => 'Зберегти',
     'saving' => 'Збереження...',
+    'saved_successfully' => 'Дані успішно збережено',
     'name' => 'Назва',
     'withTerms' => 'з умовами використання',
     'accreditationShow' => 'Наявна акредитація',
@@ -196,6 +198,7 @@ return [
     'about_myself' => 'Про мене',
     'patient' => 'Пацієнт',
     'complete_the_interaction_and_sign' => 'Завершити та підписати',
+    'save_and_send' => 'Зберегти та надіслати',
 
     // Documents
     'documents' => 'Документи',
@@ -296,6 +299,7 @@ return [
     'startDateWork' => 'Дата початку роботи',
     'selectDivision' => 'Обрати підрозділ',
     'add_new_division' => 'Додати місце надання послуг',
+    'edit_division' => 'Редагувати місце надання послуг',
     'selectDate' => 'Виберіть дату',
     'additional_info' => 'Додаткова інформація',
     'aboutMyself' => 'Про мене',
@@ -416,5 +420,6 @@ return [
         'dismissed' => 'Звільнено',
         'active' => 'Активний',
         'non_active' => 'Не активний',
+        'draft' => 'Чернетка'
     ]
 ];

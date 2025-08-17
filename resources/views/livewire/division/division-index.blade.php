@@ -28,7 +28,7 @@
         <div class="inline-block min-w-full align-middle">
             <div class="shadow">
                 <x-tables.table class="mb-20">
-                    <x-slot name="headers" :list="$tableHeaders"></x-slot>
+                    <x-slot name="headers" :list="$this->tableHeaders"></x-slot>
                     <x-slot name="tbody">
                         @nonempty($divisions->items())
                             @foreach ($divisions as $division)
@@ -58,9 +58,9 @@
                                     </td>
                                     <td class="p-4 text-sm font-normal text-center text-gray-500 whitespace-nowrap dark:text-gray-400">
                                         @if ($division->status ==  \App\Enums\Status::INACTIVE)
-                                            <span class="rejected text-meta-1">{{ __('Не активний') }}</span>
+                                            <span class="rejected text-meta-1">{{ __('forms.status.non_active') }}</span>
                                         @else
-                                            <span class="approved text-meta-3">{{ __('Активний') }}</span>
+                                            <span class="approved text-meta-3">{{ __('forms.status.active') }}</span>
                                         @endif
                                     </td>
                                     <td class="border-b border-[#eee] py-5 px-4">
@@ -120,6 +120,12 @@
                                                     :id="$id('dropdown-button')"
                                                     class="absolute right-0 mt-2 w-40 rounded-md bg-white shadow-md z-50"
                                                 >
+                                                    <a
+                                                        href="{{ route('division.show', [legalEntity(), $division]) }}"
+                                                        class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
+                                                        >
+                                                            {{ __('forms.view') }}
+                                                    </a>
                                                     @can('update', $division)
                                                         <a
                                                             href="{{ route('division.edit', [legalEntity(), $division]) }}"

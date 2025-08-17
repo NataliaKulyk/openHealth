@@ -11,7 +11,6 @@ use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\Relations\Address;
 use App\Models\Relations\Phone;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,6 +22,10 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  */
 class Division extends Model
 {
+    public const string TYPE_FAP = 'FAP';
+    public const string TYPE_CLINIC = 'CLINIC';
+    public const string TYPE_AMBULANT_CLINIC = 'AMBULANT_CLINIC';
+
     protected $fillable = [
         'uuid',
         'external_id',
@@ -52,10 +55,33 @@ class Division extends Model
         'uuid' => 'string'
     ];
 
-    protected $with = [
-        'employees',
-        'legalEntity'
-    ];
+    /**
+     * Returns an array of available divison types.
+     *
+     * @return array
+     */
+    public static function getValidDivisionTypes(): array
+    {
+        return [
+            self::TYPE_CLINIC,
+            self::TYPE_AMBULANT_CLINIC,
+            self::TYPE_FAP
+        ];
+    }
+
+    /**
+     * Returns an array of available LegalEntity types.
+     *
+     * @return array
+     */
+    public static function getValidLegalEntityTypes(): array
+    {
+        return [
+            LegalEntity::TYPE_PRIMARY_CARE,
+            LegalEntity::TYPE_MSP,
+            LegalEntity::TYPE_MSP_PHARMACY
+        ];
+    }
 
     public function legalEntity(): BelongsTo
     {

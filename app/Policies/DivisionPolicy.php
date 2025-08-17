@@ -5,8 +5,9 @@ namespace App\Policies;
 use App\Models\User;
 use App\Enums\Status;
 use App\Models\Division;
-use App\Models\HealthcareService;
 use App\Models\LegalEntity;
+use App\Models\Employee\Employee;
+use App\Models\HealthcareService;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -45,8 +46,13 @@ class DivisionPolicy
             $legalEntity = legalEntity();
         }
 
+        // If got null instaed Division model
+        if (empty($division)) {
+            return Response::denyWithStatus(404);
+        }
+
         // Should belong to the same legal entity
-        if ($division->legalEntity->id !== $legalEntity->id) {
+        if ($division->legal_entity_id !== (int) $legalEntity->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -54,6 +60,7 @@ class DivisionPolicy
             return Response::denyWithStatus(403);
         }
 
+        // Inactive divisions cannot be updated
         if ($division->status === Status::INACTIVE) {
             return Response::deny();
         }
@@ -75,6 +82,7 @@ class DivisionPolicy
             return Response::denyWithStatus(403);
         }
 
+        // Active divisions cannot be activated
         if ($division->status === Status::ACTIVE) {
             return Response::deny();
         }
@@ -96,15 +104,17 @@ class DivisionPolicy
             return Response::denyWithStatus(403);
         }
 
-
+        // Divisions with at least one active service cannot be deactivated
         if ($this->hasAnyActiveService($division)) {
             return Response::deny();
         }
 
-        if ($division->employees->count()) {
+        // Divisions that have employees cannot be deactivated
+        if (Employee::where('division_id', $division->id)->exists()) {
             return Response::deny();
         }
 
+        // Inactive divisions cannot be deactivated
         if ($division->status === Status::INACTIVE) {
             return Response::deny();
         }
@@ -145,8 +155,8 @@ class DivisionPolicy
      */
     protected function hasAnyActiveService(Division $division): bool
     {
-        return (bool)$this->getDivisionServices($division)
-            ->where('status', Status::ACTIVE)->count();
+        return $this->getDivisionServices($division)
+            ->where('status', Status::ACTIVE)->exists();
 
     }
 }

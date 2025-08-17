@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Rules\DivisionRules;
 
 use Closure;
+use App\Models\LegalEntity;
 use App\Exceptions\CustomValidationException;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -25,7 +26,7 @@ class LocationRule implements ValidationRule
         $hasLocation = $this->division['location']['longitude'] && $this->division['location']['latitude'];
 
         // CustomValidationException
-        if ($localEntityType === 'PHARMACY' && !$hasLocation) {
+        if ($localEntityType === LegalEntity::TYPE_PHARMACY && !$hasLocation) {
             throw new CustomValidationException($this->message(), 'custom');
         }
     }

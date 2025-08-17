@@ -26,7 +26,14 @@ class LegalEntity extends Model
 {
     use HasCamelCasing;
 
+    public const string TYPE_MSP = 'MSP';
+    public const string TYPE_MIS = 'MIS';
+    public const string TYPE_NHS = 'NHS';
+    public const string TYPE_PHARMACY = 'PHARMACY';
+    public const string TYPE_EMERGENCY = 'EMERGENCY';
+    public const string TYPE_OUTPATIENT = 'OUTPATIENT';
     public const string TYPE_PRIMARY_CARE = 'PRIMARY_CARE';
+    public const string TYPE_MSP_PHARMACY = 'MSP_PHARMACY';
 
     protected $fillable = [
         'uuid',
