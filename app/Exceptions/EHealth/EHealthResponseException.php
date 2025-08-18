@@ -2,10 +2,10 @@
 
 namespace App\Exceptions\EHealth;
 
+use Exception;
 use Illuminate\Http\Client\Response;
-use RuntimeException;
 
-class EHealthResponseException extends RuntimeException
+class EHealthResponseException extends Exception
 {
     public function __construct(public readonly Response $response)
     {

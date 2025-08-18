@@ -34,12 +34,12 @@ class SignatureService
             $base64FileContent = $this->getBase64KepFileContent($keyFile);
 
             $signedContent = $this->cipherApi->sendSession(
-                json_encode($dataToSign, JSON_THROW_ON_ERROR),
-                $password,
-                $base64FileContent,
-                $knedp,
-                $taxId
-            );
+                    json_encode($dataToSign, JSON_THROW_ON_ERROR),
+                    $password,
+                    $base64FileContent,
+                    $knedp,
+                    $taxId
+                );
 
             if (empty($signedContent) || !is_string($signedContent)) {
                 return __('employees.errors.signature_failed_unexpected');

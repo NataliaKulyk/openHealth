@@ -1,4 +1,8 @@
-<div x-data="{ showSignatureModal: $wire.entangle('showSignatureModal') }" x-on:close-signature-modal.window="showSignatureModal = false">
+<div
+    x-data="{ showSignatureModal: $wire.entangle('showSignatureModal') }"
+    x-on:close-signature-modal.window="showSignatureModal = false"
+    x-on:open-signature-modal.window="showSignatureModal = true"
+>
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">
             @if($isPersonalDataLocked)
@@ -48,7 +52,7 @@
                         {{__('forms.cancel')}}
                     </a>
                     {{-- This button now just toggles the Alpine.js modal --}}
-                    <button type="button" @click="showSignatureModal = true" class="button-sync">
+                    <button type="button" wire:click="prepareForSigning" class="button-sync">
                         {{ __('forms.complete_the_interaction_and_sign') }}
                     </button>
                 </div>

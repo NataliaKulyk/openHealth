@@ -2,9 +2,9 @@
 
 namespace App\Exceptions\EHealth;
 
-use RuntimeException;
+use Exception;
 
-abstract class EHealthException extends RuntimeException
+abstract class EHealthException extends Exception
 {
     // Base class for all eHealth API related exceptions.
 }

@@ -7,11 +7,9 @@ namespace App\Classes\eHealth\Api;
 use App\Classes\eHealth\EHealthRequest;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 
 class EmployeeRequest extends EHealthRequest
 {
@@ -22,38 +20,25 @@ class EmployeeRequest extends EHealthRequest
 
     /**
      * Creates a new Employee Request in eHealth using a signed data payload.
-     * This is the primary action method for this class.
      *
      * @param string $signedContent The base64 encoded signed string.
+     *
      * @return array The response data from eHealth on success.
-     * @throws RuntimeException|ConnectionException
+     * @throws EHealthResponseException|EHealthValidationException
      */
     public function create(string $signedContent): array
     {
-        $requestBody = [ 'signed_content' => $signedContent, 'signed_content_encoding' => 'base64' ];
-        $response = $this->post(self::ENDPOINT, $requestBody);
+        $requestBody = [
+            'signed_content' => $signedContent,
+            'signed_content_encoding' => 'base64'
+        ];
 
-        if (!$response->successful()) {
-            $errorBody = $response->json() ?? [];
-            Log::channel('e_health_errors')->error('EHealth API Error', [
-                'status' => $response->status(), 'body' => $errorBody,
-            ]);
-
-            if ($response->status() === 422 && !empty($errorBody['error']['invalid'])) {
-                throw new EHealthValidationException($errorBody['error']['invalid']);
-            }
-
-            throw new EHealthResponseException($response);
-        }
-
-        return $response->json('data', []);
+        return $this->request('post', self::ENDPOINT, $requestBody)->json('data', []);
     }
 
     /**
      * Validates the data array received from a successful eHealth response.
      *
-     * @param array $responseData The data array from the eHealth response.
-     * @return array The validated data, ready for local assignment.
      * @throws ValidationException
      */
     public function validateCreateResponseFromArray(array $responseData): array
@@ -64,7 +49,12 @@ class EmployeeRequest extends EHealthRequest
         ]);
 
         if ($validator->fails()) {
-            Log::channel('e_health_errors')->error('eHealth EmployeeRequest Response Validation failed', $validator->errors()->all());
+
+            Log::channel('e_health_errors')->error(
+                'eHealth EmployeeRequest Response Validation failed.',
+                ['errors' => $validator->errors()->all(), 'response_data' => $responseData]
+            );
+
             throw new ValidationException($validator);
         }
 

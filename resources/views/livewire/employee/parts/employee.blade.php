@@ -76,7 +76,7 @@
         >
             <div class="form-group group relative z-0">
                 <input
-                    wire:model.live="form.party.taxId"
+                    wire:model="form.party.taxId"
                 required
                     id="taxId"
                     type="text"

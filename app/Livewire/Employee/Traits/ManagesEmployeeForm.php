@@ -9,6 +9,7 @@ use App\Classes\eHealth\Payloads\EHealthEmployeePayload;
 use App\Core\Arr;
 use App\Enums\Employee\RequestStatus;
 use App\Enums\Employee\RevisionStatus;
+use App\Exceptions\CustomValidationException;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Employee\BaseEmployee;
@@ -40,77 +41,76 @@ trait ManagesEmployeeForm
     {
         try {
             DB::transaction(fn() => $this->saveOrUpdateDraft());
-            $this->dispatch('flashMessage', ['message' => __('forms.employee_request_saved_successfully'), 'type' => 'success']);
+            session()->flash('success', __('forms.employee_request_saved_successfully'));
         } catch (ValidationException $e) {
             $this->handleValidationException($e);
         } catch (Exception $e) {
             $this->handleException($e);
-            throw $e;
         }
     }
 
     /**
-     * A self-contained SIGN method. It controls the entire process of validating,
-     * saving, signing, and finalizing a draft within a single database transaction.
+     * Saves the form as a draft and then opens the signature modal.
+     * This is triggered by the "Complete and Sign" button.
+     */
+    public function prepareForSigning(): void
+    {
+        try {
+            DB::transaction(fn() => $this->saveOrUpdateDraft());
+
+            session()->flash('success', __('forms.employee_request_saved_successfully'));
+            $this->dispatch('open-signature-modal');
+
+        } catch (Exception $e) {
+            $this->handleException($e);
+        }
+    }
+
+    /**
+     * The main SIGN method, now simplified and decomposed.
      */
     public function sign()
     {
         DB::beginTransaction();
+
         try {
-            // Step 1: Use the unified method to validate and save/update the draft.
-            $requestToSign = $this->saveOrUpdateDraft();
+            // Step 1: Get the draft and perform local validation
+            $requestToSign = $this->validateAndGetDraft();
 
-            // Step 2: Validate KEP-specific fields.
-            $this->form->validate($this->form->rulesForKepOnly());
+            // Step 2: Sign the data with Cipher API
+            $signedContent = $this->signDataWithCipher($requestToSign);
 
-            // Step 3: Proceed with signing.
-            $requestToSign->load('revision');
-            $nestedDataForRevision = $requestToSign->revision->data;
+            // Step 3: Send the signed data to eHealth API
+            $ehealthResponseData = $this->sendToEHealth($signedContent);
 
-            $payloadToSign = EHealthEmployeePayload::prepare($nestedDataForRevision);
-
-            $signedContent = signatureService()->signData(
-                $payloadToSign,
-                $this->form->password,
-                $this->form->knedp,
-                $this->form->keyContainerUpload,
-                'Person',
-                $nestedDataForRevision['party']['tax_id']
-            );
-
-            // Step 4: Send to eHealth API.
-            $ehealthData = new EHealthEmployeeRequest()->create($signedContent);
-            $validatedData = new EHealthEmployeeRequest()->validateCreateResponseFromArray($ehealthData);
-
-            // Step 5: Update local records with eHealth response.
-            $requestToSign->update(['uuid' => $validatedData['uuid'], 'status' => RequestStatus::SIGNED]);
-            $requestToSign->revision->update(['ehealth_response' => $ehealthData, 'status' => RevisionStatus::SENT]);
+            // Step 4: Update local records
+            $this->updateLocalRecords($requestToSign, $ehealthResponseData);
 
             DB::commit();
 
-            session()?->flash('success', __('employees.sign_success'));
+            session()->flash('success', __('employees.sign_success'));
             $this->resetSignatureFields();
+            $this->dispatch('close-signature-modal');
             return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
-
+        } catch (CustomValidationException $e) {
+            DB::rollBack();
+            $this->addError('form.password', $e->getMessage());
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            $this->handleValidationException($e);
         } catch (EHealthValidationException $e) {
             DB::rollBack();
             $this->handleEHealthValidationError($e);
         } catch (EHealthResponseException $e) {
             DB::rollBack();
-            $this->handleException($e);
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            $this->handleValidationException($e);
+            session()->flash('error', $e->getMessage());
+            Log::error('EHealth response error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         } catch (Exception $e) {
             DB::rollBack();
-            // Special handling for signature-related errors (e.g., wrong password)
-            if (str_contains(strtolower($e->getMessage()), 'password') || str_contains(strtolower($e->getMessage()), 'key')) {
-                // Add an error specifically to the password field to show it inside the modal.
-                $this->addError('form.password', $e->getMessage());
-            } else {
-                // For all other unexpected errors, use the general handler.
-                $this->handleException($e);
-            }
+            session()->flash('error', __('forms.an_unexpected_error_occurred'));
+            Log::error('An unexpected error occurred during signing process: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+        } finally {
+            $this->dispatch('close-signature-modal');
         }
     }
 
@@ -154,6 +154,9 @@ trait ManagesEmployeeForm
     /**
      * Handles a detailed validation error from the eHealth API.
      */
+    /**
+     * Handles a detailed validation error from the eHealth API.
+     */
     protected function handleEHealthValidationError(EHealthValidationException $e): void
     {
         $reverseKeyMap = EHealthEmployeePayload::getReverseKeyMap();
@@ -178,8 +181,7 @@ trait ManagesEmployeeForm
             $errorList->map(fn($item) => "<li>{$item}</li>")->implode('') .
             "</ul>";
 
-        $this->dispatch('close-signature-modal');
-        $this->dispatch('flashMessage', ['message' => $fullMessage, 'type' => 'error', 'persistent' => true]);
+        session()->flash('error', $fullMessage);
     }
 
     /**
@@ -297,5 +299,94 @@ trait ManagesEmployeeForm
         }
 
         throw $e;
+    }
+
+    /**
+     * Gets the draft and validates it, including KEP-specific validation.
+     *
+     * @throws ValidationException
+     * @throws CustomValidationException
+     */
+    private function validateAndGetDraft(): EmployeeRequest
+    {
+        $requestToSign = $this->getEmployeeRequestForSave();
+
+        // Handle case where draft is not found (shouldn't happen, but good practice)
+        if (is_null($requestToSign) || !is_null($requestToSign->uuid)) {
+            // We use a custom exception here for more specific handling
+            throw new CustomValidationException(__('forms.draft_not_found_or_already_signed'), 'draft');
+        }
+
+        // Validate KEP-specific fields.
+        $this->form->validate($this->form->rulesForKepOnly());
+
+        return $requestToSign;
+    }
+
+    /**
+     * Signs the data using SignatureService.
+     *
+     * @param EmployeeRequest $requestToSign
+     * @return string
+     * @throws Exception
+     */
+    private function signDataWithCipher(EmployeeRequest $requestToSign): string
+    {
+        $requestToSign->load('revision');
+        $nestedDataForRevision = $requestToSign->revision->data;
+
+        $payloadToSign = EHealthEmployeePayload::prepare($nestedDataForRevision);
+
+        $signedContent = signatureService()->signData(
+            $payloadToSign,
+            $this->form->password,
+            $this->form->knedp,
+            $this->form->keyContainerUpload,
+            $nestedDataForRevision['party']['tax_id']
+        );
+
+        if (empty($signedContent) || !is_string($signedContent)) {
+            throw new Exception(__('employees.errors.signature_failed_unexpected'));
+        }
+
+        return $signedContent;
+    }
+
+    /**
+     * Sends the signed content to eHealth API.
+     *
+     * @param string $signedContent
+     * @return array
+     * @throws EHealthResponseException
+     * @throws EHealthValidationException
+     */
+    private function sendToEHealth(string $signedContent): array
+    {
+        $ehealthData = new EHealthEmployeeRequest()->create($signedContent);
+
+        return new EHealthEmployeeRequest()->validateCreateResponseFromArray($ehealthData);
+    }
+
+    /**
+     * Updates the local database records with the eHealth API response.
+     *
+     * @param EmployeeRequest $requestToSign
+     * @param array $ehealthResponseData
+     * @return void
+     */
+    private function updateLocalRecords(EmployeeRequest $requestToSign, array $ehealthResponseData): void
+    {
+        $requestToSign->update(
+            [
+                'uuid'   => $ehealthResponseData['uuid'],
+                'status' => RequestStatus::SIGNED,
+            ]
+        );
+        $requestToSign->revision->update(
+            [
+                'ehealth_response' => $ehealthResponseData,
+                'status'           => RevisionStatus::SENT,
+            ]
+        );
     }
 }
