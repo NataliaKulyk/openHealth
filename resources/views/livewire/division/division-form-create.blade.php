@@ -169,9 +169,9 @@
                     @foreach ($weekdays as $key => $day)
                         <div class="p-6 min-h-[220px] {{ $loop->iteration % 2 == 0 ? '' : 'border-r border-gray-200 dark:border-gray-700' }} {{ $loop->last ? '' : 'border-b border-gray-200 dark:border-gray-700' }} ">
                             <div x-data="{
-                      shift: @json(count($formService->getDivisionParam('working_hours')[$key]) > 1),
-                      show_work: @json(!empty($formService->getDivisionParam('working_hours')[$key][0]) || $mode === 'store')
-                    }">
+                  shift: @json(count($formService->getDivisionParam('working_hours')[$key]) > 1),
+                  show_work: @json(!empty($formService->getDivisionParam('working_hours')[$key][0]) || $mode === 'store')
+                }">
 
                                 <div class="mb-4">
                                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $day }}</h3>
@@ -216,12 +216,19 @@
                                                                    class="label !text-xs !text-gray-500 dark:!text-gray-400">
                                                                 <span x-text="shift ? '{{ __('Початок') }}' : '{{ __('forms.open') }}'"></span>
                                                             </label>
-                                                            <input
-                                                                type="time"
-                                                                id="opened_by-{{ $key }}-{{ $shiftIndex }}"
-                                                                class="input text-gray-900 dark:text-white"
-                                                                wire:model="formService.division.working_hours.{{ $key }}.{{ $shiftIndex }}.0"
-                                                            />
+                                                            <div class="relative w-full">
+                                                                <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                                                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <input
+                                                                    type="time"
+                                                                    id="opened_by-{{ $key }}-{{ $shiftIndex }}"
+                                                                    class="input text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 focus:ring-0 px-0 ps-8"
+                                                                    wire:model="formService.division.working_hours.{{ $key }}.{{ $shiftIndex }}.0"
+                                                                />
+                                                            </div>
                                                             @error("formService.division.working_hours.{{ $key }}.{{ $shiftIndex }}.0")
                                                             <p class="text-error">{{ $message }}</p>
                                                             @enderror
@@ -232,12 +239,19 @@
                                                                    class="label !text-xs !text-gray-500 dark:!text-gray-400">
                                                                 <span x-text="shift ? '{{ __('Кінець') }}' : '{{ __('forms.closing') }}'"></span>
                                                             </label>
-                                                            <input
-                                                                type="time"
-                                                                id="closed_by-{{ $key }}-{{ $shiftIndex }}"
-                                                                class="input text-gray-900 dark:text-white"
-                                                                wire:model="formService.division.working_hours.{{ $key }}.{{ $shiftIndex }}.1"
-                                                            />
+                                                            <div class="relative w-full">
+                                                                <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                                                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <input
+                                                                    type="time"
+                                                                    id="closed_by-{{ $key }}-{{ $shiftIndex }}"
+                                                                    class="input text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 focus:ring-0 px-0 ps-8"
+                                                                    wire:model="formService.division.working_hours.{{ $key }}.{{ $shiftIndex }}.1"
+                                                                />
+                                                            </div>
                                                             @error("formService.division.working_hours.{{ $key }}.{{ $shiftIndex }}.1")
                                                             <p class="text-error">{{ $message }}</p>
                                                             @enderror
