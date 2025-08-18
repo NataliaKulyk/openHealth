@@ -77,7 +77,7 @@
             <span>{{ __('patients.additional_search_parameters') }}</span>
         </button>
 
-        <div x-show="showAdditionalParams" x-transition x-cloak>
+        <div x-show="showAdditionalParams" class="mt-6" x-transition x-cloak>
             <div class="form-row-3">
                 <div class="form-group group">
                     <input wire:model="form.patientsFilter.secondName"

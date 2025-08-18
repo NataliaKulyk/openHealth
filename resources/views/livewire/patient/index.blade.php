@@ -22,7 +22,7 @@
             <x-slot name="navigation">
 
                 <div class="justify-end block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-8">
-                    <div class="button-group flex gap-8">
+                    <div class="ml-auto flex items-center gap-2 self-start -mt-15 translate-x-4">
                         <button type="button" class="button-primary">
                             <a href="{{ route('patient.form', [legalEntity()]) }}">
                                 {{ __('patients.add_patient') }}
