@@ -163,66 +163,82 @@
                 </div>
             </div>
 
-            <div class="form-row-3">
-                <div class="form-group group" x-data="{ open: false, selectedFilters: @entangle('activeFilter').live }">
-                    <label for="filterDropdown" class="label">Фільтр пацієнтів</label>
-                    <div class="relative">
-                        <input type="text"
-                               id="filterDropdown"
-                               class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
-                               placeholder="Оберіть фільтр"
-                               x-on:click="open = !open"
-                               :value="selectedFilters === 'all' ? '{{ __('patients.all') }}' :
-                      selectedFilters === 'eHEALTH' ? '{{ __('patients.patients') }}' :
-                      selectedFilters === 'APPLICATION' ? '{{ __('patients.applications') }}' :
-                      ''"
-                               readonly
-                        />
-                        <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                        <div x-show="open"
-                             x-on:click.away="open = false"
-                             x-transition:enter="transition ease-out duration-100"
-                             x-transition:enter-start="transform opacity-0 scale-95"
-                             x-transition:enter-end="transform opacity-100 scale-100"
-                             x-transition:leave="transition ease-in duration-75"
-                             x-transition:leave-start="transform opacity-100 scale-100"
-                             x-transition:leave-end="transform opacity-0 scale-95"
-                             class="absolute z-10 mt-2 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg">
-                            <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                <li>
-                                    <label class="flex items-center space-x-2 cursor-pointer" @click="selectedFilters = 'all'; open = false">
-                                        <input type="radio" value="all" wire:model.live="activeFilter"
-                                               class="sr-only" />
-                                        <span class="{{ $activeFilter === 'all' ? 'text-blue-600' : '' }}">
-                            {{ __('patients.all') }}
-                        </span>
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="flex items-center space-x-2 cursor-pointer" @click="selectedFilters = 'eHEALTH'; open = false">
-                                        <input type="radio" value="eHEALTH" wire:model.live="activeFilter"
-                                               class="sr-only" />
-                                        <span class="{{ $activeFilter === 'eHEALTH' ? 'text-blue-600' : '' }}">
-                            {{ __('patients.patients') }}
-                        </span>
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="flex items-center space-x-2 cursor-pointer" @click="selectedFilters = 'APPLICATION'; open = false">
-                                        <input type="radio" value="APPLICATION" wire:model.live="activeFilter"
-                                               class="sr-only" />
-                                        <span class="{{ $activeFilter === 'APPLICATION' ? 'text-blue-600' : '' }}">
-                            {{ __('patients.applications') }}
-                        </span>
-                                    </label>
-                                </li>
-                            </ul>
+            @if($context === 'index')
+                <div class="form-row-3">
+                    <div class="form-group group" x-data="{ open: false }">
+                        <label for="filterDropdown" class="label"></label>
+                        <div class="relative">
+                            <input type="text"
+                                   id="filterDropdown"
+                                   class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
+                                   placeholder="{{ __('forms.select_filter') }}"
+                                   @click="open = !open"
+                                   :value="
+                                       $wire.activeFilter === 'all' ? '{{ __('patients.all') }}' :
+                                       $wire.activeFilter === 'eHEALTH' ? '{{ __('patients.patients') }}' :
+                                       $wire.activeFilter === 'APPLICATION' ? '{{ __('patients.applications') }}' :
+                                       ''
+                                   "
+                                   readonly
+                            />
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                                 class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+                            >
+                                <path d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            <div x-show="open"
+                                 @click.away="open = false"
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute z-10 mt-2 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg"
+                            >
+                                <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                                    <li>
+                                        <label class="flex items-center space-x-2 cursor-pointer" @click="open = false">
+                                            <input type="radio"
+                                                   value="all"
+                                                   wire:model.live="activeFilter"
+                                                   class="sr-only"
+                                            />
+                                            <span class="{{ $activeFilter === 'all' ? 'text-blue-600' : '' }}">
+                                                {{ __('patients.all') }}
+                                            </span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="flex items-center space-x-2 cursor-pointer" @click="open = false">
+                                            <input type="radio"
+                                                   value="eHEALTH"
+                                                   wire:model.live="activeFilter"
+                                                   class="sr-only"
+                                            />
+                                            <span class="{{ $activeFilter === 'eHEALTH' ? 'text-blue-600' : '' }}">
+                                                {{ __('patients.patients') }}
+                                            </span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="flex items-center space-x-2 cursor-pointer" @click=" open = false">
+                                            <input type="radio"
+                                                   value="APPLICATION"
+                                                   wire:model.live="activeFilter"
+                                                   class="sr-only"
+                                            />
+                                            <span class="{{ $activeFilter === 'APPLICATION' ? 'text-blue-600' : '' }}">
+                                                {{ __('patients.applications') }}
+                                            </span>
+                                        </label>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            @endif
         </div>
     </div>
 </div>

@@ -37,7 +37,6 @@ return [
     'withTerms' => 'з умовами використання',
     'accreditationShow' => 'Наявна акредитація',
 
-    
     'selectLevel' => 'Оберіть ступінь',
     'selectDocumentType' => 'Оберіть тип документа',
     'selectQualificationType' => 'Оберіть тип кваліфікіції',
@@ -96,6 +95,7 @@ return [
     'goToEdit' => 'Перейти до редагування',
     'requestSignedAndSentToEHealth' => 'Запит успішно підписано та надіслано до ЕСОЗ',
     'viewEmployee' => 'Перегляд співробітника',
+    'select_filter' => 'Оберіть фільтр',
 
     // Legal Entity
     'legal_entity_name' => 'Медична організація',

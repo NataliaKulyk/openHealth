@@ -79,6 +79,7 @@ return [
     // patient search
     'patient_search' => 'Пошук пацієнта',
     'additional_search_parameters' => 'Додаткові параметри пошуку',
+    'patient_filter' => 'Фільтр пацієнтів',
     'search' => 'Шукати',
     'all' => 'Всі',
     'applications' => 'Заявки',
