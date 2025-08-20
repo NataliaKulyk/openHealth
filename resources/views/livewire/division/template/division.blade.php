@@ -455,11 +455,9 @@
                             />
                         </svg>
                     </div>
-                </div>
-            </form>
-        </div>
+                </form>
+         </div>
     </section>
-            </x-slot>
-        </x-forms.forms-section>
-    </div>
 </div>
+
+
