@@ -9,7 +9,16 @@
                   item: 0,
                   specDict: $wire.dictionaries['SPECIALITY_TYPE'],
                   levelDict: $wire.dictionaries['SPECIALITY_LEVEL'],
-                  qualTypeDict: $wire.dictionaries['QUALIFICATION_TYPE']
+                  qualTypeDict: $wire.dictionaries['QUALIFICATION_TYPE'],
+
+                  isModalValid() {
+                      return this.modalSpeciality.speciality
+                          && this.modalSpeciality.attestationName
+                          && this.modalSpeciality.level
+                          && this.modalSpeciality.qualificationType
+                          && this.modalSpeciality.attestationDate
+                          && this.modalSpeciality.certificateNumber;
+                  },
               }"
     >
         <legend class="legend">

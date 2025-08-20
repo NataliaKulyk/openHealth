@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Illuminate\Http\Client\ConnectionException;
 use RuntimeException;
 
@@ -22,18 +24,30 @@ class EmployeeRequest extends EHealthRequest
      * @param string $signedContent The base64 encoded signed string.
      *
      * @return array The response data from eHealth on success.
-     * @throws RuntimeException|ConnectionException
+     * @throws EHealthValidationException|EHealthResponseException|ConnectionException|RuntimeException
      */
     public function create(string $signedContent): array
     {
         $requestBody = [ 'signed_content' => $signedContent, 'signed_content_encoding' => 'base64' ];
 
-        $response = $this->post(self::ENDPOINT, $requestBody);
+        try {
+            $response = $this->post(self::ENDPOINT, $requestBody);
 
-        return [
-            'id' => $response->json('data.id'),
-            'ehealth_response' => $response->json(),
-        ];
+            if ($response->status() === 422) {
+                throw new EHealthValidationException($response->json('error.invalid'));
+            }
+
+            if (!$response->successful()) {
+                throw new EHealthResponseException($response);
+            }
+
+            return [
+                'id' => $response->json('data.id'),
+                'ehealth_response' => $response->json(),
+            ];
+        } catch (ConnectionException $e) {
+            throw new ConnectionException(__('forms.ehealth_connection_error'), 0, $e);
+        }
     }
 
     public function schemaRequest(): array

@@ -67,75 +67,43 @@ trait ManagesEmployeeForm
         }
     }
 
-    /**
-     * The main SIGN method, now with a single point for modal dispatch.
-     */
     public function sign()
     {
         Log::info('Attempting to sign.');
 
         try {
             // Step 1: Validate local form data and get the draft.
-            // This block catches validation errors, including KEP password and key issues.
-            try {
-                $requestToSign = $this->validateAndGetDraft();
-
-            } catch (ValidationException $e) {
-                $this->handleValidationException($e);
-
-                if (!$this->isKepValidationError($e)) {
-                    Log::info('Validation error is NOT KEP. Dispatching close-signature-modal.');
-                    $this->dispatch('close-signature-modal');
-                } else {
-                    Log::info('Validation error IS KEP. Modal will stay open.');
-                }
-                throw $e;
-            }
+            $requestToSign = $this->validateAndGetDraft();
 
             // Step 2: Sign the data with the Cipher API.
-            // This block catches any general signing-related issues.
-            try {
-                $signedContent = $this->signDataWithCipher($requestToSign);
-
-            } catch (RuntimeException $e) {
-                Log::info('Caught a signing Exception.');
-                $this->handleException($e);
-                $this->dispatch('close-signature-modal');
-                return;
-            }
+            $signedContent = $this->signDataWithCipher($requestToSign);
 
             // Step 3: Send data to the eHealth API and update the local database.
-            // This block handles specific eHealth API validation and response errors.
-            try {
-                $ehealthResponseData = new \App\Classes\eHealth\Api\EmployeeRequest()->create($signedContent);
-                $this->updateLocalRecords($requestToSign, $ehealthResponseData);
+            // If this step fails, it will throw an exception caught below.
+            $ehealthResponseData = new \App\Classes\eHealth\Api\EmployeeRequest()->create($signedContent);
+            $this->updateLocalRecords($requestToSign, $ehealthResponseData);
 
-            } catch (EHealthValidationException $e) {
-                Log::info('Caught an EHealthValidationException.');
-                $this->handleEHealthValidationError($e);
-                $this->dispatch('close-signature-modal');
-                return;
-            } catch (EHealthResponseException $e) {
-                Log::info('Caught an EHealthResponseException.');
-                $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
-                Log::error('EHealth response error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-                $this->dispatch('close-signature-modal');
-                return;
-            }
-
-            // Final step: The successful path.
-            // All previous steps completed without error.
+            // Final step: The successful path. This code is only reached if no exceptions are thrown.
             session()->flash('success', __('employees.sign_success'));
             $this->resetSignatureFields();
             Log::info('Successfully signed and will redirect.');
 
             return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
-        } catch (Exception $e) {
-            // This final block catches any unexpected exceptions not handled above.
-            Log::info('Caught a generic Exception.');
+        } catch (ValidationException $e) {
+            $this->handleValidationException($e);
+            if (!$this->isKepValidationError($e)) {
+                $this->dispatch('close-signature-modal');
+            }
+        } catch (EHealthValidationException $e) {
+            $this->handleEHealthValidationError($e);
+            $this->dispatch('close-signature-modal');
+        } catch (EHealthResponseException $e) {
+            $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
+            Log::error('EHealth response error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            $this->dispatch('close-signature-modal');
+        } catch (\Exception $e) {
             $this->handleException($e);
             $this->dispatch('close-signature-modal');
-            return;
         }
     }
 
@@ -179,29 +147,27 @@ trait ManagesEmployeeForm
     /**
      * Handles a detailed validation error from the eHealth API.
      */
-    protected function handleEHealthValidationError(EHealthValidationException $e): void
+    /**
+     * Handles a detailed validation error from the eHealth API.
+     */
+    protected function handleEHealthValidationError(\App\Exceptions\EHealth\EHealthValidationException $e): void
     {
         $reverseKeyMap = EHealthEmployeePayload::getReverseKeyMap();
 
         $errorList = collect($e->getDetails())->map(function ($detail) use ($reverseKeyMap) {
-            $param = $detail['entry'] ?? ($detail['param'] ?? 'unknown');
-            $param = str_replace(['$.', 'employee_request.'], '', $param);
+            $ehealthKey = $detail['entry'] ?? ($detail['param'] ?? 'unknown');
+            $ehealthKey = str_replace(['$.', 'employee_request.'], '', $ehealthKey);
 
-            $localKey = strtr($param, $reverseKeyMap);
-            $fieldName = __('validation.attributes.' . $localKey);
+            $message = $detail['rules'][0]['description'] ?? ($detail['msg'] ?? 'Некоректне значення.');
 
-            if ($fieldName === ('validation.attributes.' . $localKey)) {
-                $fieldName = $localKey;
-            }
+            // Використовуємо оригінальний ключ як назву поля
+            $fieldName = $ehealthKey;
 
-            $message = $detail['rules'][0]['description'] ?? ($detail['msg'] ?? 'Invalid value');
-            return "<b>{$fieldName}:</b> {$message}";
-        });
+            return "{$fieldName}: {$message}";
+        })->implode("\n");
 
         $header = __('forms.ehealth_validation_error_header');
-        $fullMessage = "<p class='mb-2'>{$header}</p><ul class='list-disc list-inside text-left'>" .
-            $errorList->map(fn($item) => "<li>{$item}</li>")->implode('') .
-            "</ul>";
+        $fullMessage = "{$header}\n{$errorList}";
 
         $this->dispatch('flashMessage', ['message' => $fullMessage, 'type' => 'error', 'persistent' => true]);
     }
@@ -356,7 +322,6 @@ trait ManagesEmployeeForm
             })
             ->unique()
             ->implode(', ');
-
 
         $flashMessage = __('forms.validation_fix_fields', ['fields' => $fieldNames]);
 
