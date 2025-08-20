@@ -43,8 +43,8 @@
         </div>
     </div>
 
-    <div class="inline-block w-full max-w-9xl mx-auto align-middle mt-4">
-        <div class="shadow overflow-hidden sm:rounded-lg">
+    <div class="flow-root mt-4">
+        <div class="max-w-screen-xl">
             <table class="table-input w-full table-fixed">
             <thead class="thead-input">
                 <tr>
