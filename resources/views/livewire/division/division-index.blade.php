@@ -34,19 +34,19 @@
         <div class="ml-auto flex items-center gap-2 self-start -mt-17 translate-x-2">
             <a href="{{ route('division.create', [legalEntity()]) }}"
                type="button"
-               class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+               class="button-primary">
                 {{ __('Додати місце надання послуг') }}
             </a>
-            <button wire:click="syncDivisions" class="button-sync">
+            <button wire:click="sync" class="button-sync">
                 {{ __('forms.synchronise_with_eHealth') }}
             </button>
         </div>
     </div>
 
-    <div class="inline-block min-w-full align-middle mt-4">
+    <div class="inline-block w-full max-w-9xl mx-auto align-middle mt-4">
         <div class="shadow overflow-hidden sm:rounded-lg">
             <table class="table-input w-full table-fixed">
-                <thead class="thead-input">
+            <thead class="thead-input">
                 <tr>
                     <th scope="col" class="th-input">ID E-health</th>
                     <th scope="col" class="th-input">Назва</th>
