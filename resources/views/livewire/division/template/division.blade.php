@@ -32,233 +32,108 @@
                     @method($httpMethod)
                 @endif
 
-                <div class='flex bg-white p-6 flex-col'>
-                    <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-                        <!-- Personal Data Fieldset -->
-                        <div class='py-4'>
-                            <h3 class='font-medium text-2xl	text-black dark:text-white'>
-                                {{ __('forms.main_information') }}
-                            </h3>
-                        </div>
-
-                        <div class='grid grid-cols-4 gap-6'>
-                            <!-- Division Name -->
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='name' class='default-label'>
-                                        {{ __('forms.full_name_division') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        class='default-input'
-                                        wire:model='divisionForm.division.name'
-                                        type='text'
-                                        id='name'
-                                        x-bind:disabled="isDisabled"
-                                    />
-                                </x-slot>
-                                @error('divisionForm.division.name')
-                                    <x-slot name='error'>
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
-                                    </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                            <!-- Division Email -->
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='email' class='default-label'>
-                                        {{ __('forms.email') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        class='default-input'
-                                        wire:model='divisionForm.division.email'
-                                        type='text'
-                                        id='email'
-                                        x-bind:disabled="isDisabled"
-                                    />
-                                </x-slot>
-                                @error('divisionForm.division.email')
-                                    <x-slot name='error'>
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
-                                    </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                            <!-- Division Type -->
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='type' class='default-label'>
-                                        {{ __('forms.type') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.select
-                                        class='default-input'
-                                        wire:model='divisionForm.division.type'
-                                        type='text'
-                                        id='type'
-                                        x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show' ? 'true' : 'false' }}"
+                    <fieldset class="fieldset">
+                        <legend class="legend">
+                            <h2>{{__('forms.main_information')}}</h2>
+                        </legend>
+                        <div class="form">
+                            <div class="form-row-3">
+                                <div class="form-group">
+                                    <input wire:model='divisionForm.division.name' type="text" x-bind:disabled="isDisabled" name="name_division" id="name" class="peer input" placeholder=" " required />
+                                    <label for="name_division" class="label">{{ __('forms.full_name_division') }}</label>
+                                    @error('divisionForm.division.name') <p class="text-error">{{$message}}</p> @enderror
+                                </div>
+                                <div class="form-group">
+                                    <input wire:model='divisionForm.division.email' type="text" x-bind:disabled="isDisabled" name="email" id="email" class="peer input" placeholder=" " required />
+                                    <label for="email" class="label">{{ __('forms.email') }}</label>
+                                    @error('divisionForm.division.email') <p class="text-error">{{$message}}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="form-row-3">
+                                <div class="form-group">
+                                    <select wire:model='divisionForm.division.type'
+                                            id='type'
+                                            class='peer input'
+                                            x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show' ? 'true' : 'false' }}"
                                     >
-                                        <x-slot name='option'>
-                                            <option>{{ __('forms.type') }}</option>
-                                            @foreach ($dictionaries['DIVISION_TYPE'] as $k => $type)
-                                                <option value="{{ $k }}">{{ $type }}</option>
-                                            @endforeach
-                                        </x-slot>
-                                    </x-forms.select>
-                                </x-slot>
-                                @error('divisionForm.division.type')
-                                    <x-slot name='error'>
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
-                                    </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                            <!-- Division External ID -->
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='external_id' class='default-label'>
-                                        {{ __('forms.externalId') }}
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        class='default-input'
-                                        wire:model='divisionForm.division.external_id'
-                                        type='text'
-                                        id='external_id'
-                                        x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show'? 'true' : 'false' }}"
-                                    />
-                                </x-slot>
-                                @error('divisionForm.division.external_id')
-                                    <x-slot name='error'>
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
-                                    </x-slot>
-                                @enderror
-                            </x-forms.form-group>
-
-                            <!-- PHONE TYPE -->
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='phone_type' class='default-label'>
-                                        {{ __('forms.type_mobile') }}
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.select
-                                        wire:model.defer='divisionForm.division.phones.type'
-                                        class='default-select'
-                                        id="phone_type"
-                                        x-bind:disabled="isDisabled"
+                                        <option value="" disabled selected hidden>{{ __('forms.type') }} *</option>
+                                        @foreach ($dictionaries['DIVISION_TYPE'] as $k => $type)
+                                            <option value="{{ $k }}">{{ $type }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label for="type" class="label">{{ __('forms.type') }} *</label>
+                                    @error('divisionForm.division.type')
+                                    <p class="text-error">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="form-group">
+                                    <input wire:model='divisionForm.division.external_id' type="text" x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show'? 'true' : 'false' }}" name="external_id" id="external_id" class="peer input" placeholder=" " />
+                                    <label for="external_id" class="label">{{ __('forms.externalId') }}</label>
+                                    @error('divisionForm.division.external_id') <p class="text-error">{{$message}}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="form-row-3">
+                                <div class="form-group">
+                                    <select wire:model.defer='divisionForm.division.phones.type'
+                                            id="phone_type"
+                                            class='peer input'
+                                            x-bind:disabled="isDisabled"
                                     >
-                                        <x-slot name='option'>
-                                            <option>{{ __('forms.type_mobile') }} *</option>
-                                            @foreach ($dictionaries['PHONE_TYPE'] as $k => $phone_type)
-                                                <option {{ isset($phone['type']) === $phone_type ? 'selected' : '' }}
+                                        <option value="" disabled selected hidden>{{ __('forms.type_mobile') }} *</option>
+                                        @foreach ($dictionaries['PHONE_TYPE'] as $k => $phone_type)
+                                            <option {{ isset($phone['type']) === $phone_type ? 'selected' : '' }}
                                                     value="{{ $k }}">{{ $phone_type }}
-                                                </option>
-                                            @endforeach
-                                        </x-slot>
-                                    </x-forms.select>
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <label for="phone_type" class="label">{{ __('forms.type_mobile') }}</label>
                                     @error('divisionForm.division.phones.type')
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
+                                    <p class="text-error">{{ $message }}</p>
                                     @enderror
-                                </x-slot>
-                            </x-forms.form-group>
-
-                            <!-- PHONES -->
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='phone' class='default-label'>
-                                        {{ __('forms.phone_number') }} *
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        id='phone'
-                                        class='default-input'
-                                        x-mask='+380999999999'
-                                        wire:model='divisionForm.division.phones.number'
-                                        type='text'
-                                        x-bind:disabled="isDisabled"
+                                </div>
+                                <div class="form-group phone-wrapper">
+                                    <input required
+                                            type="tel"
+                                            placeholder=" "
+                                            class="peer input pl-10 with-leading-icon"
+                                            x-model="phone.number"
+                                            x-mask="+380999999999"
+                                            wire:model='divisionForm.division.phones.number'
+                                            x-bind:disabled="isDisabled"
                                     />
-                                    @error('divisionForm.division.phones.number')
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
-                                    @enderror
-                                </x-slot>
-                            </x-forms.form-group>
-
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='longitude' class='default-label'>
-                                        {{ __('forms.longitude') }}
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        id='longitude'
-                                        class='default-input'
-                                        x-mask='99.999999'
-                                        wire:model='divisionForm.division.location.longitude'
-                                        type='text'
-                                        x-bind:disabled="isDisabled"
-                                    />
-                                    @error('divisionForm.division.location.longitude')
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
-                                    @enderror
-                                </x-slot>
-                            </x-forms.form-group>
-
-                            <x-forms.form-group>
-                                <x-slot name='label'>
-                                    <x-forms.label for='latitude' class='default-label'>
-                                        {{ __('forms.latitude') }}
-                                    </x-forms.label>
-                                </x-slot>
-                                <x-slot name='input'>
-                                    <x-forms.input
-                                        id='latitude'
-                                        class='default-input'
-                                        x-mask='99.999999'
-                                        wire:model='divisionForm.division.location.latitude'
-                                        type='text'
-                                        x-bind:disabled="isDisabled"
-                                    />
-                                    @error('divisionForm.division.location.latitude')
-                                        <x-forms.error>
-                                            {{ $message }}
-                                        </x-forms.error>
-                                    @enderror
-                                </x-slot>
-                            </x-forms.form-group>
+                                    <label class="wrapped-label">{{ __('forms.phone_number') }}</label>
+                                    @error('divisionForm.division.phones.number') <p class="text-error">{{ $message }}</p> @enderror
+                                </div>
+                                <button type="button" @click="phones.push({ type: 'MOBILE', number: '' })" class="item-add">
+                                    <span>{{__('forms.add_phone')}}</span>
+                                </button>
+                            </div>
+                            <div class="form-row-3">
+                                <div class="form-group">
+                                    <input wire:model='divisionForm.division.location.longitude' type="text" x-bind:disabled="isDisabled" name="longitude" x-mask='99.999999' id="longitude" class="peer input" placeholder=" " />
+                                    <label for="longitude" class="label">{{ __('forms.longitude') }}</label>
+                                    @error('divisionForm.division.location.longitude') <p class="text-error">{{$message}}</p> @enderror
+                                </div>
+                                <div class="form-group">
+                                    <input wire:model='divisionForm.division.location.latitude' type="text" x-bind:disabled="isDisabled" name="latitude" x-mask='99.999999' id="latitude" class="peer input" placeholder=" " />
+                                    <label for="latitude" class="label">{{ __('forms.latitude') }}</label>
+                                    @error('divisionForm.division.location.latitude') <p class="text-error">{{$message}}</p> @enderror
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input wire:model='formService.division.is_mountainous' id="is_mountainous" type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                                    <label for="is_mountainous" class="checkbox-label text-gray-500 dark:text-gray-300 ms-2">{{__('forms.mountainous_status')}}</label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </fieldset>
 
                     {{-- ADDRESS --}}
-                    <div class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-                        <div class='py-4'>
-                            <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.address') }}
-                            </h3>
-                        </div>
+
+                    <fieldset class="fieldset">
+
+                        <legend class="legend">
+                            <h2>{{ __('forms.address') }}</h2>
+                        </legend>
 
                         <x-forms.addresses-search
                             :address="$address"
@@ -266,164 +141,173 @@
                             :settlements="$settlements"
                             :streets="$streets"
                             :readonly="$readonly"
-                            class='mb-4 flex justify-between wrap flex-col flex-wrap gap-6 xl:flex-row'
+                            class="mt-8 form-row-3"
                         />
-                    </div>
+                    </fieldset>
 
                     {{-- WORKING HOURS --}}
-                    <div x-data="{ working: false }" class='w-full mb-4 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700'>
-                        <div class='py-4'>
-                            <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.schedule') }}
+                    <fieldset class="fieldset" x-data="{ working: false }">
+                        <legend class="legend">
+                            <h2>{{ __('forms.work_schedule') }}</h2>
+                        </legend>
+
+                        <div class="form">
+                            <div class="form-group mb-4">
                                 <button
-                                    @click.prevent="working = !working"
-                                    x-text="working ? '{{ __('forms.close') }}' : '{{ __('forms.open') }}'"
-                                    class='flex items-center justify-center py-2 font-semibold text-xs text-gray-500 uppercase tracking-widest hover:text-gray-900 active:text-gray-900 transition ease-in-out duration-150 cursor-pointer'
+                                        @click.prevent="working = !working"
+                                        x-text="working ? '{{ __('Прибрати графік роботи') }}' : '{{ __('forms.add_work_schedule') }}'"
+                                        class="item-add"
                                 >
+                                    {{ __('add_work_schedule') }}
                                 </button>
-                            </h3>
+                            </div>
+
                             @if($action === 'store')
-                                <p x-show='working' x-cloak class="pt-4 text-xs italic text-orange-500">{{ __('forms.schedule_note') }}</p>
+                                <div x-show="working" x-cloak class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                                    <svg class="w-6 h-6 text-blue-500 mr-3 mt-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="font-bold text-blue-800">{{ __('Важливо') }}</p>
+                                        <p class="text-sm text-blue-600">{{ __("forms.schedule_note") }}</p>
+                                    </div>
+                                </div>
                             @endif
-                        </div>
 
-                        @if ($weekdays)
-                            <div x-show='working' class='grid grid-cols-2 gap-6 w-full'>
-                                @foreach ($weekdays as $key => $day)
-                                    <div :key={{ $key }} x-data="{
-                                            shift: @json(count($divisionForm->getDivisionParam('working_hours')[$key]) > 1),
-                                            show_work: @json(!empty($divisionForm->getDivisionParam('working_hours')[$key][0]) || $action === 'store'),
-                                            checkShift() {
-                                                this.shift = !this.show_work;
-                                            }
-                                        }"
-                                        class="col-6"
-                                    >
-                                        <label class='text-lg w-full text-black-2 mb-2 pb-2'>
-                                            {{ $day }}
-                                        </label>
-                                        <div class="flex mt-4 mb-1 flex-col gap-x-6 gap-y-1 xl:flex-row align-center" x-data="{ '{{ $key }}': false }">
-                                            <x-forms.form-group class='min-w-fit'>
-                                                <x-slot name='input'>
-                                                    <div class='flex items-center mb-4'>
-                                                        <x-forms.checkbox
-                                                            wire:click="notWorking('{{ $key }}', show_work); show_work = !show_work;"
-                                                            type='checkbox'
-                                                            x-bind:checked="!show_work"
-                                                            x-bind:disabled="isDisabled"
-                                                            x-on:click="checkShift()"
+                            @if ($weekdays)
+                                <div x-show="working" x-cloak class="grid md:grid-cols-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                    @foreach ($weekdays as $key => $day)
+                                        <div class="p-6 min-h-[220px] {{ $loop->iteration % 2 == 0 ? '' : 'border-r border-gray-200 dark:border-gray-700' }} {{ $loop->last ? '' : 'border-b border-gray-200 dark:border-gray-700' }} ">
+                                            <div x-data="{
+                            shift: @json(count($divisionForm->getDivisionParam('working_hours')[$key]) > 1),
+                            show_work: @json(!empty($divisionForm->getDivisionParam('working_hours')[$key][0]) || $action === 'store'),
+                            checkShift() {
+                                this.shift = !this.show_work;
+                            }
+                        }">
+
+                                                <div class="mb-4">
+                                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $day }}</h3>
+                                                </div>
+
+                                                <div class="flex items-center gap-8 mb-4">
+                                                    <label class="inline-flex items-center cursor-pointer">
+                                                        <input type="checkbox" class="sr-only peer"
+                                                               x-model="show_work"
+                                                               @change="$wire.notWorking('{{ $key }}', !show_work)"
+                                                               x-on:click="checkShift()"
+                                                               x-bind:disabled="isDisabled"
+                                                        >
+                                                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:bg-gray-700 dark:peer-focus:ring-blue-800 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"></div>
+                                                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                                                              x-text="show_work ? '{{ __('Працює') }}' : '{{ __('Не працює') }}'"></span>
+                                                    </label>
+
+                                                    <label class="inline-flex items-center cursor-pointer" x-bind:class="!show_work && 'opacity-40 pointer-events-none'">
+                                                        <input type="checkbox"
+                                                               x-model="shift"
+                                                               @change="$wire.noShift('{{ $key }}', !shift)"
+                                                               x-bind:disabled="isDisabled"
+                                                               id="is_mountainous"
+                                                               class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                                         />
-                                                        <label class='ms-2 text-sm font-medium text-gray-900 dark:text-gray-300'>
-                                                            {{ __('forms.doesNotWork') }}
-                                                     </label>
-                                                    </div>
+                                                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('Позмінно') }}</span>
+                                                    </label>
+                                                </div>
 
-                                                    <template x-if='show_work'>
-                                                        <div class='flex items-left flex-col flex-wrap mb-4'>
-                                                            <div class='flex items-left flex-row wrap-nowrap mb-4'>
-                                                                <x-forms.checkbox
-                                                                    wire:click="noShift('{{ $key }}', shift); shift = !shift;"
-                                                                    type='checkbox'
-                                                                    x-bind:checked="shift"
-                                                                    x-bind:disabled="isDisabled"
-                                                                />
-                                                                <label class='ms-2 text-xs font-medium text-gray-900 dark:text-gray-300'>
-                                                                    {{ __('forms.by_shift') }}
-                                                                </label>
-                                                            </div>
+                                                <template x-if="show_work">
+                                                    <div class="mt-3 space-y-4">
+                                                        @if ($action === 'store' || !empty($divisionForm->getDivisionParam('working_hours')[$key]))
+                                                            @foreach ($divisionForm->getDivisionParam('working_hours')[$key] as $shiftIndex => $shift_hours)
+                                                                <div class="space-y-4">
+                                                                    <template x-if="shift">
+                                                                        <div class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                                                                            <span>{{ __(':n зміна', ['n' => $shiftIndex + 1]) }}</span>
+                                                                        </div>
+                                                                    </template>
 
+                                                                    <div class="flex items-end gap-4">
+                                                                        <div class="form-group w-full">
+                                                                            <label for="opened_by-{{ $key }}-{{ $shiftIndex }}"
+                                                                                   class="label !text-xs !text-gray-500 dark:!text-gray-400">
+                                                                                <span x-text="shift ? '{{ __('Початок') }}' : '{{ __('forms.openedBy') }}'"></span>
+                                                                            </label>
+                                                                            <div class="relative w-full">
+                                                                                <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                                                                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                                                    </svg>
+                                                                                </div>
+                                                                                <input
+                                                                                        type="time"
+                                                                                        id="opened_by-{{ $key }}-{{ $shiftIndex }}"
+                                                                                        class="input text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 focus:ring-0 px-0 ps-8"
+                                                                                        wire:model="divisionForm.division.working_hours.{{ $key }}.{{ $shiftIndex }}.0"
+                                                                                        x-bind:disabled="isDisabled"
+                                                                                />
+                                                                            </div>
+                                                                            @error("divisionForm.division.working_hours.{{ $key }}.{{ $shiftIndex }}.0")
+                                                                            <p class="text-error">{{ $message }}</p>
+                                                                            @enderror
+                                                                        </div>
+
+                                                                        <div class="form-group w-full">
+                                                                            <label for="closed_by-{{ $key }}-{{ $shiftIndex }}"
+                                                                                   class="label !text-xs !text-gray-500 dark:!text-gray-400">
+                                                                                <span x-text="shift ? '{{ __('Кінець') }}' : '{{ __('forms.closedBy') }}'"></span>
+                                                                            </label>
+                                                                            <div class="relative w-full">
+                                                                                <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                                                                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                                                    </svg>
+                                                                                </div>
+                                                                                <input
+                                                                                        type="time"
+                                                                                        id="closed_by-{{ $key }}-{{ $shiftIndex }}"
+                                                                                        class="input text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 focus:ring-0 px-0 ps-8"
+                                                                                        wire:model="divisionForm.division.working_hours.{{ $key }}.{{ $shiftIndex }}.1"
+                                                                                        x-bind:disabled="isDisabled"
+                                                                                />
+                                                                            </div>
+                                                                            @error("divisionForm.division.working_hours.{{ $key }}.{{ $shiftIndex }}.1")
+                                                                            <p class="text-error">{{ $message }}</p>
+                                                                            @enderror
+                                                                        </div>
+
+                                                                        <button type="button"
+                                                                                x-show="shift && {{ $shiftIndex > 0 ? 'true' : 'false' }}"
+                                                                                wire:click="deleteShift('{{ $key }}', '{{ $shiftIndex }}')"
+                                                                                class="h-10 text-gray-800 dark:text-gray-500 hover:text-gray-600">
+                                                                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+                                                                            </svg>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
                                                             @if (count($divisionForm->getDivisionParam('working_hours')[$key]) < 4)
-                                                                <x-button
-                                                                    x-show='shift'
-                                                                    class='font-semibold text-[10px] text-left text-gray-500 uppercase hover:text-gray-900 active:text-gray-900'
-                                                                    @click.prevent=''
-                                                                    wire:click="addAvailableShift('{{ $key }}')"
-                                                                    x-bind:disabled="isDisabled"
+                                                                <button
+                                                                        x-show='shift'
+                                                                        class='item-add text-sm'
+                                                                        @click.prevent=''
+                                                                        wire:click="addAvailableShift('{{ $key }}')"
+                                                                        x-bind:disabled="isDisabled"
                                                                 >
                                                                     {{ __('forms.add_shift') }}
-                                                                </x-button>
+                                                                </button>
                                                             @endif
-                                                        </div>
-                                                    </template>
-                                                </x-slot>
-                                            </x-forms.form-group>
-
-                                            @if($action === 'store' || !empty($divisionForm->getDivisionParam('working_hours')[$key]))
-                                            <div class='flex items-center flex-col flex-wrap gap-2 mb-4 w-full'>
-                                            @foreach ($divisionForm->getDivisionParam('working_hours')[$key] as $shift => $shift_hours)
-                                                <div class='flex  justify-between gap-4 mb-4 w-full w-1/4'>
-                                                    <x-forms.form-group
-                                                        x-show="show_work"
-                                                        class="w-1/2"
-                                                    >
-                                                        <x-slot name='label'>
-                                                            <x-forms.label
-                                                                x-text="shift ? '{{ __(':shift_number зміна: початок', ['shift_number' => $shift + 1]) }}'  : '{{ __('forms.openedBy') }}'"
-                                                                for="opened_by-{{ $key }}-{{ $shift }}"
-                                                                class='default-label'
-                                                            />
-                                                        </x-slot>
-
-                                                        <x-slot name='input'>
-                                                            <x-forms.input-time
-                                                                id="opened_by-{{ $key }}-{{ $shift }}"
-                                                                wire:model="divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.0"
-                                                                x-bind:disabled="isDisabled"
-                                                            />
-                                                        </x-slot>
-                                                        @error("divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.0")
-                                                            <x-forms.error>
-                                                                {{ $message }}
-                                                            </x-forms.error>
-                                                        @enderror
-                                                    </x-forms.form-group>
-
-                                                    <x-forms.form-group
-                                                        x-show="show_work"
-                                                        class="w-1/2"
-                                                    >
-                                                        <x-slot name='label'>
-                                                            <x-forms.label
-                                                                x-text="shift ? '{{ __(':shift_number зміна: кінець', ['shift_number' => $shift + 1]) }}' : '{{ __('forms.closedBy') }}'"
-                                                                for="closed_by-{{ $key }}-{{ $shift }}"
-                                                                class="default-label"
-                                                            />
-                                                        </x-slot>
-                                                        <x-slot name='input'>
-                                                            <x-forms.input-time
-                                                                id="closed_by-{{ $key }}-{{ $shift }}"
-                                                                wire:model="divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.1"
-                                                                x-bind:disabled="isDisabled"
-                                                            />
-                                                        </x-slot>
-                                                        @error("divisionForm.division.working_hours.{{ $key }}.{{ $shift }}.1")
-                                                            <x-forms.error>
-                                                                {{ $message }}
-                                                            </x-forms.error>
-                                                        @enderror
-                                                    </x-forms.form-group>
-
-                                                    <div class="self-center pt-6" x-data="{ isShift: {{ $shift > 0 ? 'true' : 'false' }} }">
-                                                        <x-button
-                                                            x-show="shift && isShift && show_work && isDisabled"
-                                                            @click.prevent=''
-                                                            wire:click="deleteShift('{{ $key }}', '{{ $shift }}')"
-                                                            class="px-2 py-1  text-red-500 text-2xl font-bold rounded"
-                                                        >
-                                                            ☒
-                                                        </x-button>
                                                     </div>
-                                                </div>
-                                            @endforeach
+                                                </template>
                                             </div>
-                                            @endif
                                         </div>
-                                    </div>
-                                @endforeach
-
-                            </div>
-                        @endif
-                    </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </fieldset>
 
                     <div class='mb-4.5 mt-6 flex flex-col gap-6 xl:flex-row justify-left items-center'>
                         <a role="button" class="alternative-button cursor-pointer" href="javascript:history.back()">
@@ -456,8 +340,8 @@
                         </svg>
                     </div>
                 </form>
-         </div>
     </section>
 </div>
+
 
 
