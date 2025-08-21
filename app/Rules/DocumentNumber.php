@@ -16,7 +16,7 @@ class DocumentNumber implements ValidationRule
     /**
      * Create a new rule instance.
      *
-     * @param  string  $documentType // Name of the Document Type (get from 'DOCUMENT_TYPE' dictionary)
+     * @param  string  $documentType
      *
      * @return void
      */
@@ -28,7 +28,7 @@ class DocumentNumber implements ValidationRule
     }
 
     /**
-     * Check that Email has a valid format and specified correctly
+     * Перевіряє, чи номер документа відповідає формату його типу.
      *
      * @param  \Closure(string): PotentiallyTranslatedString  $fail
      */
@@ -36,12 +36,14 @@ class DocumentNumber implements ValidationRule
     {
         $regex = match ($this->documentType) {
             'NATIONAL_ID' => '/^[0-9]{9}$/',
-            'PASSPORT' => '/^((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{6}$/u',
+            'PASSPORT', 'REFUGEE_CERTIFICATE', 'COMPLEMENTARY_PROTECTION_CERTIFICATE' => '/^((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{6}$/u',
+            'TEMPORARY_CERTIFICATE' => '/^(((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{4,6}|[0-9]{9}|((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{5}\/[0-9]{5})$/u',
+            'TEMPORARY_PASSPORT' => '/^((?![ЫЪЭЁыъэё@%&$^#`~:,.*|}{?!])[A-ZА-ЯҐЇІЄ0-9№\\/()-]){2,25}$/u',
             default => ''
         };
 
-        if (!$regex || !(bool)preg_match($regex, $value)) {
-            $fail(__('forms.document') . ' : ' . __('validation.attributes.errors.wrongNumberFormat'));
+        if (!$regex || !preg_match($regex, $value)) {
+            $fail(__('forms.document') . ': ' . __('validation.attributes.errors.wrongNumberFormat'));
         }
     }
 }

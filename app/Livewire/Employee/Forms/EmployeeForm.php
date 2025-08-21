@@ -5,6 +5,8 @@ namespace App\Livewire\Employee\Forms;
 use App\Core\Arr;
 use App\Models\Employee\BaseEmployee;
 use App\Rules\Cyrillic;
+use App\Rules\DocumentNumber;
+use App\Rules\UniquePassportRule;
 use Livewire\Form;
 use App\Rules\Name;
 use App\Rules\TaxId;
@@ -105,9 +107,31 @@ class EmployeeForm extends Form
     protected function documentsRules(): array
     {
         return [
-            'documents' => ['required', 'array', 'min:1'],
+            'documents' => ['required', 'array', 'min:1', new UniquePassportRule()],
             'documents.*.type' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['DOCUMENT_TYPE'] ?? []))],
-            'documents.*.number' => ['required', 'string'],
+            'documents.*.number' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $index = explode('.', $attribute)[1];
+                    $documentType = $this->documents[$index]['type'] ?? null;
+                    if ($documentType) {
+                        $validator = validator(
+                            [
+                                'number' => $value,
+                            ],
+                            [
+                                'number' => [new DocumentNumber($documentType)],
+                            ]
+                        );
+                        if ($validator->fails()) {
+                            foreach ($validator->errors()->all() as $error) {
+                                $fail($error);
+                            }
+                        }
+                    }
+                }
+            ],
             'documents.*.issuedBy' => ['nullable', 'present', 'string', 'min:1'],
             'documents.*.issuedAt' => ['required', 'date_format:Y-m-d'],
         ];
@@ -292,10 +316,8 @@ class EmployeeForm extends Form
      */
     private function hydrateFromParty(Party $party): void
     {
-        // 1. Populate with live data from the Party and its direct relations.
-        $this->populatePartyData($party); // REUSE
+        $this->populatePartyData($party);
 
-        // 2. THE FIX: Fallback to revision if phones/documents are still empty.
         $needsRevisionCheck = empty($this->documents);
         if ($needsRevisionCheck) {
             $latestRequest = $party->employeeRequests()->with('revision')->latest()->first();

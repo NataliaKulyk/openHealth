@@ -28,19 +28,19 @@ trait ManagesEmployeeForm
 
     protected ?BaseEmployee $employeeRequest, $employee = null;
 
-    /**
-     * An abstract method to be implemented in the component,
-     * which should find and return the existing draft request.
-     */
     abstract protected function getEmployeeRequestForSave(): ?EmployeeRequest;
 
-    /**
-     * The main save method for creating or updating drafts without signing.
-     */
+    private function processAndSave(): void
+    {
+        // Livewire automatically handles validation on state-changing methods.
+        // If validation fails, a ValidationException is thrown.
+        DB::transaction(fn() => $this->saveOrUpdateDraft());
+    }
+
     public function save(): void
     {
         try {
-            DB::transaction(fn() => $this->saveOrUpdateDraft());
+            $this->processAndSave();
             $this->dispatch('flashMessage', ['message' => __('forms.employee_request_saved_successfully'), 'type' => 'success']);
         } catch (ValidationException $e) {
             $this->handleValidationException($e);
@@ -49,17 +49,12 @@ trait ManagesEmployeeForm
         }
     }
 
-    /**
-     * Saves the form as a draft and then opens the signature modal.
-     * This is triggered by the "Complete and Sign" button.
-     */
     public function prepareForSigning(): void
     {
         try {
-            DB::transaction(fn() => $this->saveOrUpdateDraft());
+            $this->processAndSave();
             $this->dispatch('flashMessage', ['message' => __('forms.employee_request_saved_successfully'), 'type' => 'success']);
             $this->dispatch('open-signature-modal');
-
         } catch (ValidationException $e) {
             $this->handleValidationException($e);
         } catch (Exception $e) {
@@ -72,18 +67,20 @@ trait ManagesEmployeeForm
         Log::info('Attempting to sign.');
 
         try {
-            // Step 1: Validate local form data and get the draft.
+            // STEP 1: Always save the latest form data before signing.
+            $this->processAndSave();
+
+            // STEP 2: Validate and get the draft request.
             $requestToSign = $this->validateAndGetDraft();
 
-            // Step 2: Sign the data with the Cipher API.
+            // STEP 3: Sign the data.
             $signedContent = $this->signDataWithCipher($requestToSign);
 
-            // Step 3: Send data to the eHealth API and update the local database.
-            // If this step fails, it will throw an exception caught below.
-            $ehealthResponseData = new \App\Classes\eHealth\Api\EmployeeRequest()->create($signedContent);
-            $this->updateLocalRecords($requestToSign, $ehealthResponseData);
+            // STEP 4: Send the data to the eHealth API.
+            $eHealthResponse = new EHealthEmployeeRequest()->create($signedContent);
+            $this->updateLocalRecords($requestToSign, $eHealthResponse);
 
-            // Final step: The successful path. This code is only reached if no exceptions are thrown.
+            // STEP 5: Redirect on success.
             session()->flash('success', __('employees.sign_success'));
             $this->resetSignatureFields();
             Log::info('Successfully signed and will redirect.');
@@ -101,7 +98,7 @@ trait ManagesEmployeeForm
             $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
             Log::error('EHealth response error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             $this->dispatch('close-signature-modal');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->handleException($e);
             $this->dispatch('close-signature-modal');
         }
@@ -147,28 +144,9 @@ trait ManagesEmployeeForm
     /**
      * Handles a detailed validation error from the eHealth API.
      */
-    /**
-     * Handles a detailed validation error from the eHealth API.
-     */
-    protected function handleEHealthValidationError(\App\Exceptions\EHealth\EHealthValidationException $e): void
+    protected function handleEHealthValidationError(EHealthValidationException $e): void
     {
-        $reverseKeyMap = EHealthEmployeePayload::getReverseKeyMap();
-
-        $errorList = collect($e->getDetails())->map(function ($detail) use ($reverseKeyMap) {
-            $ehealthKey = $detail['entry'] ?? ($detail['param'] ?? 'unknown');
-            $ehealthKey = str_replace(['$.', 'employee_request.'], '', $ehealthKey);
-
-            $message = $detail['rules'][0]['description'] ?? ($detail['msg'] ?? 'Некоректне значення.');
-
-            // Використовуємо оригінальний ключ як назву поля
-            $fieldName = $ehealthKey;
-
-            return "{$fieldName}: {$message}";
-        })->implode("\n");
-
-        $header = __('forms.ehealth_validation_error_header');
-        $fullMessage = "{$header}\n{$errorList}";
-
+        $fullMessage = $e->getTranslatedMessage();
         $this->dispatch('flashMessage', ['message' => $fullMessage, 'type' => 'error', 'persistent' => true]);
     }
 
@@ -236,99 +214,105 @@ trait ManagesEmployeeForm
 
     /**
      * Handles ValidationException by dispatching events for user feedback and scrolling.
-     *
-     * @param ValidationException $e
      */
     private function handleValidationException(ValidationException $e): void
     {
         $validator = $e->validator;
+        $allErrorKeys = collect($validator->errors()->keys())->unique();
 
-        $errorKeys = collect($validator->errors()->keys());
+        // A map of translatable field sections.
         $sections = [
-            'form.documents',
-            'form.doctor.educations',
-            'form.doctor.specialities',
-            'form.doctor.qualifications',
-            'form.doctor.scienceDegrees',
+            'form.documents' => __('forms.document'),
+            'form.doctor.educations' => __('forms.education'),
+            'form.doctor.specialities' => __('forms.specialities'),
+            'form.doctor.qualifications' => __('forms.qualifications'),
+            'form.doctor.scienceDegrees' => __('forms.science_degree'),
         ];
 
-        foreach ($sections as $sectionPrefix) {
-            if ($errorKeys->contains(fn($key) => str_starts_with($key, $sectionPrefix . '.'))) {
-                $validator->errors()->add(
-                    $sectionPrefix,
-                    __('forms.section_contains_errors')
-                );
-            }
-        }
-
-        $errors = $validator->errors()->keys();
-        $firstErrorKey = $errors[0] ?? null;
-
-        $keyMap = [
-            'position' => 'position',
-            'employeeType' => 'employee_type',
-            'startDate' => 'start_date',
-            'endDate' => 'end_date',
-            'divisionId' => 'select_division',
-            'party.lastName' => 'last_name',
-            'party.firstName' => 'first_name',
-            'party.secondName' => 'second_name',
-            'party.gender' => 'gender',
-            'party.birthDate' => 'birth_date',
-            'party.phones' => 'phones',
-            'party.phones.0.number' => 'phone_number',
-            'party.phones.*.number' => 'phone_number',
-            'party.phones.*.type' => 'phone_type',
-            'party.taxId' => 'tax_id',
-            'party.noTaxId' => 'no_tax_id',
-            'party.email' => 'email',
-            'party.workingExperience' => 'working_experience',
-            'party.aboutMyself' => 'about_myself',
-            'documents.*.type' => 'document_type',
-            'documents.*.number' => 'document_number',
-            'documents.*.issuedBy' => 'issued_by',
-            'documents.*.issuedAt' => 'issued_at',
-            'doctor.educations.*.country' => 'country',
-            'doctor.educations.*.city' => 'city',
-            'doctor.educations.*.institutionName' => 'institution_name',
-            'doctor.educations.*.issuedDate' => 'issued_date',
-            'doctor.educations.*.diplomaNumber' => 'diploma_number',
-            'doctor.educations.*.degree' => 'degree',
-            'doctor.educations.*.speciality' => 'speciality',
+        // A map of translatable specific fields (with wildcards for nested arrays).
+        $fieldTranslations = [
+            'form.party.firstName' => __('forms.first_name'),
+            'form.party.lastName' => __('forms.last_name'),
+            'form.party.secondName' => __('forms.second_name'),
+            'form.party.gender' => __('forms.gender'),
+            'form.party.birthDate' => __('forms.birth_date'),
+            'form.party.taxId' => __('forms.tax_id'),
+            'form.party.noTaxId' => __('forms.no_tax_id'),
+            'form.party.email' => __('forms.email'),
+            'form.party.workingExperience' => __('forms.working_experience'),
+            'form.party.aboutMyself' => __('forms.about_myself'),
+            'form.position' => __('forms.position'),
+            'form.employeeType' => __('forms.role'),
+            'form.startDate' => __('forms.start_date_work'),
+            'form.endDate' => __('forms.end_date_work'),
+            'form.party.phones.*.number' => __('forms.phone_number'),
+            'form.party.phones.*.type' => __('forms.phone_type'),
+            'form.documents.*.type' => __('forms.document_type'),
+            'form.documents.*.number' => __('forms.document_number'),
+            'form.documents.*.issuedBy' => __('forms.issued_by'),
+            'form.documents.*.issuedAt' => __('forms.issued_at'),
+            'form.doctor.educations.*.city' => __('forms.city'),
+            'form.doctor.educations.*.institutionName' => __('forms.institution_name'),
+            'form.doctor.educations.*.speciality' => __('forms.speciality'),
+            'form.doctor.educations.*.degree' => __('forms.degree'),
+            'form.doctor.educations.*.issuedDate' => __('forms.issued_date'),
+            'form.doctor.educations.*.diplomaNumber' => __('forms.diploma_number'),
+            'form.doctor.specialities.*.attestationName' => __('forms.attestationName'),
+            'form.doctor.specialities.*.level' => __('forms.select_level'),
+            'form.doctor.qualifications.*.institutionName' => __('forms.institutionName'),
+            'form.doctor.qualifications.*.speciality' => __('forms.speciality'),
+            'form.doctor.scienceDegrees.*.city' => __('forms.city'),
+            'form.doctor.scienceDegrees.*.institutionName' => __('forms.institutionName'),
+            'form.doctor.scienceDegrees.*.speciality' => __('forms.speciality'),
+            'form.doctor.scienceDegrees.*.issuedDate' => __('forms.issuedDate'),
         ];
 
-        $fieldNames = collect($errors)
-            ->map(function ($key) use ($keyMap, $validator) {
-                $cleanKey = str_replace('form.', '', $key);
-                $translationKey = $keyMap[$cleanKey] ?? null;
+        $fieldsToDisplay = $allErrorKeys
+            ->map(function ($key) use ($fieldTranslations, $sections, $allErrorKeys) {
+                // Check if this is a top-level section key (e.g., 'form.documents')
+                if (array_key_exists($key, $sections)) {
+                    // Check if there are any more specific errors within this section.
+                    $hasSpecificErrors = $allErrorKeys->contains(fn($errorKey) =>
+                    str_starts_with($errorKey, $key . '.')
+                    );
 
-                if (!$translationKey) {
-                    // Special handling for nested array keys like `documents.*.type`
-                    foreach ($keyMap as $k => $v) {
-                        if (str_contains($cleanKey, $k)) {
-                            $translationKey = $v;
-                            break;
-                        }
+                    // If the section is a top-level error and has no specific sub-errors, it means the whole section is empty/missing.
+                    if (!$hasSpecificErrors) {
+                        return __('forms.section_not_filled', ['section' => $sections[$key]]);
                     }
                 }
 
-                $translated = $translationKey ? __('forms.' . $translationKey) : null;
-
-                if ($translated && $translated !== 'forms.' . $translationKey) {
-                    return $translated;
+                // Check for an exact field translation match.
+                if (isset($fieldTranslations[$key])) {
+                    return $fieldTranslations[$key];
                 }
 
-                return $validator->getDisplayableAttribute($key);
+                // Match nested keys with wildcards using regex (most reliable method).
+                foreach ($fieldTranslations as $pattern => $translation) {
+                    $patternRegex = '/^' . str_replace('\*', '\d+', preg_quote($pattern, '/')) . '$/';
+                    if (preg_match($patternRegex, $key)) {
+                        return $translation;
+                    }
+                }
+
+                // Fallback to the key itself if no translation is found.
+                return $key;
             })
+            ->filter()
             ->unique()
             ->implode(', ');
 
-        $flashMessage = __('forms.validation_fix_fields', ['fields' => $fieldNames]);
+        // Check if the flash message is empty and add a default message.
+        if (empty($fieldsToDisplay)) {
+            $flashMessage = __('forms.validation_error_unknown');
+        } else {
+            $flashMessage = __('forms.validation_fix_fields', ['fields' => $fieldsToDisplay]);
+        }
 
         $this->dispatch('flashMessage', ['message' => $flashMessage, 'type' => 'error', 'persistent' => true]);
 
-        if ($firstErrorKey) {
-            $this->dispatch('validation-failed-scroll', firstErrorKey: $firstErrorKey);
+        if (!empty($validator->errors()->keys())) {
+            $this->dispatch('validation-failed-scroll', firstErrorKey: $validator->errors()->keys()[0]);
         }
     }
 
@@ -342,9 +326,8 @@ trait ManagesEmployeeForm
     {
         $requestToSign = $this->getEmployeeRequestForSave();
 
-        // Handle case where draft is not found (shouldn't happen, but good practice)
+        // Throw an exception if the draft is not found or has already been signed.
         if (is_null($requestToSign) || !is_null($requestToSign->uuid)) {
-            // We use a custom exception here for more specific handling
             throw new RuntimeException(__('forms.draft_not_found_or_already_signed'), 400);
         }
 
@@ -357,15 +340,12 @@ trait ManagesEmployeeForm
     /**
      * Signs the data using SignatureService.
      *
-     * @param EmployeeRequest $requestToSign
-     * @return string
      * @throws RuntimeException
      */
     private function signDataWithCipher(EmployeeRequest $requestToSign): string
     {
         $requestToSign->load('revision');
         $nestedDataForRevision = $requestToSign->revision->data;
-
         $payloadToSign = EHealthEmployeePayload::prepare($nestedDataForRevision);
 
         return signatureService()->signData(
@@ -378,11 +358,11 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Step 4: Update local records.
+     * Updates local records with the response from the eHealth API.
      */
-    private function updateLocalRecords(EmployeeRequest $request, array $ehealthResponseData): void
+    private function updateLocalRecords(EmployeeRequest $request, array $eHealthResponse): void
     {
-        $uuid = $ehealthResponseData['id'];
+        $uuid = $eHealthResponse['id'];
 
         $request->update(
             [
@@ -393,7 +373,7 @@ trait ManagesEmployeeForm
 
         $request->revision->update(
             [
-                'ehealth_response' => $ehealthResponseData['ehealth_response'],
+                'ehealth_response' => $eHealthResponse['ehealth_response'],
                 'status'           => RevisionStatus::SENT,
             ]
         );
@@ -401,9 +381,6 @@ trait ManagesEmployeeForm
 
     /**
      * Checks if a ValidationException contains KEP-related errors.
-     *
-     * @param ValidationException $e
-     * @return bool
      */
     private function isKepValidationError(ValidationException $e): bool
     {

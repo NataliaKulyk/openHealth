@@ -502,7 +502,22 @@ return [
             ]
 
         ],
-        //! Licence
+
+        'party.documents' => 'Документи',
+
+        // Form fields
+        'form.doctor.educations.0.city' => 'Освіта (місто)',
+        'form.doctor.educations.0.institutionName' => 'Освіта (назва закладу)',
+        'form.doctor.specialities.0.attestationName' => 'Спеціалізація (назва атестації)',
+        'form.doctor.specialities.0.level' => 'Рівень спеціалізації',
+        'form.doctor.qualifications.0.institutionName' => 'Кваліфікація (назва закладу)',
+        'form.doctor.scienceDegrees.0.city' => 'Науковий ступінь (місто)',
+        'form.doctor.scienceDegrees.0.institutionName' => 'Науковий ступінь (назва закладу)',
+
+        // Documents
+        'documents.*.expirationDate' => 'Дійсний до',
+
+        // Licence
         'issuedBy' => 'ким видано ліцензію',
         'issuedDate' => 'дата видачі ліцензії',
         'activeFromDate' => 'дата початку дії ліцензії',

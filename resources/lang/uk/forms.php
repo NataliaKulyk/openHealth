@@ -349,6 +349,8 @@ return [
     'externalContractorsNumber' => 'Номер договору з субпідрядником',
     'externalContractorsIssuedAt' => 'Дата укладання контракту з субпідрядником',
     'externalContractorsExpiresAt' => 'Дата закінчення договору з субпідрядником',
+    'ehealth_error_is_missing' => 'відсутнє',
+    'ehealth_error_additional_properties' => 'містить недійсні дані',
     'statusReason' => 'Причина зміни статусу',
     'insertedAtContract' => 'Дата підписання договору',
     'numberContract' => 'Номер договору',
@@ -394,6 +396,8 @@ return [
     'ehealth_validation_error_header' => 'eHealth відхилив запит через невірні дані. Будь ласка, виправте:',
     'invalid_kep_password' => 'Невірний пароль до ключа або ключ пошкоджено. Будь ласка, перевірте дані та спробуйте ще раз.',
     'section_contains_errors' => 'Будь ласка, перевірте помилки в цьому розділі.',
+    'section_not_filled' => 'Не заповнений блок ":section"',
+    'validation_error_unknown' => 'Виникла помилка валідації. Будь ласка, перевірте всі поля форми.',
     'signature_validation_error' => 'Помилка під час підписання',
     'validation_failed_check_form' => 'Помилка при заповнені форми',
     'errors' => [
