@@ -16,6 +16,7 @@ use App\Models\Employee\EmployeeRequest;
 use App\Models\Revision;
 use App\Repositories\Repository;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -97,6 +98,10 @@ trait ManagesEmployeeForm
         } catch (EHealthResponseException $e) {
             $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
             Log::error('EHealth response error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            $this->dispatch('close-signature-modal');
+        } catch (ConnectionException $e) {
+            $this->dispatch('flashMessage', ['message' => __('forms.ehealth_connection_error'), 'type' => 'error', 'persistent' => true]);
+            Log::error('EHealth connection error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             $this->dispatch('close-signature-modal');
         } catch (Exception $e) {
             $this->handleException($e);

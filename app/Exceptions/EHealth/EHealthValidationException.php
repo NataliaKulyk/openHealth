@@ -39,7 +39,6 @@ class EHealthValidationException extends EHealthException
             // Add more translations as needed
         ];
 
-        // Отримання перекладів повідомлень з файлу локалізації
         $eHealthMessageTranslations = __('errors.ehealth.messages');
 
         $errorList = collect($this->getDetails())->map(function ($detail) use ($eHealthFieldTranslations, $eHealthMessageTranslations) {
