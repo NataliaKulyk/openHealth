@@ -273,14 +273,27 @@
                                         <td class="td-input break-words whitespace-normal align-top">{{ $positionToShow->division->name ?? 'N/A' }}</td>
 
                                         <td class="td-input break-words whitespace-normal align-top">
-                                            @if($positionToShow instanceof \App\Models\Employee\Employee)
+                                            @php
+                                                // First, check if the record is an Employee model. This is the highest priority.
+                                                $isEmployee = $positionToShow instanceof \App\Models\Employee\Employee;
+                                            @endphp
+
+                                            @if($isEmployee)
+                                                {{-- For a standard Employee record, show its actual status --}}
                                                 @if($positionToShow->status?->value === 'APPROVED')
-                                                    <span class="badge-green">Активний</span>
+                                                    <span class="badge-green">{{__('forms.status.active')}}</span>
                                                 @else
-                                                    <span class="badge-red">Звільнений</span>
+                                                    <span class="badge-red">{{__('forms.status.dismissed')}}</span>
                                                 @endif
                                             @else
-                                                <span class="badge-red">Чернетка</span>
+                                                {{-- If it's not an Employee, it must be an EmployeeRequest. Now check if it's a draft. --}}
+                                                @if(is_null($positionToShow->applied_at))
+                                                    {{-- applied_at is null, so it's a draft/new request. --}}
+                                                    <span class="badge-red">{{__('forms.status.draft')}}</span>
+                                                @else
+                                                    {{-- applied_at has a value, meaning the request has been submitted and is active/processed. --}}
+                                                    <span class="badge-green">{{__('forms.status.active')}}</span>
+                                                @endif
                                             @endif
                                         </td>
 

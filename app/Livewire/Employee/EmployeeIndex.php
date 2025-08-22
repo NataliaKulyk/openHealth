@@ -87,11 +87,13 @@ class EmployeeIndex extends EmployeeComponent
         // Apply Status Filter
         if (!empty($this->status)) {
             $query->where(function ($q) {
-                $employeeStatuses = array_intersect($this->status, ['APPROVED', 'DISMISSED']);
+                // Use the Status enum for the filter values
+                $employeeStatuses = array_intersect($this->status, [Status::APPROVED->value, Status::DISMISSED->value]);
                 if (!empty($employeeStatuses)) {
                     $q->orWhereHas('employees', fn($sub) => $sub->whereIn('status', $employeeStatuses));
                 }
-                if (in_array('NEW', $this->status, true)) {
+                // Use the Status enum for the 'NEW' case
+                if (in_array(Status::NEW->value, $this->status, true)) {
                     $q->orWhereHas('employeeRequests');
                 }
             });
@@ -139,13 +141,21 @@ class EmployeeIndex extends EmployeeComponent
                        'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
                    ])
             ->get()
-            ->sortBy(function ($party) use ($legalEntityId) {
+            ->sortBy(function ($party) {
+                // Use the Status enum for the sorting logic as well
+                $hasActiveEmployees = $party->employees->where('status', Status::APPROVED->value)->isNotEmpty();
                 $hasRequests = $party->employeeRequests->isNotEmpty();
-                $hasActiveEmployees = $party->employees->where('status', 'APPROVED')->isNotEmpty();
 
-                if ($hasRequests) return 1; // Drafts first
-                if ($hasActiveEmployees) return 2; // Active employees second
-                return 3; // Dismissed employees last
+                // Prioritize Active Employees first
+                if ($hasActiveEmployees) {
+                    return 1;
+                }
+                // Then, drafts (requests)
+                if ($hasRequests) {
+                    return 2;
+                }
+                // Finally, dismissed employees
+                return 3;
             });
 
         // --- Step 4: Return a new paginator instance with the sorted items. ---
