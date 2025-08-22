@@ -1,21 +1,33 @@
 <div class="overflow-x-auto relative">
-    <fieldset class="fieldset"
-              {{-- Binding documents to Alpine, it will be re-used in the modal.
-                Note that it's necessary for modal to work properly --}}
+    <fieldset class="fieldset" id="section-doctor-specialities"
               x-data="{
                   specialities: $wire.entangle('form.doctor.specialities'),
+                  employeeType: $wire.get('form.employeeType'),
                   openModal: false,
                   modalSpeciality: new Speciality(),
                   newSpeciality: false,
                   item: 0,
                   specDict: $wire.dictionaries['SPECIALITY_TYPE'],
                   levelDict: $wire.dictionaries['SPECIALITY_LEVEL'],
-                  qualTypeDict: $wire.dictionaries['QUALIFICATION_TYPE']
+                  qualTypeDict: $wire.dictionaries['QUALIFICATION_TYPE'],
+
+                  isModalValid() {
+                      return this.modalSpeciality.speciality
+                          && this.modalSpeciality.attestationName
+                          && this.modalSpeciality.level
+                          && this.modalSpeciality.qualificationType
+                          && this.modalSpeciality.attestationDate
+                          && this.modalSpeciality.certificateNumber;
+                  },
               }"
     >
         <legend class="legend">
             <h2>{{ __('forms.specialities') }}</h2>
         </legend>
+
+        @error('form.doctor.specialities')
+        <p class="text-error -mt-2 mb-4">{{ $message }}</p>
+        @enderror
 
         <table class="table-input w-full">
             <thead class="thead-input">
@@ -147,7 +159,6 @@
                             <h3 class="modal-header" :id="$id('modal-title')">
                                 <span x-text="newSpeciality ? '{{ __('forms.addSpeciality') }}' : '{{ __('forms.edit') . ' ' . __('forms.speciality') }}'"></span>
                             </h3>
-
                             <form>
                                 <div class="form-row-modal">
                                     <div>
@@ -216,23 +227,11 @@
                                 </div>
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
                                 <div class="mt-6 flex justify-between space-x-2">
-                                    <button type="button"
-                                            @click="openModal = false"
-                                            class="button-minor"
-                                    >
-                                        {{ __('forms.cancel') }}
-                                    </button>
+                                    <button type="button" @click="openModal = false" class="button-minor">{{ __('forms.cancel') }}</button>
 
-                                    <button @click.prevent
-                                            @click="newSpeciality ? specialities.push(modalSpeciality) : specialities[item] = modalSpeciality; openModal = false"
+                                    <button @click.prevent="newSpeciality ? specialities.push(modalSpeciality) : specialities[item] = modalSpeciality; openModal = false"
                                             class="button-primary"
-                                            :disabled="!(modalSpeciality.speciality && modalSpeciality.speciality.trim().length > 0 &&
-                                                modalSpeciality.attestationName && modalSpeciality.attestationName.trim().length > 0 &&
-                                                modalSpeciality.level && modalSpeciality.level.trim().length > 0 &&
-                                                modalSpeciality.attestationDate && modalSpeciality.attestationDate.trim().length > 0 &&
-
-                                                modalSpeciality.qualificationType && modalSpeciality.qualificationType.trim().length > 0)"
-                                    >
+                                            :disabled="!isModalValid()">
                                         {{ __('forms.save') }}
                                     </button>
                                 </div>
@@ -241,7 +240,6 @@
                     </div>
                 </div>
             </template>
-
         </div>
     </fieldset>
 </div>
@@ -249,7 +247,7 @@
 <script>
     class Speciality {
         speciality = '';
-        specialityOfficio = '';
+        specialityOfficio = false; // Встановлено значення за замовчуванням
         level = '';
         attestationName = '';
         attestationDate = '';

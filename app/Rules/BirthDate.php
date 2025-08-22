@@ -38,7 +38,7 @@ class BirthDate implements ValidationRule
         $birthDate = Carbon::parse($value);
         $minDate = Carbon::createFromFormat('Y-m-d', self::MIN_DATE);
 
-        if ($birthDate->lte($minDate) && $birthDate->gte(Carbon::now())) {
+        if ($birthDate->lte($minDate) || $birthDate->gt(Carbon::now())) {
             $fail(__('validation.employee.party.birth_date_value'));
         }
 

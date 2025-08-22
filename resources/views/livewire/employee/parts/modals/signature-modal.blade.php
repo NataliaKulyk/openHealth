@@ -38,9 +38,14 @@
 
                         {{-- Key File --}}
                         <x-forms.form-group>
-                            <x-slot name="label"><x-forms.label class="default-label">{{ __('forms.key_container_upload') }} *</x-forms.label></x-slot>
+                            <x-slot name="label">
+                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="keyContainerUpload">
+                                    {{ __('forms.key_container_upload') }} *
+                                </label>
+                            </x-slot>
                             <x-slot name="input">
-                                <x-forms.input class="default-input" wire:model="form.keyContainerUpload" type="file" id="keyContainerUpload"/>
+                                <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_help" id="keyContainerUpload" type="file" wire:model="form.keyContainerUpload">
+{{--                                <div class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_help">{{ __('forms.key_file_description') ?? 'Upload your key file to sign the document.' }}</div>--}}
                                 <div wire:loading wire:target="form.keyContainerUpload" class="text-sm text-gray-500 mt-2">Uploading...</div>
                             </x-slot>
                             @error("form.keyContainerUpload")<x-forms.error>{{ $message }}</x-forms.error>@enderror
@@ -55,7 +60,7 @@
                     </div>
                 </div>
 
-                <div class="modal-footer">
+                <div class="mt-6 flex flex-row items-center gap-4 border-t border-gray-200 pt-6">
                     <button type="button" @click="showSignatureModal = false" class="button-minor">{{__('forms.cancel')}}</button>
                     <button wire:click="sign" type="button" class="button-primary" wire:loading.attr="disabled" wire:target="sign">
                         <span wire:loading.remove wire:target="sign">{{ __('forms.sign') }}</span>

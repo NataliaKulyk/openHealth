@@ -4,51 +4,47 @@ namespace App\Policies;
 
 use App\Models\Employee\Employee;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class EmployeePolicy
 {
-    /**
-     * Check if the employee belongs to the current legal entity.
-     * @param Employee $employee
-     * @return bool
-     */
-    private function belongsToEntity(Employee $employee): bool
+    public function viewAny(User $user): Response
     {
-        return (int)$employee->legal_entity_id === (int)legalEntity()->id;
+        return $user->can('employee:read')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.view_any_denied'));
     }
 
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    public function view(User $user, Employee $employee): Response
     {
-        return $user->hasPermissionTo('employee:read', 'ehealth');
+        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        return $user->can('employee:details')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.view_denied'));
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Employee $employee): bool
+    public function update(User $user, Employee $employee): Response
     {
-        return $this->belongsToEntity($employee)
-            && $user->hasPermissionTo('employee:details', 'ehealth');
+        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        return $user->can('employee:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.update_denied'));
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Employee $employee): bool
+    public function deactivate(User $user, Employee $employee): Response
     {
-        return $this->belongsToEntity($employee)
-            && $user->hasPermissionTo('employee:write', 'ehealth');
-    }
+        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
 
-    /**
-     * Determine whether the user can deactivate the model.
-     */
-    public function deactivate(User $user, Employee $employee): bool
-    {
-        return $this->belongsToEntity($employee)
-            && $user->hasPermissionTo('employee:deactivate', 'ehealth');
+        return $user->can('employee:deactivate')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.deactivate_denied'));
     }
 }

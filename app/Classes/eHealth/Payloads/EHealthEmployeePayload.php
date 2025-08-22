@@ -1,94 +1,72 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Classes\eHealth\Payloads;
 
-use App\Classes\eHealth\Api\EmployeeRequest as EHealthEmployeeRequest;
-use Illuminate\Support\Carbon;
+use App\Core\Arr;
+use RuntimeException;
 
 class EHealthEmployeePayload
 {
     /**
-     * Prepares, formats, and normalizes data for the eHealth employee request.
+     * Prepares the nested data structure for the eHealth API.
      *
-     * @param array $revisionData The raw data from the local revision.
-     * @return array The normalized payload ready for signing.
+     * @param array $nestedData The nested data from the Revision.
+     * @return array The flattened payload for eHealth, correctly wrapped.
+     * @throws RuntimeException If essential data is missing.
      */
-    public static function prepare(array $revisionData): array
+    public static function prepare(array $nestedData): array
     {
-        $formattedPayload = self::format($revisionData);
-
-        return schemaService()
-            ->setDataSchema($formattedPayload, app(EHealthEmployeeRequest::class))
-            ->requestSchemaNormalize()
-            ->getNormalizedData();
-    }
-
-    /**
-     * Formats data from a revision into the structure required by the eHealth API.
-     */
-    public static function format(array $revisionData): array
-    {
-        $employeeData = $revisionData['employee_request_data'];
-        $partyData = $revisionData['party'];
-        $documentsData = $revisionData['documents'];
-        $phonesData = $revisionData['phones'];
-        $doctorData = $revisionData['doctor'] ?? [];
-
-        $apiEmployeeRequest = [
-            'position' => $employeeData['position'] ?? null,
-            'status' => 'NEW',
-            'employee_type' => $employeeData['employee_type'] ?? null,
-            'legal_entity_id' => (string) legalEntity()->id,
-            'start_date' => isset($employeeData['start_date']) ? Carbon::parse($employeeData['start_date'])->format('Y-m-d') : null,
+        $payload = [
+            'position' => Arr::get($nestedData, 'employee_request_data.position'),
+            'start_date' => Arr::get($nestedData, 'employee_request_data.start_date'),
+            'end_date' => Arr::get($nestedData, 'employee_request_data.end_date'),
+            'employee_type' => Arr::get($nestedData, 'employee_request_data.employee_type'),
+            'division_id' => Arr::get($nestedData, 'employee_request_data.division_id'),
+            'legal_entity_id' => Arr::get($nestedData, 'employee_request_data.legal_entity_id'),
+            'status' => 'NEW', // Added this field to satisfy API validation
+            'party' => [
+                'first_name' => Arr::get($nestedData, 'party.first_name'),
+                'last_name' => Arr::get($nestedData, 'party.last_name'),
+                'second_name' => Arr::get($nestedData, 'party.second_name'),
+                'birth_date' => Arr::get($nestedData, 'party.birth_date'),
+                'gender' => Arr::get($nestedData, 'party.gender'),
+                'no_tax_id' => (bool) Arr::get($nestedData, 'party.no_tax_id'),
+                'tax_id' => Arr::get($nestedData, 'party.tax_id'),
+                'email' => Arr::get($nestedData, 'party.email'),
+                'documents' => Arr::get($nestedData, 'documents'),
+                'phones' => Arr::get($nestedData, 'phones'),
+                'working_experience' => Arr::get($nestedData, 'party.working_experience'),
+                'about_myself' => Arr::get($nestedData, 'party.about_myself'),
+            ],
         ];
 
-        if (! empty($employeeData['division_id'])) {
-            $apiEmployeeRequest['division_id'] = (string) $employeeData['division_id'];
+        // Add the 'doctor' object only if the employee type is 'DOCTOR'
+        if (Arr::get($nestedData, 'employee_request_data.employee_type') === 'DOCTOR') {
+            $doctorData = [
+                'educations' => Arr::get($nestedData, 'doctor.educations'),
+                'qualifications' => Arr::get($nestedData, 'doctor.qualifications'),
+                'specialities' => Arr::get($nestedData, 'doctor.specialities'),
+            ];
+
+            $scienceDegrees = Arr::get($nestedData, 'doctor.scienceDegrees', []);
+            if (!empty($scienceDegrees)) {
+                $doctorData['science_degree'] = Arr::first($scienceDegrees);
+            }
+
+            $payload['doctor'] = $doctorData;
         }
 
-        if (! empty($employeeData['end_date'])) {
-            $apiEmployeeRequest['end_date'] = Carbon::parse($employeeData['end_date'])->format('Y-m-d');
+        // Clean up empty fields
+        $payload = array_filter($payload, fn($value) => !is_null($value) && $value !== '');
+        if (isset($payload['party'])) {
+            $payload['party'] = array_filter($payload['party'], fn($value) => !is_null($value) && $value !== '');
+        }
+        if (isset($payload['doctor'])) {
+            $payload['doctor'] = array_filter($payload['doctor'], fn($value) => !is_null($value) && $value !== '');
         }
 
-        $apiEmployeeRequest['party'] = [
-            'first_name' => $partyData['first_name'] ?? null,
-            'last_name' => $partyData['last_name'] ?? null,
-            'second_name' => $partyData['second_name'] ?? null,
-            'birth_date' => isset($partyData['birth_date']) ? Carbon::parse($partyData['birth_date'])->format('Y-m-d') : null,
-            'gender' => $partyData['gender'] ?? null,
-            'no_tax_id' => (bool) ($partyData['no_tax_id'] ?? false),
-            'tax_id' => $partyData['tax_id'] ?? null,
-            'email' => $partyData['email'] ?? null,
-            'working_experience' => isset($partyData['working_experience']) ? (int) $partyData['working_experience'] : null,
-            'about_myself' => $partyData['about_myself'] ?? null,
-            'phones' => array_map(fn ($phone) => ['type' => $phone['type'], 'number' => $phone['number']], $phonesData),
-            'documents' => array_map(fn ($doc) => [
-                'type' => $doc['type'],
-                'number' => $doc['number'],
-                'issued_by' => $doc['issued_by'] ?? null,
-                'issued_at' => ! empty($doc['issued_at']) ? Carbon::parse($doc['issued_at'])->format('Y-m-d') : null,
-            ], $documentsData),
-        ];
-
-        if (($employeeData['employee_type'] ?? null) === 'DOCTOR' && ! empty($doctorData)) {
-            $doctorPayload = [];
-            if (! empty($doctorData['educations'])) {
-                $doctorPayload['educations'] = $doctorData['educations'];
-            }
-            if (! empty($doctorData['qualifications'])) {
-                $doctorPayload['qualifications'] = $doctorData['qualifications'];
-            }
-            if (! empty($doctorData['specialities'])) {
-                $doctorPayload['specialities'] = $doctorData['specialities'];
-            }
-            if (! empty($doctorData['science_degrees'])) {
-                $doctorPayload['science_degree'] = $doctorData['science_degrees'][0];
-            }
-            if (! empty($doctorPayload)) {
-                $apiEmployeeRequest['doctor'] = $doctorPayload;
-            }
-        }
-
-        return ['employee_request' => $apiEmployeeRequest];
+        return ['employee_request' => $payload];
     }
 }

@@ -38,17 +38,13 @@ class EmployeeIndex extends EmployeeComponent
     ];
 
     // --- State for Modals ---
-    public bool $showDismissModal = false;
-    public ?int $employeeToDismissId = null;
-    public ?string $employeeToDismissName = null;
+    public bool $showDeactivateModal    = false;
+    public ?int $employeeToDeactivateId   = null;
+    public ?string $employeeToDeactivateName = null;
 
     public bool $showDeleteModal = false;
     public ?int $requestToDeleteId = null;
     public ?string $deleteRequestName = null;
-    public string $deleteRequestText = '';
-
-    public bool $canViewEmployeeDetails, $canUpdateEmployee, $canDismissEmployee;
-    public bool $canViewEmployeeRequest, $canUpdateEmployeeRequest, $canDeleteEmployeeRequest, $canCreateRequest;
 
     private LegalEntity $legalEntity;
 
@@ -60,17 +56,6 @@ class EmployeeIndex extends EmployeeComponent
     {
         $this->legalEntity = legalEntity();
         $this->loadDictionaries();
-
-        $user = auth()->user();
-        $userPermissions = $user?->getPermissionsViaRoles()->pluck('name');
-
-        $this->canViewEmployeeDetails = $userPermissions->contains('employee:details');
-        $this->canUpdateEmployee = $userPermissions->contains('employee:write');
-        $this->canDismissEmployee = $userPermissions->contains('employee:deactivate');
-        $this->canViewEmployeeRequest = $userPermissions->contains('employee_request:read');
-        $this->canUpdateEmployeeRequest = $userPermissions->contains('employee_request:write');
-        $this->canDeleteEmployeeRequest = $userPermissions->contains('employee_request:write');
-        $this->canCreateRequest = $userPermissions->contains('employee_request:write');
     }
 
 
@@ -102,11 +87,13 @@ class EmployeeIndex extends EmployeeComponent
         // Apply Status Filter
         if (!empty($this->status)) {
             $query->where(function ($q) {
-                $employeeStatuses = array_intersect($this->status, ['APPROVED', 'DISMISSED']);
+                // Use the Status enum for the filter values
+                $employeeStatuses = array_intersect($this->status, [Status::APPROVED->value, Status::DISMISSED->value]);
                 if (!empty($employeeStatuses)) {
                     $q->orWhereHas('employees', fn($sub) => $sub->whereIn('status', $employeeStatuses));
                 }
-                if (in_array('NEW', $this->status, true)) {
+                // Use the Status enum for the 'NEW' case
+                if (in_array(Status::NEW->value, $this->status, true)) {
                     $q->orWhereHas('employeeRequests');
                 }
             });
@@ -154,13 +141,21 @@ class EmployeeIndex extends EmployeeComponent
                        'employeeRequests' => fn($q) => $q->where('legal_entity_id', $legalEntityId)->with('division'),
                    ])
             ->get()
-            ->sortBy(function ($party) use ($legalEntityId) {
+            ->sortBy(function ($party) {
+                // Use the Status enum for the sorting logic as well
+                $hasActiveEmployees = $party->employees->where('status', Status::APPROVED->value)->isNotEmpty();
                 $hasRequests = $party->employeeRequests->isNotEmpty();
-                $hasActiveEmployees = $party->employees->where('status', 'APPROVED')->isNotEmpty();
 
-                if ($hasRequests) return 1; // Drafts first
-                if ($hasActiveEmployees) return 2; // Active employees second
-                return 3; // Dismissed employees last
+                // Prioritize Active Employees first
+                if ($hasActiveEmployees) {
+                    return 1;
+                }
+                // Then, drafts (requests)
+                if ($hasRequests) {
+                    return 2;
+                }
+                // Finally, dismissed employees
+                return 3;
             });
 
         // --- Step 4: Return a new paginator instance with the sorted items. ---
@@ -174,16 +169,16 @@ class EmployeeIndex extends EmployeeComponent
     }
 
     /**
-     * Prepares and shows the dismissal modal.
+     * Prepares and shows the deactivation modal.
      */
-    public function showModalDismissed(int $id): void
+    public function showModalDeactivate(int $id): void
     {
         $employee = Employee::with('party')->find($id);
         if (!$employee) return;
 
-        $this->employeeToDismissName = $employee->party->fullName ?? 'співробітника';
-        $this->employeeToDismissId = $id;
-        $this->showDismissModal = true;
+        $this->employeeToDeactivateName = $employee->party->fullName ?? __('employees.modals.deactivate.default_name');
+        $this->employeeToDeactivateId   = $id;
+        $this->showDeactivateModal    = true;
     }
 
     /**
@@ -191,7 +186,7 @@ class EmployeeIndex extends EmployeeComponent
      */
     public function closeModal(): void
     {
-        $this->showDismissModal = false;
+        $this->showDeactivateModal = false;
         $this->reset(['employeeToDismissId', 'employeeToDismissName']);
     }
 
@@ -203,11 +198,11 @@ class EmployeeIndex extends EmployeeComponent
     }
 
     /**
-     * Performs the dismissal action.
+     * Performs the deactivation action.
      */
     public function deactivate(): void
     {
-        $employee = Employee::find($this->employeeToDismissId);
+        $employee = Employee::find($this->employeeToDeactivateId);
         if (!$employee) {
             $this->closeModal();
             return;
@@ -237,34 +232,28 @@ class EmployeeIndex extends EmployeeComponent
     public function sync(): void
     {
         try {
-            // 1. Get all employee IDs from the remote E-Health API.
             $eHealthEmployees = $this->getRemoteEmployees();
             if (empty($eHealthEmployees)) {
-                $this->dispatch('flashMessage', ['message' => 'Не знайдено співробітників в E-Health або сталася помилка API.', 'type' => 'info']);
+                $this->dispatch('flashMessage', ['message' => __('employees.sync.no_employees_found'), 'type' => 'info']);
                 return;
             }
 
-            // 2. Get all existing employee UUIDs from our local database in a SINGLE query.
             $localEmployeeUuids = $this->getLocalEmployeeUuids();
-
-            // 3. Determine which employees are new by comparing the two lists.
             $newEmployeeIds = array_diff(array_column($eHealthEmployees, 'id'), $localEmployeeUuids);
 
             if (empty($newEmployeeIds)) {
-                $this->dispatch('flashMessage', ['message' => 'Синхронізацію завершено. Нових співробітників не знайдено.', 'type' => 'success']);
+                $this->dispatch('flashMessage', ['message' => __('employees.sync.completed_no_new'), 'type' => 'success']);
                 return;
             }
 
-            // 4. Create the new employees.
             $newEmployeesAdded = $this->createNewEmployees($newEmployeeIds);
 
-            // 5. Dispatch the final success message.
-            $message = "Синхронізацію завершено. Додано {$newEmployeesAdded} нових співробітників.";
+            $message = __('employees.sync.completed_with_new', ['count' => $newEmployeesAdded]);
             $this->dispatch('flashMessage', ['message' => $message, 'type' => 'success']);
 
         } catch (\Exception $e) {
             Log::error('Employee sync failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => 'Помилка синхронізації']), 'type' => 'error']);
+            $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => __('employees.sync.error')]), 'type' => 'error']);
         }
     }
 
@@ -346,8 +335,7 @@ class EmployeeIndex extends EmployeeComponent
             return;
         }
         $this->requestToDeleteId = $id;
-        $this->deleteRequestName = $request->party->fullName ?? 'співробітника';
-        $this->deleteRequestText = 'Ви впевнені, що хочете видалити чернетку?';
+        $this->deleteRequestName = $request->party->fullName ?? __('employees.modals.delete_draft.default_name');
         $this->showDeleteModal = true;
     }
 
@@ -356,7 +344,7 @@ class EmployeeIndex extends EmployeeComponent
         $request = EmployeeRequest::find($this->requestToDeleteId);
         if ($request && !$request->uuid) {
             $request->delete();
-            $this->dispatch('flashMessage', ['message' => 'Чернетку успішно видалено.', 'type' => 'success']);
+            $this->dispatch('flashMessage', ['message' => __('employees.draft.delete_success'), 'type' => 'success']);
         }
         $this->showDeleteModal = false;
         $this->requestToDeleteId = null;

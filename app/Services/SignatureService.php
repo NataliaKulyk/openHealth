@@ -9,6 +9,7 @@ use App\Classes\Cipher\Exceptions\ApiException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 class SignatureService
 {
@@ -20,11 +21,8 @@ class SignatureService
     }
 
     /**
-     * Sends data for signing.
-     * On success, returns the signed content string.
-     * On failure, returns the error message string.
-     *
-     * @return string The signed content or an error message.
+     * Sends data for signing using Cipher API.
+     * The file processing logic is now handled inside this service.
      */
     public function signData(
         array $dataToSign,
@@ -32,7 +30,7 @@ class SignatureService
         string $knedp,
         ?UploadedFile $keyFile,
         string $taxId
-    ): string {
+    ): string|array {
         try {
             $base64FileContent = $this->getBase64KepFileContent($keyFile);
 
@@ -45,21 +43,19 @@ class SignatureService
             );
 
             if (empty($signedContent) || !is_string($signedContent)) {
-                return __('employees.errors.signature_failed_unexpected');
+                throw new RuntimeException(__('employees.errors.signature_failed_unexpected'));
             }
 
             return $signedContent;
 
         } catch (ApiException $e) {
-
             $errors = $e->getErrors();
+            $errorMessage = collect($errors)->flatten()->first() ?? __('forms.invalid_kep_password');
 
-            return collect($errors)->flatten()->first() ?? __('forms.invalid_kep_password_or_file');
-
+            throw new RuntimeException($errorMessage);
         } catch (\Exception $e) {
-            Log::error('Unexpected error in SignatureService: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-
-            return __('api.cipher.unexpected_error_short');
+            Log::error('An unexpected error occurred in SignatureService: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            throw new RuntimeException(__('employees.errors.signature_failed_unexpected'));
         }
     }
 

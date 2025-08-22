@@ -47,13 +47,15 @@
                         </button>
                     </div>
 
-                    <div class="flex items-center space-x-2 pt-5 ml-auto transform translate-x-[55px]">
+                    @can('create', \App\Models\Employee\EmployeeRequest::class)
+                        <div class="ml-auto flex items-center gap-2 self-start -mt-14 translate-x-7">
                         <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
-                           class="button-primary">{{ __('forms.new_employee') }}</a>
-                        <button wire:click="syncEmployees" type="button" class="button-sync">
-                            {{ __('forms.synchronise_with_eHealth') }}
-                        </button>
-                    </div>
+                               class="button-primary">{{ __('forms.new_employee') }}</a>
+                            <button wire:click="sync" type="button" class="button-sync">
+                                {{ __('forms.synchronise_with_eHealth') }}
+                            </button>
+                        </div>
+                    @endcan
                 </div>
 
                 <div x-show="showFilter" x-transition class="pt-4 mt-4">
@@ -234,13 +236,15 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                               class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                    <span
-                                        class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
-                            </a>
-                        </div>
+                        @can('create', \App\Models\Employee\EmployeeRequest::class)
+                            <div class="flex items-center space-x-3">
+                                <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                   class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                        <span
+                                            class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
+                                </a>
+                            </div>
+                        @endcan
                     </div>
                     <div class="flow-root mt-4">
                         <div class="max-w-screen-xl">
@@ -269,26 +273,33 @@
                                         <td class="td-input break-words whitespace-normal align-top">{{ $positionToShow->division->name ?? 'N/A' }}</td>
 
                                         <td class="td-input break-words whitespace-normal align-top">
-                                            @if($positionToShow instanceof \App\Models\Employee\Employee)
+                                            @php
+                                                // First, check if the record is an Employee model. This is the highest priority.
+                                                $isEmployee = $positionToShow instanceof \App\Models\Employee\Employee;
+                                            @endphp
+
+                                            @if($isEmployee)
+                                                {{-- For a standard Employee record, show its actual status --}}
                                                 @if($positionToShow->status?->value === 'APPROVED')
-                                                    <span class="badge-green">Активний</span>
+                                                    <span class="badge-green">{{__('forms.status.active')}}</span>
                                                 @else
-                                                    <span class="badge-red">Звільнений</span>
+                                                    <span class="badge-red">{{__('forms.status.dismissed')}}</span>
                                                 @endif
                                             @else
-                                                <span class="badge-red">Чернетка</span>
+                                                {{-- If it's not an Employee, it must be an EmployeeRequest. Now check if it's a draft. --}}
+                                                @if(is_null($positionToShow->applied_at))
+                                                    {{-- applied_at is null, so it's a draft/new request. --}}
+                                                    <span class="badge-red">{{__('forms.status.draft')}}</span>
+                                                @else
+                                                    {{-- applied_at has a value, meaning the request has been submitted and is active/processed. --}}
+                                                    <span class="badge-green">{{__('forms.status.active')}}</span>
+                                                @endif
                                             @endif
                                         </td>
 
                                         <td class="td-input text-center">
                                             @include('livewire.employee.parts.actions-dropdown', [
-                                                'position' => $positionToShow,
-                                                'canViewEmployeeDetails' => $canViewEmployeeDetails,
-                                                'canUpdateEmployee' => $canUpdateEmployee,
-                                                'canDismissEmployee' => $canDismissEmployee,
-                                                'canViewEmployeeRequest' => $canViewEmployeeRequest,
-                                                'canUpdateEmployeeRequest' => $canUpdateEmployeeRequest,
-                                                'canDeleteEmployeeRequest' => $canDeleteEmployeeRequest,
+                                                'position' => $positionToShow
                                             ])
                                         </td>
                                     </tr>

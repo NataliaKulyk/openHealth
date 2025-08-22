@@ -1,5 +1,5 @@
 <div class="overflow-x-auto relative">
-    <fieldset class="fieldset"
+    <fieldset class="fieldset" id="section-documents"
               x-data="{
                   documents: $wire.entangle('form.documents'),
                   openModal: false,
@@ -12,6 +12,10 @@
         <legend class="legend">
             <h2>{{__('forms.document')}}</h2>
         </legend>
+
+        @error('form.documents')
+        <p class="text-error -mt-2 mb-4">{{ $message }}</p>
+        @enderror
 
         <table class="table-input w-inherit">
             <thead class="thead-input">
@@ -143,8 +147,6 @@
                                         <label for="documentNumber" class="label-modal">{{__('forms.document_number')}}<span class="text-red-600"> *</span></label>
                                         <input x-model="modalDocument.number" type="text" name="documentNumber"
                                                id="documentNumber" class="input-modal" required>
-                                        <p class="text-error text-xs"
-                                           x-show="!modalDocument.number.trim().length > 0">{{__('forms.field_empty')}}</p>
                                     </div>
 
                                     <div>

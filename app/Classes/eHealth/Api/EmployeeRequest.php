@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class EmployeeRequest extends EHealthRequest
@@ -23,71 +21,24 @@ class EmployeeRequest extends EHealthRequest
      * This is the primary action method for this class.
      *
      * @param string $signedContent The base64 encoded signed string.
+     *
      * @return array The response data from eHealth on success.
-     * @throws RuntimeException|ConnectionException
+     * @throws EHealthValidationException|ConnectionException|RuntimeException
      */
     public function create(string $signedContent): array
     {
-        $requestBody = [
-            'signed_content' => $signedContent,
-            'signed_content_encoding' => 'base64',
-        ];
+        $requestBody = [ 'signed_content' => $signedContent, 'signed_content_encoding' => 'base64' ];
 
         $response = $this->post(self::ENDPOINT, $requestBody);
 
-        if (! $response->successful()) {
-            $errorBody = $response->json();
-            $errorMessage = 'eHealth API Error (422): '.($errorBody['error']['message'] ?? $response->reason());
-
-            Log::channel('e_health_errors')->error('EHealth Create EmployeeRequest Error', [
-                'status' => $response->status(),
-                'body' => $errorBody,
-            ]);
-
-            throw new RuntimeException($errorMessage);
+        if ($response->status() === 422) {
+            throw new EHealthValidationException($response->json('error.invalid'));
         }
 
-        return $response->json('data', []);
-    }
-
-    /**
-     * Validates the data array received from a successful eHealth response.
-     *
-     * @param array $responseData The data array from the eHealth response.
-     * @return array The validated data, ready for local assignment.
-     * @throws ValidationException
-     */
-    public function validateCreateResponseFromArray(array $responseData): array
-    {
-        $mappedData = self::replaceEHealthPropNames($responseData);
-        $validator = Validator::make($mappedData, [
-            'uuid' => 'required|uuid',
-        ]);
-
-        if ($validator->fails()) {
-            Log::channel('e_health_errors')->error('eHealth EmployeeRequest Response Validation failed', $validator->errors()->all());
-            throw new ValidationException($validator);
-        }
-
-        return $validator->validated();
-    }
-
-    /**
-     * Replaces property names from the eHealth response (e.g., id -> uuid)
-     * to match the local database schema.
-     */
-    public static function replaceEHealthPropNames(array $properties): array
-    {
-        $replaced = [];
-        foreach ($properties as $name => $value) {
-            $replaced[match ($name) {
-                'id' => 'uuid',
-                'legal_entity_id' => 'legal_entity_uuid',
-                default => $name,
-            }] = $value;
-        }
-
-        return $replaced;
+        return [
+            'id' => $response->json('data.id'),
+            'ehealth_response' => $response->json(),
+        ];
     }
 
     public function schemaRequest(): array
@@ -143,7 +94,7 @@ class EmployeeRequest extends EHealthRequest
                 'institution_name' => ['type' => 'string'],
                 'speciality' => ['type' => 'string'],
                 'issued_date' => ['type' => 'string', 'format' => 'date'],
-                'certificate_number' => ['type' => 'string', 'format' => 'date'],
+                'certificate_number' => ['type' => 'string'],
             ],
             'required' => ['type', 'institution_name', 'speciality'],
             'additionalProperties' => false,
@@ -216,7 +167,7 @@ class EmployeeRequest extends EHealthRequest
                 'speciality' => $specialityDefinition,
                 'science_degree' => $scienceDegreeDefinition,
                 'party' => $partyDefinition,
-                ],
+            ],
             'type' => 'object',
             'properties' => [
                 'employee_request' => [

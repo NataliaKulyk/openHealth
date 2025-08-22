@@ -170,6 +170,7 @@ return [
     'add_employee' => 'Додати співробітника',
     'edit_employee' => 'Зміна даних співробітника',
     'view_employee' => 'Перегляд данних співробітника',
+    'view' => 'Переглянyти',
     'employee_requests' => 'Запити співробітників',
     'edit_employee_request' => 'Редагування запиту співробітника',
     'view_employee_request' => 'Перегляд запиту співробітника',
@@ -227,6 +228,7 @@ return [
 
     // Doctor Specific
     'education' => 'Освіта',
+    'educations' => 'Освіти',
     'add_education' => 'Додати освіту',
     'education_type' => 'Тип освіти',
     'add_education_type' => 'Додати тип освіти',
@@ -347,6 +349,8 @@ return [
     'externalContractorsNumber' => 'Номер договору з субпідрядником',
     'externalContractorsIssuedAt' => 'Дата укладання контракту з субпідрядником',
     'externalContractorsExpiresAt' => 'Дата закінчення договору з субпідрядником',
+    'ehealth_error_is_missing' => 'відсутнє',
+    'ehealth_error_additional_properties' => 'містить недійсні дані',
     'statusReason' => 'Причина зміни статусу',
     'insertedAtContract' => 'Дата підписання договору',
     'numberContract' => 'Номер договору',
@@ -383,10 +387,17 @@ return [
     'get_link' => 'Отримати посилання',
     'return_to_login' => 'Повернутись на сторінку входу',
     'secure_page_description' => 'Здійснюється вхід на захищену сторінку. Будь ласка, підтвердіть пароль',
+    'key_file_description' => 'КЕП',
     'send_for_approval' => 'Відправити на затвердження',
 
     // Notifications & Errors
     'no_actions_available' => 'У вас немає дозволених дій для цього розділу.',
+    'validation_fix_fields' => 'Будь ласка, виправте помилки в полях: :fields.',
+    'ehealth_validation_error_header' => 'eHealth відхилив запит через невірні дані. Будь ласка, виправте:',
+    'invalid_kep_password' => 'Невірний пароль до ключа або ключ пошкоджено. Будь ласка, перевірте дані та спробуйте ще раз.',
+    'section_contains_errors' => 'Будь ласка, перевірте помилки в цьому розділі.',
+    'section_not_filled' => 'Не заповнений блок ":section"',
+    'validation_error_unknown' => 'Виникла помилка валідації. Будь ласка, перевірте всі поля форми.',
     'signature_validation_error' => 'Помилка під час підписання',
     'validation_failed_check_form' => 'Помилка при заповнені форми',
     'errors' => [

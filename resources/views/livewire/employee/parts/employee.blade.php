@@ -77,7 +77,7 @@
             <div class="form-group group relative z-0">
                 <input
                     wire:model="form.party.taxId"
-                    required
+                required
                     id="taxId"
                     type="text"
                     maxlength="10"
@@ -85,10 +85,9 @@
                     class="input peer text-gray-500 @error('form.party.taxId') input-error @enderror"
                     :disabled="noTaxId || {{ $isPersonalDataLocked ? 'true' : 'false' }}"
                 />
-                <label for="taxId" class="label z-10"
-                       x-text="noTaxId ? '{{ __('forms.document_no_tax_id') }}' : '{{ __('forms.tax_id') }}'"></label>
-                @error('form.party.taxId') <p id="partyTaxIdErrorHelp" class="text-error">{{ $message }}</p> @enderror
+
                 <label for="taxId" class="label z-10" x-text="noTaxId ? '{{ __('forms.document_no_tax_id') }}' : '{{ __('forms.tax_id') }}'"></label>
+                @error('form.party.taxId') <p class="text-error">{{ $message }}</p> @enderror
             </div>
             <div class="form-group group">
                 <div class="mt-3">
@@ -160,7 +159,7 @@
 
         <div class="form-row-3">
             <div class="form-group">
-                <input wire:model="form.party.email" type="email" id="email" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" placeholder=" " required {{ $isPersonalDataLocked ? 'disabled' : '' }} />
+                <input wire:model="form.party.email" type="email" id="email" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400"/>
                 <label for="email" class="label">{{__('forms.email')}}</label>
                 @error('form.party.email') <p class="text-error">{{$message}}</p> @enderror
             </div>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
+use App\Exceptions\EHealth\EHealthResponseException;
 use Closure;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
@@ -42,6 +43,14 @@ abstract class EHealthRequest extends PendingRequest
         $this->baseUrl(
             config('ehealth.api.domain')
         );
+    }
+
+    public function send(string $method, string $url, array $options = []): void
+    {
+        $response = parent::send($method, $url, $options);
+        if (!$response->successful()) {
+            throw new EHealthResponseException($response);
+        }
     }
 
     /**

@@ -4,78 +4,62 @@ namespace App\Policies;
 
 use App\Models\Employee\EmployeeRequest;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class EmployeeRequestPolicy
 {
-    /**
-     * Check if the user has the read permission.
-     */
-    private function canRead(User $user): bool
+    public function viewAny(User $user): Response
     {
-        return $user->hasPermissionTo('employee_request:read', 'ehealth');
+        return $user->can('employee_request:read')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.view_any_denied'));
     }
 
-    /**
-     * Check if the user has the write permission.
-     */
-    private function canWrite(User $user): bool
+    public function view(User $user, EmployeeRequest $employeeRequest): Response
     {
-        return $user->hasPermissionTo('employee_request:write', 'ehealth');
+        if ((int)$employeeRequest->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        return $user->can('employee_request:details')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.view_denied'));
     }
 
-    /**
-     * Check if the request belongs to the current legal entity.
-     */
-    private function belongsToEntity(EmployeeRequest $employeeRequest): bool
+    public function create(User $user): Response
     {
-        return (int)$employeeRequest->legal_entity_id === (int)legalEntity()->id;
+        return $user->can('employee_request:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.create_denied'));
     }
 
-    /**
-     * Check if the request is editable (i.e., not yet sent to e-Health).
-     */
-    private function isEditable(EmployeeRequest $employeeRequest): bool
+    public function update(User $user, EmployeeRequest $employeeRequest): Response
     {
-        return $this->belongsToEntity($employeeRequest) && is_null($employeeRequest->uuid);
+        if ((int)$employeeRequest->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        if (!is_null($employeeRequest->uuid)) {
+            return Response::deny(__('employees.policy.req.processed_no_edit'));
+        }
+
+        return $user->can('employee_request:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.update_denied'));
     }
 
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    public function delete(User $user, EmployeeRequest $employeeRequest): Response
     {
-        return $this->canRead($user);
-    }
+        if ((int)$employeeRequest->legal_entity_id !== (int)legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, EmployeeRequest $employeeRequest): bool
-    {
-        return $this->belongsToEntity($employeeRequest) && $this->canRead($user);
-    }
+        if (!is_null($employeeRequest->uuid)) {
+            return Response::deny(__('employees.policy.req.processed_no_delete'));
+        }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
-    {
-        return $this->canWrite($user);
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, EmployeeRequest $employeeRequest): bool
-    {
-        return $this->isEditable($employeeRequest) && $this->canWrite($user);
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, EmployeeRequest $employeeRequest): bool
-    {
-        return $this->isEditable($employeeRequest) && $this->canWrite($user);
+        return $user->can('employee_request:write')
+            ? Response::allow()
+            : Response::deny(__('employees.policy.req.delete_denied'));
     }
 }
