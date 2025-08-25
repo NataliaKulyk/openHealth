@@ -2,16 +2,46 @@
 
 namespace App\Exceptions\EHealth;
 
+use App\Core\Arr;
+
 class EHealthValidationException extends EHealthException
 {
     public function __construct(public readonly array $details)
     {
-        parent::__construct('eHealth API returned a validation error.');
+        parent::__construct('eHealth API returned a validation error. ' . $this->getErrorMessage());
     }
 
-    public function getDetails(): array
+    /**
+     * Retrieve specific details from the eHealth validation error response.
+     *
+     * If a type is provided and equals 'error', returns only the 'error' key from the details array.
+     * Otherwise, returns the entire details array.
+     *
+     * @param string|null $type The type of details to retrieve ('error' or null for all details)
+     *
+     * @return array|null The requested details or null if not found
+     */
+    public function getDetails(?string $type = null): ?array
     {
-        return $this->details;
+        return match($type) {
+            'error' => Arr::get($this->details, 'error'),
+            default => $this->details
+        };
+    }
+
+    /**
+     * Retrieves the raw error message from the eHealth validation error details.
+     *
+     * This method extracts the 'error' key from the details array and returns it as a JSON-encoded string.
+     * If the error details are not available, it returns 'Unknown error'.
+     *
+     * @return string
+     */
+    public function getErrorMessage(): string
+    {
+        $error = $this->getDetails('error');
+
+        return json_encode($error) ?? 'Unknown error';
     }
 
     /**

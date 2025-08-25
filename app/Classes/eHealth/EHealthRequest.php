@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
-use App\Exceptions\EHealth\EHealthResponseException;
 use Closure;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\HigherOrderTapProxy;
+use Illuminate\Http\Client\Response;
 
 abstract class EHealthRequest extends PendingRequest
 {
@@ -45,12 +47,41 @@ abstract class EHealthRequest extends PendingRequest
         );
     }
 
-    public function send(string $method, string $url, array $options = []): void
+    /**
+     * Sends an HTTP request to the eHealth API and handles the response.
+     *
+     * This method overrides the parent send method to provide custom error handling:
+     * - Returns the response if it is not an EHealthResponse instance.
+     * - Returns the response if it is successful.
+     * - Throws EHealthValidationException if the response status is 422 (validation error).
+     * - Throws EHealthResponseException for all other unsuccessful responses.
+     *
+     * @param string $method The HTTP method (e.g., 'GET', 'POST', etc.).
+     * @param string $url The endpoint URL.
+     * @param array $options Additional request options (query, body, headers, etc.).
+     *
+     * @return EHealthResponse|Response
+     *
+     * @throws EHealthValidationException
+     * @throws EHealthResponseException
+     */
+    public function send(string $method, string $url, array $options = []): EHealthResponse|Response
     {
         $response = parent::send($method, $url, $options);
-        if (!$response->successful()) {
-            throw new EHealthResponseException($response);
+
+        if (!is_a($response, EHealthResponse::class)) {
+            return $response;
         }
+
+        if ($response->successful()) {
+            return $response;
+        }
+
+        if ($response->status() === 422) {
+            throw new EHealthValidationException($response->json());
+        }
+
+        throw new EHealthResponseException($response);
     }
 
     /**
