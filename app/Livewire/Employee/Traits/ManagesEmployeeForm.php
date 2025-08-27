@@ -384,8 +384,7 @@ trait ManagesEmployeeForm
             $this->form->password,
             $this->form->knedp,
             $this->form->keyContainerUpload,
-            Auth::user()->employees->first()->party->tax_id,
-            legalEntity()?->getAttribute('edrpou')
+            Auth::user()->employees->first()->party->tax_id
         );
     }
 

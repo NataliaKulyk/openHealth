@@ -29,8 +29,7 @@ class SignatureService
         string $password,
         string $knedp,
         ?UploadedFile $keyFile,
-        string $taxId,
-        string $edrpou
+        string $taxId
     ): string|array {
 
         try {
@@ -41,8 +40,7 @@ class SignatureService
                 $password,
                 $base64FileContent,
                 $knedp,
-                $taxId,
-                $edrpou
+                $taxId
             );
 
             if (empty($signedContent) || !is_string($signedContent)) {
