@@ -19,12 +19,12 @@
                     </label>
                 </x-slot>
                 <x-slot name="input">
-                    <div class="form-group group w-full relative">
+                    <div class="form-group group w-full relative mt-3" >
                         <input type="text"
                                id="division_search"
                                placeholder=" "
-                               class="input peer"
-                               {{--wire:model.live.debounce.300ms="search"--}}
+                               class="input peer pb-1"
+                               wire:model.live.debounce.300ms="search"
                                autocomplete="off" />
                         <label for="division_search" class="label">Назва</label>
                     </div>
@@ -48,7 +48,7 @@
             <table class="table-input w-full table-fixed">
             <thead class="thead-input">
                 <tr>
-                    <th scope="col" class="th-input">ID E-health</th>
+                    {{--<th scope="col" class="th-input">ID E-health</th>--}}
                     <th scope="col" class="th-input">Назва</th>
                     <th scope="col" class="th-input">Тип</th>
                     <th scope="col" class="th-input">Телефон</th>
@@ -60,9 +60,9 @@
                 <tbody>
                 @forelse ($divisions as $division)
                     <tr x-data="{ divisionTypes: @entangle('dictionaries.DIVISION_TYPE') }">
-                        <td class="td-input break-words whitespace-normal align-top">
+                        {{--<td class="td-input break-words whitespace-normal align-top">
                             <p>{{ $division->uuid ?? '' }}</p>
-                        </td>
+                        </td>--}}
                         <td class="td-input break-words whitespace-normal align-top">
                             <p>{{ $division->name ?? '' }}</p>
                         </td>
@@ -167,8 +167,12 @@
                                             <a
                                                 wire:click="activate({{ $division }}); open = !open"
                                                 href="#"
-                                                class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
+                                                class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 hover:bg-green-50"
                                             >
+                                                <svg class="w-5 h-5 text-green-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                </svg>
+
                                                 {{ __('forms.activate') }}
                                             </a>
                                         @endif

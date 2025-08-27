@@ -72,42 +72,57 @@
                                     @error('divisionForm.division.external_id') <p class="text-error">{{$message}}</p> @enderror
                                 </div>
                             </div>
-                            <div class="form-row-3">
-                                <div class="form-group">
-                                    <select wire:model.defer='divisionForm.division.phones.type'
-                                            id="phone_type"
-                                            class='peer input'
-                                            x-bind:disabled="isDisabled"
-                                    >
-                                        <option value="" disabled selected hidden>{{ __('forms.type_mobile') }} *</option>
-                                        @foreach ($dictionaries['PHONE_TYPE'] as $k => $phone_type)
-                                            <option {{ isset($phone['type']) === $phone_type ? 'selected' : '' }}
-                                                    value="{{ $k }}">{{ $phone_type }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <label for="phone_type" class="label">{{ __('forms.type_mobile') }}</label>
-                                    @error('divisionForm.division.phones.type')
-                                    <p class="text-error">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div class="form-group phone-wrapper">
-                                    <input required
-                                            type="tel"
-                                            placeholder=" "
-                                            class="peer input pl-10 with-leading-icon"
-                                            x-model="phone.number"
-                                            x-mask="+380999999999"
-                                            wire:model='divisionForm.division.phones.number'
-                                            x-bind:disabled="isDisabled"
-                                    />
-                                    <label class="wrapped-label">{{ __('forms.phone_number') }}</label>
-                                    @error('divisionForm.division.phones.number') <p class="text-error">{{ $message }}</p> @enderror
-                                </div>
-                                <button type="button" @click="phones.push({ type: 'MOBILE', number: '' })" class="item-add">
-                                    <span>{{__('forms.add_phone')}}</span>
-                                </button>
+
+                            <div
+                                class="space-y-2"
+                                x-data="{ phones: $wire.entangle('divisionForm.division.phones') }"
+                                x-init="if (!Array.isArray(phones) || phones.length === 0) { phones = [{ type: 'MOBILE', number: '' }] }"
+                            >
+                                <template x-for="(phone, index) in phones" :key="index">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                                        {{-- Phone Type Select --}}
+                                        <div class="form-group">
+                                            <select x-model="phone.type" class="input-select @error('divisionForm.division.phones.*.type') input-error @enderror" required x-bind:disabled="isDisabled">
+                                                <option value="" disabled>{{__('forms.type_mobile')}} *</option>
+                                                @foreach($dictionaries['PHONE_TYPE'] as $key => $phoneType)
+                                                    <option value="{{$key}}">{{$phoneType}}</option>
+                                                @endforeach
+                                            </select>
+                                            <label class="label">{{ __('forms.phone_type') }}</label>
+                                            @error('divisionForm.division.phones.*.type') <p class="text-error">{{ $message }}</p> @enderror
+                                        </div>
+
+                                        {{-- Phone Number Input --}}
+                                        <div class="form-group phone-wrapper">
+                                            <input
+                                                required
+                                                type="tel"
+                                                placeholder=" "
+                                                class="peer input pl-10 with-leading-icon text-gray-500"
+                                                x-model="phone.number"
+                                                x-mask="+380999999999"
+                                                x-bind:disabled="isDisabled"
+                                            />
+                                            <label class="wrapped-label">{{ __('forms.phone_number') }}</label>
+                                            @error('divisionForm.division.phones.*.number') <p class="text-error">{{ $message }}</p> @enderror
+                                        </div>
+
+                                        <div class="flex items-center space-x-4 justify-start">
+                                            <template x-if="phones.length > 1">
+                                                <button type="button" @click="phones.splice(index, 1)" class="item-remove text-red-600 hover:text-red-800 justify-self-start">
+                                                    <span>{{__('forms.remove_phone')}}</span>
+                                                </button>
+                                            </template>
+                                            <template x-if="index === phones.length - 1">
+                                                <button type="button" @click="phones.push({ type: 'MOBILE', number: '' })" class="item-add">
+                                                    <span>{{__('forms.add_phone')}}</span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
+
                             <div class="form-row-3">
                                 <div class="form-group">
                                     <input wire:model='divisionForm.division.location.longitude' type="text" x-bind:disabled="isDisabled" name="longitude" x-mask='99.999999' id="longitude" class="peer input" placeholder=" " />
@@ -118,10 +133,6 @@
                                     <input wire:model='divisionForm.division.location.latitude' type="text" x-bind:disabled="isDisabled" name="latitude" x-mask='99.999999' id="latitude" class="peer input" placeholder=" " />
                                     <label for="latitude" class="label">{{ __('forms.latitude') }}</label>
                                     @error('divisionForm.division.location.latitude') <p class="text-error">{{$message}}</p> @enderror
-                                </div>
-                                <div class="form-group checkbox-group">
-                                    <input wire:model='formService.division.is_mountainous' id="is_mountainous" type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                                    <label for="is_mountainous" class="checkbox-label text-gray-500 dark:text-gray-300 ms-2">{{__('forms.mountainous_status')}}</label>
                                 </div>
                             </div>
                         </div>
@@ -143,6 +154,11 @@
                             :readonly="$readonly"
                             class="mt-8 form-row-3"
                         />
+                        <div class="form-group checkbox-group">
+                            <input wire:model='formService.division.is_mountainous' id="is_mountainous" type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                            <label for="is_mountainous" class="checkbox-label text-gray-500 dark:text-gray-300 ms-2">{{__('forms.mountainous_status')}}</label>
+                        </div>
+
                     </fieldset>
 
                     {{-- WORKING HOURS --}}
@@ -340,6 +356,7 @@
                         </svg>
                     </div>
                 </form>
+         </div>
     </section>
 </div>
 
