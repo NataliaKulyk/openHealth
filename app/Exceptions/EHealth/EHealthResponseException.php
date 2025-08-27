@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exceptions\EHealth;
 
 use Exception;
@@ -15,7 +17,20 @@ class EHealthResponseException extends Exception
     }
 
     /**
+     * Get the full JSON response from eHealth.
+     *
+     * @return array
+     */
+    public function getDetails(): array
+    {
+        return $this->response->json();
+    }
+
+    /**
      * Helper method to extract the most relevant error message.
+     *
+     * @param Response $response
+     * @return string
      */
     protected function extractErrorMessage(Response $response): string
     {
@@ -26,7 +41,7 @@ class EHealthResponseException extends Exception
         }
 
         return sprintf(
-            'Помилка EHealth (статус %d): %s',
+            __('errors.ehealth.general_error'),
             $response->status(),
             $errorMessage
         );

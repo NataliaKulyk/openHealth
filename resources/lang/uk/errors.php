@@ -30,6 +30,14 @@ return [
             'type mismatch' => 'невідповідність типу даних.',
             'does not match pattern' => 'не відповідає очікуваному формату.',
             'is not allowed for doctor' => 'даний тип кваліфікації не дозволено для лікаря.',
+            'type mismatch. Expected integer but got string' => 'Невірний тип даних (очікувалося число)',
+            'employee doesn\'t have speciality with active speciality_officio' => 'Відсутня основна спеціалізація',
+            'speciality not allowed' => 'Невірна спеціалізація для лікаря',
+            'Incorrect value.' => 'Некоректне значення.',
+            'required' => 'відсутнє',
+            'length' => 'необхідно додати хоча б один елемент',
+            'speciality_not_allowed' => 'спеціалізація ":speciality" не дозволена для лікаря.',
+            'speciality_officio_not_allowed' => 'спеціалізація ":speciality" з активним основним записом не дозволена для лікаря.',
         ]
     ],
 ];

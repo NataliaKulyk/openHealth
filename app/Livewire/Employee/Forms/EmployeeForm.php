@@ -44,7 +44,7 @@ class EmployeeForm extends Form
         'taxId' => '',
         'noTaxId' => false,
         'email' => '',
-        'workingExperience' => '',
+        'workingExperience' => null,
         'aboutMyself' => '',
     ];
 
@@ -99,7 +99,7 @@ class EmployeeForm extends Form
             'party.taxId' => ['required', 'string', new TaxId()],
             'party.noTaxId' => ['boolean'],
             'party.email' => ['nullable', 'present', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
-            'party.workingExperience' => ['nullable', 'present', 'integer', 'min:0'],
+            'party.workingExperience' => ['required', 'numeric', 'min:1'],
             'party.aboutMyself' => ['nullable', 'present', 'string'],
         ];
     }

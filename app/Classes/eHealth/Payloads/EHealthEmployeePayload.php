@@ -37,7 +37,7 @@ class EHealthEmployeePayload
                 'email' => Arr::get($nestedData, 'party.email'),
                 'documents' => Arr::get($nestedData, 'documents'),
                 'phones' => Arr::get($nestedData, 'phones'),
-                'working_experience' => Arr::get($nestedData, 'party.working_experience'),
+                'working_experience' => (int) Arr::get($nestedData, 'party.working_experience'),
                 'about_myself' => Arr::get($nestedData, 'party.about_myself'),
             ],
         ];

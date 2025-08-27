@@ -31,10 +31,6 @@ class EmployeeRequest extends EHealthRequest
 
         $response = $this->post(self::ENDPOINT, $requestBody);
 
-        if ($response->status() === 422) {
-            throw new EHealthValidationException($response->json('error.invalid'));
-        }
-
         return [
             'id' => $response->json('data.id'),
             'ehealth_response' => $response->json(),

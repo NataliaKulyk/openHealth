@@ -46,7 +46,7 @@ trait ManagesEmployeeForm
         } catch (ValidationException $e) {
             $this->handleValidationException($e);
         } catch (Exception $e) {
-            $this->handleException($e);
+            $this->handleGeneralException($e);
         }
     }
 
@@ -59,7 +59,7 @@ trait ManagesEmployeeForm
         } catch (ValidationException $e) {
             $this->handleValidationException($e);
         } catch (Exception $e) {
-            $this->handleException($e);
+            $this->handleGeneralException($e);
         }
     }
 
@@ -82,30 +82,14 @@ trait ManagesEmployeeForm
             $this->updateLocalRecords($requestToSign, $eHealthResponse);
 
             // STEP 5: Redirect on success.
-            session()->flash('success', __('employees.sign_success'));
+            session()?->flash('success', __('employees.sign_success'));
             $this->resetSignatureFields();
             Log::info('Successfully signed and will redirect.');
 
             return redirect()->route('employee.index', ['legalEntity' => legalEntity()->id]);
-        } catch (ValidationException $e) {
-            $this->handleValidationException($e);
-            if (!$this->isKepValidationError($e)) {
-                $this->dispatch('close-signature-modal');
-            }
-        } catch (EHealthValidationException $e) {
-            $this->handleEHealthValidationError($e);
-            $this->dispatch('close-signature-modal');
-        } catch (EHealthResponseException $e) {
-            $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
-            Log::error('EHealth response error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->dispatch('close-signature-modal');
-        } catch (ConnectionException $e) {
-            $this->dispatch('flashMessage', ['message' => __('forms.ehealth_connection_error'), 'type' => 'error', 'persistent' => true]);
-            Log::error('EHealth connection error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->dispatch('close-signature-modal');
+
         } catch (Exception $e) {
-            $this->handleException($e);
-            $this->dispatch('close-signature-modal');
+            $this->handleGeneralException($e);
         }
     }
 
@@ -153,6 +137,14 @@ trait ManagesEmployeeForm
     {
         $fullMessage = $e->getTranslatedMessage();
         $this->dispatch('flashMessage', ['message' => $fullMessage, 'type' => 'error', 'persistent' => true]);
+
+        Log::error(
+            'EHealth Validation Error: ' . $fullMessage,
+            [
+                'details' => $e->getDetails(),
+                'trace'   => $e->getTraceAsString(),
+            ]
+        );
     }
 
     /**
@@ -163,6 +155,40 @@ trait ManagesEmployeeForm
         Log::error('Process failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
     }
+
+    /**
+     * A new centralized exception handler for various specific exceptions.
+     */
+    private function handleGeneralException(Exception $e): void
+    {
+        match (true) {
+            $e instanceof ValidationException => $this->handleValidationException($e),
+            $e instanceof EHealthValidationException => $this->handleEHealthValidationError($e),
+            $e instanceof EHealthResponseException => $this->handleEHealthResponseException($e),
+            $e instanceof ConnectionException => $this->handleConnectionException($e),
+            default => $this->handleException($e),
+        };
+        $this->dispatch('close-signature-modal');
+    }
+
+    private function handleEHealthResponseException(EHealthResponseException $e): void
+    {
+        $this->dispatch('flashMessage', ['message' => $e->getMessage(), 'type' => 'error', 'persistent' => true]);
+        Log::error(
+            'EHealth response error: ' . $e->getMessage(),
+            [
+                'details' => $e->getDetails(),
+                'trace'   => $e->getTraceAsString(),
+            ]
+        );
+    }
+
+    private function handleConnectionException(ConnectionException $e): void
+    {
+        $this->dispatch('flashMessage', ['message' => __('forms.ehealth_connection_error'), 'type' => 'error', 'persistent' => true]);
+        Log::error('EHealth connection error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+    }
+
 
     /**
      * Prepares the nested data structure required for a Revision from flat form data.

@@ -1,51 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exceptions\EHealth;
 
-use App\Core\Arr;
+use App\Core\Arr as AppArr;
+use Illuminate\Support\Arr;
 
 class EHealthValidationException extends EHealthException
 {
     public function __construct(public readonly array $details)
     {
-        parent::__construct('eHealth API returned a validation error. ' . $this->getErrorMessage());
+        parent::__construct('eHealth API returned a validation error.');
     }
 
     /**
-     * Retrieve specific details from the eHealth validation error response.
+     * Get the full details of the exception.
      *
-     * If a type is provided and equals 'error', returns only the 'error' key from the details array.
-     * Otherwise, returns the entire details array.
-     *
-     * @param string|null $type The type of details to retrieve ('error' or null for all details)
-     *
-     * @return array|null The requested details or null if not found
+     * @return array
      */
-    public function getDetails(?string $type = null): ?array
+    public function getDetails(): array
     {
-        return match($type) {
-            'error' => Arr::get($this->details, 'error'),
-            default => $this->details
-        };
+        return $this->details;
     }
 
     /**
-     * Retrieves the raw error message from the eHealth validation error details.
-     *
-     * This method extracts the 'error' key from the details array and returns it as a JSON-encoded string.
-     * If the error details are not available, it returns 'Unknown error'.
+     * Get the translated error message based on eHealth details.
      *
      * @return string
-     */
-    public function getErrorMessage(): string
-    {
-        $error = $this->getDetails('error');
-
-        return json_encode($error) ?? 'Unknown error';
-    }
-
-    /**
-     * Gets a translated version of the eHealth validation error message.
      */
     public function getTranslatedMessage(): string
     {
@@ -55,43 +37,56 @@ class EHealthValidationException extends EHealthException
             'party.second_name' => __('forms.second_name'),
             'party.birth_date' => __('forms.birth_date'),
             'party.tax_id' => __('forms.tax_id'),
+            'party.working_experience' => __('forms.working_experience'),
             'doctor' => __('forms.doctor_data'),
             'start_date' => __('forms.start_date_work'),
             'employee_type' => __('forms.role'),
-            'forms.doctor_data' => __('forms.doctor_data'),
-            'party' => __('forms.personal_data'),
             'position' => __('forms.position'),
             'employee_request' => __('forms.employee_requests'),
             'doctor.science_degree' => __('forms.science_degree'),
             'party.documents.[0].number' => __('forms.document_number'),
             'doctor.qualifications' => __('forms.qualifications'),
             'doctor.specialities' => __('forms.specialities'),
-            // Add more translations as needed
+            'doctor.specialities.speciality_officio' => __('forms.speciality_officio'),
         ];
 
-        $eHealthMessageTranslations = __('errors.ehealth.messages');
+        $invalidErrors = Arr::get($this->details, 'error.invalid') ?? Arr::get($this->details, 'invalid') ?? [];
 
-        $errorList = collect($this->getDetails())->map(function ($detail) use ($eHealthFieldTranslations, $eHealthMessageTranslations) {
-            $eHealthKey = $detail['entry'] ?? ($detail['param'] ?? 'unknown');
+        $errorList = collect($invalidErrors)->map(function ($detail) use ($eHealthFieldTranslations) {
+            $eHealthKey = AppArr::get($detail, 'entry') ?? AppArr::get($detail, 'param') ?? 'unknown';
+            $message = AppArr::get($detail, 'rules.0.description') ?? AppArr::get($detail, 'msg') ?? '';
+            $ruleName = AppArr::get($detail, 'rules.0.rule');
 
-            // Workaround for a bug in eHealth API where it returns a validation error for 'status'
             if ($eHealthKey === 'status') {
                 return null;
             }
 
             $eHealthKey = str_replace(['$.', 'employee_request.'], '', $eHealthKey);
-            $message = $detail['rules'][0]['description'] ?? ($detail['msg'] ?? 'Incorrect value.');
-
-            // Translate the eHealth key using the map.
             $translatedKey = $eHealthFieldTranslations[$eHealthKey] ?? $eHealthKey;
 
-            // Find and apply a translated message from our new map
-            $translatedMessage = 'Некоректне значення.'; // Default message
-            foreach ($eHealthMessageTranslations as $key => $translation) {
-                if (str_contains($message, $key)) {
-                    $translatedMessage = $translation;
-                    break;
+            $translatedMessage = '';
+
+            if (str_contains($message, 'employee doesn\'t have speciality with active speciality_officio')) {
+                $translatedMessage = __('errors.ehealth.messages.employee doesn\'t have speciality with active speciality_officio');
+            } elseif (str_contains($message, 'speciality') && str_contains($message, ' with active speciality_officio is not allowed for doctor')) {
+                preg_match('/speciality (.+?) with active speciality_officio is not allowed for doctor/', $message, $matches);
+                $specialityName = $matches[1] ?? '';
+                $translatedMessage = __('errors.ehealth.messages.speciality_officio_not_allowed', ['speciality' => $specialityName]);
+            } elseif (str_contains($message, 'speciality') && str_contains($message, 'not allowed for doctor')) {
+                $translatedMessage = __('errors.ehealth.messages.speciality not allowed for doctor');
+            } elseif (str_contains($message, 'type mismatch')) {
+                $translatedMessage = __('errors.ehealth.messages.type mismatch. Expected integer but got string');
+            }
+
+            if (empty($translatedMessage) && !empty($ruleName)) {
+                $translatedMessage = __('errors.ehealth.messages.' . $ruleName);
+                if ($translatedMessage === 'errors.ehealth.messages.' . $ruleName) {
+                    $translatedMessage = $message;
                 }
+            }
+
+            if (empty($translatedMessage)) {
+                $translatedMessage = __('errors.ehealth.messages.untranslated_error_message', ['message' => $message]);
             }
 
             return "{$translatedKey}: {$translatedMessage}";

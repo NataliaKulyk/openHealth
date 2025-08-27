@@ -37,8 +37,8 @@ class DocumentNumber implements ValidationRule
         $regex = match ($this->documentType) {
             'NATIONAL_ID' => '/^[0-9]{9}$/',
             'PASSPORT', 'REFUGEE_CERTIFICATE', 'COMPLEMENTARY_PROTECTION_CERTIFICATE' => '/^((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{6}$/u',
-            'TEMPORARY_CERTIFICATE' => '/^(((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{4,6}|[0-9]{9}|((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{5}\/[0-9]{5})$/u',
-            'TEMPORARY_PASSPORT' => '/^((?![ЫЪЭЁыъэё@%&$^#`~:,.*|}{?!])[A-ZА-ЯҐЇІЄ0-9№\\/()-]){2,25}$/u',
+            'TEMPORARY_CERTIFICATE', 'PERMANENT_RESIDENCE_PERMIT' => '/^(((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{4,6}|[0-9]{9}|((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{5}\/[0-9]{5})$/u',
+            'TEMPORARY_PASSPORT', 'BIRTH_CERTIFICATE', 'BIRTH_CERTIFICATE_FOREIGN' => '/^((?![ЫЪЭЁыъэё@%&$^#`~:,.*|}{?!])[A-ZА-ЯҐЇІЄ0-9№\\/()-]){2,25}$/u',
             default => ''
         };
 
