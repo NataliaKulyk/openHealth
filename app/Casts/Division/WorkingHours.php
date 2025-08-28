@@ -41,7 +41,7 @@ class WorkingHours implements CastsAttributes
         if (is_array($value)) {
             $data = [$key => $value];
         } else {
-            $data = $value ? [$key => json_decode($value,true)] : [$key => [Division::DEFAULT_WORKING_TIME]];
+            $data = $value ? [$key => json_decode($value,true)] : [$key => [Division::getWorkingTimeTemplate()]];
         }
 
         return json_encode($this->prepareWorkingHours($data[$key]));
