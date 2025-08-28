@@ -206,9 +206,22 @@
     </x-section-navigation>
 
     <x-section>
-        <div class="space-y-6">
+        <div class="space-y-6" style="padding-left: 0;">
+            <style>
+                @media (min-width: 1920px) {
+                    .employee-table-container {
+                        padding-left: 2rem !important;
+                    }
+                }
+                @media (min-width: 2560px) {
+                    .employee-table-container {
+                        padding-left: 3.5rem !important;
+                    }
+                }
+            </style>
+            <div class="employee-table-container">
             @forelse($parties as $party)
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:w-[1150px] lg:mx-0 lg:ml-10" wire:key="party-{{ $party->id }}">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6" wire:key="party-{{ $party->id }}">
                     <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                         <div>
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $party->fullName }}</h3>
@@ -314,6 +327,7 @@
                     <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('Нічого не знайдено')}}</p>
                 </div>
             @endforelse
+            </div>
         </div>
 
         <div class="mt-8">
