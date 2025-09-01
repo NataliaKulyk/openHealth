@@ -10,18 +10,23 @@ use App\Casts\Division\Location;
 use App\Models\Employee\Employee;
 use App\Models\Relations\Address;
 use App\Casts\Division\WorkingHours;
-use App\Models\Employee\EmployeeRequest;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Employee\EmployeeRequest;
+use Eloquence\Behaviours\HasCamelCasing;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * @mixin IdeHelperDivision
  */
 class Division extends Model
 {
+
+    use HasCamelCasing;
+
     public const string TYPE_FAP = 'FAP';
     public const string TYPE_CLINIC = 'CLINIC';
     public const string TYPE_AMBULANT_CLINIC = 'AMBULANT_CLINIC';
@@ -157,5 +162,26 @@ class Division extends Model
     public function phones(): MorphMany
     {
         return $this->morphMany(Phone::class, 'phoneable');
+    }
+
+    /**
+     * Scope a query to search for divisions by given search string.
+     *
+     * @param  Builder  $query
+     * @param  string|null $toSearch
+     *
+     * @return Builder
+     */
+    public function scopeSearch($query, ?string $toSearch): Builder
+    {
+        if (empty($toSearch)) {
+            return $query;
+        }
+
+        $driver = $query->getConnection()->getDriverName();
+
+        return $driver === 'pgsql'
+            ? $query->whereRaw('LOWER(name) LIKE ?', [ '%' . strtolower($toSearch) . '%'])
+            : $query->where('name', 'like', "%{$toSearch}%");
     }
 }

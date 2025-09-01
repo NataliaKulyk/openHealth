@@ -3,16 +3,13 @@
     $status='';
     $division = \App\Models\Division::find($divisionForm->division['id']);
     $divisionType = dictionary()->getDictionary('DIVISION_TYPE', false)->getValue($divisionForm->division['type']);
+    $uuid = $divisionForm->division['uuid'];
 @endphp
 
 @extends('livewire.division.template.division')
 
 @section('title')
         {{ $divisionType }} "{{ $divisionForm->division["name"] }}"
-@endsection
-
-@section('description')
-    {{ $divisionForm->division['uuid'] }}
 @endsection
 
 @section('additional-buttons')

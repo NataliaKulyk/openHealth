@@ -32,7 +32,7 @@ class WorkingHoursRule implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $workingHours = $this->division['working_hours'];
+        $workingHours = $this->division['workingHours'];
 
         foreach ($this->weekdays as $day => $dayName) {
             // If the shift is empty, then skip the day

@@ -37,7 +37,7 @@ class DivisionForm extends Form
     ])]
 
     public ?array $division = [
-        'working_hours' => [
+        'workingHours' => [
             'mon' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
             'tue' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
             'wed' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
@@ -49,8 +49,11 @@ class DivisionForm extends Form
         'location' => [
             Division::WORKING_TIME_DEFAULT_START,
             Division::WORKING_TIME_DEFAULT_END
-        ]
+        ],
+        'phones' => []
     ];
+
+    public string $search = '';
 
     public function boot(AddressRepository $addressRepository)
     {
@@ -166,7 +169,7 @@ class DivisionForm extends Form
     public function rules(): array
     {
         return [
-            'division.external_id' => 'nullable|integer|gt:0',
+            'division.externalId' => 'nullable|integer|gt:0',
             'division.location.longitude' => ['nullable', 'numeric', new LocationRule($this->division)],
             'division.location.latitude' => ['nullable', 'numeric', new LocationRule($this->division)],
             'division.phones' => 'required|array',
@@ -183,81 +186,12 @@ class DivisionForm extends Form
     public function messages(): array
     {
         return [
-            'division.external_id.integer' => __('validation.attributes.healthcareService.error.division.external_id'),
+            'division.externalId.integer' => __('validation.attributes.healthcareService.error.division.external_id'),
             'division.email.required' => __('validation.attributes.healthcareService.error.division.email.required'),
             'division.email.email' => __('validation.attributes.healthcareService.error.division.email.wrong'),
             'division.phones.*.type' => __('validation.attributes.healthcareService.error.division.phone.type_required'),
             'division.phones.*.number' => __('validation.attributes.healthcareService.error.division.phone.number_required')
         ];
-    }
-
-    /**
-     * Proceed data when day is off and hasn't the schedule at all
-     *
-     * @param mixed $day
-     * @param mixed $allDayWork
-     *
-     * @return void
-     */
-    public function notWorking($day, $allDayWork)
-    {
-        if ($allDayWork) {
-            $this->division['working_hours'][$day] = [["00:00", "00:00"]];
-        } else {
-            if (count($this->division['working_hours'][$day]) === 0) {
-                $this->division['working_hours'][$day][] = ["00:00", "00:00"];
-            }
-        }
-    }
-
-    /**
-     * Add shift(s) to the current day's schedule
-     *
-     * @param string $day
-     *
-     * @return void
-     */
-    public function addAvailableShift(string $day): void
-    {
-        $this->division['working_hours'][$day][] = [];
-    }
-
-    /**
-     * Remove the selected shift from the day's schedule
-     *
-     * @param string $day   // key value aka 'mon', 'tue' etc.
-     * @param int $shift    // shift's numeric position in array
-     *
-     * @return void
-     */
-    public function deleteShift(string $day, int $shift)
-    {
-        unset($this->division['working_hours'][$day][$shift]);
-
-        // This need to recalculate numeric array keys (remove holes in numbering)
-        $this->division['working_hours'][$day] = array_values($this->division['working_hours'][$day]);
-    }
-
-    /**
-     * This method called when no shift should be present in the day's schedule.
-     * But one time range must left anyway!
-     *
-     * @param mixed $day
-     * @param mixed $isShift    // true if shift schedule is activated
-     * @return void
-     */
-    public function noShift($day, $isShift)
-    {
-        if ($isShift) {
-            $shiftCount = count($this->division['working_hours'][$day]);
-
-            // There can be only one!
-            if ($shiftCount > 1) {
-                for ($i = 1; $i < $shiftCount; $i++) {
-                    $this->deleteShift($day, $i);
-                }
-            }
-        }
     }
 
     /**

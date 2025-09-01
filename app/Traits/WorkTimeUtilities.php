@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Models\Division;
+
 trait WorkTimeUtilities
 {
     public array $weekdays = [
@@ -14,14 +16,14 @@ trait WorkTimeUtilities
         'sun' => 'Неділя'
     ];
 
-    public array $workingHours = [
-        'mon' => [["00:00", "00:00"]],
-        'tue' => [["00:00", "00:00"]],
-        'wed' => [["00:00", "00:00"]],
-        'thu' => [["00:00", "00:00"]],
-        'fri' => [["00:00", "00:00"]],
-        'sat' => [["00:00", "00:00"]],
-        'sun' => [["00:00", "00:00"]],
+    public array $workingHours =  [
+        'mon' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
+        'tue' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
+        'wed' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
+        'thu' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
+        'fri' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
+        'sat' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]],
+        'sun' => [[Division::WORKING_TIME_DEFAULT_START, Division::WORKING_TIME_DEFAULT_END]]
     ];
 
     /**

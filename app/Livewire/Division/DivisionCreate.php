@@ -207,7 +207,7 @@ class DivisionCreate extends DivisionComponent
         $division['location'] ??= $this->divisionForm->division['location'];
 
         // If working_hours is not set, then use the original working_hours value cause the '[]' value has been removed by removeEmptyKeys method
-        $division['working_hours'] = $this->prepareTimeToRequest($this->divisionForm->division['working_hours'], false);
+        $division['working_hours'] = $this->prepareTimeToRequest($this->divisionForm->division['workingHours'], false);
 
         return EHealth::division()->create(data: $division)->validate();
     }

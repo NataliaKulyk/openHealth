@@ -100,6 +100,7 @@ return [
     'max_file_size_and_format' => 'Розмір завантажуваного файлу не більше 10МБ у форматі jpeg',
     'select_filter' => 'Оберіть фільтр',
     'success_response' => 'Запит виконано успішно',
+    'important' => 'Важливо',
 
     // Legal Entity
     'legal_entity_name' => 'Медична організація',
@@ -146,6 +147,7 @@ return [
     'external_id' => 'Зовнішній ідентифікатор',
     'schedule' => 'Графік роботи',
     'schedule_note' => "ВАЖЛИВО: Всі дні з незаповненими даними автоматично отримують статус 'Не працює'",
+    'shift' => 'зміна',
     'by_shift' => 'Позмінно',
     'add_shift' => 'Додати зміну',
 
@@ -157,7 +159,8 @@ return [
     'allDay' => 'Цілий день',
     'openedBy' => 'Відчиняється о',
     'closedBy' => 'Закривається о',
-    'doesNotWork' => 'Не працює',
+    'does_not_work' => 'Не працює',
+    'works' => 'Працює',
     'healthcareService' => 'Послуга здоров\'я',
     'add_healthcare_service' => 'Додати послугу',
     'available_time' => 'Час Доступності',
@@ -225,7 +228,16 @@ return [
     'add_role' => 'Додати роль',
     'role_choose' => 'Обрати роль',
     'start_date_work' => 'Дата початку роботи',
+    'division_search' => 'Пошук місць надання послуг',
     'employee_type' => 'Тип працівника',
+    'basic_data' => 'Основні дані',
+    'housing' => 'Корпус',
+    'mountainous_status' => 'Має статус гірського',
+    'add_work_schedule' => 'Додати графік роботи',
+    'work_schedule' => 'Графік роботи',
+    'opening' => 'Відчиняється:',
+    'closing' => 'Зачиняється:',
+    'remove_work_schedule' => 'Прибрати графік роботи',
 
     // Doctor Specific
     'education' => 'Освіта',
@@ -275,6 +287,9 @@ return [
     'building' => 'Будинок',
     'apartment' => 'Квартира',
     'zip_code' => 'Поштовий індекс',
+    'latitude' => 'Широта',
+    'house_number' => 'Номер будинку',
+    'longitude' => 'Довгота',
 
     // Signature & Auth
     'signature' => 'Підписання',

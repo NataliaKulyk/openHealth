@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Livewire\Division\Trait\HasAction;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
+use Arr;
 
 class DivisionEdit extends DivisionComponent
 {
@@ -229,8 +230,11 @@ class DivisionEdit extends DivisionComponent
         // If location is not set, then use the original location cause the 0 value has been removed by removeEmptyKeys method
         $division['location'] ??= $this->divisionForm->division['location'];
 
+        // TODO: Remove this line if multiaddress support is implemented
+        $division['addresses'] = Arr::where($division['addresses'], fn($value) => $value['type'] === 'RESIDENCE');
+
         // If working_hours is not set, then use the original working_hours value cause the '[]' value has been removed by removeEmptyKeys method
-        $division['working_hours'] = $this->prepareTimeToRequest($this->divisionForm->division['working_hours'], false);
+        $division['working_hours'] = $this->prepareTimeToRequest($this->divisionForm->division['workingHours'], false);
 
         return EHealth::division()->update(uuid: $uuid, data: $division)->validate();
     }

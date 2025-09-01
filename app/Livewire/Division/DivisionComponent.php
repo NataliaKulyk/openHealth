@@ -66,61 +66,6 @@ class DivisionComponent extends Component
     }
 
     /**
-     * Proxy method!
-     * Proceed data when day is off and hasn't the schedule at all
-     *
-     * @param  mixed  $day
-     * @param  mixed  $allDayWork
-     *
-     * @return void
-     */
-    public function notWorking($day, $allDayWork)
-    {
-        $this->divisionForm->notWorking($day, $allDayWork);
-    }
-
-    /**
-     * Proxy method!
-     * Add shift(s) to the current day's schedule
-     *
-     * @param  string  $day
-     *
-     * @return void
-     */
-    public function addAvailableShift(string $day): void
-    {
-        $this->divisionForm->addAvailableShift($day);
-    }
-
-    /**
-     * Proxy method!
-     * Remove the selected shift from the day's schedule
-     *
-     * @param  string  $day  key value aka 'mon', 'tue' etc.
-     * @param  int  $shift  shift's numeric position in array
-     *
-     * @return void
-     */
-    public function deleteShift(string $day, int $shift)
-    {
-        $this->divisionForm->deleteShift($day, $shift);
-    }
-
-    /**
-     * Proxy method!
-     * Called when no shift should be present in the day's schedule.
-     * But one time range must left anyway!
-     *
-     * @param  mixed  $day
-     * @param  mixed  $isShift  true if shift schedule is activated
-     * @return void
-     */
-    public function noShift($day, $isShift)
-    {
-        $this->divisionForm->noShift($day, $isShift);
-    }
-
-    /**
      * Sets the dictionary for this component.
      *
      * @return static Returns the current instance for method chaining
@@ -181,13 +126,15 @@ class DivisionComponent extends Component
      */
     protected function saveToDB(): ?Division
     {
+        $divisionData = $this->convertArrayKeysToSnakeCase($this->divisionForm->division);
+
         $division = null;
 
-        $this->divisionForm->division['status'] =  empty($this->divisionForm->division['uuid'])
+        $divisionData['status'] =  empty($divisionData['uuid'])
             ? Status::DRAFT->value
             : Status::UNSYNCED->value;
 
-        $division = Repository::division()->saveDivisionData($this->divisionForm->division, legalEntity());
+        $division = Repository::division()->saveDivisionData($divisionData, legalEntity());
 
         return $division;
     }

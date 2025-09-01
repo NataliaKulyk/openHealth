@@ -41,6 +41,19 @@ class DivisionIndex extends DivisionComponent
     }
 
     /**
+     * Resets the pagination when the search term is updated.
+     *
+     * It ensures that when a user starts searching, the pagination
+     * is reset to the first page to show the most relevant results.
+     *
+     * @return void
+     */
+    public function updatingDivisionFormSearch()
+    {
+        $this->resetPage();
+    }
+
+    /**
      * Synchronize all the Divisisons with stored on the eHealths side
      *
      * @return void
@@ -91,7 +104,12 @@ class DivisionIndex extends DivisionComponent
     public function render(): View
     {
         $perPage = config('pagination.per_page');
-        $divisions = legalEntity()?->divisions()->orderBy('uuid')->paginate($perPage);
+
+        $divisions= legalEntity()
+            ?->divisions()
+            ->orderBy('uuid')
+            ->search($this->divisionForm->search)
+            ->paginate($perPage);
 
         return view('livewire.division.division-index', compact('divisions'));
     }

@@ -18,7 +18,7 @@ class Location implements CastsAttributes
     public function get(Model $model, string $key, mixed $value, array $attributes): mixed
     {
         if (!is_array($value)) {
-            $data = json_decode($value,true);
+            $data = !empty($value) ? json_decode($value,true) : [];
         }
 
         return empty($data) ? ['latitude' => 0, 'longitude' => 0] : $data;
