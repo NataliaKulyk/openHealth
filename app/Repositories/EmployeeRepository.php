@@ -204,12 +204,21 @@ class EmployeeRepository
     }
 
     /**
-     * Creates or updates an Employee from a PRE-VALIDATED E-Health data payload.
-     * This is the main public method for data synchronization.
+     * Finds all pending employee requests for a given user and legal entity.
+     * This encapsulates the database query, keeping the service layer clean.
+     *
+     * @param User|null  $user
+     * @param Party|null $party
+     * @param array      $employeeData Data received from request to eHealth (GetEmployeesList|GetEmployeeDetails)
+     * @param string     $authUserUUID
+     * @param string     $legalEntityUUID
+     *
+     * @return void
+     * @throws Exception
      */
-    public function createOrUpdateEmployeeFromEhealthData(?User $user, ?Party $party, array $ehealthData, string $authUserUUID, string $legalEntityUUID): void
+    protected function updateEmployeeDataAtFirstLogin(User|null $user, Party|null $party, array $employeeData, string $authUserUUID, string $legalEntityUUID): void
     {
-        $employeeResponse = schemaService()->setDataSchema($ehealthData, app(EmployeeApi::class))
+        $employeeResponse = schemaService()->setDataSchema($employeeData, app(EmployeeApi::class))
             ->responseSchemaNormalize()
             ->replaceIdsKeysToUuid(['id', 'legalEntityId', 'divisionId', 'partyId'])
             ->snakeCaseKeys(true)
@@ -221,14 +230,18 @@ class EmployeeRepository
             ? Division::where('uuid', $employeeResponse['division_uuid'])->first()?->id
             : null;
 
-        if (!empty($party) && isset($employeeResponse['party']['uuid']) && $party->uuid !== $employeeResponse['party']['uuid']) {
+        // Update Party uuid because it is hasn't actual value in the employeeRequest
+        if ($party !== null && $party->uuid !== $employeeResponse['party']['uuid']) {
             $party->uuid = $employeeResponse['party']['uuid'];
+
             $party->save();
         }
 
-        if ($user && empty($ehealthData['userId'])) {
+        if ($user && empty($employeeData['userId'])) {
             $employeeResponse['user_id'] = $user->id;
+
             $user->uuid = $authUserUUID;
+
             $user->save();
         }
 
@@ -236,47 +249,15 @@ class EmployeeRepository
     }
 
     /**
-     * Finds all pending employee requests for a given user and legal entity.
-     * This encapsulates the database query, keeping the service layer clean.
+     * Authenticate new OWNER and save data to the database.
+     * This method now uses the EmployeeApi to prepare data and then performs a bulk upsert.
+     * The unused $authUserUUID parameter has been removed.
      *
-     * @param User $user
-     * @param LegalEntity $legalEntity
-     *
-     * @return Collection
-     */
-    public function findPendingRequestsForUser(User $user, LegalEntity $legalEntity
-    ): Collection
-    {
-        $user->loadMissing('party');
-        $userPartyId = $user->party?->id;
-
-        return EmployeeRequest::query()
-            ->where('legal_entity_id', $legalEntity->id)
-            ->whereIn('status', RequestStatus::getStatusesForSync())
-            ->whereNotNull('uuid')
-            ->where(function ($query) use ($user, $userPartyId) {
-                // Find requests linked directly to the user...
-                $query->where('user_id', $user->id);
-
-                if ($userPartyId) {
-                    // ...or linked to the user's party, for legacy data.
-                    $query->orWhere('party_id', $userPartyId);
-                }
-            })
-            ->get();
-    }
-
-    /**
-     * Authenticate new OWNER and save data to the database
-     * Also check if the other employees is already exists in the system and save its data too
-     *
-     * @param EmployeeRequest $employeeRequest Only EmployeeRequest type because up to now we should have only the EmployeeRequest for the OWNER
-     * @param User $user
-     * @param string $authUserUUID
-     *
+     * @param EmployeeRequest $employeeRequest
+     * @param User $ownerUser
      * @return bool
      */
-    public function authenticateNewOwner(EmployeeRequest $employeeRequest, User $ownerUser, string $authUserUUID): bool|RedirectResponse
+    public function authenticateNewOwner(EmployeeRequest $employeeRequest, User $ownerUser): bool
     {
         try {
             DB::transaction(function () use ($employeeRequest, $ownerUser, $authUserUUID) {
@@ -370,7 +351,6 @@ class EmployeeRepository
             });
         } catch (Exception $err) {
             Log::error('[authenticateNewOwner]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
-
             return false;
         }
 
@@ -439,14 +419,13 @@ class EmployeeRepository
     }
 
     /**
-     * Authenticate new employee and save data to the database
+     * Checks for employee updates.
+     * This method now performs bulk updates outside the loop.
+     * The unused $authUserUUID parameter has been removed.
      *
-     * @param Employee $employee Only Employee type because up to now we should have all the data for employees
+     * @param LegalEntity $legalEntity
      * @param User $user
-     * @param string $authUserUUID
-     *
      * @return bool
-     * TODO: test after creating an employee will works
      */
     public function checkForEmployeeUpdate(LegalEntity $legalEntity, User $user, string $authUserUUID): bool
     {
