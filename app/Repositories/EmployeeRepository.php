@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use Exception;
-use App\Core\Arr;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Division;
@@ -17,13 +16,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Employee\BaseEmployee;
 use App\Enums\Employee\RequestStatus;
-use Illuminate\Http\RedirectResponse;
 use App\Enums\Employee\RevisionStatus;
 use App\Classes\eHealth\Api\EmployeeApi;
 use App\Models\Employee\EmployeeRequest;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Contracts\Validation\Validator as ResponseValidator;
 use Illuminate\Database\Eloquent\Collection;
+use InvalidArgumentException;
 
 class EmployeeRepository
 {
@@ -63,17 +62,15 @@ class EmployeeRepository
      * Creates or updates an employee-related model based on UUID.
      * This method is designed to be called ONLY when $employeeModel is NOT null.
      *
-     * @param array $data Data for the model.
+     * @param array                    $data          Data for the model.
      * @param Employee|EmployeeRequest $employeeModel The model class to update/create.
-     * @param LegalEntity $legalEntity The legal entity to associate with.
+     * @param LegalEntity              $legalEntity   The legal entity to associate with.
+     *
      * @return BaseEmployee The created or updated model.
-     * @throws \InvalidArgumentException If $employeeModel is null (should not happen with correct usage).
+     * @throws InvalidArgumentException If $employeeModel is null (should not happen with correct usage).
      */
-    public function createOrUpdate($data, Employee|EmployeeRequest $employeeModel, LegalEntity $legalEntity): BaseEmployee
+    public function createOrUpdate(array $data, Employee|EmployeeRequest $employeeModel, LegalEntity $legalEntity): BaseEmployee
     {
-        if ($employeeModel === null) {
-            throw new \InvalidArgumentException('Employee model cannot be null for createOrUpdate method. It should only be called with a non-null model class.');
-        }
 
         $employee = $employeeModel::updateOrCreate(
             [
@@ -93,7 +90,6 @@ class EmployeeRepository
      * @param LegalEntity                   $legalEntity
      * @param Employee|EmployeeRequest|null $employeeModel The model class to create/update (can be null for a new request).
      * @param string|null                   $employeeUUID  UUID of an existing Employee, if this is an EmployeeRequest that updates.
-     * @param bool                          $isNewRequest  Indicates a new unique EmployeeRequest creation scenario.
      *
      * @return BaseEmployee
      * @throws Exception
@@ -102,18 +98,9 @@ class EmployeeRepository
         array $response,
         LegalEntity $legalEntity,
         Employee|EmployeeRequest|null $employeeModel,
-        ?string $employeeUUID = null,
-        bool $isNewRequest = false
+        ?string $employeeUUID = null
     ): BaseEmployee {
         try {
-
-            if ($isNewRequest && empty($response['uuid'])) {
-                return $this->handleInitialEmployeeRequestCreation(
-                    $response,
-                    $legalEntity
-                );
-            }
-
             $partyData = $response['party'] ?? [];
             unset($response['party']);
 
@@ -201,6 +188,33 @@ class EmployeeRepository
             Log::error('Create Employee Error: ' . $err->getMessage(), ['exception' => $err]);
             throw new Exception(__('Create Employee Error') . ' : ' . $err->getMessage());
         }
+    }
+
+    /**
+     * Creates a new EmployeeRequest draft from prepared data.
+     * This is a universal method that only handles database persistence.
+     *
+     * @param array $employeeRequestData The prepared data for the request itself.
+     * @param Party $party The associated Party model.
+     * @param LegalEntity $legalEntity The associated LegalEntity model.
+     * @param User|null $user The associated User model, if found.
+     * @return EmployeeRequest
+     */
+    public function createEmployeeRequestDraft(array $employeeRequestData, Party $party, LegalEntity $legalEntity, ?User $user): EmployeeRequest
+    {
+        $employeeRequest = new EmployeeRequest();
+        $employeeRequest->fill($employeeRequestData);
+        $employeeRequest->status = 'NEW';
+        $employeeRequest->legalEntity()->associate($legalEntity);
+        $employeeRequest->party()->associate($party);
+
+        if ($user) {
+            $employeeRequest->user()->associate($user);
+        }
+
+        $employeeRequest->save();
+
+        return $employeeRequest;
     }
 
     /**
@@ -634,82 +648,5 @@ class EmployeeRepository
             'start_date' => 'nullable|string',
             'end_date' => 'nullable|string',
         ]);
-    }
-
-    /**
-     * Handles the specific logic for creating a brand new EmployeeRequest and its Party,
-     * bypassing existing general update/create logic when no UUID is provided.
-     * This is the dedicated method for the "new request" scenario.
-     *
-     * @param array       $requestData The full request data from the form.
-     * @param LegalEntity $legalEntity The legal entity associated with the request.
-     *
-     * @return Employee|EmployeeRequest The newly created EmployeeRequest.
-     */
-    private function handleInitialEmployeeRequestCreation(
-        array $requestData,
-        LegalEntity $legalEntity
-    ): Employee|EmployeeRequest
-    {
-        try {
-            $employeeRequestFillableFields = [
-                'position', 'start_date', 'end_date', 'employee_type', 'division_id',
-            ];
-            $partyFillableFields = [
-                'last_name', 'first_name', 'second_name', 'gender', 'birth_date',
-                'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself',
-            ];
-
-            $filteredEmployeeRequestData = Arr::only($requestData, $employeeRequestFillableFields);
-            $filteredPartyData = Arr::only($requestData, $partyFillableFields);
-
-            $party = $this->findOrCreatePartyForEmployeeRequest($filteredPartyData);
-
-            $user = null;
-            if (!empty($party->email)) {
-                $user = User::where('email', $party->email)->first();
-            }
-
-            $employeeRequest = new EmployeeRequest();
-            $employeeRequest->fill($filteredEmployeeRequestData);
-            $employeeRequest->uuid = null;
-            $employeeRequest->legal_entity_uuid = legalEntity()?->getUuid();
-            $employeeRequest->status = 'NEW';
-            $employeeRequest->legalEntity()->associate($legalEntity);
-            $employeeRequest->party()->associate($party);
-
-            if ($user) {
-                $employeeRequest->user()->associate($user);
-            }
-
-            $employeeRequest->save();
-
-            return $employeeRequest;
-
-        } catch (Exception $err) {
-            Log::error('Initial Employee Request Creation Error: ' . $err->getMessage(), ['exception' => $err]);
-            throw new \RuntimeException(__('Initial Employee Request Creation Error') . ' : ' . $err->getMessage());
-        }
-    }
-
-    private function findOrCreatePartyForEmployeeRequest(array $partyData): Party
-    {
-        $party = null;
-
-        if (!empty($partyData['email'])) {
-            $party = Party::where('email', $partyData['email'])->first();
-        }
-
-        if ($party === null && !empty($partyData['tax_id'])) {
-            $party = Party::where('tax_id', $partyData['tax_id'])->first();
-        }
-
-        if ($party === null) {
-            $party = new Party();
-            $party->fill($partyData);
-            $party->save();
-        }
-
-        return $party;
     }
 }
