@@ -118,7 +118,7 @@ class EmployeeApi
 
         while ($page <= $totalPages) {
             $queryParams = array_merge($filters, [
-                'page'      => $page,
+                'page' => $page,
                 'page_size' => $perPage
             ]);
 
@@ -142,64 +142,6 @@ class EmployeeApi
         }
 
         return $employees;
-    }
-
-    /**
-     * Retrieve EmployeeRequest Details by its uuid.
-     *
-     * @param string $requestId
-     *
-     * @return array
-     * @throws ApiException
-     */
-    public static function getEmployeeRequestData(string $requestId): array
-    {
-        return new Request('GET', self::URL_REQUEST . '/' . $requestId, [])->sendRequest()['data'] ?? [];
-    }
-
-    /**
-     * Prepares raw eHealth employee data for insertion into our local database.
-     *
-     * @param array $ehealthData Raw data for one employee from the E-Health API.
-     * @param LegalEntity $legalEntity The associated legal entity.
-     * @param User|null $user The user to associate, if known.
-     * @return array The prepared, snake_cased data ready for upsert.
-     */
-    public static function prepareEmployeeDataForDb(array $ehealthData, LegalEntity $legalEntity, ?User $user = null): array
-    {
-        $prepared = [
-            'uuid' => $ehealthData['id'],
-            'status' => $ehealthData['status'],
-            'position' => $ehealthData['position'],
-            'employee_type' => $ehealthData['employee_type'],
-            'start_date' => Carbon::parse($ehealthData['start_date'])->toDateString(),
-            'end_date' => isset($ehealthData['end_date']) ? Carbon::parse($ehealthData['end_date'])->toDateString() : null,
-            'legal_entity_id' => $legalEntity->id,
-            'party_id' => null,
-            'user_id' => null,
-            'division_id' => null,
-        ];
-
-        if (isset($ehealthData['party']['id'])) {
-            $party = Party::firstWhere('uuid', $ehealthData['party']['id']);
-            if ($party) {
-                $prepared['party_id'] = $party->id;
-                $user = $user ?? $party->user;
-            }
-        }
-
-        if ($user) {
-            $prepared['user_id'] = $user->id;
-        }
-
-        if (isset($ehealthData['division']['id'])) {
-            $division = Division::firstWhere('uuid', $ehealthData['division']['id']);
-            if ($division) {
-                $prepared['division_id'] = $division->id;
-            }
-        }
-
-        return $prepared;
     }
 
     /**

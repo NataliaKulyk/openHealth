@@ -8,6 +8,7 @@ use Exception;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Division;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Contracts\Validation\Validator as ResponseValidator;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
+use App\Classes\eHealth\Api\Employee as EmployeeApiClient;
+use Throwable;
 
 class EmployeeRepository
 {
@@ -35,6 +38,7 @@ class EmployeeRepository
     protected ?QualificationRepository $qualificationRepository;
     protected ?SpecialityRepository    $specialityRepository;
     protected ?RevisionRepository      $revisionRepository;
+    private readonly EmployeeApiClient $employeeApi;
 
     public function __construct(
         UserRepository          $userRepository,
@@ -45,7 +49,8 @@ class EmployeeRepository
         ScienceDegreeRepository $scienceDegreeRepository,
         QualificationRepository $qualificationRepository,
         SpecialityRepository    $specialityRepository,
-        RevisionRepository      $revisionRepository
+        RevisionRepository      $revisionRepository,
+        EmployeeApiClient       $employeeApi
     ) {
         $this->userRepository = $userRepository;
         $this->partyRepository = $partyRepository;
@@ -56,6 +61,7 @@ class EmployeeRepository
         $this->qualificationRepository = $qualificationRepository;
         $this->specialityRepository = $specialityRepository;
         $this->revisionRepository = $revisionRepository;
+        $this->employeeApi = $employeeApi;
     }
 
     /**
@@ -238,7 +244,8 @@ class EmployeeRepository
             ->snakeCaseKeys(true)
             ->getNormalizedData();
 
-        $legalEntity = legalEntity() ?? LegalEntity::where('uuid', $legalEntityUUID)->first();
+        // $legalEntity = !empty($user) ? $user->legalEntity : LegalEntity::where('uuid', $legalEntityUUID)->first(); // TODO: remove it if code below works
+        $legalEntity = legalEntity() ?? LegalEntity::where('uuid', $legalEntityUUID)->first(); // TODO: check if it will works
 
         $employeeResponse['division_id'] = isset($employeeResponse['division_uuid'])
             ? Division::where('uuid', $employeeResponse['division_uuid'])->first()?->id
@@ -274,90 +281,44 @@ class EmployeeRepository
     public function authenticateNewOwner(EmployeeRequest $employeeRequest, User $ownerUser): bool
     {
         try {
-            DB::transaction(function () use ($employeeRequest, $ownerUser, $authUserUUID) {
+            DB::transaction(function() use($employeeRequest, $ownerUser) {
+                $legalEntity = LegalEntity::find($employeeRequest->legal_entity_id);
+                $employeeList = EmployeeApi::getEmployeesList(['legal_entity_id' => $legalEntity->uuid]);
 
-                $legalEntity = LegalEntity::find($employeeRequest->legal_entity_id); // TODO: check this and line below
+                $employeesToUpsert = [];
+                $ownerPartyUUID = null; // To find all employees related to the owner
 
-                $legalEntityUUID = $legalEntity->uuid;
+                foreach ($employeeList as $employeeData) {
+                    $isOwnerEmployee = ($employeeData['position'] === $employeeRequest->position
+                        && $employeeData['employee_type'] === 'OWNER')
+                        || ($ownerPartyUUID && $employeeData['party']['id'] === $ownerPartyUUID);
 
-                // List of the users (employees) belongs to the same legal entity
-                $employeeList = EmployeeApi::getEmployeesList($legalEntityUUID);
-
-                $employeeData = [];
-
-                $employeePosition = $employeeRequest->position;
-
-                /*
-                 * Variable to store OWNER's Party ID.
-                 * Need to determine all employees belongs to OWNER.
-                 */
-                $ownerPartyUUID = null;
-
-                // $employeList already contains 'OWNER' as first element
-                foreach ($employeeList as $employee) {
-                    $employeeData = $employee;
-
-                    // Used only for OWNER's employee
-                    $user = null;
-
-                    if (($employee['position'] === $employeePosition && $employee['employee_type'] === 'OWNER') || $employeeData['party']['id'] === $ownerPartyUUID) {
-
-                        $user = $ownerUser;
-
-                        $employeeResponse = EmployeeApi::getEmployeeData($employee['id']);
-
-                        $employeeValidator = $this->validateEmployeeData($employeeResponse);
-
-                        /** @var \Illuminate\Contracts\Validation\Validator $employeeValidator */
-                        if ($employeeValidator->fails()) {
-                            Log::error(__('auth.login.error.validation.employee_data', [], 'en'), ['errors' => $employeeValidator->errors()]);
-
-                            throw new Exception($employeeValidator->errors());
-                        }
-
-                        $employeeData = $employeeValidator->validated();
-
-                        // This need because Party UUID for newly created EmployeeRequest may be NULL
-                        $ownerPartyUUID = $employeeData['party']['id'];
-
-                        $employeeData['party']['email'] = $user->email;
-
-                        if ($employeeData['employee_type'] !== 'OWNER') {
-                            Log::info('assignRole:', ['user' => $employeeData['employee_type']]); // TODO: remove it after testing
-
-                            auth()->shouldUse('web');
-                            $user->assignRole($employeeData['employee_type']);
-
-                            auth()->shouldUse('ehealths');
-                            $user->assignRole($employeeData['employee_type']);
-                        }
+                    $userForEmployee = null;
+                    if ($isOwnerEmployee) {
+                        $fullEmployeeData = EmployeeApi::getEmployeeData($employeeData['id']);
+                        $ownerPartyUUID = $fullEmployeeData['party']['id']; // Set owner party UUID
+                        $userForEmployee = $ownerUser; // Associate the main user only with the owner employee
+                        $employeeData = $fullEmployeeData; // Use full data for the owner
                     }
 
-                    $employeeData['legal_entity_id'] = $employeeData['legal_entity']['id'];
-                    $employeeData['inserted_at'] = Carbon::now()->format('Y-m-d');
-                    $employeeData['updated_at'] = Carbon::now()->format('Y-m-d');
-
-                    $party = $user
-                        ? $employeeRequest->party
-                        : Party::where('uuid', $employeeData['party']['id'])->first();
-
-                    if ($user && !$user->party) {
-                        $party->user()->associate($user);
-                    }
-
-                    if ($employeeData['status'] === 'DISMISSED') {
-                        $party = null;
-                    }
-
-                    if (is_array($employeeData['division']) && isset($employeeData['division']['id'])) {
-                        $employeeData['division_id'] = $employeeData['division']['id'];
-                    }
-
-                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntityUUID);
+                    // The EmployeeApi class is now responsible for preparing the data
+                    $preparedData = EmployeeApi::prepareEmployeeDataForDb($employeeData, $legalEntity, $userForEmployee);
+                    $employeesToUpsert[] = $preparedData;
                 }
 
-                // Update status of EmployeeRequest and the time of update
-                $this->updateEmployeeRequestStatus($employeeRequest, 'APPROVED', $employeeRequest->updatedAt);
+                // Perform bulk insert/update for all employees at once.
+                $this->upsertEmployees($employeesToUpsert);
+
+                // Update the original owner's request status.
+                $this->upsertEmployeeRequests(
+                    [
+                        [
+                            'id' => $employeeRequest->id,
+                            'status' => 'APPROVED',
+                            'applied_at' => $employeeRequest->updated_at ?? now(),
+                        ],
+                    ]
+                );
 
                 if ($employeeRequest->revision) {
                     $employeeRequest->revision->setApplied();
@@ -510,6 +471,29 @@ class EmployeeRepository
         return true;
     }
 
+
+
+    /**
+     * Finds all pending employee requests for a given user and legal entity.
+     */
+    public function findPendingRequestsForUser(User $user, LegalEntity $legalEntity): Collection
+    {
+        $user->loadMissing('party');
+        $userPartyId = $user->party?->id;
+
+        return EmployeeRequest::query()
+            ->where('legal_entity_id', $legalEntity->id)
+            ->whereIn('status', RequestStatus::getStatusesForSync())
+            ->whereNotNull('uuid')
+            ->where(function ($query) use ($user, $userPartyId) {
+                $query->where('user_id', $user->id);
+                if ($userPartyId) {
+                    $query->orWhere('party_id', $userPartyId);
+                }
+            })
+            ->get();
+    }
+
     /**
      * Update EmployeeRequest status and updated_at attributes
      * It mandatory for next employee updates to avoid repeat finished ones
@@ -526,15 +510,6 @@ class EmployeeRepository
         $employeeRequest->appliedAt = $updatedAt;
 
         $employeeRequest->save();
-    }
-
-    /**
-     * [backward compatibility]
-     * This method now proxies to the new, public method.
-     */
-    protected function updateEmployeeDataAtFirstLogin(?User $user, ?Party $party, array $employeeData, string $authUserUUID, string $legalEntityUUID): void
-    {
-        $this->createOrUpdateEmployeeFromEhealthData($user, $party, $employeeData, $authUserUUID, $legalEntityUUID);
     }
 
     /**
