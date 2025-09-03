@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\LegalEntity;
 
 use Exception;
@@ -263,7 +265,7 @@ class CreateLegalEntity extends LegalEntity
         // Associate the legal entity with the address
         $this->legalEntity->setRelation('address', $address);
 
-        // Create the new License model bsed on the form data
+        // Create the new License model based on the form data
         $license = new License();
 
         $license->fill($formData['license']);
@@ -273,7 +275,7 @@ class CreateLegalEntity extends LegalEntity
 
         // Associate the legal entity with the phones
         if (!empty($formData['phones'])) {
-            $phoneCollection = collect($formData['phones'])->map(function($phone) {
+            $phoneCollection = collect($formData['phones'])->map(function ($phone) {
                 $instance = new Phone();
                 $instance->fill($phone);
 
@@ -306,7 +308,7 @@ class CreateLegalEntity extends LegalEntity
             $cachedLegalEntity = $this->flattenArray($this->getAllAttributes(Cache::get($this->entityCacheKey)));
 
             // If the Legal Entity has not changed, return false
-            if (!empty(array_diff_assoc($legalEntity,$cachedLegalEntity)) ||
+            if (!empty(array_diff_assoc($legalEntity, $cachedLegalEntity)) ||
                 !empty(array_diff_assoc($cachedLegalEntity, $legalEntity))
             ) {
                 return true; // Legal Entity has changed
@@ -397,7 +399,7 @@ class CreateLegalEntity extends LegalEntity
     // Step #7 Create/Update Additional Information
     private function stepAdditionalInformation(): void
     {
-        if($this->legalEntityForm->archivationShow) {
+        if ($this->legalEntityForm->archivationShow) {
             $this->legalEntityForm->rulesForAdditionalInformation();
         }
     }
@@ -433,7 +435,7 @@ class CreateLegalEntity extends LegalEntity
         try {
             $this->legalEntityForm->allFieldsValidate();
         } catch (ValidationException $err) {
-            $key= array_key_first($err->errors());
+            $key = array_key_first($err->errors());
             $error = $err->errors()[$key][0];
 
             if (str_contains($key, 'legalEntityForm.')) {
@@ -453,7 +455,7 @@ class CreateLegalEntity extends LegalEntity
                     'beneficiary' => 'information',
                     default => 'undefined'
                 };
-            } else if (str_contains($key, 'address.')) {
+            } elseif (str_contains($key, 'address.')) {
                 $step = 'address';
             }
 
@@ -471,7 +473,7 @@ class CreateLegalEntity extends LegalEntity
         return true;
     }
 
-      /**
+    /**
      * Handle success response from API request.
      *
      * @param array $response The response from the API request
@@ -480,7 +482,7 @@ class CreateLegalEntity extends LegalEntity
     protected function handleSuccessResponse(array $response, array $requestData = [])
     {
         try {
-            DB::transaction(function() use($response, $requestData) {
+            DB::transaction(function () use ($response, $requestData) {
 
                 $this->createNewLegalEntity($response);
 
@@ -547,7 +549,7 @@ class CreateLegalEntity extends LegalEntity
             try {
                 // Handle successful API response
                 $this->handleSuccessResponse($response, $requestData);
-            } catch(Exception $err) {
+            } catch (Exception $err) {
                 // Dispatch error message for possible errors
                 $this->dispatchErrorMessage($err->getMessage());
             }

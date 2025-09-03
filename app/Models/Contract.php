@@ -1,19 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @mixin IdeHelperContract
  */
 class Contract extends Model
 {
-    use HasFactory;
-
     public $timestamps = false;
-
 
     protected $fillable = [
         'uuid',
@@ -67,7 +66,7 @@ class Contract extends Model
         'inserted_at',
     ];
 
-    public function legalEntity(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function legalEntity(): BelongsTo
     {
         return $this->belongsTo(LegalEntity::class, 'legal_entity_id', 'id');
     }

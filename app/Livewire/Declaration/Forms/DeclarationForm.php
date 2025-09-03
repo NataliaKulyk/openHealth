@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Declaration\Forms;
 
+use Illuminate\Validation\Rule;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Form;
 
@@ -32,9 +33,9 @@ class DeclarationForm extends Form
     public function rulesForCreating(): array
     {
         return [
-            'personId' => ['required', 'uuid'],
-            'employeeId' => ['required', 'uuid'],
-            'divisionId' => ['required', 'uuid'],
+            'personId' => ['required', 'uuid', Rule::exists('persons', 'uuid')],
+            'employeeId' => ['required', 'uuid', Rule::exists('employees', 'uuid')],
+            'divisionId' => ['required', 'uuid', Rule::exists('divisions', 'uuid')],
             'authorizeWith' => ['nullable', 'uuid'],
             'parentDeclarationId' => ['nullable', 'uuid']
         ];

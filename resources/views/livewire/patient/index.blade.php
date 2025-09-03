@@ -28,9 +28,6 @@
                                 {{ __('patients.add_patient') }}
                             </a>
                         </button>
-                        <button class="button-sync">
-                            {{ __('forms.synchronise_with_eHealth') }}
-                        </button>
                     </div>
                 </div>
 
@@ -60,7 +57,7 @@
 
         <x-section>
             <div class="space-y-6">
-                @forelse($paginatedPatients as $patient)
+                @foreach($paginatedPatients as $patient)
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:w-[1150px] lg:mx-0 lg:ml-10" wire:key="patient-{{ $patient['id'] }}">
                         <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                             <div>
@@ -94,17 +91,20 @@
                             <div class="flex items-center space-x-3">
                                 @if($patient['status'] === 'APPLICATION')
                                     <a href="{{ route('patient.form', [legalEntity(), 'id' => $patient['id']]) }}"
-                                       class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                       class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                    >
                                         <span class="text-xl leading-none">+</span>
                                         <span>{{ __('patients.continue_registration') }}</span>
                                     </a>
                                 @else
-                                    <button wire:click="redirectToRecord({{ $patient['id'] }})"
-                                            class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                    <button wire:click="redirectToRecord('{{ $patient['id'] }}')"
+                                            class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                    >
                                         <span>{{ __('patients.view_record') }}</span>
                                     </button>
-                                    <button wire:click="redirectToEncounter({{ $patient['id'] }})"
-                                            class="item-add text-green-600 hover:text-green-800 flex items-center gap-1">
+                                    <button wire:click="redirectToEncounter('{{ $patient['id'] }}')"
+                                            class="item-add text-green-600 hover:text-green-800 flex items-center gap-1"
+                                    >
                                         <span>{{ __('patients.start_interacting') }}</span>
                                     </button>
                                 @endif
@@ -213,11 +213,12 @@
                             </div>
                         </div>
                     </div>
-                @empty
+                @endforeach
+                @empty($paginatedPatients)
                     <div class="text-center py-16">
                         <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('Нічого не знайдено')}}</p>
                     </div>
-                @endforelse
+                @endempty
             </div>
 
             <div class="mt-8">

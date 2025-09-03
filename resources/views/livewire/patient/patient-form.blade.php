@@ -50,5 +50,6 @@
         </section>
     @endif
 
+    <x-messages/>
     <x-forms.loading/>
 </div>

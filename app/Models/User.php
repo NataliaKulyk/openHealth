@@ -17,7 +17,6 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -26,7 +25,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory;
     use Notifiable;
     use TwoFactorAuthenticatable;
     use HasRoles {
@@ -81,6 +79,37 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $with = ['person'];
 
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    /**
+     * Get the party associated with the user.
+     *
+     * @return HasOne
+     */
+    public function party(): HasOne
+    {
+        return $this->hasOne(Party::class);
+    }
+
+    // TODO: Check why need it for??????
+    public function licenses(): HasMany
+    {
+        return $this->hasMany(License::class, 'legal_entity_id', 'legal_entity_id');
+    }
+
+    public function employeeRequests(): HasMany
+    {
+        return $this->hasMany(EmployeeRequest::class);
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
     /**
      * This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling.
      *
@@ -94,6 +123,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get email verified at timestamp in camelCase
+     *
+     * @return mixed
+     */
+    public function getEmailVerifiedAtAttribute()
+    {
+        return $this->attributes['email_verified_at'];
+    }
+
+    /**
      * This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling.
      *
      * @return string
@@ -101,14 +140,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function defaultProfilePhotoUrl(): string
     {
         return '';
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\belongsTo
-     */
-    public function person(): BelongsTo
-    {
-        return $this->belongsTo(Person::class);
     }
 
     /**
@@ -127,16 +158,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the party associated with the user.
-     *
-     * @return HasOne
-     */
-    public function party(): HasOne
-    {
-        return $this->hasOne(Party::class);
-    }
-
-    /**
      * Get ALL Legal Entities IDs available for this user
      *
      * @return Collection<int|string, mixed>
@@ -148,22 +169,6 @@ class User extends Authenticatable implements MustVerifyEmail
             ->get()
             ->unique('legal_entity_id')
             ->pluck('legal_entity_id');
-    }
-
-    // TODO: Check why need it for??????
-    public function licenses(): HasMany
-    {
-        return $this->hasMany(License::class, 'legal_entity_id', 'legal_entity_id');
-    }
-
-    public function employeeRequests(): HasMany
-    {
-        return $this->hasMany(EmployeeRequest::class);
-    }
-
-    public function employees(): HasMany
-    {
-        return $this->hasMany(Employee::class);
     }
 
     /**
@@ -229,16 +234,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getProcedureWriterEmployee(): ?Employee
     {
         return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT']);
-    }
-
-    /**
-     * Get email verified at timestamp in camelCase
-     *
-     * @return mixed
-     */
-    public function getEmailVerifiedAtAttribute()
-    {
-        return $this->attributes['email_verified_at'];
     }
 
     /**

@@ -138,13 +138,6 @@ class PatientComponent extends Component
         'PHONE_TYPE'
     ];
 
-    /**
-     * Initialize the component with required data.
-     *
-     * @param  int|null  $id
-     * @return void
-     * @throws \App\Classes\Cipher\Exceptions\ApiException
-     */
     public function mount(LegalEntity $legalEntity, ?int $id = null): void
     {
         if ($id !== null) {
@@ -162,11 +155,6 @@ class PatientComponent extends Component
         $this->getPatient();
         $this->setCertificateAuthority();
         $this->getDictionary();
-    }
-
-    public function render(): View
-    {
-        return view('livewire.patient.patient-form');
     }
 
     /**
@@ -242,7 +230,7 @@ class PatientComponent extends Component
      */
     public function createPerson(): void
     {
-        if (Auth::user()?->cannot('createPerson', Person::class)) {
+        if (Auth::user()?->cannot('create', PersonRequest::class)) {
             $this->dispatch('flashMessage', [
                 'message' => 'У вас немає дозволу на створення пацієнта.',
                 'type' => 'error'
@@ -268,12 +256,8 @@ class PatientComponent extends Component
 
             $responseData = $response->getData();
             $responseStatusCode = $response->getStatusCode();
-        } catch (ConnectionException $e) {
-            Log::channel('e_health_errors')->error('Error while creating person request', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error while creating person request');
             $this->flashGeneralError();
 
             return;
@@ -297,12 +281,8 @@ class PatientComponent extends Component
             // save in DB
             try {
                 PersonRepository::savePersonResponseData($responseData, PersonRequest::class);
-            } catch (Throwable $e) {
-                Log::channel('db_errors')->error('Failed to store person request', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to store person request');
                 $this->flashGeneralError();
 
                 return;
@@ -339,12 +319,8 @@ class PatientComponent extends Component
                 removeEmptyKeys(Arr::toSnakeCase($this->form->toArray())),
                 PersonRequest::class
             );
-        } catch (Throwable $e) {
-            Log::channel('db_errors')->error('Failed to store person request', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
+        } catch (Throwable $exception) {
+            $this->logDatabaseErrors($exception, 'Failed to store person request');
             $this->flashGeneralError();
 
             return;
@@ -816,5 +792,10 @@ class PatientComponent extends Component
                 'model' => 'Недопустиме значення моделі'
             ]);
         }
+    }
+
+    public function render(): View
+    {
+        return view('livewire.patient.patient-form');
     }
 }

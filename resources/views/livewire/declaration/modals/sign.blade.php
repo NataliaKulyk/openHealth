@@ -36,7 +36,7 @@
                             </svg>
                             {{ __('declarations.print_application') }}
                         </button>
-                        <li class="default-p mt-8">{{ __('declaration.declaration_signed_confirmation') }}</li>
+                        <li class="default-p mt-8">{{ __('declarations.declaration_signed_confirmation') }}</li>
                     </ol>
 
                     {{-- Is signed by patient --}}

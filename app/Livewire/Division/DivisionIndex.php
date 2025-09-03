@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
+use Throwable;
 use Exception;
-use App\Models\Division;
 use Livewire\WithPagination;
 use App\Classes\eHealth\EHealth;
 use App\Repositories\Repository;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Auth;
+use App\Livewire\Division\Trait\HasAction;
 use Illuminate\Http\Client\ConnectionException;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 
 class DivisionIndex extends DivisionComponent
 {
-    use WithPagination;
+    use WithPagination,
+        HasAction;
 
     #[Computed]
     public function tableHeaders(): array
     {
         return [
-            __('ID E-health '),
             __('forms.name'),
             __('forms.type'),
             __('Телефон'),
@@ -31,6 +33,24 @@ class DivisionIndex extends DivisionComponent
             __('Статус'),
             __('forms.action'),
         ];
+    }
+
+    public function mount(): void
+    {
+        $this->setDictionary();
+    }
+
+    /**
+     * Resets the pagination when the search term is updated.
+     *
+     * It ensures that when a user starts searching, the pagination
+     * is reset to the first page to show the most relevant results.
+     *
+     * @return void
+     */
+    public function updatingDivisionFormSearch()
+    {
+        $this->resetPage();
     }
 
     /**
@@ -47,27 +67,24 @@ class DivisionIndex extends DivisionComponent
         try {
             $response = EHealth::division()->getMany();
 
-            if (! $response->successful()) {
-                $this->logEHealthError($response,  'EHealth\'s Request response_error');
+            $divisions = $response->validate();
 
-                throw new ConnectionException('Cannot retrieve divisions list. See errors message upper...');
-            }
-        } catch (ConnectionException $err) {
-            Log::channel('e_health_errors')->error(static::class . ':activate:', ['message' => $err->getMessage()]);
-
-            session()->flash('error', _('Помилка при обробці запиту до сервера'));
+            Repository::division()->saveDivisionsList($divisions);
+        } catch (EHealthResponseException $err) {
+            Log::channel('e_health_errors')->error(self::class . ':createDivision', ['error' => $err->getMessage()]);
+            session()->flash('error', __('errors.ehealth.messages.server_error'));
 
             return;
-        }
+        } catch (EHealthValidationException $err) {
+            Log::channel('e_health_errors')->error(self::class . ':createDivision', ['error' => $err->getDetails()]);
 
-        $divisions = $response->validate();
+            session()->flash('error', __('errors.ehealth.messages.server_error'));
 
-        try {
-            Repository::division()->saveDivisionsList($divisions);
-        } catch (Exception $err) {
-            Log::error(static::class . ': [syncDivisions]: ', ['error' => $err->getMessage()]);
+            return;
+        } catch (Throwable $err) {
+            Log::channel('db_errors')->error(static::class . ': [syncDivisions]: ', ['error' => $err->getMessage()]);
 
-            session()->flash('error', __('Помилка синхронізації. Зверніться до адміністратора.'));
+            session()->flash('error', __('divisions.request.sync.errors.fail'));
 
             return;
         }
@@ -82,100 +99,17 @@ class DivisionIndex extends DivisionComponent
     }
 
     /**
-     * Set 'ACTIVE' action status for specified division
-     *
-     * @param \App\Models\Division $division
-     *
-     * @return void
-     *
-     * @throws Exception|ConnectionException
-     */
-    public function activate(Division $division): void
-    {
-        if (Auth::user()->cannot('activate', $division)) {
-            session()->flash('error', __('У вас немає дозволу на деактивацію цього місця надання послуг'));
-
-            return;
-        }
-
-        try {
-            $response = EHealth::division()->activate($division->uuid);
-
-            if (! $response->successful()) {
-                $this->logEHealthError($response,  'EHealth\'s Request response_error');
-
-                throw new ConnectionException('Wrong activation request. See errors message upper...');
-            }
-        } catch (ConnectionException $err) {
-            Log::channel('e_health_errors')->error(static::class . ':activate:', ['message' => $err->getMessage()]);
-
-            session()->flash('error', _('Помилка при обробці запиту до сервера'));
-
-            return;
-        }
-
-        $responseData = $response->getData();
-
-        try {
-            Repository::division()->setAction($division, $responseData['status']);
-        } catch (Exception $err) {
-            Log::error(static::class . ':activate:', ['message' => $err->getMessage()]);
-
-            session()->flash('error', _('Це місце надання послуг не вдалось активувати'));
-        }
-    }
-
-    /**
-     * Set 'INACTIVE' action status for specified division
-     *
-     * @param \App\Models\Division $division
-     *
-     * @return void
-     *
-     * @throws Exception|ConnectionException
-     */
-    public function deactivate(Division $division): void
-    {
-        if (Auth::user()->cannot('deactivate', $division)) {
-            session()->flash('error', __('У вас немає дозволу на деактивацію цього місця надання послуг'));
-
-            return;
-        }
-
-        try {
-            $response = EHealth::division()->deactivate($division->uuid);
-
-            if (! $response->successful()) {
-                $this->logEHealthError($response,  'EHealth\'s Request response_error');
-
-                throw new ConnectionException('Wrong deactivation request. See errors message upper...');
-            }
-        } catch (ConnectionException $err) {
-            Log::channel('e_health_errors')->error(static::class . ':activate:', ['message' => $err->getMessage()]);
-
-            session()->flash('error', _('Помилка при обробці запиту до сервера'));
-
-            return;
-        }
-
-        $responseData = $response->getData();
-
-        try {
-            Repository::division()->setAction($division, $responseData['status']);
-        } catch (Exception $err) {
-            Log::error(static::class . ':deactivate:', ['message' => $err->getMessage()]);
-
-            session()->flash('error', _('Це місце надання послуг не вдалось деактивувати'));
-        }
-    }
-
-    /**
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
     public function render(): View
     {
         $perPage = config('pagination.per_page');
-        $divisions = legalEntity()?->divisions()->orderBy('uuid')->paginate($perPage);
+
+        $divisions= legalEntity()
+            ?->divisions()
+            ->orderBy('uuid')
+            ->search($this->divisionForm->search)
+            ->paginate($perPage);
 
         return view('livewire.division.division-index', compact('divisions'));
     }

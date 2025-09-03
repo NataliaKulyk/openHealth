@@ -25,10 +25,10 @@ class PersonRequest extends BasePerson
 
         // Cascade delete
         static::deleting(static function (PersonRequest $personRequest) {
-            $personRequest->address()->delete();
+            $personRequest->addresses()->delete();
             $personRequest->documents()->delete();
             $personRequest->phones()->delete();
-            $personRequest->authenticationMethod()->delete();
+            $personRequest->authenticationMethods()->delete();
         });
     }
 
@@ -40,7 +40,7 @@ class PersonRequest extends BasePerson
     #[Scope]
     protected function showPersonRequest(Builder $query, int $id): Builder
     {
-        return $query->with(['phones', 'authenticationMethod', 'documents', 'address', 'confidantPerson'])
+        return $query->with(['phones', 'authenticationMethods', 'documents', 'addresses', 'confidantPerson'])
             ->where('id', $id);
     }
 }

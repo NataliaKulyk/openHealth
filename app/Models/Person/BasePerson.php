@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * @mixin IdeHelperBasePerson
@@ -55,9 +54,9 @@ class BasePerson extends Model
         );
     }
 
-    public function address(): MorphOne
+    public function addresses(): MorphMany
     {
-        return $this->morphOne(Address::class, 'addressable');
+        return $this->MorphMany(Address::class, 'addressable');
     }
 
     public function documents(): MorphMany
@@ -70,7 +69,7 @@ class BasePerson extends Model
         return $this->morphMany(Phone::class, 'phoneable');
     }
 
-    public function authenticationMethod(): MorphMany
+    public function authenticationMethods(): MorphMany
     {
         return $this->morphMany(AuthenticationMethod::class, 'authenticatable');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Relations\Address;
 use App\Classes\eHealth\Api\AdressesApi;
 use App\View\Components\Forms\AddressesSearch;
 use Illuminate\Validation\ValidationException;
@@ -9,8 +10,8 @@ use Illuminate\Validation\ValidationException;
 trait AddressSearch
 {
     public ?array $address = [
-        'country' => 'UA',
-        'type' => 'RESIDENCE'
+        'country' => Address::DEFAULT_COUNTRY,
+        'type' => Address::DEFAULT_TYPE
     ];
 
     public ?array $districts = [];

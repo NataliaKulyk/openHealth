@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Casts\NullableDateCast;
@@ -30,6 +32,10 @@ class License extends Model
         'ehealth_inserted_by',
         'ehealth_updated_at',
         'ehealth_updated_by',
+    ];
+
+    protected $hidden = [
+        'id'
     ];
 
     protected $casts = [

@@ -58,6 +58,64 @@ input[required] ~ label:after {
     @apply bg-white dark:bg-gray-800
 }
 
+/* Standardized Navigation Classes */
+.navigation-container {
+    @apply p-4 bg-white block sm:flex items-center justify-between border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700;
+}
+
+.navigation-content {
+    @apply w-full mb-1;
+}
+
+.navigation-actions {
+    @apply mt-3 sm:mt-0 flex items-center gap-2;
+}
+
+.navigation-breadcrumb {
+    @apply flex mb-5;
+}
+
+.navigation-breadcrumb-list {
+    @apply inline-flex items-center space-x-1 text-sm font-medium md:space-x-2;
+}
+
+.navigation-breadcrumb-item {
+    @apply inline-flex items-center;
+}
+
+.navigation-breadcrumb-link {
+    @apply inline-flex items-center text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-white;
+}
+
+.navigation-breadcrumb-separator {
+    @apply w-6 h-6 text-gray-400;
+}
+
+.navigation-breadcrumb-current {
+    @apply ml-1 text-gray-400 md:ml-2 dark:text-gray-500;
+}
+
+.navigation-title {
+    @apply text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white;
+}
+
+.navigation-description {
+    @apply pt-2 text-xs italic font-bold text-left font-normal text-gray-500 whitespace-nowrap dark:text-gray-700;
+}
+
+/* Unified section/form header with title left and actions right */
+.form-header {
+    @apply w-full flex flex-col gap-3 md:flex-row md:items-center md:justify-between;
+}
+
+.form-header-title {
+    @apply flex-1 min-w-0;
+}
+
+.form-header-actions {
+    @apply mt-3 md:mt-0 flex items-center gap-2;
+}
+
 .form {
     @apply py-6 px-4 md:max-w-6xl lg:py-10
 }
@@ -212,6 +270,10 @@ input:-webkit-autofill ~ .label {
     @apply button bg-blue-400 dark:bg-blue-500 cursor-not-allowed;
 }
 
+.button-primary-outline {
+    @apply cursor-pointer text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800;
+}
+
 .button-minor {
     @apply cursor-pointer button text-gray-900 inline-flex items-center bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700;
 }
@@ -276,6 +338,10 @@ input:-webkit-autofill ~ .label {
 
 .accordion-content {
     @apply p-5 border border-gray-200 dark:border-gray-700 dark:bg-gray-900;
+}
+
+.badge-dark {
+    @apply bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-gray-300;
 }
 
 .badge-green {
@@ -359,31 +425,6 @@ input:-webkit-autofill ~ .label {
 
 .table-nav-number {
     @apply font-semibold text-gray-900 dark:text-white;
-}
-
-/* Pagination */
-.pagination-list {
-    @apply inline-flex items-stretch -space-x-px;
-}
-
-.pagination-prev-button {
-    @apply flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white;
-}
-
-.pagination-next-button {
-    @apply flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white;
-}
-
-.pagination-number {
-    @apply flex items-center justify-center text-sm py-2 px-3 leading-tight border dark:border-gray-700;
-}
-
-.pagination-number-active {
-    @apply z-10 text-primary-600 bg-primary-50 border-primary-300 hover:bg-primary-100 hover:text-primary-700 dark:bg-gray-700 dark:text-white;
-}
-
-.pagination-number-inactive {
-    @apply text-gray-500 bg-white border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white;
 }
 
 /* Modals */

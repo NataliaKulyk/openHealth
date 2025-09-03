@@ -27,6 +27,7 @@
                                 <input wire:model="form.verificationCode"
                                        id="verificationCode"
                                        name="verificationCode"
+                                       maxlength="4"
                                        type="text"
                                        class="input-modal"
                                        placeholder=" "

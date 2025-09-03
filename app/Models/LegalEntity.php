@@ -8,6 +8,7 @@ use App\Enums\Status;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
 use App\Models\Employee\Employee;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection;
 use App\Casts\LegalEntityArchiveCast;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,6 @@ use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Builder;
 use App\Casts\LegalEntityAccreditationCast;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
@@ -111,11 +111,6 @@ class LegalEntity extends Model
     public function licenses(): HasMany
     {
         return $this->hasMany(License::class);
-    }
-
-    public function getId(): int
-    {
-        return $this->id;
     }
 
     // Get Legal Entity UUID

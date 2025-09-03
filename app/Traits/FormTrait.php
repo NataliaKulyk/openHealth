@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Traits;
 
 use App\Classes\eHealth\EHealthResponse;
+use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -224,10 +225,7 @@ trait FormTrait
      */
     protected function flashGeneralError(): void
     {
-        $this->dispatch('flashMessage', [
-            'message' => __('Виникла помилка. Зверніться до адміністратора.'),
-            'type' => 'error',
-        ]);
+        session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
     }
 
     /**
@@ -265,6 +263,25 @@ trait FormTrait
             'message' => $exception->getMessage(),
             'file' => $exception->getFile(),
             'line' => $exception->getLine()
+        ]);
+    }
+
+    /**
+     * Log error messages if any exception occur during database interaction.
+     *
+     * @param  Exception  $exception
+     * @param  string  $message
+     * @return void
+     */
+    protected function logDatabaseErrors(Exception $exception, string $message): void
+    {
+        $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? [];
+
+        Log::channel('db_errors')->error($message, [
+            'class' => $caller['class'] ?? 'unknown_class',
+            'method' => $caller['function'] ?? 'unknown_method',
+            'line' => $caller['line'] ?? 0,
+            'error_message' => $exception->getMessage()
         ]);
     }
 }

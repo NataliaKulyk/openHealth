@@ -304,7 +304,7 @@ class TestUserMigrate extends Seeder
 
                 $this->command->info("\tINFO: A new EmployeeRequest entry has been successfully inserted into the database\n");
 
-                DB::table('persons')->insert([
+                $personId = DB::table('persons')->insertGetId([
                     'uuid' => '60c00b7e-b12a-429c-a9cd-4138fd0132cc',
                     'verification_status' => 'VERIFIED',
                     'first_name' => 'Михайло',
@@ -323,12 +323,36 @@ class TestUserMigrate extends Seeder
                             ['type' => 'MOBILE', 'number' => '+380981547813']
                         ],
                         'last_name' => 'Бабенко',
-                        'first_name' => 'Степан',
+                        'first_name' => 'Степан'
                     ]),
                     'patient_signed' => true,
                     'process_disclosure_data_consent' => true,
                     'created_at' => new Carbon(),
                     'updated_at' => new Carbon()
+                ]);
+
+                DB::table('phones')->insert([
+                    'type' => 'MOBILE',
+                    'number' => '+380466879132',
+                    'phoneable_type' => 'App\Models\Person\Person',
+                    'phoneable_id' => $personId
+                ]);
+
+                DB::table('addresses')->insert([
+                    'apartment' => '88',
+                    'area' => 'М.КИЇВ',
+                    'building' => null,
+                    'country' => 'UA',
+                    'region' => null,
+                    'settlement' => 'Київ',
+                    'settlement_id' => 'adaa4abf-f530-461c-bcbf-a0ac210d955b',
+                    'settlement_type' => 'CITY',
+                    'street' => 'Набережна',
+                    'street_type' => 'STREET',
+                    'type' => 'RESIDENCE',
+                    'zip' => '13546',
+                    'addressable_type' => 'App\Models\Person\Person',
+                    'addressable_id' => $personId
                 ]);
             });
         } catch (Exception $err) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories;
 
 use Exception;
@@ -43,17 +45,16 @@ class EmployeeRepository
         QualificationRepository $qualificationRepository,
         SpecialityRepository    $specialityRepository,
         RevisionRepository      $revisionRepository
-    )
-    {
-        $this->userRepository          = $userRepository;
-        $this->partyRepository         = $partyRepository;
-        $this->phoneRepository         = $phoneRepository;
-        $this->documentRepository      = $documentRepository;
-        $this->educationRepository     = $educationRepository;
+    ) {
+        $this->userRepository = $userRepository;
+        $this->partyRepository = $partyRepository;
+        $this->phoneRepository = $phoneRepository;
+        $this->documentRepository = $documentRepository;
+        $this->educationRepository = $educationRepository;
         $this->scienceDegreeRepository = $scienceDegreeRepository;
         $this->qualificationRepository = $qualificationRepository;
-        $this->specialityRepository    = $specialityRepository;
-        $this->revisionRepository      = $revisionRepository;
+        $this->specialityRepository = $specialityRepository;
+        $this->revisionRepository = $revisionRepository;
     }
 
     /**
@@ -79,6 +80,7 @@ class EmployeeRepository
             $data
         );
         $employee->legalEntity()->associate($legalEntity);
+
         return $employee;
     }
 
@@ -100,8 +102,7 @@ class EmployeeRepository
         Employee|EmployeeRequest|null $employeeModel,
         ?string $employeeUUID = null,
         bool $isNewRequest = false
-    ): BaseEmployee
-    {
+    ): BaseEmployee {
         try {
 
             if ($isNewRequest && empty($response['uuid'])) {
@@ -122,7 +123,7 @@ class EmployeeRepository
                 $documentsData = $partyData['documents'];
                 unset($partyData['documents']);
             }
-            if(!empty($response['doctor'])) {
+            if (!empty($response['doctor'])) {
                 $doctorData = $response['doctor'];
                 unset($response['doctor']);
             }
@@ -132,7 +133,7 @@ class EmployeeRepository
             $user = null;
 
             if (!empty($partyData['email'])) {
-                $this->userRepository->createIfNotExist($partyData, $response['employee_type'], $legalEntity);
+                $this->userRepository->createIfNotExist($partyData, $response['employee_type']);
             }
 
             $employee = $this->createOrUpdate($response, $employeeModel, $legalEntity);
@@ -142,7 +143,7 @@ class EmployeeRepository
             $party = $alreadyExistParty ?? $this->partyRepository->createOrUpdate($partyData);
 
             if ($isEmployeeRequest) {
-                optional($employeeInstance, fn($instance) => $employee->employee()->associate($instance));
+                optional($employeeInstance, fn ($instance) => $employee->employee()->associate($instance));
             }
 
             /**
@@ -197,7 +198,7 @@ class EmployeeRepository
         } catch (Exception $err) {
             Log::error('Create Employee Error: ' . $err->getMessage(), ['exception' => $err]);
             throw new Exception(__('Create Employee Error') . ' : ' . $err->getMessage());
-       }
+        }
     }
 
     /**
@@ -213,8 +214,7 @@ class EmployeeRepository
     private function handleInitialEmployeeRequestCreation(
         array $requestData,
         LegalEntity $legalEntity
-    ): Employee|EmployeeRequest
-    {
+    ): Employee|EmployeeRequest {
         try {
             $employeeRequestFillableFields = [
                 'position', 'start_date', 'end_date', 'employee_type', 'division_id',
@@ -323,7 +323,7 @@ class EmployeeRepository
     public function authenticateNewOwner(EmployeeRequest $employeeRequest, User $ownerUser, string $authUserUUID): bool|RedirectResponse
     {
         try {
-            DB::transaction(function() use($employeeRequest, $ownerUser, $authUserUUID) {
+            DB::transaction(function () use ($employeeRequest, $ownerUser, $authUserUUID) {
 
                 $legalEntity = LegalEntity::find($employeeRequest->legal_entity_id); // TODO: check this and line below
 
@@ -349,7 +349,7 @@ class EmployeeRepository
                     // Used only for OWNER's employee
                     $user = null;
 
-                    if (($employee['position'] === $employeePosition  && $employee['employee_type'] === 'OWNER') || $employeeData['party']['id'] === $ownerPartyUUID) {
+                    if (($employee['position'] === $employeePosition && $employee['employee_type'] === 'OWNER') || $employeeData['party']['id'] === $ownerPartyUUID) {
 
                         $user = $ownerUser;
 
@@ -358,7 +358,7 @@ class EmployeeRepository
                         $employeeValidator = $this->validateEmployeeData($employeeResponse);
 
                         /** @var \Illuminate\Contracts\Validation\Validator $employeeValidator */
-                        if($employeeValidator->fails()) {
+                        if ($employeeValidator->fails()) {
                             Log::error(__('auth.login.error.validation.employee_data', [], 'en'), ['errors' => $employeeValidator->errors()]);
 
                             throw new Exception($employeeValidator->errors());
@@ -391,14 +391,14 @@ class EmployeeRepository
                         : Party::where('uuid', $employeeData['party']['id'])->first();
 
                     if ($user && !$user->party) {
-                       $party->user()->associate($user);
+                        $party->user()->associate($user);
                     }
 
                     if ($employeeData['status'] === 'DISMISSED') {
                         $party = null;
                     }
 
-                    if (is_array($employeeData['division']) &&  isset($employeeData['division']['id'])) {
+                    if (is_array($employeeData['division']) && isset($employeeData['division']['id'])) {
                         $employeeData['division_id'] = $employeeData['division']['id'];
                     }
 
@@ -408,7 +408,7 @@ class EmployeeRepository
                 // Update status of EmployeeRequest and the time of update
                 $this->updateEmployeeRequestStatus($employeeRequest, 'APPROVED', $employeeRequest->updatedAt);
 
-                if($employeeRequest->revision) {
+                if ($employeeRequest->revision) {
                     $employeeRequest->revision->setApplied();
                 }
             });
@@ -441,7 +441,7 @@ class EmployeeRepository
         }
 
         try {
-            DB::transaction(function() use($employees, $user, $legalEntityUUID, $authUserUUID) {
+            DB::transaction(function () use ($employees, $user, $legalEntityUUID, $authUserUUID) {
                 foreach ($employees as $employee) {
                     if ($employee->party->email) {
                         continue;
@@ -452,7 +452,7 @@ class EmployeeRepository
                     $employeeValidator = $this->validateEmployeeData($employeeResponse);
 
                     /** @var \Illuminate\Contracts\Validation\Validator $employeeValidator */
-                    if($employeeValidator->fails()) {
+                    if ($employeeValidator->fails()) {
                         Log::error(__('auth.login.error.validation.employee_data', [], 'en'), ['errors' => $employeeValidator->errors()]);
 
                         throw new Exception($employeeValidator->errors());
@@ -470,7 +470,7 @@ class EmployeeRepository
                     $employeeData['inserted_at'] = Carbon::now()->format('Y-m-d');
                     $employeeData['updated_at'] = Carbon::now()->format('Y-m-d');
 
-                    $this->updateEmployeeDataAtFirstLogin($user,  $employee->party, $employeeData, $authUserUUID, $legalEntityUUID);
+                    $this->updateEmployeeDataAtFirstLogin($user, $employee->party, $employeeData, $authUserUUID, $legalEntityUUID);
                 }
             });
         } catch (Exception $err) {
@@ -506,7 +506,7 @@ class EmployeeRepository
         }
 
         try {
-            DB::transaction(function() use($employeeRequests, $user, $legalEntity, $authUserUUID) {
+            DB::transaction(function () use ($employeeRequests, $user, $legalEntity, $authUserUUID) {
                 $updatedAt = '1970-01-01T00:00:00.000000Z';
 
                 foreach ($employeeRequests as $employeeRequest) {
@@ -602,7 +602,7 @@ class EmployeeRepository
         $employeeData['legal_entity_id'] = $employeeData['legal_entity_uuid'];
         $employeeData['party']['id'] = $employeeData['party']['uuid'];
         $employeeData['party'] = array_merge($employeeData['party'], $revisionData['party']);
-        $employeeData['party']['documents'] =  $revisionData['documents'];
+        $employeeData['party']['documents'] = $revisionData['documents'];
         $employeeData['party']['phones'] = $revisionData['phones'];
 
         if (isset($employeeData['division']['id'])) {

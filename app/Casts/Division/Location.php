@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Casts\Division;
 
-use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+use App\Models\Division;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 
 class Location implements CastsAttributes
 {
@@ -15,17 +18,10 @@ class Location implements CastsAttributes
     public function get(Model $model, string $key, mixed $value, array $attributes): mixed
     {
         if (!is_array($value)) {
-            $data = json_decode($value,true);
+            $data = !empty($value) ? json_decode($value,true) : [];
         }
 
-        if (!empty($data) && ($data['latitude'] !== 0 || $data['longitude'] !== 0)) {
-            $data['latitude'] = $this->normalizeValue($data['latitude']);
-            $data['longitude'] = $this->normalizeValue($data['longitude']);
-
-            return $data;
-        }
-
-        return [];
+        return empty($data) ? ['latitude' => 0, 'longitude' => 0] : $data;
     }
 
     /**
@@ -43,25 +39,10 @@ class Location implements CastsAttributes
             $data = $value ? [$key => json_decode($value,true)] : [];
 
             if (empty($data)) {
-                $data[$key]['latitude'] = 0;
-                $data[$key]['longitude'] = 0;
-
+                $data[$key] = Division::getLocationTemplate();
             }
         }
 
         return json_encode($data[$key]);
-    }
-
-    /**
-     * Add trailing 'zero' symbol if coordinate value has one digit before the dot.
-     * Without it Longitude or Latitude values in it's input fields displays wrong value.
-     *
-     * @param string $value
-     *
-     * @return string
-     */
-    protected function normalizeValue(string $value): string
-    {
-        return rtrim(sprintf("%09.6f", $value), '0');
     }
 }

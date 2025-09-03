@@ -41,13 +41,6 @@ class PatientIndex extends Component
     public Form $form;
 
     /**
-     * Check if the search person's request found someone.
-     *
-     * @var bool
-     */
-    public bool $searchPerformed = false;
-
-    /**
      * Active filter for patients.
      *
      * @var string
@@ -56,7 +49,6 @@ class PatientIndex extends Component
 
     public function mount(LegalEntity $legalEntity): void
     {
-
     }
 
     /**
@@ -154,7 +146,7 @@ class PatientIndex extends Component
         if (!empty($this->originalPatients)) {
             $this->patients = array_merge(
                 $this->setPersonStatus($personRequests, 'APPLICATION'),
-                $this->originalPatients = array_map(static function ($patient) {
+                $this->originalPatients = array_map(static function (array $patient) {
                     return array_merge($patient, ['status' => $patient['verification_status']]);
                 }, $this->originalPatients)
             );
@@ -168,31 +160,29 @@ class PatientIndex extends Component
                 $this->originalPatients = $this->setPersonStatus($this->originalPatients, 'eHEALTH'),
             );
         }
-
-        $this->searchPerformed = true;
-        $this->dispatch('patientsUpdated', $this->patients);
     }
 
     /**
      * Redirect to patient data route.
      *
-     * @param  int  $patientId
+     * @param  string  $patientId
      * @return void
      */
-    public function redirectToRecord(int $patientId): void
+    public function redirectToRecord(string $patientId): void
     {
-        $this->redirectRoute('patient.patient-data', [legalEntity(), 'patientId' => $patientId]);
+        $this->handleRedirect($patientId, 'patient.patient-data');
     }
 
     /**
      * Redirect to create encounter route.
      *
-     * @param  int  $patientId  The patient ID.
+     * @param  string  $patientId
      * @return void
      */
-    public function redirectToEncounter(int $patientId): void
+
+    public function redirectToEncounter(string $patientId): void
     {
-        $this->redirectRoute('encounter.create', [legalEntity(), 'patientId' => $patientId]);
+        $this->handleRedirect($patientId, 'encounter.create');
     }
 
     /**
@@ -224,36 +214,29 @@ class PatientIndex extends Component
     /**
      * Stores patient data in the DB and redirects to route by name.
      *
-     * @param  array  $patientData  The associative array containing patient details.
+     * @param  string  $patientId
      * @param  string  $routeName
      * @return void
      */
-    private function handleRedirect(array $patientData, string $routeName): void
+    private function handleRedirect(string $patientId, string $routeName): void
     {
-        $originalPatientData = collect($this->getOriginalPatients())
-            ->first(function ($patient) use ($patientData) {
-                return (isset($patientData['id']) && $patient['id'] === $patientData['id']) ||
-                    (isset($patientData['uuid']) && $patient['uuid'] === $patientData['uuid']);
-            });
+        if (uuid_is_valid($patientId)) {
+            // IF UUID is valid, then find for it in DB
+            $patientData = collect($this->getOriginalPatients())->firstWhere('id', $patientId);
+            $person = Person::firstWhere('uuid', $patientId);
 
-        // Check if the array has not changed and if the UUID is valid.
-        if (($patientData !== $originalPatientData) && uuid_is_valid($originalPatientData['uuid'] ?? $originalPatientData['id'])) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Виникла помилка, зверніться до адміністратора.',
-                'type' => 'error'
-            ]);
+            // Crete person in DB if not exist.
+            if (!$person) {
+                $patientData['uuid'] = $patientData['id'];
+                unset($patientData['id'], $patientData['status']);
 
-            return;
+                $person = $this->storeNewPerson($patientData);
+            }
+
+            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $person->id]);
+        } else {
+            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $patientId]);
         }
-
-        $person = Person::firstWhere('uuid', $originalPatientData['uuid'] ?? $originalPatientData['id']);
-
-        // Crete person in DB if not exist.
-        if (!$person) {
-            $person = $this->storeNewPerson($originalPatientData);
-        }
-
-        $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $person->id]);
     }
 
     /**
@@ -269,30 +252,28 @@ class PatientIndex extends Component
     /**
      * Store new person from eHealth in DB.
      *
-     * @param  array  $originalPatientData
+     * @param  array  $patientData
      * @return Person|null
      */
-    private function storeNewPerson(array $originalPatientData): ?Person
+    private function storeNewPerson(array $patientData): ?Person
     {
         try {
-            $person = Person::firstOrCreate(
-                ['uuid' => $originalPatientData['uuid'] ?? $originalPatientData['id']],
-                $originalPatientData
-            );
+            $person = Person::firstOrCreate(['uuid' => $patientData['uuid']], $patientData);
 
-            if (isset($patientData['phones'])) {
-                $person->phones()->createMany($originalPatientData['phones']);
+            if (!empty($patientData['phones'])) {
+                foreach ($patientData['phones'] as $phoneData) {
+                    $person->phones()->firstOrCreate($phoneData);
+                }
             }
 
             return $person;
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             $this->dispatch('flashMessage', [
                 'message' => 'Виникла помилка, зверніться до адміністратора.',
                 'type' => 'error'
             ]);
-
             Log::channel('db_errors')->error('Error while creating new person', [
-                'error' => $e->getMessage()
+                'error' => $exception->getMessage()
             ]);
 
             return null;

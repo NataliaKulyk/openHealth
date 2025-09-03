@@ -45,4 +45,19 @@ final class Repository
     {
         return app(HealthcareServiceRepository::class);
     }
+
+    public static function declarationRequest(): DeclarationRequestRepository
+    {
+        return app(DeclarationRequestRepository::class);
+    }
+
+    public static function declaration(): DeclarationRepository
+    {
+        return app(DeclarationRepository::class);
+    }
+
+    public static function user(): UserRepository
+    {
+        return app(UserRepository::class);
+    }
 }

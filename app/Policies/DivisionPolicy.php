@@ -38,6 +38,19 @@ class DivisionPolicy
     }
 
     /**
+     * User allow to delete the Division's draft record fromm the DB
+     */
+    public function delete(User $user, Division $division): Response
+    {
+        // Only Divisions with DRAFT status can be deleted
+        if ($division->status !== Status::DRAFT) {
+            return Response::deny();
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * Determine whether the user can update the model.
      */
     public function update(User $user, Division $division, ?LegalEntity $legalEntity = null): Response|bool
@@ -82,8 +95,12 @@ class DivisionPolicy
             return Response::denyWithStatus(403);
         }
 
-        // Active divisions cannot be activated
-        if ($division->status === Status::ACTIVE) {
+        // Some divisions cannot be activated
+        if (
+            $division->status === Status::ACTIVE ||
+            $division->status === Status::DRAFT ||
+            $division->status === Status::UNSYNCED
+        ) {
             return Response::deny();
         }
 
@@ -114,8 +131,12 @@ class DivisionPolicy
             return Response::deny();
         }
 
-        // Inactive divisions cannot be deactivated
-        if ($division->status === Status::INACTIVE) {
+        // Some divisions cannot be deactivated
+        if (
+            $division->status === Status::INACTIVE ||
+            $division->status === Status::DRAFT ||
+            $division->status === Status::UNSYNCED
+        ) {
             return Response::deny();
         }
 

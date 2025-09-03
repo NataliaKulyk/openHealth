@@ -7,6 +7,7 @@ namespace App\Classes\eHealth;
 use Closure;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\HigherOrderTapProxy;
@@ -56,14 +57,13 @@ abstract class EHealthRequest extends PendingRequest
      * - Throws EHealthValidationException if the response status is 422 (validation error).
      * - Throws EHealthResponseException for all other unsuccessful responses.
      *
-     * @param string $method The HTTP method (e.g., 'GET', 'POST', etc.).
-     * @param string $url The endpoint URL.
-     * @param array $options Additional request options (query, body, headers, etc.).
+     * @param  string  $method  The HTTP method (e.g., 'GET', 'POST', etc.).
+     * @param  string  $url  The endpoint URL.
+     * @param  array  $options  Additional request options (query, body, headers, etc.).
      *
      * @return EHealthResponse|Response
      *
-     * @throws EHealthValidationException
-     * @throws EHealthResponseException
+     * @throws EHealthValidationException|EHealthResponseException|ConnectionException
      */
     public function send(string $method, string $url, array $options = []): EHealthResponse|Response
     {

@@ -5,34 +5,47 @@ declare(strict_types=1);
 namespace App\Rules\DivisionRules;
 
 use Closure;
-use App\Models\LegalEntity;
-use App\Exceptions\CustomValidationException;
+use Illuminate\Support\Str;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class LocationRule implements ValidationRule
 {
+    protected string $message;
+
     public function __construct(protected array $division)
     {
     }
 
     /**
-     * Run the validation rule. Check that location exists in request for legal entity with type PHARMACY
+     * Run the validation rule. Check that location longitude and latitude specified in pair simultaneously
      *
      * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $localEntityType = legalEntity()->type;
-        $hasLocation = $this->division['location']['longitude'] && $this->division['location']['latitude'];
+        $field = Str::afterLast($attribute, '.');
 
-        // CustomValidationException
-        if ($localEntityType === LegalEntity::TYPE_PHARMACY && !$hasLocation) {
-            throw new CustomValidationException($this->message(), 'custom');
+        $emptyLongitude = ((float) ($this->division['location']['longitude'] ?? 0))=== 0.0;
+        $emptyLatitude = ((float) ($this->division['location']['latitude'] ?? 0)) === 0.0;
+
+        if ($emptyLongitude && $emptyLatitude) {
+            return;
         }
-    }
 
-    protected function message(): string
-    {
-        return __('validation.attributes.healthcareService.error.division.location.required_type');
+        if (! preg_match('/^-?([1-8]?[1-9]|[1-9]0|0)\\.\\d{1,6}/', number_format($value, 6, '.', ''))) {
+            $fail(__('validation.attributes.healthcareService.error.division.location.loсation_misformat'));
+
+            return;
+        }
+
+        if ($field === 'longitude' && $emptyLongitude && !$emptyLatitude) {
+            $fail(__('validation.attributes.healthcareService.error.division.location.longitude_required'));
+
+            return;
+        }
+
+        if ($field === 'latitude' && !$emptyLongitude && $emptyLatitude) {
+            $fail(__('validation.attributes.healthcareService.error.division.location.latitude_required'));
+        }
     }
 }

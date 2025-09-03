@@ -140,7 +140,7 @@ class DiagnosticReportComponent extends Component
         $this->employeeFullName = $authUser->getEncounterWriterEmployee()->fullName;
 
         $employees = Employee::withoutEagerLoads()
-            ->select('uuid', 'party_id')
+            ->select(['uuid', 'party_id'])
             ->with('party:id,last_name,first_name,second_name')
             ->where('legal_entity_id', legalEntity()->id)
             ->get();

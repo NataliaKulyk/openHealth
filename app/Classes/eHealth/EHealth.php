@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
-
-
+use App\Classes\eHealth\Api\Declaration;
 use App\Classes\eHealth\Api\DeclarationRequest;
 use App\Classes\eHealth\Api\License;
 use App\Classes\eHealth\Api\Job;
@@ -40,6 +39,11 @@ final class EHealth
     public static function declarationRequest(): DeclarationRequest
     {
         return app(DeclarationRequest::class);
+    }
+
+    public static function declaration(): Declaration
+    {
+        return app(Declaration::class);
     }
 
     public static function ruleEngineRules(): RuleEngineRules

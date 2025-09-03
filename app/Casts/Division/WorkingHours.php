@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Casts\Division;
 
+use App\Models\Division;
 use App\Traits\WorkTimeUtilities;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
@@ -19,9 +22,9 @@ class WorkingHours implements CastsAttributes
     {
         $data = $value;
 
-        if (!empty($data)) {
-            $data = json_decode($value,true);
-        }
+        $decodedValue = $value ? json_decode($value, true) : null;
+
+        $data = array_replace($this->workingHours, $decodedValue ?: []);
 
         return $this->prepareWorkingHours($data, true);
     }
@@ -38,7 +41,7 @@ class WorkingHours implements CastsAttributes
         if (is_array($value)) {
             $data = [$key => $value];
         } else {
-            $data = $value ? [$key => json_decode($value,true)] : [$key => []];
+            $data = $value ? [$key => json_decode($value,true)] : [$key => [Division::getWorkingTimeTemplate()]];
         }
 
         return json_encode($this->prepareWorkingHours($data[$key]));

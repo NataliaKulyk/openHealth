@@ -32,7 +32,7 @@ class DeclarationRequest extends Request
     /**
      * Resend sms on previously created Declaration Request V3.
      *
-     * @param  string  $id
+     * @param  string  $id  Declaration ID
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
@@ -98,5 +98,33 @@ class DeclarationRequest extends Request
     public function reject(string $id, array $data = []): PromiseInterface|EHealthResponse
     {
         return $this->patch(self::URL . "/$id/actions/reject", $data);
+    }
+
+    /**
+     * Obtain list of previously created Declaration Requests.
+     *
+     * @param  string  $url
+     * @param $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException
+     */
+    public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
+    {
+        $this->setDefaultPageSize();
+
+        return $this->get($url, $query);
+    }
+
+    /**
+     * Obtain full information about Declaration Request by ID.
+     *
+     * @param  string  $url  Request identifier
+     * @param $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException
+     */
+    public function get(string $url, $query = null): PromiseInterface|EHealthResponse
+    {
+        return parent::get(self::URL . "/$url", $query);
     }
 }

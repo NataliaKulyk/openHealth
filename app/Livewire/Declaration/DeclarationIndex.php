@@ -4,219 +4,173 @@ declare(strict_types=1);
 
 namespace App\Livewire\Declaration;
 
+use App\Classes\eHealth\EHealth;
+use App\Enums\Declaration\Status;
 use App\Models\Declaration;
-use App\Models\Employee;
+use App\Models\DeclarationRequest;
 use App\Models\LegalEntity;
-use Database\Seeders\DeclarationSeeder;
-use Illuminate\Support\Facades\DB;
+use App\Traits\FormTrait;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 use Livewire\WithPagination;
 
-class DeclarationIndex extends DeclarationComponent
+class DeclarationIndex extends Component
 {
     use WithPagination;
+    use FormTrait;
 
-    public array $tableHeaders = [];
+    public string $search = '';
 
     /**
-     * Employee filter
+     * Default types for multiselect filter
      * @var array|string[]
      */
-    public array $employee_filter = [
-        'full_name' => '',
-        'status' => '',
-        'employee_uuid' => '',
-    ];
-
-    /**
-     * @var array|int[]
-     */
-    public ?array $request_declaration = [
-        'page' => 1,
-        'page_size' => 10,
-    ];
-
-    /**
-     * @var object|null
-     */
-    public ?object $employees = null;
-
-    /**
-     * @var array|string[]
-     */
-
-    public ?array $declarations_filter = [
-        'number_declaration' => '',
-        'first_name' => '',
-        'last_name' => '',
-        'second_name' => '',
-        'gender' => '',
-        'birthday_day' => '',
-        'phone' => '',
-    ];
-
-    /**
-     * @var object|null
-     */
-    public ?object $declaration_show = null;
-
-    protected $listeners = ['searchUpdated'];
+    public array $typeFilter = ['request', 'declaration'];
 
     public function mount(LegalEntity $legalEntity): void
     {
-        $this->tableHeaders();
     }
 
-    public function tableHeaders(): void
+    #[Computed]
+    public function declarations(): LengthAwarePaginator
     {
-        $this->tableHeaders = [
-            __('ФІО'),
-            __('Телефон'),
-            __('Дата народження'),
-            __('Номер декларації'),
-            __('Статус'),
-            __('Дата декларації'),
-            __('Лікар'),
-            __('forms.actions'),
-        ];
-    }
+        $user = Auth::user();
+        $declarationRequests = DeclarationRequest::with(['person', 'employee'])
+            ->where('legal_entity_id', legalEntity()->id)
+            ->when(
+                !$user?->hasRole('OWNER'),
+                fn (Builder $query) => $query->whereIn('employee_id', $user->employees()->pluck('id'))
+            )
+            ->whereNotIn('status', [Status::SIGNED->value])
+            ->get()
+            ->each->setAttribute('type', 'request');
 
-    //Livewire functions
-    public function showDeclaration($declaration): void
-    {
-        $this->declaration_show = new Declaration($declaration);
-    }
+        $declarations = Declaration::with(['person', 'employee'])
+            ->where('legal_entity_id', legalEntity()->id)
+            ->when(
+                !$user?->hasRole('OWNER'),
+                fn (Builder $query) => $query->whereIn('employee_id', $user->employees()->pluck('id'))
+            )
+            ->get()
+            ->each->setAttribute('type', 'declaration');
 
-    public function closeDeclaration(): void
-    {
-        $this->declaration_show = null;
-    }
+        $allItems = $declarationRequests->concat($declarations);
 
-    public function updated($field): void
-    {
-
-        if (in_array($field, $this->declarations_filter)) {
-            $this->resetPage();
+        // Filter by type
+        if (!empty($this->typeFilter)) {
+            $allItems = $allItems->filter(
+                fn (DeclarationRequest|Declaration $item) => in_array($item->type, $this->typeFilter, true)
+            );
         }
-    }
-    //TODO: Remove function after testing
-    public function callSeeder(): void
-    {
-        Declaration::truncate();
-        if (!Declaration::count()) {
-            $seeder = new DeclarationSeeder();
-            DB::transaction(function () use ($seeder) {
-                $seeder->run(1000);
+
+        // Search by first and last name
+        if (!empty($this->search)) {
+            $searchTerm = Str::lower(trim($this->search));
+
+            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) use ($searchTerm) {
+                $last = Str::lower(data_get($item, 'person.last_name', ''));
+                $first = Str::lower(data_get($item, 'person.first_name', ''));
+
+                return Str::contains($last, $searchTerm) || Str::contains($first, $searchTerm);
             });
-
         }
 
+        // Pagination
+        $perPage = config('pagination.per_page');
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $currentItems = $allItems->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        return new LengthAwarePaginator(
+            $currentItems,
+            $allItems->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url()]
+        );
     }
 
-    public function searchUpdated($searchData): void
+    public function approve(int $patientId, int $declarationRequestId): void
     {
-        $this->declarations_filter = $searchData;
-    }
-
-    public function getDeclarations(): ?object
-    {
-        if (strlen($this->employee_filter['full_name']) > 3) {
-            $query = Employee::doctor();
-
-            $this->filterByEmployeeName($query, $this->employee_filter['full_name']);
+        if (!$this->ensureAbility('approve', 'У вас немає дозволу на підтвердження заявки на подання декларації')) {
+            return;
         }
 
-        return $this->filterDeclarations();
+        $this->redirectRoute(
+            'declaration.edit',
+            [legalEntity(), 'patientId' => $patientId, 'declarationRequestId' => $declarationRequestId],
+            navigate: true
+        );
     }
 
-    private function filterByEmployeeName($query, string $employeeName): void
+    public function sign(int $patientId, int $declarationRequestId): void
     {
-        $nameParts = explode(' ', $employeeName);
-        $fields = ['first_name', 'last_name', 'second_name'];
-        $query->where(function ($query) use ($nameParts, $fields) {
-            foreach ($nameParts as $index => $part) {
-                if (isset($part) && strlen($part) > 3) {
-                    $field = $fields[$index] ?? null;
-                    if ($field) {
-                        $query->where("party->$field", 'ILIKE', "%$part%");
-                    }
-                }
+        if (!$this->ensureAbility('sign', 'У вас немає дозволу на підписання заявки на подання декларації')) {
+            return;
+        }
+
+        session()?->flash('showSignModal');
+
+        $this->redirectRoute(
+            'declaration.edit',
+            [legalEntity(), 'patientId' => $patientId, 'declarationRequestId' => $declarationRequestId],
+            navigate: true
+        );
+    }
+
+    public function reject(string $declarationUuid): void
+    {
+        if (!$this->ensureAbility('reject', 'У вас немає дозволу на відхилення заявки на подання декларації')) {
+            return;
+        }
+
+        try {
+            $response = EHealth::declarationRequest()->reject($declarationUuid);
+
+            if (!$response->successful()) {
+                $this->logEHealthError($response, 'Error while rejecting declaration request');
+                $this->flashGeneralError();
+
+                return;
             }
-        });
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error while rejecting declaration request');
+            $this->flashGeneralError();
 
-        $this->employees = $query->take(5)->get();
-
+            return;
+        }
     }
 
-    private function filterDeclarations($employee = null): ?object
+    /**
+     * Ensure that the authenticated user has the given ability; if not, flash an error message.
+     *
+     * @param  string  $ability
+     * @param  string  $errorMessage
+     * @return bool
+     */
+    protected function ensureAbility(string $ability, string $errorMessage): bool
     {
+        if (Auth::user()?->cannot($ability, DeclarationRequest::class)) {
+            $this->dispatch('flashMessage', [
+                'message' => $errorMessage,
+                'type' => 'error'
+            ]);
 
-        if ($this->employee_filter['employee_uuid']) {
-            $employee = Employee::where('uuid', $this->employee_filter['employee_uuid'])->with('declarations')->first();
+            return false;
         }
 
-        //  Get the employee by UUID
-        if ($employee) {
-            $declarations = $employee->declarations(); // Return the employee's declarations
-
-        } else {
-            $declarations = Declaration::query(); // Return all declarations
-        }
-
-        if (!empty($this->declarations_filter['first_name']) && strlen($this->declarations_filter['first_name']) > 3) {
-            $firstName = $this->declarations_filter['first_name'];
-            $declarations->where('person->first_name', 'ILIKE', "%$firstName%");
-        }
-
-        if (!empty($this->declarations_filter['last_name']) && strlen($this->declarations_filter['last_name']) > 3) {
-            $last_name = $this->declarations_filter['last_name'];
-            $declarations->where('person->last_name', 'ILIKE', "%$last_name%");
-        }
-
-        if (!empty($this->declarations_filter['second_name']) && strlen($this->declarations_filter['second_name']) > 3) {
-            $second_name = $this->declarations_filter['second_name'];
-            $declarations->where('person->second_name', 'ILIKE', "$second_name%");
-        }
-
-        if (!empty($this->declarations_filter['birth_date']) && strlen($this->declarations_filter['birth_date']) > 3) {
-            $birth_date = $this->declarations_filter['birth_date'];
-            $declarations->where('person->birth_date', 'ILIKE', "%$birth_date%");
-        }
-
-        if (!empty($this->declarations_filter['phone']) && strlen($this->declarations_filter['phone']) >= 3) {
-            $phone = trim($this->declarations_filter['phone']);
-            $declarations->whereRaw("EXISTS (
-                                SELECT 1
-                                FROM jsonb_array_elements(person->'phones') AS phone
-                                WHERE phone->>'number' ILIKE ?
-                            )", ["%$phone%"]);
-        }
-
-        if (!empty($this->declarations_filter['declaration_number']) && strlen($this->declarations_filter['declaration_number']) > 3) {
-            $declaration_number = $this->declarations_filter['declaration_number'];
-            $declarations->where('declaration_number', 'ILIKE', "%$declaration_number%");
-        }
-
-        if ($declarations) {
-            return $declarations;
-        }
-
-        return null; // Return null if the employee is not found or doesn't havE
+        return true;
     }
 
     public function render(): View
     {
-        $declarations = $this->getDeclarations();
-
-        if (!$declarations) {
-            $declarations = [];
-        }
-
-        $perPage = config('pagination.per_page');
-        $paginatedDeclarations = !$declarations ? [] : $declarations->paginate($perPage);
-
         return view('livewire.declaration.declaration-index', [
-            'declarations' => $paginatedDeclarations,
+            'declarations' => $this->declarations
         ]);
     }
 }

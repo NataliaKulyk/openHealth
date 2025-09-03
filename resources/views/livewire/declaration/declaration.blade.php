@@ -13,10 +13,17 @@
             <button type="submit" class="button-minor" onclick="window.history.back()">
                 {{ __('forms.cancel') }}
             </button>
+            <button wire:click.prevent="createLocally" type="submit" class="button-primary-outline">
+                {{ __('declarations.create_locally') }}
+            </button>
             <button wire:click.prevent="create" type="submit" class="button-primary">
                 {{ __('declarations.create_an_application') }}
             </button>
         </div>
+
+        @if($showInformationMessageModal)
+            @include('livewire.declaration.modals.information-message')
+        @endif
 
         @if($showAuthModal)
             @include('livewire.declaration.modals.authentication')
@@ -35,5 +42,6 @@
         @endif
     </form>
 
+    <x-messages/>
     <x-forms.loading/>
 </section>

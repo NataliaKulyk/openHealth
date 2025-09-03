@@ -17,7 +17,7 @@ class Person extends BasePerson
     public function __construct()
     {
         parent::__construct();
-        $this->mergeFillable(['death_date']);
+        $this->mergeFillable(['verification_status', 'death_date']);
     }
 
     protected $table = 'persons';

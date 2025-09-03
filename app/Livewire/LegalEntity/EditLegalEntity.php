@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\LegalEntity;
 
 use Log;
@@ -29,7 +31,7 @@ class EditLegalEntity extends LegalEntity
      */
     protected function getLegalEntity(): ?LegalEntityModel
     {
-        return legalEntity()->loadMissing(['licenses', 'address', 'phones', 'revisions']) ?? null;
+        return legalEntity()?->loadMissing(['licenses', 'address', 'phones', 'revisions']) ?? null;
     }
 
     protected function setLegalEntity(): bool
@@ -63,17 +65,19 @@ class EditLegalEntity extends LegalEntity
         $license = $this->legalEntity->licenses()?->first();
 
         if ($license) {
-            $this->legalEntityForm->license = Arr::only($this->convertArrayKeysToCamelCase($license->toArray()),
-            [
-                'type',
-                'licenseNumber',
-                'issuedBy',
-                'issuedDate',
-                'expiryDate',
-                'activeFromDate',
-                'whatLicensed',
-                'orderNo'
-            ]);
+            $this->legalEntityForm->license = Arr::only(
+                $this->convertArrayKeysToCamelCase($license->toArray()),
+                [
+                    'type',
+                    'licenseNumber',
+                    'issuedBy',
+                    'issuedDate',
+                    'expiryDate',
+                    'activeFromDate',
+                    'whatLicensed',
+                    'orderNo'
+                ]
+            );
         }
     }
 
@@ -148,7 +152,6 @@ class EditLegalEntity extends LegalEntity
             return;
         }
 
-
         $data = $result['request'];
         $response = $this->filterUnprovidedFields($result['response'], $data);
 
@@ -164,7 +167,7 @@ class EditLegalEntity extends LegalEntity
             $legalEntity->save();
             $legalEntity->refresh();
 
-            DB::transaction(function() use($response, $data) {
+            DB::transaction(function () use ($response, $data) {
                 $this->modifyLegalEntity($response);
 
                 $user = Auth::user();
@@ -191,7 +194,6 @@ class EditLegalEntity extends LegalEntity
         $beneficiary = legalEntity()->beneficiary ?? null;
         $receiverFundsCode = legalEntity()->receiverFundsCode ?? null;
 
-        return view('livewire.legal-entity.edit-legal-entity', ['isEdit' => true]
-        );
+        return view('livewire.legal-entity.edit-legal-entity', ['isEdit' => true]);
     }
 }

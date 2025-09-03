@@ -33,7 +33,7 @@ class Arr extends BaseArr
     {
         $result = [];
 
-        $array = is_object($data) ? (array) $data : $data;
+        $array = is_object($data) ? (array)$data : $data;
 
         foreach ($array as $key => $value) {
             $newKey = is_string($key) ? Str::camel($key) : $key;
@@ -58,13 +58,13 @@ class Arr extends BaseArr
      * This method assumes that if a key ends with 'Id' (camelCase) or '_id' (snake_case) and is to be replaced,
      * its value is intended to be a UUID.
      *
-     * @param array|object $data The input array or object.
+     * @param  array|object  $data  The input array or object.
      * @return array The array with keys replaced.
      */
     public static function replaceIdsKeysToUuid(array|object $data): array
     {
         $result = [];
-        $array = is_object($data) ? (array) $data : $data;
+        $array = is_object($data) ? (array)$data : $data;
 
         foreach ($array as $key => $value) {
             $newKey = $key;
@@ -96,7 +96,7 @@ class Arr extends BaseArr
                 case 'partyId':
                     $newKey = 'party_uuid';
                     break;
-                    // Add other specific mappings here if needed (e.g., 'requestId' to 'request_uuid')
+                // Add other specific mappings here if needed (e.g., 'requestId' to 'request_uuid')
                 default:
                     // If not explicitly handled above, keep the key as is (it will be snake_cased by snakeKeys later if needed)
                     break;
@@ -106,5 +106,26 @@ class Arr extends BaseArr
         }
 
         return $result;
+    }
+
+    /**
+     * Sort an array by key in ascending order recursively.
+     *
+     * @param $array
+     * @return array
+     */
+    public static function sortArrayRecursive($array): array
+    {
+        if (!is_array($array)) {
+            return [$array];
+        }
+
+        ksort($array);
+
+        foreach ($array as $key => $value) {
+            $array[$key] = self::sortArrayRecursive($value);
+        }
+
+        return $array;
     }
 }

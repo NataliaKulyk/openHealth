@@ -7,6 +7,7 @@ namespace App\Rules\DivisionRules;
 use Closure;
 use App\Models\Division;
 use App\Models\LegalEntity;
+use App\Models\Relations\Address;
 use Illuminate\Contracts\Validation\ValidationRule;
 use App\Exceptions\CustomValidationException;
 
@@ -100,12 +101,14 @@ class AddressRule implements ValidationRule
      */
     protected function checkAddressType(): bool
     {
-        $addressType = $this->division['addresses']['type'];
+        foreach ($this->division['addresses'] as $address) {
+            $addressType = $address['type'] ?? '';
 
-        if (!in_array($addressType, array_keys($this->dictionaries['ADDRESS_TYPE']))) {
-            $this->setMessage(__('validation.attributes.healthcareService.error.division.address.type'));
+            if (!in_array($addressType, array_keys($this->dictionaries['ADDRESS_TYPE']))) {
+                $this->setMessage(__('validation.attributes.healthcareService.error.division.address.type'));
 
-            return false;
+                return false;
+            }
         }
 
         return true;
@@ -118,12 +121,14 @@ class AddressRule implements ValidationRule
      */
     protected function checkSettlementType(): bool
     {
-        $settlementType = $this->division['addresses']['settlementType'];
+        foreach ($this->division['addresses'] as $address) {
+                $settlementType = $address['settlementType'] ?? '';
 
-        if (!in_array($settlementType, array_keys($this->dictionaries['SETTLEMENT_TYPE']))) {
-            $this->setMessage(__('validation.attributes.healthcareService.error.division.address.settlementType'));
+                if (!in_array($settlementType, array_keys($this->dictionaries['SETTLEMENT_TYPE']))) {
+                    $this->setMessage(__('validation.attributes.healthcareService.error.division.address.settlementType'));
 
-            return false;
+                    return false;
+                }
         }
 
         return true;
@@ -136,12 +141,14 @@ class AddressRule implements ValidationRule
      */
     protected function checkStreetType(): bool
     {
-        $streetType = $this->division['addresses']['streetType'];
+        foreach ($this->division['addresses'] as $address) {
+            $streetType = $address['streetType'] ?? '';
 
-        if (!in_array($streetType, array_keys($this->dictionaries['STREET_TYPE']))) {
-            $this->setMessage(__('validation.attributes.healthcareService.error.division.address.streetType'));
+            if (!in_array($streetType , array_keys($this->dictionaries['STREET_TYPE']))) {
+                $this->setMessage(__('validation.attributes.healthcareService.error.division.address.streetType'));
 
-            return false;
+                return false;
+            }
         }
 
         return true;
@@ -154,12 +161,14 @@ class AddressRule implements ValidationRule
      */
     protected function checkZipCode(): bool
     {
-        $zipCode = $this->division['addresses']['zip'];
+        foreach ($this->division['addresses'] as $address) {
+            $zipCode = $address['zip'] ?? '';
 
-        if (!empty($zipCode) && !preg_match('/^[0-9]{5}$/', $zipCode)) {
-            $this->setMessage(__('validation.attributes.healthcareService.error.division.address.zip'));
+            if (!empty($zipCode) && !preg_match('/^[0-9]{5}$/', $zipCode)) {
+                $this->setMessage(__('validation.attributes.healthcareService.error.division.address.zip'));
 
-            return false;
+                return false;
+            }
         }
 
         return true;
@@ -174,17 +183,20 @@ class AddressRule implements ValidationRule
     {
         $legalEntityType = legalEntity()->type;
         $divisionType = $this->division['type'];
-        $addressType = $this->division['addresses']['type'];
 
-        if (in_array($divisionType, Division::getValidDivisionTypes()) &&
-            in_array($legalEntityType, Division::getValidLegalEntityTypes()) &&
-            $addressType === 'RESIDENCE'
-        ) {
-            return true;
+        foreach ($this->division['addresses'] as $address) {
+            $addressType = $address['type'] ?? '';
+
+            if (! in_array($divisionType, Division::getValidDivisionTypes()) ||
+                ! in_array($legalEntityType, Division::getValidLegalEntityTypes()) ||
+                $addressType !== Address::DEFAULT_TYPE
+            ) {
+                $this->setMessage(__('validation.attributes.healthcareService.error.address.mapping'));
+
+                return false;
+            }
         }
 
-        $this->setMessage(__('validation.attributes.healthcareService.error.address.mapping'));
-
-        return false;
+        return true;
     }
 }

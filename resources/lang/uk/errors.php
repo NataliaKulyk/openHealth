@@ -21,7 +21,11 @@ return [
             'primary_not_editable'
         ]
     ],
-
+    'database' => [
+        'messages' => [
+            'save_error' => 'Не вдалося зберегти дані в БД'
+        ]
+    ],
     'ehealth' => [
         'validation_error_header' => 'eHealth відхилив запит через невірні дані. Будь ласка, виправте:',
         'messages' => [
@@ -38,6 +42,8 @@ return [
             'length' => 'необхідно додати хоча б один елемент',
             'speciality_not_allowed' => 'спеціалізація ":speciality" не дозволена для лікаря.',
             'speciality_officio_not_allowed' => 'спеціалізація ":speciality" з активним основним записом не дозволена для лікаря.',
+            'request_error' => 'Помилка в процесі обробки запиту',
+            'server_error' => 'Помилка при обробці запиту до сервера',
         ]
     ],
 ];

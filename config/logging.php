@@ -146,6 +146,12 @@ return [
             'path' => storage_path('logs/e_health_errors.log'),
             'level' => 'error'
         ],
+
+        'task_scheduling' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/task_scheduling.log'),
+            'level' => 'info'
+        ],
     ],
 
 ];

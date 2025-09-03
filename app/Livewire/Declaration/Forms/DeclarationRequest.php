@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Declaration\Forms;
 
-use App\Classes\eHealth\Api\DeclarationApi;
+use App\Classes\eHealth\Api\Declaration;
 
-class DeclarationRequestApi extends DeclarationApi
+class DeclarationRequest extends Declaration
 {
 
 

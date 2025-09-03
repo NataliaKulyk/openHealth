@@ -1,17 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Classes\eHealth\Api;
 
-use Arr;
 use Exception;
-use Illuminate\Validation\Rule;
 use App\Traits\WorkTimeUtilities;
-use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Promise\PromiseInterface;
 use App\Classes\eHealth\EHealthResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Client\ConnectionException;
 use App\Classes\eHealth\EHealthRequest as Request;
+use App\Models\Division as DivisionModel;
+use  Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class Division extends Request
 {
@@ -43,7 +45,7 @@ class Division extends Request
         $this->setDefaultPageSize();
 
         $mergedQuery = array_merge(
-    $this->options['query'] ?? [],
+            $this->options['query'] ?? [],
             $query ?? []
         );
 
@@ -58,13 +60,16 @@ class Division extends Request
      *
      * @return EHealthResponse|PromiseInterface
      */
-    public function update(string $uuid, $data = []): PromiseInterface|EHealthResponse
+    public function update(?string $uuid, $data = []): PromiseInterface|EHealthResponse
     {
+        // If $uuid is missed it means that Division's record was edited is DRAFT (newly created and saved)
+        if (! $uuid) {
+            return $this->create($data);
+        }
+
         $this->setValidator($this->validateOne(...));
 
-        $mappedData = $this->mapRequest($data);
-
-        return parent::patch(self::URL . '/' . $uuid, $mappedData);
+        return parent::patch(self::URL . '/' . $uuid, $data);
     }
 
     /**
@@ -78,9 +83,7 @@ class Division extends Request
     {
         $this->setValidator($this->validateOne(...));
 
-        $mappedData = $this->mapRequest($data);
-
-        return parent::post(self::URL, $mappedData);
+        return parent::post(self::URL, $data);
     }
 
     /**
@@ -105,6 +108,197 @@ class Division extends Request
     public function deactivate(string $uuid): PromiseInterface|EHealthResponse
     {
         return parent::patch(self::URL . '/' . $uuid . self::ACTIONS_DEACTIVATE);
+    }
+
+    /**
+      * Schema Create/Update Division
+      *
+      * @return array
+      */
+    public static function schemaRequest(): array
+    {
+        return [
+            '$schema' => 'http://json-schema.org/draft-07/schema#',
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'type' => 'string'
+                ],
+                'addresses' => [
+                    'type' => 'array'
+                ],
+                'phones' => [
+                    'type' => 'array'
+                ],
+                'email' => [
+                    'type' => 'string'
+                ],
+                'working_hours' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'mon' => [
+                            'type' => 'array'
+                        ],
+                        'tue' => [
+                            'type' => 'array'
+                        ],
+                        'wed' => [
+                            'type' => 'array'
+                        ],
+                        'thu' => [
+                            'type' => 'array'
+                        ],
+                        'fri' => [
+                            'type' => "array"
+                        ],
+                        'sat' => [
+                            'type' => 'array'
+                        ],
+                        'sun' => [
+                            'type' => 'array'
+                        ]
+                    ]
+                ],
+                'type' => [
+                    'type' => 'string',
+                    'enum' => [
+                        'ACTIVE',
+                        'INACTIVE',
+                        'DRAFT',
+                        'UNSYNCED'
+                    ]
+                ],
+                'legal_entity_id' => [
+                    'type' => 'string'
+                ],
+                'external_id' => [
+                    'type' => 'string'
+                ],
+                'location' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'latitude' => [
+                            'type' => 'number'
+                        ],
+                        'longitude' => [
+                            'type' => 'number'
+                        ]
+                    ],
+                    'required' => [
+                        'latitude',
+                        'longitude'
+                    ]
+                ]
+            ],
+            'required' => [
+                'name',
+                'addresses',
+                'phones',
+                'email',
+                'type'
+            ]
+        ];
+    }
+
+    /**
+     * Normalizes division response data for database upsert operation.
+     *
+     * This method transforms the division data received from eHealth API to a format
+     * suitable for bulk upsert operation by:
+     * 1. Removing nested relationship data (legal_entity_uuid, addresses, phones)
+     * 2. Setting the legal_entity_id from the current legal entity
+     * 3. Converting JSON-serializable fields (location, working_hours) to JSON strings
+     *
+     * @param array $divisionsList Array of division data from eHealth API
+     *
+     * @return array Normalized array ready for database upsert operation
+     */
+    public static function normalizeResponseDataForUpsert(array $divisionsList): array
+    {
+        foreach ($divisionsList as $index => $division) {
+            unset($divisionsList[$index]['legal_entity_uuid']);
+            unset($divisionsList[$index]['addresses']);
+            unset($divisionsList[$index]['phones']);
+
+            $divisionsList[$index]['legal_entity_id'] = legalEntity()->id;
+
+            $divisionsList[$index]['location'] = empty($division['location'])
+                ? null
+                : json_encode($division['location']);
+
+            $divisionsList[$index]['working_hours'] = empty($division['working_hours'])
+                ? null
+                : json_encode($division['working_hours']);
+        }
+
+        return $divisionsList;
+    }
+
+    /**
+     * Prepares relationship data (table: 'addresses' and 'phones') for bulk database insertion.
+     *
+     * This method processes a list of division data from the eHealth API,
+     * extracts the nested 'addresses' and 'phones' arrays, and transforms them
+     * into a flat structure suitable for a bulk `insert()` operation. It uses a
+     * provided map to link the eHealth UUIDs to local database primary keys.
+     *
+     * @param array $dvisionsData The raw division data list from the eHealth API.
+     * @param Collection $divisionIds A collection mapping UUIDs (keys) to local division IDs (values).
+     *
+     * @return array An associative array containing 'divisionIds', 'addresses', and 'phones' data ready for the repository.
+     */
+    public static function getRelationshipData(array $dvisionsData, Collection $divisionIds): array
+    {
+        $divisionIdsArray = $divisionIds->values()->toArray();
+
+        $now = now();
+
+        $addressesData = [];
+        $phonesData = [];
+
+        foreach ($dvisionsData as $division) {
+            $divisionId = $divisionIds->get($division['uuid']);
+
+            // ADDRESSES PPREPARE
+            foreach ($division['addresses'] ?? [] as $address) {
+                $addressesData[] = [
+                    'type' => $address['type'],
+                    'country' => $address['country'],
+                    'area' => $address['area'],
+                    'region' => $address['region'] ?? null,
+                    'settlement' => $address['settlement'],
+                    'settlement_type' => $address['settlement_type'],
+                    'settlement_id' => $address['settlement_id'],
+                    'street_type' => $address['street_type'] ?? null,
+                    'street' => $address['street'] ?? null,
+                    'building' => $address['building'] ?? null,
+                    'apartment' => $address['apartment'] ?? null,
+                    'zip' => $address['zip'] ?? null,
+                    'addressable_id' => $divisionId,
+                    'addressable_type'=> DivisionModel::class,
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ];
+            }
+
+            // PHONES PREPARE
+            foreach ($division['phones'] ?? [] as $phone) {
+                $phonesData[] = [
+                    'type' => $phone['type'],
+                    'number' => $phone['number'],
+                    'phoneable_id' => $divisionId,
+                    'phoneable_type'=> DivisionModel::class,
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ];
+            }
+        }
+
+        return [
+            'divisionIds' => $divisionIdsArray,
+            'addresses' => $addressesData,
+            'phones' => $phonesData
+        ];
     }
 
     /**
@@ -187,7 +381,6 @@ class Division extends Request
             'uuid' => 'required|uuid',
             'email' => 'required|string',
             'external_id' => 'nullable|string',
-            'legal_entity_uuid' => ['required', 'uuid', Rule::in([legalEntity()->uuid])],
             'location' => 'nullable|array',
             'location.latitude' => 'required_with:location|numeric',
             'location.longitude' => 'required_with:location|numeric',
@@ -222,117 +415,6 @@ class Division extends Request
             'working_hours.sat.*.0' => 'required|string',
             'working_hours.sat.*.1' => 'required|string',
         ];
-    }
-
-    protected function schemaRequest(): array
-    {
-        return [
-            'working_hours' => ['nonEmpty' => true, 'format' => 'array', 'default' => [["00.00", "00.00"]]],
-            'phones' => ['format' => 'array'],
-            'location' => ['nonEmpty' => true, 'default' => ['longitude' => 0, 'latitude' => 0]],
-            'name',
-            'email',
-            'type',
-            'external_id',
-            'addresses' => ['format' => 'array']
-        ];
-    }
-
-    protected function mapRequest(array $requestData): array
-    {
-        $mapped = [];
-
-        foreach ($this->schemaRequest() as $sourceKey => $rules) {
-            // If specified the short form the $rules will be string, not an array
-            if (is_int($sourceKey) && is_string($rules)) {
-                $sourceKey = $rules;
-                $rules = [];
-            }
-
-            if (!isset($requestData[$sourceKey]) || empty($requestData[$sourceKey])) {
-                if (! Arr::boolean($rules, 'nonEmpty', false)) {
-                    continue; // skip empty if allowed to
-                }
-            }
-
-            // TODO: remove it for custom LocaltionCast
-            // If collect here is empty thus the value of array means is EMPTY
-            if (
-                Arr::boolean($rules, 'nonEmpty', false) &&
-                collect(Arr::wrap($requestData[$sourceKey] ?? []))->every(fn($item) => empty($item))
-            ) {
-                switch($sourceKey) {
-                    case 'location':
-                        $mapped['location'] = $rules['default'];
-                        continue 2;
-                }
-            }
-
-            // TODO: remove it for custom WorkingHoursCast and LocaltionCast accordingly
-            switch ($sourceKey) {
-            case 'location':
-                $mapped['location'] = $this->reformatLocation($requestData['location']);
-
-                continue 2;
-            case 'working_hours':
-                if (!empty($requestData['working_hours'])) {
-                    $mapped['working_hours'] = $this->prepareWorkingHours($requestData['working_hours']);
-                }
-                else {
-                    foreach(array_keys($this->weekdays) as $day) {
-                        $mapped['working_hours'][$day] = $rules['default'];
-                    }
-                }
-
-                continue 2;
-            }
-
-            $mapped[$sourceKey] = $requestData[$sourceKey];
-
-            if (Arr::get($rules, 'format') === 'array') {
-                $mapped[$sourceKey] = [$mapped[$sourceKey]];
-            }
-        }
-
-        return $mapped;
-    }
-
-    /**
-     * TODO: remove this after creating LocaltionCast
-     * API service requires that values of longitude and latitude should be as number
-     * but input fields returns string. Thus this values must be converted to.
-     * Otherwise to save Location data comes from API-service the data should be JSON object,
-     * therefore it must be converted too.
-     *
-     * @param array $location // Contains longitude and latitude values
-     * @param bool $toJson    // Indicates when location data should be converted to teh JSON object
-     *
-     * @return string|array
-     */
-    protected function reformatLocation(array $location, bool $toJson = false): string|array
-    {
-        if($location && $toJson) {
-            return json_encode($location);
-        } else {
-            $location['longitude'] = (float)$location['longitude'];
-            $location['latitude'] = (float)$location['latitude'];
-
-            return $location;
-        }
-    }
-
-    /**
-     * TODO: remove this after creating WorkingHoursCast
-     * Change divider between hours and minutes
-     *
-     * @param array $workingHours   // Array with work hours time data
-     * @param bool $dotToColon      // Determine how divider must be switched
-     *
-     * @return array
-     */
-    protected function prepareWorkingHours(array $workingHours, bool $dotToColon = false): array
-    {
-        return $this->prepareTimeToRequest($workingHours, $dotToColon);
     }
 
     /**

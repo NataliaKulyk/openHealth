@@ -208,10 +208,10 @@ class HealthcareService extends Component
                 ->setDivision($this->division)
                 ->saveHealthcareServiceResponseData($response);
 
-            return redirect()->route('healthcare_service.index', [legalEntity(), $this->division])->with('success', __('Запит виконано успішно'));
+            return redirect()->route('healthcare_service.index', [legalEntity(), $this->division])->with('success', __('forms.success_response'));
         }
 
-        session()->flash('error', __('Помилка в процесі обробки запиту'));
+        session()->flash('error', __('errors.ehealth.messages.request_error'));
 
         return null;
     }
@@ -265,7 +265,7 @@ class HealthcareService extends Component
         } catch (Exception $err) {
             Log::error(self::class . ':activate:', ['message' => $err->getMessage()]);
 
-            session()->flash('error', _('Цю послугу не вдалось активувати'));
+            session()->flash('error', __('Цю послугу не вдалось активувати'));
         }
     }
 
@@ -284,7 +284,7 @@ class HealthcareService extends Component
         } catch (Exception $err) {
             Log::error(self::class . ':deactivate:', ['message' => $err->getMessage()]);
 
-            session()->flash('error', _('Цю послугу не вдалось деактивувати'));
+            session()->flash('error', __('Цю послугу не вдалось деактивувати'));
         }
     }
 

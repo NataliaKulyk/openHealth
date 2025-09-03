@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models\Relations;
 
 use Illuminate\Database\Eloquent\Model;
@@ -30,7 +32,6 @@ class Document extends Model
         'issued_at',
         'expiration_date'
     ];
-
 
     protected $casts = [
         'issued_at' => 'date:Y-m-d',

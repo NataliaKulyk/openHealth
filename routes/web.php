@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Declaration\DeclarationEdit;
+use App\Livewire\Division\DivisionView;
 use App\Models\License;
 use App\Models\LegalEntity;
 use App\Livewire\Auth\Login;
@@ -14,7 +16,6 @@ use App\Http\Controllers\Auth\EHealthLoginController;
 use App\Livewire\Declaration\DeclarationCreate;
 use App\Livewire\Division\DivisionCreate;
 use App\Livewire\Division\DivisionEdit;
-use App\Livewire\Division\DivisionShow;
 use App\Livewire\Employee\EmployeeEdit;
 use App\Livewire\Employee\EmployeeShow;
 use App\Livewire\Employee\EmployeeIndex;
@@ -94,11 +95,11 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
     Route::get('/select-legal-entity', SelectLegalEntity::class)->name('legalEntity.select');
 
-    Route::middleware(['auth:web'])->prefix('/dashboard')->group(function() {
+    Route::middleware(['auth:web'])->prefix('/dashboard')->group(function () {
         Route::get('/', Dashboard::class)->name('dashboard');
 
         Route::get('/legal-entities/create', CreateLegalEntity::class)
-            ->can('create',  LegalEntity::class)
+            ->can('create', LegalEntity::class)
             ->name('legal-entity.new.create');
     });
     Route::middleware(['can:access,legalEntity'])->prefix('/dashboard/{legalEntity}')->whereNumber('legalEntity')->group(function () {
@@ -106,19 +107,19 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         Route::get('/', Dashboard::class)->name('dashboard');
 
         Route::get('/edit', EditLegalEntity::class)
-            ->can('edit',  LegalEntity::class)
+            ->can('edit', LegalEntity::class)
             ->name('legal-entity.edit');
 
         Route::get('/create', CreateLegalEntity::class)
-            ->can('create',  LegalEntity::class)
+            ->can('create', LegalEntity::class)
             ->name('legal-entity.create');
 
         Route::prefix('division')->middleware(['permission:division:read|division:details'])->group(function () {
             Route::get('/', DivisionIndex::class)->name('division.index')->can('viewAny', Division::class);
 
             Route::get('/create', DivisionCreate::class)->name('division.create')->can('create', Division::class);
-            Route::get('/{division}', DivisionShow::class)->name('division.show')->can('viewAny', Division::class);
-            Route::get('/{division}/edit', DivisionEdit::class)->name('division.edit')->can( 'update','division');
+            Route::get('/{division}', DivisionView::class)->name('division.view')->can('viewAny', Division::class);
+            Route::get('/{division}/edit', DivisionEdit::class)->name('division.edit')->can('update', 'division');
 
             Route::get('/{division}/healthcare-service', HealthcareService::class)->name('healthcare_service.index');
         });
@@ -174,7 +175,12 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/', PatientIndex::class)->name('patient.index');
                 Route::get('/create/{id?}', PatientComponent::class)->name('patient.form');
 
-                Route::get('/{patientId}/declaration/create', DeclarationCreate::class)->name('declaration.create')->whereNumber('id');
+                Route::get('/{patientId}/declaration/create', DeclarationCreate::class)
+                    ->name('declaration.create')
+                    ->whereNumber('patientId');
+                Route::get('/{patientId}/declaration/{declarationRequestId}', DeclarationEdit::class)
+                    ->name('declaration.edit')
+                    ->whereNumber(['patientId', 'declarationRequestId']);
 
                 Route::get('/{patientId}/patient-data', PatientData::class)->name('patient.patient-data');
                 Route::get('/{patientId}/summary', PatientSummary::class)->name('patient.summary');

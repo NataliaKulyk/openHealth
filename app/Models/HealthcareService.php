@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use \App\Enums\Status;
+use App\Enums\Status;
 use App\Casts\NotAvailableTimeCast;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -13,8 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class HealthcareService extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'uuid',
         'speciality_type',

@@ -8,11 +8,13 @@ use App\Models\Division;
 use App\Models\LegalEntity;
 use App\Traits\AddressSearch;
 use App\Traits\WorkTimeUtilities;
+use App\Livewire\Division\Trait\HasAction;
 
-class DivisionShow extends DivisionComponent
+class DivisionView extends DivisionComponent
 {
     use WorkTimeUtilities,
-        AddressSearch;
+        AddressSearch,
+        HasAction;
 
     public function mount(LegalEntity $legalEntity, Division $division): void
     {
@@ -21,8 +23,6 @@ class DivisionShow extends DivisionComponent
         }
 
         $this->setDivisionData($division);
-
-        $this->divisionForm->initWorkingHours($this->weekdays);
 
         $this->setDictionary();
     }
@@ -42,18 +42,14 @@ class DivisionShow extends DivisionComponent
     {
         $this->divisionForm->setDivision($division->toArray());
 
-        $this->divisionForm->setDivisionParam('addresses', $division->address->toArray());
-
+        // TODO: This need to be refactored after teh multiaddress will works
+        $this->divisionForm->setDivisionParam('addresses', $division->addresses->toArray());
         $this->address = $this->divisionForm->getDivisionParam('addresses');
 
-        $this->divisionForm->setDivisionParam('phones', $division->phones->toArray()[0]); // TODO: need refactor this to multiphone array
+        $this->divisionForm->setDivisionParam('phones', $division->phones->toArray()); // TODO: need refactor this to multiphone array
 
         $this->divisionForm->setDivisionParam('id', $division->id ?? '');
         $this->divisionForm->setDivisionParam('uuid', $division->uuid ?? '');
-
-        if ($this->divisionForm->isDivisionParamExistAndNull('working_hours')) {
-            $this->divisionForm->initWorkingHours($this->weekdays);
-        }
     }
 
     /**
@@ -61,6 +57,6 @@ class DivisionShow extends DivisionComponent
      */
     public function render()
     {
-        return view('livewire.division.division-show');
+        return view('livewire.division.division-view');
     }
 }

@@ -25,16 +25,18 @@ class WorkingHoursRule implements ValidationRule
 
     /**
      * Check that working hours schedule is correct
+     * Here 'shift' is the working time period from start to the end
+     * If shift's count is more or equal than 1, then the day is considered as a workday
      *
      * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $workingHours = $this->division['working_hours'];
+        $workingHours = $this->division['workingHours'];
 
         foreach ($this->weekdays as $day => $dayName) {
-            // If the first value of array is not set or empty this means that day is day off
-            if (empty($workingHours[$day][0])) {
+            // If the shift is empty, then skip the day
+            if ($this->checkEmptyShift($workingHours[$day][0] ?? null)) {
                 continue;
             }
 
@@ -64,16 +66,64 @@ class WorkingHoursRule implements ValidationRule
         }
     }
 
+    /**
+     * Check if a shift is considered empty (non-working).
+     *
+     * A shift is considered empty if:
+     * - It is null or empty array
+     * - Both start and end times are '00:00', which indicates a day off
+     *
+     * @param mixed $shift The shift array to check, containing start and end times
+     *
+     * @return bool Returns true if the shift is empty (non-working), false otherwise
+     */
+    protected function checkEmptyShift(mixed $shift): bool
+    {
+        if (empty($shift)) {
+            return true;
+        }
+
+        // If Start time = '00:00' and endTime = '00:00' it means that day is off
+        if ($shift[0] === $shift[1] && $shift[0] === '00:00') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check that all bunch of the workingHours' data is correct and valid
+     *
+     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     */
     protected function throwError(string $shiftName = ''): void
     {
         throw new CustomValidationException($this->message($shiftName), 'custom');
     }
 
+    /**
+     * Throw a custom validation exception with the current error message.
+     *
+     * This method is called when a address type rule fails validation.
+     *
+     * @return void
+     *
+     * @throws CustomValidationException
+     */
     protected function setMessage(string $message): void
     {
         $this->message = $message;
     }
 
+    /**
+     * Set the custom error message for the validation rule.
+     *
+     * This message will be used when throwing a validation exception.
+     *
+     * @param string $message The error message to set.
+     *
+     * @return void
+     */
     protected function message(string $shiftName = ''): string
     {
         return $shiftName . $this->message;
