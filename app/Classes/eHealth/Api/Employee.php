@@ -69,6 +69,7 @@ class Employee extends EHealthRequest
             'employee_type' => $ehealthData['employee_type'],
             'start_date' => Carbon::parse($ehealthData['start_date'])->toDateString(),
             'end_date' => isset($ehealthData['end_date']) ? Carbon::parse($ehealthData['end_date'])->toDateString() : null,
+            'inserted_at' => Carbon::now(),
             'legal_entity_id' => $legalEntity->id,
             'legal_entity_uuid' => $legalEntity->uuid,
             'party_id' => null,

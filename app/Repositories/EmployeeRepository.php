@@ -320,7 +320,7 @@ class EmployeeRepository
                     ]
                 );
 
-                if ($employeeRequest->revision) {
+                if($employeeRequest->revision) {
                     $employeeRequest->revision->setApplied();
                 }
             });
@@ -402,76 +402,64 @@ class EmployeeRepository
      * @param User $user
      * @return bool
      */
-    public function checkForEmployeeUpdate(LegalEntity $legalEntity, User $user, string $authUserUUID): bool
+    public function checkForEmployeeUpdate(LegalEntity $legalEntity, User $user): bool
     {
-        $employeeRoles = $user->getRoleNames()->toArray();
-
-        $employeeRequests = EmployeeRequest::employeeInstance($user->id, $legalEntity->uuid, $employeeRoles, true)
+        // This method from the model is probably a local scope. We assume it exists.
+        $pendingRequests = EmployeeRequest::employeeInstance($user->id, $legalEntity->uuid, $user->getRoleNames()->toArray(), true)
             ->whereIn('status', RequestStatus::getStatusesForSync())
             ->whereNotNull('uuid')
             ->get();
 
-        if (!$employeeRequests->count()) {
+        if ($pendingRequests->isEmpty()) {
             return true;
         }
 
         try {
-            DB::transaction(function () use ($employeeRequests, $user, $legalEntity, $authUserUUID) {
-                $updatedAt = '1970-01-01T00:00:00.000000Z';
+            DB::transaction(function() use($pendingRequests, $user, $legalEntity) {
+                $requestsToUpdate = [];
+                $employeesToUpsert = [];
 
-                foreach ($employeeRequests as $employeeRequest) {
+                foreach ($pendingRequests as $employeeRequest) {
+                    $ehealthRequestData = EmployeeApi::getEmployeeRequestData($employeeRequest->uuid);
 
-                    $employeeRequestResponse = EmployeeApi::_getRequestById($employeeRequest->uuid);
-
-                    $employeeRequestValidator = $this->validateEmployeeRequestData($employeeRequestResponse['data']);
-
-                    /** @var \Illuminate\Contracts\Validation\Validator $employeeRequestValidator */
-                    if ($employeeRequestValidator->fails()) {
-                        Log::error(__('auth.login.error.validation.employee_request_data', [], 'en'), ['errors' => $employeeRequestValidator->errors()]);
-
-                        throw new Exception($employeeRequestValidator->errors());
-                    }
-
-                    $employeeRequestData = $employeeRequestValidator->validated();
-
-                    // Just skip request if nothing changes
-                    if ($employeeRequestData['status'] === 'NEW') {
+                    if (($ehealthRequestData['status'] ?? 'NEW') === 'NEW') {
                         continue;
                     }
 
-                    $this->updateEmployeeRequestStatus($employeeRequest, $employeeRequestData['status'], $employeeRequestData['updated_at']);
+                    // Prepare request data for bulk update
+                    $requestsToUpdate[] = [
+                        'id' => $employeeRequest->id,
+                        'status' => $ehealthRequestData['status'],
+                        'applied_at' => $ehealthRequestData['updated_at']
+                    ];
 
-                    $currentRequestDate = Carbon::parse($employeeRequestData['updated_at']);
-                    $proceddedRequestDate = Carbon::parse($updatedAt);
+                    if ($ehealthRequestData['status'] === 'APPROVED') {
+                        // Prepare employee data for bulk update using data from the revision
+                        $employeeDataFromRevision = $this->getRevisionEmployeeData($employeeRequest);
+                        $preparedData = EmployeeApi::prepareEmployeeDataForDb($employeeDataFromRevision, $legalEntity, $user);
+                        $employeesToUpsert[] = $preparedData;
 
-                    // Skip all EmployeeRequests that has wrong status (ex. EXPIRED) or older than last proceeded one
-                    if ($employeeRequestData['status'] !== 'APPROVED' || $currentRequestDate->lt($proceddedRequestDate)) {
+                        $employeeRequest->revision?->setApplied();
+                    } else {
                         $employeeRequest->revision?->setOutdated();
-
-                        continue;
                     }
+                }
 
-                    $updatedAt = $employeeRequestData['updated_at'];
+                if (!empty($employeesToUpsert)) {
+                    $this->upsertEmployees($employeesToUpsert);
+                }
 
-                    $employeeData = $this->getRevisionEmployeeData($employeeRequest);
-
-                    $party = $employeeRequest->employee->party;
-
-                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntity->uuid);
-
-                    $employeeRequest->revision->setApplied();
+                if (!empty($requestsToUpdate)) {
+                    $this->upsertEmployeeRequests($requestsToUpdate);
                 }
             });
         } catch (Exception $err) {
             Log::error('[checkForEmployeeUpdate]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
-
             return false;
         }
 
         return true;
     }
-
-
 
     /**
      * Finds all pending employee requests for a given user and legal entity.
@@ -495,21 +483,29 @@ class EmployeeRepository
     }
 
     /**
-     * Update EmployeeRequest status and updated_at attributes
-     * It mandatory for next employee updates to avoid repeat finished ones
+     * Creates or updates a single Employee record and returns the model.
+     * This is used when we need the ID of the created/updated record.
      *
-     * @param EmployeeRequest $employeeRequest
-     * @param string          $status
-     * @param string          $updatedAt
-     *
-     * @return void
+     * @param array $employeeData Prepared data for a single employee.
+     * @return Employee
      */
-    public function updateEmployeeRequestStatus(EmployeeRequest $employeeRequest, string $status, string $updatedAt): void
+    public function createOrUpdateEmployee(array $employeeData): Employee
     {
-        $employeeRequest->status = $status;
-        $employeeRequest->appliedAt = $updatedAt;
+        return Employee::updateOrCreate(
+            ['uuid' => $employeeData['uuid']],
+            $employeeData
+        );
+    }
 
-        $employeeRequest->save();
+    /**
+     * Updates a single EmployeeRequest with new data.
+     *
+     * @param EmployeeRequest $request The request model to update.
+     * @param array $updateData The data to update.
+     */
+    public function updateEmployeeRequest(EmployeeRequest $request, array $updateData): void
+    {
+        $request->update($updateData);
     }
 
     /**

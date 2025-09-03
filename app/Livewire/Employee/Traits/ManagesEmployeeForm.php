@@ -17,6 +17,7 @@ use App\Models\Relations\Party;
 use App\Models\Revision;
 use App\Models\User;
 use App\Repositories\Repository;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
@@ -464,6 +465,8 @@ trait ManagesEmployeeForm
         $request->update(
             [
                 'uuid'   => $uuid,
+                'legal_entity_uuid' => legalEntity()->uuid,
+                'inserted_at' => Carbon::now(),
                 'status' => RequestStatus::SIGNED,
             ]
         );

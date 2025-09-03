@@ -9,6 +9,7 @@ use App\Enums\Status;
 use App\Events\EHealthUserLogin;
 use App\Repositories\EmployeeRepository;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -39,40 +40,40 @@ readonly class ProcessEmployeeRequestsOnLogin
             if (empty($employeesFromApi)) return;
 
             $approvedEmployeeMap = collect($employeesFromApi)->keyBy('position');
-            $employeesToUpsert = [];
-            $requestsToUpsert = [];
 
+            // We will perform all operations for a single request inside a transaction.
             foreach ($pendingRequests as $request) {
                 if ($approvedEmployeeMap->has($request->position)) {
-                    $approvedData = $approvedEmployeeMap->get($request->position);
+                    DB::transaction(function () use ($request, $approvedEmployeeMap, $event) {
+                        $approvedData = $approvedEmployeeMap->get($request->position);
 
-                    $employeesToUpsert[] = Employee::prepareEmployeeDataForDb(
-                        $approvedData,
-                        $event->legalEntity,
-                        $event->user
-                    );
+                        // 1. Create/update the Employee and get the model back.
+                        $employeeData = Employee::prepareEmployeeDataForDb(
+                            $approvedData,
+                            $event->legalEntity,
+                            $event->user
+                        );
+                        $employee = $this->employeeRepository->createOrUpdateEmployee($employeeData);
 
-                    // Prepare data for the bulk request update.
-                    $requestsToUpsert[] = [
-                        'id' => $request->id,
-                        'status' => 'APPROVED',
-                        'applied_at' => Carbon::parse($approvedData['updated_at'] ?? 'now')->toIso8601String()
-                    ];
+                        // 2. Prepare data for the EmployeeRequest update.
+                        $requestUpdateData = [
+                            'status' => 'APPROVED',
+                            'applied_at' => Carbon::parse($approvedData['updated_at'] ?? 'now')->toIso8601String(),
+                            'employee_id' => $employee->id,
+                            'legal_entity_uuid' => $request->legal_entity_uuid,
+                            'inserted_at' => $request->inserted_at,
+                        ];
 
-                    if ($request->revision) {
-                        $request->revision->setApplied();
-                    }
+                        // 3. Update the EmployeeRequest.
+                        $this->employeeRepository->updateEmployeeRequest($request, $requestUpdateData);
+
+                        if ($request->revision) {
+                            // This still runs inside the transaction, which is safe.
+                            $request->revision->setApplied();
+                        }
+                    });
                 }
             }
-
-            if (!empty($employeesToUpsert)) {
-                $this->employeeRepository->upsertEmployees($employeesToUpsert);
-            }
-
-            if (!empty($requestsToUpsert)) {
-                $this->employeeRepository->upsertEmployeeRequests($requestsToUpsert);
-            }
-
         } catch (Throwable $e) {
             Log::error('Failed to process employee requests on login.', [
                 'user_id' => $event->user->id,

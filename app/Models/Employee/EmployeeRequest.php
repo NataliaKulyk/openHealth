@@ -15,7 +15,7 @@ class EmployeeRequest extends BaseEmployee
         parent::__construct($attributes);
 
         $this->with = array_merge($this->with, ['revision', 'employee']);
-        $this->fillable = array_merge($this->fillable, ['applied_at']);
+        $this->fillable = array_merge($this->fillable, ['applied_at', 'employee_id']);
         $this->casts = array_merge($this->casts, [
             'applied_at' => 'datetime',
         ]);
