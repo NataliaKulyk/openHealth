@@ -17,6 +17,7 @@ use App\Models\Revision;
 use App\Repositories\Repository;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -378,13 +379,12 @@ trait ManagesEmployeeForm
         $requestToSign->load('revision');
         $nestedDataForRevision = $requestToSign->revision->data;
         $payloadToSign = EHealthEmployeePayload::prepare($nestedDataForRevision);
-
         return signatureService()->signData(
             $payloadToSign,
             $this->form->password,
             $this->form->knedp,
             $this->form->keyContainerUpload,
-            $nestedDataForRevision['party']['tax_id']
+            Auth::user()->party->tax_id
         );
     }
 
