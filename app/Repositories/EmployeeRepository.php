@@ -193,7 +193,7 @@ class EmployeeRepository
         } catch (Exception $err) {
             Log::error('Create Employee Error: ' . $err->getMessage(), ['exception' => $err]);
             throw new Exception(__('Create Employee Error') . ' : ' . $err->getMessage());
-        }
+       }
     }
 
     /**
@@ -224,17 +224,14 @@ class EmployeeRepository
     }
 
     /**
-     * Finds all pending employee requests for a given user and legal entity.
-     * This encapsulates the database query, keeping the service layer clean.
+     * Save employee data to the database
      *
-     * @param User|null  $user
+     * @param User $user
      * @param Party|null $party
-     * @param array      $employeeData Data received from request to eHealth (GetEmployeesList|GetEmployeeDetails)
-     * @param string     $authUserUUID
-     * @param string     $legalEntityUUID
+     * @param array $employeeData Data received from request to eHealth (GetEmployeesList|GetEmployeeDetails)
+     * @param string $authUserUUID
      *
-     * @return void
-     * @throws Exception
+     * @return bool
      */
     protected function updateEmployeeDataAtFirstLogin(User|null $user, Party|null $party, array $employeeData, string $authUserUUID, string $legalEntityUUID): void
     {
@@ -252,7 +249,7 @@ class EmployeeRepository
             : null;
 
         // Update Party uuid because it is hasn't actual value in the employeeRequest
-        if ($party !== null && $party->uuid !== $employeeResponse['party']['uuid']) {
+        if (!empty($party) && $party->uuid !== $employeeResponse['party']['uuid']) {
             $party->uuid = $employeeResponse['party']['uuid'];
 
             $party->save();
@@ -270,62 +267,110 @@ class EmployeeRepository
     }
 
     /**
-     * Authenticate new OWNER and save data to the database.
-     * This method now uses the EmployeeApi to prepare data and then performs a bulk upsert.
-     * The unused $authUserUUID parameter has been removed.
+     * Authenticate new OWNER and save data to the database
+     * Also check if the other employees is already exists in the system and save its data too
      *
-     * @param EmployeeRequest $employeeRequest
-     * @param User $ownerUser
+     * @param EmployeeRequest $employeeRequest Only EmployeeRequest type because up to now we should have only the EmployeeRequest for the OWNER
+     * @param User $user
+     * @param string $authUserUUID
+     *
      * @return bool
      */
-    public function authenticateNewOwner(EmployeeRequest $employeeRequest, User $ownerUser): bool
+    public function authenticateNewOwner(EmployeeRequest $employeeRequest, User $ownerUser, string $authUserUUID): bool|RedirectResponse
     {
         try {
-            DB::transaction(function() use($employeeRequest, $ownerUser) {
-                $legalEntity = LegalEntity::find($employeeRequest->legal_entity_id);
-                $employeeList = EmployeeApi::getEmployeesList(['legal_entity_id' => $legalEntity->uuid]);
+            DB::transaction(function () use ($employeeRequest, $ownerUser, $authUserUUID) {
 
-                $employeesToUpsert = [];
-                $ownerPartyUUID = null; // To find all employees related to the owner
+                $legalEntity = LegalEntity::find($employeeRequest->legal_entity_id); // TODO: check this and line below
 
-                foreach ($employeeList as $employeeData) {
-                    $isOwnerEmployee = ($employeeData['position'] === $employeeRequest->position
-                        && $employeeData['employee_type'] === 'OWNER')
-                        || ($ownerPartyUUID && $employeeData['party']['id'] === $ownerPartyUUID);
+                $legalEntityUUID = $legalEntity->uuid;
 
-                    $userForEmployee = null;
-                    if ($isOwnerEmployee) {
-                        $fullEmployeeData = EmployeeApi::getEmployeeData($employeeData['id']);
-                        $ownerPartyUUID = $fullEmployeeData['party']['id']; // Set owner party UUID
-                        $userForEmployee = $ownerUser; // Associate the main user only with the owner employee
-                        $employeeData = $fullEmployeeData; // Use full data for the owner
+                // List of the users (employees) belongs to the same legal entity
+                $employeeList = EmployeeApi::getEmployeesList($legalEntityUUID);
+
+                $employeeData = [];
+
+                $employeePosition = $employeeRequest->position;
+
+                /*
+                 * Variable to store OWNER's Party ID.
+                 * Need to determine all employees belongs to OWNER.
+                 */
+                $ownerPartyUUID = null;
+
+                // $employeList already contains 'OWNER' as first element
+                foreach ($employeeList as $employee) {
+                    $employeeData = $employee;
+
+                    // Used only for OWNER's employee
+                    $user = null;
+
+                    if (($employee['position'] === $employeePosition && $employee['employee_type'] === 'OWNER') || $employeeData['party']['id'] === $ownerPartyUUID) {
+
+                        $user = $ownerUser;
+
+                        $employeeResponse = EmployeeApi::getEmployeeData($employee['id']);
+
+                        $employeeValidator = $this->validateEmployeeData($employeeResponse);
+
+                        /** @var \Illuminate\Contracts\Validation\Validator $employeeValidator */
+                        if ($employeeValidator->fails()) {
+                            Log::error(__('auth.login.error.validation.employee_data', [], 'en'), ['errors' => $employeeValidator->errors()]);
+
+                            throw new Exception($employeeValidator->errors());
+                        }
+
+                        $employeeData = $employeeValidator->validated();
+
+                        // This need because Party UUID for newly created EmployeeRequest may be NULL
+                        $ownerPartyUUID = $employeeData['party']['id'];
+
+                        $employeeData['party']['email'] = $user->email;
+
+                        if ($employeeData['employee_type'] !== 'OWNER') {
+                            Log::info('assignRole:', ['user' => $employeeData['employee_type']]); // TODO: remove it after testing
+
+                            auth()->shouldUse('web');
+                            $user->assignRole($employeeData['employee_type']);
+
+                            auth()->shouldUse('ehealths');
+                            $user->assignRole($employeeData['employee_type']);
+                        }
                     }
 
-                    // The EmployeeApi class is now responsible for preparing the data
-                    $preparedData = EmployeeApi::prepareEmployeeDataForDb($employeeData, $legalEntity, $userForEmployee);
-                    $employeesToUpsert[] = $preparedData;
+                    $employeeData['legal_entity_id'] = $employeeData['legal_entity']['id'];
+                    $employeeData['inserted_at'] = Carbon::now()->format('Y-m-d');
+                    $employeeData['updated_at'] = Carbon::now()->format('Y-m-d');
+
+                    $party = $user
+                        ? $employeeRequest->party
+                        : Party::where('uuid', $employeeData['party']['id'])->first();
+
+                    if ($user && !$user->party) {
+                        $party->user()->associate($user);
+                    }
+
+                    if ($employeeData['status'] === 'DISMISSED') {
+                        $party = null;
+                    }
+
+                    if (is_array($employeeData['division']) && isset($employeeData['division']['id'])) {
+                        $employeeData['division_id'] = $employeeData['division']['id'];
+                    }
+
+                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntityUUID);
                 }
 
-                // Perform bulk insert/update for all employees at once.
-                $this->upsertEmployees($employeesToUpsert);
+                // Update status of EmployeeRequest and the time of update
+                $this->updateEmployeeRequestStatus($employeeRequest, 'APPROVED', $employeeRequest->updatedAt);
 
-                // Update the original owner's request status.
-                $this->upsertEmployeeRequests(
-                    [
-                        [
-                            'id' => $employeeRequest->id,
-                            'status' => 'APPROVED',
-                            'applied_at' => $employeeRequest->updated_at ?? now(),
-                        ],
-                    ]
-                );
-
-                if($employeeRequest->revision) {
+                if ($employeeRequest->revision) {
                     $employeeRequest->revision->setApplied();
                 }
             });
         } catch (Exception $err) {
             Log::error('[authenticateNewOwner]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
+
             return false;
         }
 
@@ -394,67 +439,78 @@ class EmployeeRepository
     }
 
     /**
-     * Checks for employee updates.
-     * This method now performs bulk updates outside the loop.
-     * The unused $authUserUUID parameter has been removed.
+     * Authenticate new employee and save data to the database
      *
-     * @param LegalEntity $legalEntity
+     * @param Employee $employee Only Employee type because up to now we should have all the data for employees
      * @param User $user
+     * @param string $authUserUUID
+     *
      * @return bool
+     * TODO: test after creating an employee will works
      */
-    public function checkForEmployeeUpdate(LegalEntity $legalEntity, User $user): bool
+    public function checkForEmployeeUpdate(LegalEntity $legalEntity, User $user, string $authUserUUID): bool
     {
-        // This method from the model is probably a local scope. We assume it exists.
-        $pendingRequests = EmployeeRequest::employeeInstance($user->id, $legalEntity->uuid, $user->getRoleNames()->toArray(), true)
-            ->whereIn('status', RequestStatus::getStatusesForSync())
+        $employeeRoles = $user->getRoleNames()->toArray();
+
+        $employeeRequests = EmployeeRequest::employeeInstance($user->id, $legalEntity->uuid, $employeeRoles, true)
+            ->where('status', 'NEW')
             ->whereNotNull('uuid')
             ->get();
 
-        if ($pendingRequests->isEmpty()) {
+        if (!$employeeRequests->count()) {
             return true;
         }
 
         try {
-            DB::transaction(function() use($pendingRequests, $user, $legalEntity) {
-                $requestsToUpdate = [];
-                $employeesToUpsert = [];
+            DB::transaction(function () use ($employeeRequests, $user, $legalEntity, $authUserUUID) {
+                $updatedAt = '1970-01-01T00:00:00.000000Z';
 
-                foreach ($pendingRequests as $employeeRequest) {
-                    $ehealthRequestData = EmployeeApi::getEmployeeRequestData($employeeRequest->uuid);
+                foreach ($employeeRequests as $employeeRequest) {
 
-                    if (($ehealthRequestData['status'] ?? 'NEW') === 'NEW') {
+                    $employeeRequestResponse = EmployeeApi::_getRequestById($employeeRequest->uuid);
+
+                    $employeeRequestValidator = $this->validateEmployeeRequestData($employeeRequestResponse['data']);
+
+                    /** @var \Illuminate\Contracts\Validation\Validator $employeeRequestValidator */
+                    if ($employeeRequestValidator->fails()) {
+                        Log::error(__('auth.login.error.validation.employee_request_data', [], 'en'), ['errors' => $employeeRequestValidator->errors()]);
+
+                        throw new Exception($employeeRequestValidator->errors());
+                    }
+
+                    $employeeRequestData = $employeeRequestValidator->validated();
+
+                    // Just skip request if nothing changes
+                    if ($employeeRequestData['status'] === 'NEW') {
                         continue;
                     }
 
-                    // Prepare request data for bulk update
-                    $requestsToUpdate[] = [
-                        'id' => $employeeRequest->id,
-                        'status' => $ehealthRequestData['status'],
-                        'applied_at' => $ehealthRequestData['updated_at']
-                    ];
+                    $this->updateEmployeeRequestStatus($employeeRequest, $employeeRequestData['status'], $employeeRequestData['updated_at']);
 
-                    if ($ehealthRequestData['status'] === 'APPROVED') {
-                        // Prepare employee data for bulk update using data from the revision
-                        $employeeDataFromRevision = $this->getRevisionEmployeeData($employeeRequest);
-                        $preparedData = EmployeeApi::prepareEmployeeDataForDb($employeeDataFromRevision, $legalEntity, $user);
-                        $employeesToUpsert[] = $preparedData;
+                    $currentRequestDate = Carbon::parse($employeeRequestData['updated_at']);
+                    $proceddedRequestDate = Carbon::parse($updatedAt);
 
-                        $employeeRequest->revision?->setApplied();
-                    } else {
+                    // Skip all EmployeeRequests that has wrong status (ex. EXPIRED) or older than last proceeded one
+                    if ($employeeRequestData['status'] !== 'APPROVED' || $currentRequestDate->lt($proceddedRequestDate)) {
                         $employeeRequest->revision?->setOutdated();
+
+                        continue;
                     }
-                }
 
-                if (!empty($employeesToUpsert)) {
-                    $this->upsertEmployees($employeesToUpsert);
-                }
+                    $updatedAt = $employeeRequestData['updated_at'];
 
-                if (!empty($requestsToUpdate)) {
-                    $this->upsertEmployeeRequests($requestsToUpdate);
+                    $employeeData = $this->getRevisionEmployeeData($employeeRequest);
+
+                    $party = $employeeRequest->employee->party;
+
+                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntity->uuid);
+
+                    $employeeRequest->revision->setApplied();
                 }
             });
         } catch (Exception $err) {
             Log::error('[checkForEmployeeUpdate]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
+
             return false;
         }
 
