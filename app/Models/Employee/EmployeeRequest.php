@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * Represents a request to create or modify an employee.
+ * Inherits common properties from BaseEmployee.
+ *
  * @mixin IdeHelperEmployeeRequest
  */
 class EmployeeRequest extends BaseEmployee
@@ -14,7 +17,8 @@ class EmployeeRequest extends BaseEmployee
     protected $table = 'employee_requests';
 
     /**
-     * Add 'applied_at' to the fillable fields from the parent class.
+     * The attributes that are mass assignable.
+     * Extends the list from the parent BaseEmployee class.
      */
     protected $fillable = [
         'uuid',
@@ -35,13 +39,14 @@ class EmployeeRequest extends BaseEmployee
     ];
 
     /**
-     * Merging parent casts with specific ones for this model.
+     * The attributes that should be cast.
+     * Extends the casts from the parent BaseEmployee class.
      */
     protected $casts = [
-        'status' => RequestStatus::class,
-        'start_date' => 'date:Y-m-d',
-        'end_date' => 'date:Y-m-d',
-        'applied_at' => 'datetime',
+        'status'       => RequestStatus::class,
+        'start_date'   => 'date:Y-m-d',
+        'end_date'     => 'date:Y-m-d',
+        'applied_at'   => 'datetime',
     ];
 
     // --- REQUEST-SPECIFIC RELATIONS ---
@@ -56,16 +61,6 @@ class EmployeeRequest extends BaseEmployee
 
     // --- TEMPORARY SCOPES (to be removed after controller refactoring) ---
 
-    /**
-     * Scope a query to get an employee data depends on user id and it's legal entity relation
-     *
-     * @param Builder $query
-     * @param int $userId User's ID from MIS DB table 'users'
-     * @param string $legalEntityUUID UUID of the LegalEntity when user (with $userId) is belongs to
-     * @param array $roles Specify ROLEs that shouldn't be inclued in query
-     *
-     * @return void
-     */
     public function scopeEmployeeInstance(Builder $query, int $userId, string $legalEntityUUID, array $roles, bool $isInclude = false): void
     {
         $query->where('user_id', $userId)
