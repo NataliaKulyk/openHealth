@@ -82,8 +82,12 @@ document.addEventListener('livewire:load', () => {
 });
 
 function scrollToElement(selector) {
+    console.log('scrollToElement called with selector:', selector);
     const element = document.querySelector(selector);
+    console.log('Found element:', element);
+
     if (element) {
+        console.log('Scrolling to element:', element);
         element.scrollIntoView({
             behavior: 'smooth',
             block: 'center'
@@ -92,14 +96,45 @@ function scrollToElement(selector) {
         if (typeof element.focus === 'function') {
             element.focus();
         }
+        console.log('Successfully scrolled to element');
+    } else {
+        console.log('No element found with selector:', selector);
+        // Let's also check what elements are available
+        const allInputs = document.querySelectorAll('input, select, textarea');
+        console.log('Available form elements:', allInputs);
+        const errorElements = document.querySelectorAll('.input-error, .select-error, .border-red-500');
+        console.log('Elements with error classes:', errorElements);
     }
 }
 
 document.addEventListener('livewire:init', () => {
+    // Preloader hooks
+    Livewire.hook('message.sent', (message) => {
+        if (message.actionQueue[0].payload.method === 'update') {
+            document.getElementById('preloader').style.display = 'block';
+        }
+    });
+
+    Livewire.hook('message.processed', (message) => {
+        if (message.actionQueue[0].payload.method === 'update') {
+            document.getElementById('preloader').style.display = 'none';
+        }
+    });
+
     // Listener for validation errors.
     Livewire.on('employee-form-failed', (event) => {
         // It calls the universal function with a selector for the first error class.
         scrollToElement('.input-error, .select-error');
+    });
+
+    // Listener for division form validation errors.
+    Livewire.on('division-form-failed', (event) => {
+        console.log('Division form failed event received');
+
+        setTimeout(() => {
+            console.log('Attempting to scroll to error elements');
+            scrollToElement('.input-error, .select-error');
+        }, 100);
     });
 
     // Listener for specific element scrolling (e.g., for 'Add Position').

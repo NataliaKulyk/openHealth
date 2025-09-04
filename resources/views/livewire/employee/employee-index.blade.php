@@ -7,7 +7,7 @@
 
         <x-slot name="navigation">
             <div class="flex flex-col">
-                <div class="flex flex-wrap items-end justify-between gap-4" style="max-width: var(--container-6xl);">
+                <div class="flex flex-wrap items-end justify-between gap-4 employee-nav-row">
                     <div class="flex items-end gap-4">
                         <div class="w-96">
                             <x-forms.form-group>
@@ -206,20 +206,8 @@
     </x-section-navigation>
 
     <x-section>
-        <div class="space-y-6" style="padding-left: 0;">
-            <style>
-                @media (min-width: 1920px) {
-                    .employee-table-container {
-                        padding-left: 2rem !important;
-                    }
-                }
-                @media (min-width: 2560px) {
-                    .employee-table-container {
-                        padding-left: 3.5rem !important;
-                    }
-                }
-            </style>
-            <div class="employee-table-container">
+        <div class="space-y-6 employee-section-no-left-padding">
+            <div class="employee-table-container table-container-responsive">
             @forelse($parties as $party)
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6" wire:key="party-{{ $party->id }}">
                     <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">

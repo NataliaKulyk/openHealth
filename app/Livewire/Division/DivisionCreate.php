@@ -113,6 +113,10 @@ class DivisionCreate extends DivisionComponent
 
                 session()->flash('error', __('errors.database.messages.save_error'));
             }
+        } else {
+
+            Log::info('Division form validation failed, dispatching scroll event');
+            $this->dispatch('division-form-failed');
         }
 
         return null;

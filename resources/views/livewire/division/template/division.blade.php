@@ -46,20 +46,21 @@
                     </legend>
 
                         <div class='form'>
+                            <div class="form-row-3">
                             <!-- Division Name -->
                              <div class="form-group">
                                  <input
-                                    required
-                                    id="name"
-                                    type="text"
-                                    placeholder=" "
-                                    class="peer input"
-                                    name="name_division"
-                                    wire:model.defer='divisionForm.division.name'
-                                    x-bind:disabled="isDisabled"
-                                />
+                                     required
+                                     id="name"
+                                     type="text"
+                                     placeholder=" "
+                                     class="peer input @error('divisionForm.division.name') input-error border-red-500 @enderror"
+                                     name="name_division"
+                                     wire:model.defer='divisionForm.division.name'
+                                     x-bind:disabled="isDisabled"
+                                 />
 
-                                <label
+                                 <label
                                     for="name_division"
                                     class="label"
                                 >
@@ -79,7 +80,7 @@
                                     type="text"
                                     name="email"
                                     placeholder=" "
-                                    class="peer input"
+                                    class="peer input @error('divisionForm.division.email') input-error border-red-500 @enderror"
                                     wire:model.defer='divisionForm.division.email'
                                     x-bind:disabled="isDisabled"
                                 />
@@ -95,6 +96,7 @@
                                     <p class="text-error">{{$message}}</p>
                                 @enderror
                             </div>
+                        </div>
 
 
                             <!-- Division Type & External ID -->
@@ -102,11 +104,11 @@
                                 <div class="form-group">
                                     <select
                                         id='type'
-                                        class='peer input'
+                                        class='peer input @error("divisionForm.division.type") select-error border-red-500 @enderror'
                                         wire:model.defer='divisionForm.division.type'
                                         x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show' ? 'true' : 'false' }}"
                                     >
-                                        <option value="_placeholder_" selected hidden>-- {{ __('forms.type') }} --</option>
+                                    <option value="_placeholder_" selected hidden>-- {{ __('forms.type') }} --</option>
 
                                         @foreach ($dictionaries['DIVISION_TYPE'] as $k => $type)
                                             <option value="{{ $k }}">{{ $type }}</option>
@@ -130,7 +132,7 @@
                                         type="text"
                                         placeholder=" "
                                         id="external_id"
-                                        class="peer input"
+                                        class="peer input @error('divisionForm.division.externalId') input-error border-red-500 @enderror"
                                         name="external_id"
                                         wire:model.defer='divisionForm.division.externalId'
                                         x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show'? 'true' : 'false' }}"
@@ -196,7 +198,7 @@
                                                 required
                                                 type="tel"
                                                 placeholder=" "
-                                                class="peer input pl-10 with-leading-icon text-gray-500"
+                                                class="peer input pl-10 with-leading-icon text-gray-500 "
                                                 x-model="phones[index].number"
                                                 x-mask="+380999999999"
                                                 :id="$id('phone', '_number' + index)"
