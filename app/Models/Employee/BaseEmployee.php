@@ -7,12 +7,10 @@ namespace App\Models\Employee;
 use App\Models\User;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
-use App\Models\Revision;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * An abstract base class for Employee and EmployeeRequest models.
@@ -63,11 +61,16 @@ abstract class BaseEmployee extends Model
     protected function fullName(): Attribute
     {
         return Attribute::get(
-            fn () => implode(' ', array_filter([
-                                                   $this->party?->last_name,
-                                                   $this->party?->first_name,
-                                                   $this->party?->second_name,
-                                               ]))
+            fn() => implode(
+                ' ',
+                array_filter(
+                    [
+                        $this->party?->last_name,
+                        $this->party?->first_name,
+                        $this->party?->second_name,
+                    ]
+                )
+            )
         );
     }
 
@@ -97,14 +100,6 @@ abstract class BaseEmployee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * A common relationship to revisions for both models.
-     */
-    public function revision(): MorphOne
-    {
-        return $this->morphOne(Revision::class, 'revisionable');
     }
 }
 

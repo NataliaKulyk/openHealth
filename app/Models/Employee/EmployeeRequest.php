@@ -3,8 +3,10 @@
 namespace App\Models\Employee;
 
 use App\Enums\Employee\RequestStatus;
+use App\Models\Revision;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * Represents a request to create or modify an employee.
@@ -57,6 +59,11 @@ class EmployeeRequest extends BaseEmployee
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function revision(): MorphOne
+    {
+        return $this->morphOne(Revision::class, 'revisionable');
     }
 
     // --- TEMPORARY SCOPES (to be removed after controller refactoring) ---

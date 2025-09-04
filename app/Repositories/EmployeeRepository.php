@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use Exception;
-use Carbon\Carbon;
 use App\Models\User;
-use App\Models\Division;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Str;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
@@ -18,14 +14,9 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Employee\BaseEmployee;
 use App\Enums\Employee\RequestStatus;
 use App\Enums\Employee\RevisionStatus;
-use App\Classes\eHealth\Api\EmployeeApi;
 use App\Models\Employee\EmployeeRequest;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Contracts\Validation\Validator as ResponseValidator;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
-use App\Classes\eHealth\Api\Employee as EmployeeApiClient;
-use Throwable;
 
 class EmployeeRepository
 {
@@ -38,7 +29,6 @@ class EmployeeRepository
     protected ?QualificationRepository $qualificationRepository;
     protected ?SpecialityRepository    $specialityRepository;
     protected ?RevisionRepository      $revisionRepository;
-    private readonly EmployeeApiClient $employeeApi;
 
     public function __construct(
         UserRepository          $userRepository,
@@ -49,8 +39,7 @@ class EmployeeRepository
         ScienceDegreeRepository $scienceDegreeRepository,
         QualificationRepository $qualificationRepository,
         SpecialityRepository    $specialityRepository,
-        RevisionRepository      $revisionRepository,
-        EmployeeApiClient       $employeeApi
+        RevisionRepository      $revisionRepository
     ) {
         $this->userRepository = $userRepository;
         $this->partyRepository = $partyRepository;
@@ -61,7 +50,6 @@ class EmployeeRepository
         $this->qualificationRepository = $qualificationRepository;
         $this->specialityRepository = $specialityRepository;
         $this->revisionRepository = $revisionRepository;
-        $this->employeeApi = $employeeApi;
     }
 
     /**
@@ -78,7 +66,7 @@ class EmployeeRepository
     public function createOrUpdate(array $data, Employee|EmployeeRequest $employeeModel, LegalEntity $legalEntity): BaseEmployee
     {
 
-        $employee = $employeeModel::updateOrCreate(
+        $employee = $employeeModel->updateOrCreate(
             [
                 'uuid' => $data['uuid'] ?? '',
             ],
@@ -224,456 +212,125 @@ class EmployeeRepository
     }
 
     /**
-     * Save employee data to the database
-     *
-     * @param User $user
-     * @param Party|null $party
-     * @param array $employeeData Data received from request to eHealth (GetEmployeesList|GetEmployeeDetails)
-     * @param string $authUserUUID
-     *
-     * @return bool
-     */
-    protected function updateEmployeeDataAtFirstLogin(User|null $user, Party|null $party, array $employeeData, string $authUserUUID, string $legalEntityUUID): void
-    {
-        $employeeResponse = schemaService()->setDataSchema($employeeData, app(EmployeeApi::class))
-            ->responseSchemaNormalize()
-            ->replaceIdsKeysToUuid(['id', 'legalEntityId', 'divisionId', 'partyId'])
-            ->snakeCaseKeys(true)
-            ->getNormalizedData();
-
-        // $legalEntity = !empty($user) ? $user->legalEntity : LegalEntity::where('uuid', $legalEntityUUID)->first(); // TODO: remove it if code below works
-        $legalEntity = legalEntity() ?? LegalEntity::where('uuid', $legalEntityUUID)->first(); // TODO: check if it will works
-
-        $employeeResponse['division_id'] = isset($employeeResponse['division_uuid'])
-            ? Division::where('uuid', $employeeResponse['division_uuid'])->first()?->id
-            : null;
-
-        // Update Party uuid because it is hasn't actual value in the employeeRequest
-        if (!empty($party) && $party->uuid !== $employeeResponse['party']['uuid']) {
-            $party->uuid = $employeeResponse['party']['uuid'];
-
-            $party->save();
-        }
-
-        if ($user && empty($employeeData['userId'])) {
-            $employeeResponse['user_id'] = $user->id;
-
-            $user->uuid = $authUserUUID;
-
-            $user->save();
-        }
-
-        $this->store($employeeResponse, $legalEntity, new Employee());
-    }
-
-    /**
-     * Authenticate new OWNER and save data to the database
-     * Also check if the other employees is already exists in the system and save its data too
-     *
-     * @param EmployeeRequest $employeeRequest Only EmployeeRequest type because up to now we should have only the EmployeeRequest for the OWNER
-     * @param User $user
-     * @param string $authUserUUID
-     *
-     * @return bool
-     */
-    public function authenticateNewOwner(EmployeeRequest $employeeRequest, User $ownerUser, string $authUserUUID): bool|RedirectResponse
-    {
-        try {
-            DB::transaction(function () use ($employeeRequest, $ownerUser, $authUserUUID) {
-
-                $legalEntity = LegalEntity::find($employeeRequest->legal_entity_id); // TODO: check this and line below
-
-                $legalEntityUUID = $legalEntity->uuid;
-
-                // List of the users (employees) belongs to the same legal entity
-                $employeeList = EmployeeApi::getEmployeesList($legalEntityUUID);
-
-                $employeeData = [];
-
-                $employeePosition = $employeeRequest->position;
-
-                /*
-                 * Variable to store OWNER's Party ID.
-                 * Need to determine all employees belongs to OWNER.
-                 */
-                $ownerPartyUUID = null;
-
-                // $employeList already contains 'OWNER' as first element
-                foreach ($employeeList as $employee) {
-                    $employeeData = $employee;
-
-                    // Used only for OWNER's employee
-                    $user = null;
-
-                    if (($employee['position'] === $employeePosition && $employee['employee_type'] === 'OWNER') || $employeeData['party']['id'] === $ownerPartyUUID) {
-
-                        $user = $ownerUser;
-
-                        $employeeResponse = EmployeeApi::getEmployeeData($employee['id']);
-
-                        $employeeValidator = $this->validateEmployeeData($employeeResponse);
-
-                        /** @var \Illuminate\Contracts\Validation\Validator $employeeValidator */
-                        if ($employeeValidator->fails()) {
-                            Log::error(__('auth.login.error.validation.employee_data', [], 'en'), ['errors' => $employeeValidator->errors()]);
-
-                            throw new Exception($employeeValidator->errors());
-                        }
-
-                        $employeeData = $employeeValidator->validated();
-
-                        // This need because Party UUID for newly created EmployeeRequest may be NULL
-                        $ownerPartyUUID = $employeeData['party']['id'];
-
-                        $employeeData['party']['email'] = $user->email;
-
-                        if ($employeeData['employee_type'] !== 'OWNER') {
-                            Log::info('assignRole:', ['user' => $employeeData['employee_type']]); // TODO: remove it after testing
-
-                            auth()->shouldUse('web');
-                            $user->assignRole($employeeData['employee_type']);
-
-                            auth()->shouldUse('ehealths');
-                            $user->assignRole($employeeData['employee_type']);
-                        }
-                    }
-
-                    $employeeData['legal_entity_id'] = $employeeData['legal_entity']['id'];
-                    $employeeData['inserted_at'] = Carbon::now()->format('Y-m-d');
-                    $employeeData['updated_at'] = Carbon::now()->format('Y-m-d');
-
-                    $party = $user
-                        ? $employeeRequest->party
-                        : Party::where('uuid', $employeeData['party']['id'])->first();
-
-                    if ($user && !$user->party) {
-                        $party->user()->associate($user);
-                    }
-
-                    if ($employeeData['status'] === 'DISMISSED') {
-                        $party = null;
-                    }
-
-                    if (is_array($employeeData['division']) && isset($employeeData['division']['id'])) {
-                        $employeeData['division_id'] = $employeeData['division']['id'];
-                    }
-
-                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntityUUID);
-                }
-
-                // Update status of EmployeeRequest and the time of update
-                $this->updateEmployeeRequestStatus($employeeRequest, 'APPROVED', $employeeRequest->updatedAt);
-
-                if ($employeeRequest->revision) {
-                    $employeeRequest->revision->setApplied();
-                }
-            });
-        } catch (Exception $err) {
-            Log::error('[authenticateNewOwner]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Authenticate new employee and save data to the database
-     *
-     * @param Employee $employee Only Employee type because up to now we should have all the data for employees
-     * @param User $user
-     * @param string $authUserUUID
-     *
-     * @return bool
-     * TODO: test after creating an employee will works
-     */
-    public function authenticateNewEmployees(string $legalEntityUUID, User $user, string $authUserUUID): bool
-    {
-        // Get all employees except owner
-        $employees = Employee::employeeInstance($user->id, $legalEntityUUID, ['OWNER'])->get();
-
-        if (!$employees->count()) {
-            return true;
-        }
-
-        try {
-            DB::transaction(function () use ($employees, $user, $legalEntityUUID, $authUserUUID) {
-                foreach ($employees as $employee) {
-                    if ($employee->party->email) {
-                        continue;
-                    }
-
-                    $employeeResponse = EmployeeApi::getEmployeeData($employee->uuid);
-
-                    $employeeValidator = $this->validateEmployeeData($employeeResponse);
-
-                    /** @var \Illuminate\Contracts\Validation\Validator $employeeValidator */
-                    if ($employeeValidator->fails()) {
-                        Log::error(__('auth.login.error.validation.employee_data', [], 'en'), ['errors' => $employeeValidator->errors()]);
-
-                        throw new Exception($employeeValidator->errors());
-                    }
-
-                    $employeeData = $employeeValidator->validated();
-
-                    $employeeData['party']['email'] = $user->email;
-
-                    if (isset($employeeData['division']['id'])) {
-                        $employeeData['division_id'] = $employeeData['division']['id'];
-                    }
-
-                    $employeeData['legal_entity_id'] = $employeeData['legal_entity']['id'];
-                    $employeeData['inserted_at'] = Carbon::now()->format('Y-m-d');
-                    $employeeData['updated_at'] = Carbon::now()->format('Y-m-d');
-
-                    $this->updateEmployeeDataAtFirstLogin($user, $employee->party, $employeeData, $authUserUUID, $legalEntityUUID);
-                }
-            });
-        } catch (Exception $err) {
-            Log::error('[authenticateNewEmployees]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Authenticate new employee and save data to the database
-     *
-     * @param Employee $employee Only Employee type because up to now we should have all the data for employees
-     * @param User $user
-     * @param string $authUserUUID
-     *
-     * @return bool
-     * TODO: test after creating an employee will works
-     */
-    public function checkForEmployeeUpdate(LegalEntity $legalEntity, User $user, string $authUserUUID): bool
-    {
-        $employeeRoles = $user->getRoleNames()->toArray();
-
-        $employeeRequests = EmployeeRequest::employeeInstance($user->id, $legalEntity->uuid, $employeeRoles, true)
-            ->where('status', 'NEW')
-            ->whereNotNull('uuid')
-            ->get();
-
-        if (!$employeeRequests->count()) {
-            return true;
-        }
-
-        try {
-            DB::transaction(function () use ($employeeRequests, $user, $legalEntity, $authUserUUID) {
-                $updatedAt = '1970-01-01T00:00:00.000000Z';
-
-                foreach ($employeeRequests as $employeeRequest) {
-
-                    $employeeRequestResponse = EmployeeApi::_getRequestById($employeeRequest->uuid);
-
-                    $employeeRequestValidator = $this->validateEmployeeRequestData($employeeRequestResponse['data']);
-
-                    /** @var \Illuminate\Contracts\Validation\Validator $employeeRequestValidator */
-                    if ($employeeRequestValidator->fails()) {
-                        Log::error(__('auth.login.error.validation.employee_request_data', [], 'en'), ['errors' => $employeeRequestValidator->errors()]);
-
-                        throw new Exception($employeeRequestValidator->errors());
-                    }
-
-                    $employeeRequestData = $employeeRequestValidator->validated();
-
-                    // Just skip request if nothing changes
-                    if ($employeeRequestData['status'] === 'NEW') {
-                        continue;
-                    }
-
-                    $this->updateEmployeeRequestStatus($employeeRequest, $employeeRequestData['status'], $employeeRequestData['updated_at']);
-
-                    $currentRequestDate = Carbon::parse($employeeRequestData['updated_at']);
-                    $proceddedRequestDate = Carbon::parse($updatedAt);
-
-                    // Skip all EmployeeRequests that has wrong status (ex. EXPIRED) or older than last proceeded one
-                    if ($employeeRequestData['status'] !== 'APPROVED' || $currentRequestDate->lt($proceddedRequestDate)) {
-                        $employeeRequest->revision?->setOutdated();
-
-                        continue;
-                    }
-
-                    $updatedAt = $employeeRequestData['updated_at'];
-
-                    $employeeData = $this->getRevisionEmployeeData($employeeRequest);
-
-                    $party = $employeeRequest->employee->party;
-
-                    $this->updateEmployeeDataAtFirstLogin($user, $party, $employeeData, $authUserUUID, $legalEntity->uuid);
-
-                    $employeeRequest->revision->setApplied();
-                }
-            });
-        } catch (Exception $err) {
-            Log::error('[checkForEmployeeUpdate]: ' . __('auth.login.error.data_saving', [], 'en'), ['error' => $err->getMessage()]);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Finds all pending employee requests for a given user and legal entity.
+     * This encapsulates the database query, keeping the service layer clean.
+     *
+     * @param User $user
+     * @param LegalEntity $legalEntity
+     * @return Collection
      */
     public function findPendingRequestsForUser(User $user, LegalEntity $legalEntity): Collection
     {
         $user->loadMissing('party');
-        $userPartyId = $user->party?->id;
 
         return EmployeeRequest::query()
+            ->with('revision')
             ->where('legal_entity_id', $legalEntity->id)
             ->whereIn('status', RequestStatus::getStatusesForSync())
             ->whereNotNull('uuid')
-            ->where(function ($query) use ($user, $userPartyId) {
+            ->where(function ($query) use ($user) {
+
                 $query->where('user_id', $user->id);
-                if ($userPartyId) {
-                    $query->orWhere('party_id', $userPartyId);
-                }
             })
             ->get();
     }
 
     /**
-     * Creates or updates a single Employee record and returns the model.
-     * This is used when we need the ID of the created/updated record.
+     * Creates or updates multiple Employee records in a single query.
      *
-     * @param array $employeeData Prepared data for a single employee.
-     * @return Employee
+     * @param array $employeesData
      */
-    public function createOrUpdateEmployee(array $employeeData): Employee
+    public function upsertEmployees(array $employeesData): void
     {
-        return Employee::updateOrCreate(
-            ['uuid' => $employeeData['uuid']],
-            $employeeData
-        );
-    }
-
-    /**
-     * Updates a single EmployeeRequest with new data.
-     *
-     * @param EmployeeRequest $request The request model to update.
-     * @param array $updateData The data to update.
-     */
-    public function updateEmployeeRequest(EmployeeRequest $request, array $updateData): void
-    {
-        $request->update($updateData);
-    }
-
-    /**
-     * Prepare EmployeeData for employee update based on data stored in 'revisions' table
-     *
-     * @param EmployeeRequest $employeeRequest
-     *
-     * @return array
-     */
-    protected function getRevisionEmployeeData(EmployeeRequest $employeeRequest): array
-    {
-        $revisionData = $employeeRequest->revision->data;
-
-        $employee = $employeeRequest->employee;
-
-        $employeeData = collect($employee->toArray())
-            ->mapWithKeys(fn ($value, $key) => [Str::snake($key) => $value])
-            ->toArray();
-
-        unset($employeeData['user']);
-
-        $employeeData['id'] = $employeeData['uuid'];
-        $employeeData['legal_entity_id'] = $employeeData['legal_entity_uuid'];
-        $employeeData['party']['id'] = $employeeData['party']['uuid'];
-        $employeeData['party'] = array_merge($employeeData['party'], $revisionData['party']);
-        $employeeData['party']['documents'] = $revisionData['documents'];
-        $employeeData['party']['phones'] = $revisionData['phones'];
-
-        if (isset($employeeData['division']['id'])) {
-            $employeeData['division_id'] = $employeeData['division']['id'];
+        if (empty($employeesData)) {
+            return;
         }
 
-        $employeeData['updated_at'] = Carbon::now()->format('Y-m-d');
+        // Define the unique key (uuid) and the columns to update if the record exists.
+        $updateColumns = array_keys(reset($employeesData));
 
-        return $employeeData;
+        Employee::upsert($employeesData, ['uuid'], $updateColumns);
     }
 
     /**
-     * Check employee details $response schema for errors.
+     * Retrieves a map of employee UUIDs to their primary IDs.
      *
-     * @return array Returned only specified fields
+     * @param array $uuids
+     * @return array ['uuid' => 'id', ...]
      */
-    protected function validateEmployeeData(array $data): ResponseValidator
+    public function getEmployeeIdsByUuids(array $uuids): array
     {
-        return Validator::make($data, [
-            'division' => 'nullable|array',
-            'division.id' => 'required_with:division|string',
-            'division.name' => 'required_with:division|string',
-            'division.legal_entity_id' => 'nullable|string',
-            'employee_type' => 'required|string',
-            'end_date' => 'nullable|string',
-            'id' => 'required|string',
-            'is_active' => 'required|bool',
-            'legal_entity' => 'required|array',
-            'legal_entity.id' => 'required|string',
-            'party' => 'required|array',
-            'party.id' => 'required|string',
-            'party.first_name' => 'required|string',
-            'party.last_name' => 'required|string',
-            'party.second_name' => 'nullable|string',
-            'party.no_tax_id' => 'nullable|bool',
-            'party.gender' => 'nullable|string',
-            'party.verification_status' => 'required|string',
-            'party.tax_id' => 'nullable|string',
-            'party.birth_date' => 'nullable|string',
-            'party.documents' => 'nullable|array',
-            'party.phones' => 'nullable|array',
-            'party.phones.*.type' => 'required_with:party.phones|string',
-            'party.phones.*.number' => 'required_with:party.phones|string',
-            'party.working_experience' => 'nullable',
-            'party.about_myself' => 'nullable',
-            'start_date' => 'required|string',
-            'status' => 'required|string',
-            'position' => 'required|string',
-            'doctor' => 'nullable|array'
-        ]);
+        if (empty($uuids)) {
+            return [];
+        }
+
+        return Employee::whereIn('uuid', $uuids)->pluck('id', 'uuid')->all();
     }
 
     /**
-     * Check employee response details $response schema for errors.
+     * Updates multiple EmployeeRequest records in a single query using a CASE statement.
      *
-     * @return array Returned only specified fields
+     * @param array $requestsData ['request_id' => ['column' => 'value', ...]]
      */
-    protected function validateEmployeeRequestData(array $data): ResponseValidator
+    public function bulkUpdateEmployeeRequests(array $requestsData): void
     {
-        return Validator::make($data, [
-            'division' => 'nullable|array',
-            'division.id' => 'required_with:division|string',
-            'division.name' => 'required_with:division|string',
-            'division.legal_entity_id' => 'nullable|string',
-            'employee_type' => 'required|string',
-            'id' => 'required|string',
-            'legal_entity_id' => 'required|string',
-            'inserted_at' => 'required|string',
-            'updated_at' => 'required|string',
-            'party' => 'required|array',
-            'party.birth_date' => 'nullable|string',
-            'party.email' => 'nullable|string',
-            'party.first_name' => 'required|string',
-            'party.last_name' => 'required|string',
-            'party.second_name' => 'nullable|string',
-            'party.no_tax_id' => 'nullable|bool',
-            'party.gender' => 'nullable|string',
-            'party.tax_id' => 'nullable|string',
-            'party.documents' => 'nullable|array',
-            'party.phones' => 'nullable|array',
-            'party.phones.*.type' => 'required_with:party.phones|string',
-            'party.phones.*.number' => 'required_with:party.phones|string',
-            'status' => 'required|string',
-            'position' => 'required|string',
-            'start_date' => 'nullable|string',
-            'end_date' => 'nullable|string',
-        ]);
+        if (empty($requestsData)) {
+            return;
+        }
+
+        $requestIds = array_keys($requestsData);
+        $table = new EmployeeRequest()->getTable();
+
+        // Prepare CASE parts for each column that needs to be updated.
+        $cases = [];
+        $bindings = [];
+        $columns = array_keys(reset($requestsData)); // e.g., ['employee_id', 'applied_at', 'status']
+
+        foreach ($columns as $column) {
+            // Use double quotes for PostgreSQL compatibility.
+            $cases[$column] = "CASE \"id\" ";
+            foreach ($requestsData as $id => $data) {
+                $cases[$column] .= "WHEN ? THEN ? ";
+                $bindings[] = $id;
+                $bindings[] = $data[$column];
+            }
+            $cases[$column] .= "ELSE \"$column\" END";
+        }
+
+        // Assemble the SQL query with PostgreSQL-compatible syntax.
+        $updateQuery = "UPDATE \"{$table}\" SET ";
+        $updateStatements = [];
+        foreach ($cases as $column => $case) {
+            $updateStatements[] = "\"{$column}\" = {$case}";
+        }
+        $updateQuery .= implode(', ', $updateStatements);
+        $updateQuery .= " WHERE \"id\" IN (" . rtrim(str_repeat('?,', count($requestIds)), ',') . ")";
+
+        $bindings = array_merge($bindings, $requestIds);
+
+        DB::update($updateQuery, $bindings);
+    }
+
+    /**
+     * Applies multiple revisions in a single query.
+     *
+     * @param array $revisionIds
+     */
+    public function bulkApplyRevisions(array $revisionIds): void
+    {
+        if (empty($revisionIds)) {
+            return;
+        }
+
+        // Updated:
+        // 1. Use the correct table name 'revisions'.
+        // 2. Set status via Enum for reliability.
+        // 3. Add 'deleted_at' to simulate soft deletion, as in the setApplied() method.
+        DB::table('revisions')
+            ->whereIn('id', $revisionIds)
+            ->update([
+                         'status' => RevisionStatus::APPLIED->value,
+                         'deleted_at' => now()
+                     ]);
     }
 }

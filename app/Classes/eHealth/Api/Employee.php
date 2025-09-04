@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest;
-use App\Models\Division;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Models\User;
@@ -15,10 +14,10 @@ use Illuminate\Support\Carbon;
 class Employee extends EHealthRequest
 {
     public const string URL = '/api/employees';
+    public const string EMPLOYEE_TYPE_OWNER = 'OWNER';
 
     /**
      * Get a list of employees from E-Health with pagination and optional filters.
-     * Renamed from getEmployeesList for clarity.
      *
      * @param array $filters An associative array of query parameters to filter the results.
      *
@@ -49,7 +48,7 @@ class Employee extends EHealthRequest
         }
 
         if (count($employees) > 1) {
-            $ownerIndex = array_search('OWNER', array_column($employees, 'employee_type'), true);
+            $ownerIndex = array_search(self::EMPLOYEE_TYPE_OWNER, array_column($employees, 'employee_type'), true);
             if ($ownerIndex !== false && isset($employees[0])) {
                 $tmp = $employees[$ownerIndex];
                 $employees[$ownerIndex] = $employees[0];
@@ -60,6 +59,13 @@ class Employee extends EHealthRequest
         return $employees;
     }
 
+    /**
+     * Prepares a basic data structure from the eHealth API response.
+     * It no longer contains database queries.
+     *
+     * @param array $ehealthData Raw data for one employee from the E-Health API.
+     * @return array The partially prepared data.
+     */
     public static function prepareEmployeeDataForDb(array $ehealthData, LegalEntity $legalEntity, ?User $user = null): array
     {
         $prepared = [
