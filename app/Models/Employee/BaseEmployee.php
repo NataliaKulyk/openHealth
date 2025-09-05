@@ -5,33 +5,32 @@ declare(strict_types=1);
 namespace App\Models\Employee;
 
 use App\Models\User;
-use App\Enums\Status;
-use App\Models\Division;
-use App\Models\Revision;
-use App\Models\Declaration;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
-use App\Models\Relations\Education;
-use App\Models\Relations\Speciality;
-use App\Models\Relations\Qualification;
-use App\Models\Relations\ScienceDegree;
-use Illuminate\Database\Eloquent\Attributes\Scope;
+use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Eloquence\Behaviours\HasCamelCasing;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
+ * An abstract base class for Employee and EmployeeRequest models.
+ * It contains only the common logic, properties, and relationships.
+ *
  * @mixin IdeHelperBaseEmployee
  */
-class BaseEmployee extends Model
+abstract class BaseEmployee extends Model
 {
     use HasCamelCasing;
 
+    /**
+     * Eager loading is disabled by default for performance reasons.
+     * All relationships should be loaded explicitly using ->with() in queries.
+     */
+    protected $with = [];
+
+    /**
+     * Common fillable attributes for both employees and requests.
+     */
     protected $fillable = [
         'uuid',
         'legal_entity_uuid',
@@ -49,75 +48,39 @@ class BaseEmployee extends Model
     ];
 
     /**
-     * The attributes that should be cast to native types.
-     * We are changing the format for start_date and end_date to 'Y-m-d'.
-     *
-     * @var array
+     * Common casts.
      */
     protected $casts = [
-        'status' => Status::class,
         'start_date' => 'date:Y-m-d',
         'end_date' => 'date:Y-m-d',
     ];
 
-    protected array $prettyAttributes = [
-        'start_date',
-        'end_date',
-        'status',
-        'position',
-        'employee_type'
-    ];
 
-    protected $with = [
-        'user',
-        'party',
-        'party.phones',
-        'party.documents',
-        'qualifications',
-        'educations',
-        'specialities',
-        'scienceDegrees'
-    ];
+    // --- COMMON ACCESSORS ---
 
     protected function fullName(): Attribute
     {
-        return Attribute::make(
-            get: fn () => implode(' ', array_filter([
-                optional($this->party)->last_name ?? '',
-                optional($this->party)->first_name ?? '',
-                optional($this->party)->second_name ?? '',
-            ]))
+        return Attribute::get(
+            fn() => implode(
+                ' ',
+                array_filter(
+                    [
+                        $this->party?->last_name,
+                        $this->party?->first_name,
+                        $this->party?->second_name,
+                    ]
+                )
+            )
         );
     }
 
-    /**
-     * Determine if the employee's associated user is verified.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
-     */
     protected function isVerified(): Attribute
     {
-        return Attribute::make(
-        // The logic checks if the user relationship exists AND
-        // if the user's email_verified_at column is not null.
-            get: fn () => $this->user?->email_verified_at !== null
-        );
+        return Attribute::get(fn () => $this->user?->email_verified_at !== null);
     }
 
-    public function getPhoneAttribute(): string
-    {
-        return optional(optional($this->party)->phones)->first()->number ?? '';
-    }
 
-    public function getBirthDateAttribute(): string
-    {
-        return humanFormatDate(optional($this->party)->birth_date ?? '');
-    }
-
-    public function getEmailAttribute(): string
-    {
-        return optional($this->party)->email ?? '';
-    }
+    // --- COMMON RELATIONS ---
 
     public function legalEntity(): BelongsTo
     {
@@ -126,7 +89,7 @@ class BaseEmployee extends Model
 
     public function division(): BelongsTo
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsTo(\App\Models\Division::class);
     }
 
     public function party(): BelongsTo
@@ -138,94 +101,5 @@ class BaseEmployee extends Model
     {
         return $this->belongsTo(User::class);
     }
-
-    public function declarations(): HasMany
-    {
-        return $this->hasMany(Declaration::class);
-    }
-
-    public function educations(): MorphMany
-    {
-        return $this->morphMany(Education::class, 'educationable');
-    }
-
-    public function scienceDegrees(): MorphMany
-    {
-        return $this->morphMany(ScienceDegree::class, 'science_degreeable');
-    }
-
-    public function qualifications(): MorphMany
-    {
-        return $this->morphMany(Qualification::class, 'qualificationable');
-    }
-
-    public function specialities(): MorphMany
-    {
-        return $this->morphMany(Speciality::class, 'specialityable');
-    }
-
-    public function revision(): MorphOne
-    {
-        return $this->morphOne(Revision::class, 'revisionable');
-    }
-
-    #[Scope]
-    public function doctor(Builder $query): Builder
-    {
-        return $query->where('employee_type', 'DOCTOR');
-    }
-
-    public function scopeShowEmployee($query, $id)
-    {
-        $employeeData = $query->findOrFail($id);
-        foreach ($this->prettyAttributes as $attribute) {
-            $employeeData->party->{$attribute} = $employeeData->{$attribute} ?? '';
-        }
-        $employeeData->documents = $employeeData->party->documents()->get()->toArray() ?? [];
-
-        return $employeeData->toArray();
-    }
-
-    /**
-     * Scope a query to get an employee data depends on user id and it's legal entity relation
-     *
-     * @param Builder $query
-     * @param int $userId User's ID from MIS DB table 'users'
-     * @param string $legalEntityUUID UUID of the LegalEntity when user (with $userId) is belongs to
-     * @param array $roles Specify ROLEs that shouldn't be inclued in query
-     *
-     * @return void
-     */
-    public function scopeEmployeeInstance(Builder $query, int $userId, string $legalEntityUUID, array $roles, bool $isInclude = false): void
-    {
-        $query->where('user_id', $userId)
-            ->where('legal_entity_uuid', $legalEntityUUID);
-
-        if ($isInclude) {
-            $query->whereIn('employee_type', $roles);
-        } else {
-            $query->whereNotIn('employee_type', $roles);
-        }
-    }
-
-    /**
-     * Scope query to identify an employee based on multiple criteria
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     * @param string $employeeType The type of employee
-     * @param string $status The current status of the employee
-     * @param int $userId The user ID associated with the employee
-     * @param int $legalEntityId The legal entity ID the employee belongs to
-     * @param int $partyId The party ID associated with the employee
-     *
-     * @return void
-     */
-    public function scopeIdentifyEmployee(Builder $query, array $employeeTypes, string  $status, int $userId, int $legalEntityId, ?int $partyId): void
-    {
-        $query->whereIn('employee_type', $employeeTypes)
-                ->where('status', $status)
-                ->where('user_id', $userId)
-                ->where('legal_entity_id', $legalEntityId)
-                ->where('party_id', $partyId);
-    }
 }
+

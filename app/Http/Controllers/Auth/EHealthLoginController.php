@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Auth\EHealth\Services\TokenStorage;
+use App\Classes\eHealth\Exceptions\ApiException;
+use App\Events\EHealthUserLogin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\LegalEntity;
-use App\Repositories\Repository;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -95,130 +96,77 @@ class EHealthLoginController extends Controller
         $isFirstLogin = !User::where('uuid', $authUserUUID)->first()?->uuid;
 
         auth()->shouldUse('ehealth');
-
-        $user = $this->checkLoginedUser($legalEntity, $authUserUUID);
+        $user = $this->findOrCreateUser($legalEntity, $authUserUUID);
 
         if (!$user) {
             Log::error(__('auth.login.error.user_authentication', [], 'en'));
             return $this->breakAuth('auth.login.error.user_authentication');
         }
 
-        // We must ensure that the user entered test email in the login form corresponds to the user's eHealth email
         if ($testUser && ($sessionEmail !== $user->email)) {
             Log::error(__('auth.login.error.test_user_email', [], 'en'));
             return $this->breakAuth('auth.login.error.test_user_email');
         }
 
+        EHealthUserLogin::dispatch($user, $legalEntity, $authUserUUID);
+
         auth('ehealth')->login($user);
 
-        /* Check if the user has assigned LegalEntity */
         if ($legalEntity) {
             Log::info(__('auth.login.success.user_auth', [], 'en'), ['User ID' => $user->id]);
-
             return Redirect::route('dashboard', [$legalEntity])->with('success', $isFirstLogin ? __('auth.login.success.new_user_auth') : null);
-        } else {
-            Auth::guard('ehealth')->logout();
-
-            return Redirect::route('login')->with('error', __('auth.login.error.legal_entity.wrong_request'));
         }
+
+        Auth::guard('ehealth')->logout();
+        return Redirect::route('login')->with('error', __('auth.login.error.legal_entity.wrong_request'));
     }
 
     /**
-     * Check if this first user's login. If so then all user's data (as employee) has to be updated
+     * Finds an existing user or prepares a new one for the first login.
+     * This method NO LONGER performs data synchronization.
      *
-     * @param \App\Models\LegalEntity $legalEntity
-     * @param string $authUserUUID
+     * @param LegalEntity $legalEntity
+     * @param string      $authUserUUID
      *
      * @return User|null
+     * @throws ApiException
      */
-    protected function checkLoginedUser(LegalEntity $legalEntity, string $authUserUUID): ?User
+    protected function findOrCreateUser(LegalEntity $legalEntity, string $authUserUUID): ?User
     {
-        // Get user trying to login
-        $alreadyAuthorizedUser = User::where('uuid', $authUserUUID)->first();
-        $authLegalEntityUUID = $legalEntity->uuid;
-
-        if ($alreadyAuthorizedUser) {
-            /**
-             * must set actual permissions for the particular legal entity, see:
-             * https://spatie.be/docs/laravel-permission/v6/basic-usage/teams-permissions#content-working-with-teams-permissions
-             */
+        $user = User::where('uuid', $authUserUUID)->first();
+        if ($user) {
             setPermissionsTeamId($legalEntity->id);
-            $alreadyAuthorizedUser->unsetRelation('roles')->unsetRelation('permissions');
+            $user->unsetRelation('roles')->unsetRelation('permissions');
 
-            // Check if user has connection to selected Legal Entity
-            if (!$alreadyAuthorizedUser->hasAccessToLegalEntityByUuid($authLegalEntityUUID)) {
-                Log::error(__('auth.login.error.user_authentication', [], 'en') . __(" User {$alreadyAuthorizedUser->uuid} does not have required access to LegalEntity {$authLegalEntityUUID} after sync."));
-
+            if (!$user->hasAccessToLegalEntityByUuid($legalEntity->uuid)) {
+                Log::error(__('auth.login.error.user_authentication', [], 'en') . __(" User {$user->uuid} does not have required access to LegalEntity {$legalEntity->uuid} after sync."));
                 return null;
             }
 
-            // Check if user has more than one Employee Role that hasn't been authorized
-            if (!Repository::employee()->authenticateNewEmployees($authLegalEntityUUID, $alreadyAuthorizedUser, $authUserUUID)) {
-                Log::error(__('auth.login.error.user_authentication', [], 'en'));
-
-                return null;
-            }
-
-            // Check employee for updates
-            if (!Repository::employee()->checkForEmployeeUpdate($legalEntity, $alreadyAuthorizedUser, $authUserUUID)) {
-                Log::error(__('auth.login.error.user_employee_update', [], 'en'));
-
-                return null;
-            }
-
-            return $alreadyAuthorizedUser;
+            return $user;
         }
 
-        // If user not found, try to get user from eHealth response by Get User Details request
-        $authorizedUserValidator = $this->validateUserDetailsResponse(EmployeeApi::getUserDetails());
-
-        /** @var \Illuminate\Contracts\Validation\Validator $authorizedUserValidator */
-        if ($authorizedUserValidator->fails()) {
-            Log::error(__('auth.login.error.vlidation.user_details', [], 'en'), ['errors' => $authorizedUserValidator->errors()]);
-
+        $userDetailsValidator = $this->validateUserDetailsResponse(EmployeeApi::getUserDetails());
+        if ($userDetailsValidator->fails()) {
+            Log::error(__('auth.login.error.validation.user_details', [], 'en'), ['errors' => $userDetailsValidator->errors()]);
             return null;
         }
 
-        $authorizedUserData = $authorizedUserValidator->validated();
+        $userData = $userDetailsValidator->validated();
 
-        $userUUID = $authorizedUserData['id'];
-        $userEmail = $authorizedUserData['email'];
-
-        // Check if user doesn't change email through ESOZ login
-        if ($userUUID !== $authUserUUID) {
+        if ($userData['id'] !== $authUserUUID) {
             Log::error(__('auth.login.error.user_identity', [], 'en'));
-
             return null;
         }
 
-        $user = User::where('email', $userEmail)->first();
-
+        $user = User::where('email', $userData['email'])->first();
         if (!$user) {
-            Log::error(__('auth.login.error.user_not_found_by_email', [], 'en') . ": {$userEmail}");
-
+            Log::error(__('auth.login.error.user_not_found_by_email', [], 'en') . ": {$userData['email']}");
             return null;
         }
 
-        /**
-         * must set actual permissions for the particular legal entity, see:
-         * https://spatie.be/docs/laravel-permission/v6/basic-usage/teams-permissions#content-working-with-teams-permissions
-         */
         setPermissionsTeamId($legalEntity->id);
         $user->unsetRelation('roles')->unsetRelation('permissions');
-
-        // Get Employee or EmployeeRequest instance for specified user and it's Legal Entity ID
-        $employeeRequest = EmployeeRequest::employeeInstance($user->id, $legalEntity->uuid, ['OWNER'], true)->first();
-
-        $isAuntenticated = $employeeRequest
-            ? Repository::employee()->authenticateNewOwner($employeeRequest, $user, $authUserUUID)
-            : Repository::employee()->authenticateNewEmployees($legalEntity->uuid, $user, $authUserUUID);
-
-        // Logout if user is not authenticated properly
-        if (!$isAuntenticated) {
-            Log::error(__('auth.login.error.user_authentication', [], 'en'), ['error' => 'Wrong authenticateNewOwner or authenticateNewEmployees workflow'] );
-
-            return null;
-        }
 
         return $user;
     }
