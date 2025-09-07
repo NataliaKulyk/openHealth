@@ -2,12 +2,8 @@
 
 namespace App\Providers;
 
-use App\Events\ApplyUserTeamId;
-use App\Listeners\ApplyUserTeamIdListener;
-use App\Listeners\EmailVerification;
 use App\Listeners\LogLockout;
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -18,9 +14,6 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
-        Registered::class => [
-            EmailVerification::class,
-        ],
         Lockout::class => [
             LogLockout::class
         ],

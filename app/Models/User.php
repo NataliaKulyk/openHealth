@@ -32,6 +32,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Track if email verification was already sent
+     */
+    private static $emailVerificationSent = [];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
@@ -234,6 +239,34 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getProcedureWriterEmployee(): ?Employee
     {
         return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT']);
+    }
+
+    /**
+     * OVERRIDE: the parent method.
+     * Send the email verification notification with error handling.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification()
+    {
+        // Check if we already sent verification to this email in this request
+        $emailKey = $this->email . '_' . $this->id;
+
+        // Already sent, skipping
+        if (isset(self::$emailVerificationSent[$emailKey])) {
+            return;
+        }
+
+        try {
+            parent::sendEmailVerificationNotification();
+
+            // Mark as sent
+            self::$emailVerificationSent[$emailKey] = true;
+        } catch (\Exception $err) {
+            \Log::error('EmailVerification Error:', ['error' => $err->getMessage(), 'user_email' => $this->email]);
+
+            throw new \Exception(__("Cannot send verification email to the user"));
+        }
     }
 
     /**

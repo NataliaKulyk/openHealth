@@ -501,7 +501,7 @@ class CreateLegalEntity extends LegalEntity
                 $user->unsetRelation('roles');
 
                 try {
-                    $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id'], $user?->id ?? null);
+                    $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id'], $user?->id ? (string)$user->id : null);
                 } catch (Exception $err) {
                     throw new Exception('Error: createEmployeeRequest: ' . $err->getMessage(), $err->getCode());
                 }
