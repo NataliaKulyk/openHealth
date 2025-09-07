@@ -8,7 +8,12 @@ use App\Enums\Status;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
 use App\Models\Employee\Employee;
+use App\Models\Division;
+use App\Models\Contract;
+use App\Models\License;
+use App\Models\Revision;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 use App\Casts\LegalEntityArchiveCast;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +22,6 @@ use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Builder;
 use App\Casts\LegalEntityAccreditationCast;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * @mixin IdeHelperLegalEntity
@@ -132,7 +136,7 @@ class LegalEntity extends Model
 
     public function getActiveDivisions(): Collection
     {
-        return $this->division()->has('healthcareService')->where('status', Status::ACTIVE)->get();
+        return $this->divisions()->has('healthcareService')->where('status', Status::ACTIVE)->get();
     }
 
     public function getEdr(): array
@@ -143,6 +147,11 @@ class LegalEntity extends Model
     public function address(): MorphOne
     {
         return $this->morphOne(Address::class, 'addressable');
+    }
+
+    public function addresses(): MorphMany
+    {
+        return $this->morphMany(Address::class, 'addressable');
     }
 
     public function phones(): MorphMany

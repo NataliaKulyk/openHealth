@@ -66,7 +66,7 @@
                    x-ref="regionField"
                    aria-describedby="{{ $hasRegionError ? 'addressRegionErrorHelp' : '' }}"
                    class="input {{ $hasRegionError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-                   :disabled="{{ empty($address['area']) || (isset($address['area']) && $address['area']) === 'М.КИЇВ' || $readonly ? 'true' : 'false' }}"
+                   :disabled="{{ empty($address['area']) || (isset($address['area']) && $address['area'] === 'М.КИЇВ') || $readonly ? 'true' : 'false' }}"
             />
 
             <template x-if="showTo">

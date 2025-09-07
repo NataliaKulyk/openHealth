@@ -4,9 +4,14 @@ namespace App\Models\Employee;
 
 use App\Enums\Employee\RequestStatus;
 use App\Models\Revision;
+use App\Models\Relations\ScienceDegree;
+use App\Models\Relations\Education;
+use App\Models\Relations\Qualification;
+use App\Models\Relations\Speciality;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * Represents a request to create or modify an employee.
@@ -64,6 +69,26 @@ class EmployeeRequest extends BaseEmployee
     public function revision(): MorphOne
     {
         return $this->morphOne(Revision::class, 'revisionable');
+    }
+
+    public function scienceDegrees(): MorphMany
+    {
+        return $this->morphMany(ScienceDegree::class, 'science_degreeable');
+    }
+
+    public function educations(): MorphMany
+    {
+        return $this->morphMany(Education::class, 'educationable');
+    }
+
+    public function qualifications(): MorphMany
+    {
+        return $this->morphMany(Qualification::class, 'qualificationable');
+    }
+
+    public function specialities(): MorphMany
+    {
+        return $this->morphMany(Speciality::class, 'specialityable');
     }
 
     // --- TEMPORARY SCOPES (to be removed after controller refactoring) ---

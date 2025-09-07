@@ -8,6 +8,7 @@ use App\Enums\Status;
 use App\Models\Relations\Phone;
 use App\Casts\Division\Location;
 use App\Models\Employee\Employee;
+use App\Models\LegalEntity;
 use App\Models\Relations\Address;
 use App\Casts\Division\WorkingHours;
 use Illuminate\Database\Eloquent\Model;
