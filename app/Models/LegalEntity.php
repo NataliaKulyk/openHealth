@@ -144,11 +144,6 @@ class LegalEntity extends Model
         return $this->edr;
     }
 
-    public function address(): MorphOne
-    {
-        return $this->morphOne(Address::class, 'addressable');
-    }
-
     public function addresses(): MorphMany
     {
         return $this->morphMany(Address::class, 'addressable');

@@ -154,9 +154,9 @@ class Division extends Model
         return $this->hasMany(HealthcareService::class);
     }
 
-    public function address(): MorphOne
+    public function addresses(): MorphMany
     {
-        return $this->morphOne(Address::class, 'addressable');
+        return $this->morphMany(Address::class, 'addressable');
     }
 
     public function phones(): MorphMany
