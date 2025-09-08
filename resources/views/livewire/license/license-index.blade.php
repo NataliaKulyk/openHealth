@@ -1,22 +1,21 @@
 <div>
     <x-section-navigation x-data="{ showFilter: false }" class="" title="{{ __('Ліцензії') }}">
         <div class="flex flex-col">
-            <div class="flex flex-wrap items-end justify-between gap-4" style="max-width: var(--container-6xl);">
+            <div class="flex flex-wrap items-end justify-between gap-4 max-w-6xl">
                 <div class="flex items-end gap-4">
                 </div>
                 <div class="ml-auto flex items-center gap-2 self-start mt-6 translate-x-6">
                     <button type="button" class="button-primary">
                         <a href="{{ route('license.create', [legalEntity()]) }}">
-                            Нова ліцензія
+                            {{__('forms.license.create')}}
                         </a>
                     </button>
                     <button wire:click="sync" class="button-sync">
-                        Синхронізувати з ЕСОЗ
+                        {{__('forms.synchronise_data_with_EHealth')}}
                     </button>
                 </div>
             </div>
         </div>
-
     </x-section-navigation>
 
     <div class="max-w-7xl mx-auto">
