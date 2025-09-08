@@ -4,7 +4,7 @@
             <div class="flex flex-wrap items-end justify-between gap-4 max-w-6xl">
                 <div class="flex items-end gap-4">
                 </div>
-                <div class="ml-auto flex items-center gap-2 self-start mt-6 translate-x-6">
+                <div class="ml-auto flex items-center gap-2 self-start -mt-9 translate-x-6">
                     <button type="button" class="button-primary">
                         <a href="{{ route('license.create', [legalEntity()]) }}">
                             {{__('forms.license.create')}}
