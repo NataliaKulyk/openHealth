@@ -33,6 +33,8 @@ class Party extends Model
         'no_tax_id',
         'about_myself',
         'working_experience',
+        'declaration_count',
+        'declaration_limit',
     ];
 
     protected $casts = [

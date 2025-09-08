@@ -6,18 +6,28 @@ namespace App\Livewire\Employee;
 
 use AllowDynamicProperties;
 use App\Classes\eHealth\Api\EmployeeApi;
+use App\Classes\eHealth\EHealth;
+use App\Core\Arr;
 use App\Enums\Status;
+use App\Exceptions\EHealth\EHealthException;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Repositories\EmployeeRepository;
+use App\Repositories\Repository;
+use Illuminate\Bus\Batch;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
+use function Laravel\Prompts\error;
 
 #[AllowDynamicProperties]
 class EmployeeIndex extends EmployeeComponent
@@ -229,32 +239,95 @@ class EmployeeIndex extends EmployeeComponent
         $this->closeModal();
     }
 
+    /**
+     * @throws ConnectionException
+     */
     public function sync(): void
     {
         try {
-            $eHealthEmployees = $this->getRemoteEmployees();
-            if (empty($eHealthEmployees)) {
-                $this->dispatch('flashMessage', ['message' => __('employees.sync.no_employees_found'), 'type' => 'info']);
-                return;
-            }
-
-            $localEmployeeUuids = $this->getLocalEmployeeUuids();
-            $newEmployeeIds = array_diff(array_column($eHealthEmployees, 'id'), $localEmployeeUuids);
-
-            if (empty($newEmployeeIds)) {
-                $this->dispatch('flashMessage', ['message' => __('employees.sync.completed_no_new'), 'type' => 'success']);
-                return;
-            }
-
-            $newEmployeesAdded = $this->createNewEmployees($newEmployeeIds);
-
-            $message = __('employees.sync.completed_with_new', ['count' => $newEmployeesAdded]);
-            $this->dispatch('flashMessage', ['message' => $message, 'type' => 'success']);
-
-        } catch (\Exception $e) {
+            $response = EHealth::employee()->getMany(['legal_entity_id' => legalEntity()->uuid]);
+        } catch (ConnectionException $e) {
             Log::error('Employee sync failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => __('employees.sync.error')]), 'type' => 'error']);
+            $this->dispatch('flashMessage',  ['message' => __('errors.ehealth.messages.no_connection'), 'type' => 'error']);
+            return;
+        } catch (EHealthResponseException $e) {
+            Log::error('Employee sync failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            $this->dispatch('flashMessage',  ['message' => __('employees.requestError', ['error' => $e->getMessage()]), 'type' => 'error']);
+            return;
         }
+
+        $employees = $response->validate();
+        data_forget($employees, '*.party');
+        data_forget($employees, '*.doctor');
+
+        Employee::upsert($employees, uniqueBy: ['uuid']);
+
+        /**
+         * Employees are updated, now we need to proccess all related data, i.e., party, documents, phones, educations, specialties, etc.
+         * This is done through the Employee Details endpoint, with a cooldown to respect rate limits.
+         * We use batching to handle this efficiently.
+         */
+
+        // First get all saved employee models
+        $models = Employee::with('party')->filterByUuids(array_column($employees, 'uuid'))->get();
+
+        $model = $models->find(33);
+
+        $employee = EHealth::employee()->getDetails($model->uuid);
+        $employee = $employee->validate();
+
+        $doctor = Arr::pull($employee, 'doctor', []);
+        $educations = Arr::pull($doctor, 'educations', []);
+        $specialties = Arr::pull($doctor, 'specialties', []);
+
+        $party = Arr::pull($employee, 'party');
+        $partyUuid = Arr::pull($party, 'uuid');
+        $documents = Arr::pull($party, 'documents', []);
+        $phones = Arr::pull($party, 'phones', []);
+
+        /**
+         * The logic behind the party update or create is as follows:
+         * 1. Check party by UUID. Possible scenario: the party already exists in the system
+         * 2. If user already has a party, update it.
+         * 3. If user does not have a party, but there is a party with the same UUID, update it and establish the relation.
+         * 4. If neither of the above, create a new party and establish the relation.
+         */
+
+        $partyByUuid = Party::where('uuid', $partyUuid)->first();
+
+        // If the model doesn't have a party and party doesn't exist, create new one. It's a brand-new person
+        if (!($partyByUuid && $model->party)) {
+            $theParty = $model->party()->create($party);
+
+        // If the model doesn't have a related party but the party already exists, update it and relate - the scenario of a new employee with already created person/party
+        } else if ($partyByUuid && !$model->party) {
+            $theParty = $model->party()->save($partyByUuid);
+
+        // The model already has a related party, update it and change the UUID - the case when eHealth creates another party, probably merge scenario
+        } else if (!$partyByUuid && $model->party) {
+            $theParty = $model->party()->update(array_merge(
+                $party,
+                ['uuid' => $partyUuid]
+            ));
+        // Both the model and the party exist, check if they are the same
+        } else if ($partyByUuid && $model->party) {
+
+            // uuid is the same, just update
+            if ($partyByUuid->uuid == $model->party->uuid) {
+                $theParty = $model->party()->update($partyByUuid);
+            } else {
+
+            // Different uuid, need to merge the results, prioritizing the eHealth data
+                $result = array_merge(
+                    $model->party()->toArray(),
+                    $partyByUuid->toArray()
+                );
+
+                $theParty = $model->party()->update($result);
+            }
+        }
+
+        dd($theParty->toArray());
     }
 
     /**

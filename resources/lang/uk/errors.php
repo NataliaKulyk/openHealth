@@ -44,6 +44,7 @@ return [
             'speciality_officio_not_allowed' => 'спеціалізація ":speciality" з активним основним записом не дозволена для лікаря.',
             'request_error' => 'Помилка в процесі обробки запиту',
             'server_error' => 'Помилка при обробці запиту до сервера',
-        ]
+            'no_connection' => 'Немає зв\'язку з eHealth',
+        ],
     ],
 ];

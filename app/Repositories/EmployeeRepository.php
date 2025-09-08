@@ -238,18 +238,18 @@ class EmployeeRepository
     /**
      * Creates or updates multiple Employee records in a single query.
      *
-     * @param array $employeesData
+     * @param array $employees
      */
-    public function upsertEmployees(array $employeesData): void
+    public function upsertEmployees(array $employees): void
     {
-        if (empty($employeesData)) {
+        if (empty($employees)) {
             return;
         }
 
         // Define the unique key (uuid) and the columns to update if the record exists.
-        $updateColumns = array_keys(reset($employeesData));
+        $updateColumns = array_keys(reset($employees));
 
-        Employee::upsert($employeesData, ['uuid'], $updateColumns);
+        Employee::upsert($employees, ['uuid'], $updateColumns);
     }
 
     /**
