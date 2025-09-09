@@ -1,5 +1,5 @@
 @php
-    $user = Auth::user();
+    use App\Models\Person\PersonRequest;
     $svgSprite = file_get_contents(resource_path('images/sprite.svg'));
 @endphp
 
@@ -28,16 +28,15 @@
                     <a href="{{ route('patient.index', [legalEntity()]) }}" class="button-minor">
                         {{ __('forms.back') }}
                     </a>
-                    @if($user->hasRole('DOCTOR'))
+
+                    @can('create', PersonRequest::class)
                         <button wire:click.prevent="createPerson" class="button-primary">
                             {{ __('forms.send_for_approval') }}
                         </button>
-                    @endif
-                    @if($user->hasAnyRole(['DOCTOR', 'RECEPTIONIST']))
                         <button wire:click.prevent="createApplication" class="button-primary">
                             {{ __('patients.save_to_application') }}
                         </button>
-                    @endif
+                    @endcan
                 </div>
             </form>
         </section>

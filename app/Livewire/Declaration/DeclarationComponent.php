@@ -7,6 +7,8 @@ namespace App\Livewire\Declaration;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Enums\Declaration\Status;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Declaration\Forms\DeclarationForm as Form;
 use App\Models\DeclarationRequest;
 use App\Models\Division;
@@ -17,11 +19,13 @@ use App\Notifications\LegalEntityUpdated;
 use App\Repositories\Repository;
 use App\Traits\FormTrait;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Throwable;
@@ -32,6 +36,9 @@ abstract class DeclarationComponent extends Component
     use WithFileUploads;
 
     public Form $form;
+
+    #[Locked]
+    public $patientId;
 
     public bool $showInformationMessageModal = false;
     public bool $showAuthModal = false;
@@ -109,6 +116,7 @@ abstract class DeclarationComponent extends Component
             ->where('id', $patientId)
             ->firstOrFail();
         $this->patientFullName = $patient->fullName;
+        $this->patientId = $patientId;
         $this->patientUuid = $patient->uuid;
 
         $this->getDictionary();
@@ -139,11 +147,8 @@ abstract class DeclarationComponent extends Component
 
         try {
             $validated = $this->form->validate($this->form->rulesForCreating());
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
@@ -160,42 +165,39 @@ abstract class DeclarationComponent extends Component
         } catch (Exception $exception) {
             $action = $this->declarationRequestId ? 'updating' : 'creating';
             $this->logDatabaseErrors($exception, "Error $action declaration request");
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
+        $validated['divisionId'] = null;
 
         try {
             $response = EHealth::declarationRequest()->create(data: removeEmptyKeys(Arr::toSnakeCase($validated)));
 
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while creating declaration request');
-                $this->flashGeneralError();
+            try {
+                Repository::declarationRequest()->update($declarationRequest->id, $response->getData());
+            } catch (Exception $exception) {
+                $this->logDatabaseErrors($exception, 'Error updating declaration request after response');
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                 return;
             }
 
-            if ($response->getStatusCode() === 200) {
-                try {
-                    Repository::declarationRequest()->update($declarationRequest->id, $response->getData());
-                } catch (Exception $exception) {
-                    $this->logDatabaseErrors($exception, 'Error updating declaration request after response');
-                    $this->flashGeneralError();
+            $this->declarationRequestUuid = $response->getData()['id'];
 
-                    return;
-                }
-
-                $this->declarationRequestUuid = $response->getData()['id'];
-
-                if ($response->getUrgent()['authentication_method_current']['type'] === 'OFFLINE') {
-                    $this->uploadedDocuments = $response->getUrgent()['documents'];
-                }
-
-                $this->showInformationMessageModal = true;
+            if ($response->getUrgent()['authentication_method_current']['type'] === 'OFFLINE') {
+                $this->uploadedDocuments = $response->getUrgent()['documents'];
             }
+
+            $this->showInformationMessageModal = true;
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while creating declaration request');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error connecting when creating a declaration');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when creating a declaration');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -230,11 +232,8 @@ abstract class DeclarationComponent extends Component
 
         try {
             $validated = $this->form->validate($this->form->rulesForApproving());
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
@@ -242,13 +241,6 @@ abstract class DeclarationComponent extends Component
         try {
             $response = EHealth::declarationRequest()
                 ->approve($this->declarationRequestUuid, Arr::toSnakeCase($validated));
-
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while approving declaration request');
-                $this->flashGeneralError();
-
-                return;
-            }
 
             if ($response->getStatusCode() === 200) {
                 try {
@@ -261,7 +253,7 @@ abstract class DeclarationComponent extends Component
                     DB::transaction(fn () => $this->syncDeclarationRelatedData($toBeSignedData));
                 } catch (Exception|Throwable $exception) {
                     $this->logDatabaseErrors($exception, 'Error while approving declaration request');
-                    $this->flashGeneralError();
+                    session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                     return;
                 }
@@ -272,8 +264,13 @@ abstract class DeclarationComponent extends Component
                 $this->showSignModal = true;
             }
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while approving declaration request');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error connecting when approving a declaration');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when approving a declaration');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -306,11 +303,8 @@ abstract class DeclarationComponent extends Component
 
         try {
             $this->form->validate($this->form->rulesForUploadingDocuments());
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
@@ -318,10 +312,7 @@ abstract class DeclarationComponent extends Component
         $totalFiles = count($this->form->uploadedDocuments);
         // Check that all provided files were uploaded
         if ($totalFiles !== count($this->uploadedDocuments)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Будь ласка завантажте всі файли!',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'Будь ласка завантажте всі файли!');
 
             return;
         }
@@ -337,10 +328,12 @@ abstract class DeclarationComponent extends Component
                 if ($response->getStatusCode() === 200) {
                     $successCount++;
                 } else {
-                    $this->flashGeneralError();
+                    logger()?->error('Error while uploading document', ['body' => $response->getBody()]);
+                    session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
                 }
-            } catch (ConnectionException) {
-                $this->flashGeneralError();
+            } catch (ConnectionException $exception) {
+                $this->logConnectionError($exception, 'Error while uploading document');
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
             }
         }
 
@@ -349,8 +342,16 @@ abstract class DeclarationComponent extends Component
             try {
                 $this->approveUploadedFiles();
             } catch (ConnectionException $exception) {
-                $this->logConnectionError($exception, 'Error while approving declaration request after sending files');
-                $this->flashGeneralError();
+                $this->logConnectionError(
+                    $exception,
+                    'Error connecting when approving a declaration request after sending files'
+                );
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+                return;
+            } catch (EHealthValidationException|EHealthResponseException $exception) {
+                $this->logEHealthException($exception, 'Error when approving a declaration after sending files');
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                 return;
             }
@@ -365,36 +366,28 @@ abstract class DeclarationComponent extends Component
     public function resendSms(): void
     {
         if ($this->smsResent) {
-            $this->dispatch('flashMessage', [
-                'message' => __('СМС вже відправлено повторно. Виконати повторне надсилання можна лише разово.'),
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'СМС вже відправлено повторно. Виконати повторне надсилання можна лише разово.');
 
             return;
         }
 
         try {
             $response = EHealth::declarationRequest()->resendAuthOtp($this->declarationRequestUuid);
-
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while resending auth OTP on declaration request');
-                $this->flashGeneralError();
-
-                return;
-            }
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while resending sms to person');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error connecting when resending sms to person');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when resending sms to person');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
 
         if ($response->getData()['status'] === 'new') {
             $this->smsResent = true;
-            $this->dispatch('flashMessage', [
-                'message' => __('SMS успішно надіслано!'),
-                'type' => 'success'
-            ]);
+            session()?->flash('success', 'SMS успішно надіслано!');
         }
     }
 
@@ -402,18 +395,11 @@ abstract class DeclarationComponent extends Component
      * Send approve request if all files were uploaded successfully
      *
      * @return void
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     protected function approveUploadedFiles(): void
     {
         $response = EHealth::declarationRequest()->approve($this->declarationRequestUuid);
-
-        if (!$response->successful()) {
-            $this->logEHealthError($response, 'Error while approving declaration request after sending files');
-            $this->flashGeneralError();
-
-            return;
-        }
 
         if ($response->getStatusCode() === 200) {
             try {
@@ -426,7 +412,7 @@ abstract class DeclarationComponent extends Component
                 DB::transaction(fn () => $this->syncDeclarationRelatedData($toBeSignedData));
             } catch (Exception|Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Error while approving declaration request');
-                $this->flashGeneralError();
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                 return;
             }
@@ -451,11 +437,8 @@ abstract class DeclarationComponent extends Component
 
         try {
             $validated = $this->form->validate($this->form->rulesForSigning());
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
@@ -477,13 +460,6 @@ abstract class DeclarationComponent extends Component
                 ['signed_declaration_request' => $signedContent]
             );
 
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while signing declaration request');
-                $this->flashGeneralError();
-
-                return;
-            }
-
             if ($response->getStatusCode() === 200) {
                 try {
                     $context = 'updating declaration request status';
@@ -493,7 +469,7 @@ abstract class DeclarationComponent extends Component
                     Repository::declaration()->store($response->getData());
                 } catch (Exception $exception) {
                     $this->logDatabaseErrors($exception, "Error while $context");
-                    $this->flashGeneralError();
+                    session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                     return;
                 }
@@ -504,8 +480,13 @@ abstract class DeclarationComponent extends Component
                 ]);
             }
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while signing declaration request');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error connecting when signing declaration request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when signing declaration request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -513,7 +494,13 @@ abstract class DeclarationComponent extends Component
 
     protected function setEmployeesInfo(): void
     {
-        $employees = Auth::user()?->employees()->whereNotNull('division_id')->with('division')->get();
+        $employees = Auth::user()
+            ?->employees()
+            ->where('legal_entity_id', legalEntity()->id)
+            ->whereNotNull('division_id')
+            ->whereHas('specialities', fn (Builder $query) => $query->where('speciality_officio', true))
+            ->with(['division', 'legalEntity'])
+            ->get();
         $this->employeesInfo = $employees->map(static fn (Employee $employee) => [
             'employeeId' => $employee->uuid,
             'fullName' => $employee->fullName,
@@ -536,17 +523,15 @@ abstract class DeclarationComponent extends Component
     protected function getPersonAuthMethods(): array
     {
         try {
-            $response = EHealth::person()->getAuthMethods($this->patientUuid);
-
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while getting patient auth methods');
-
-                return [];
-            }
-
-            return $response->getData();
+            return EHealth::person()->getAuthMethods($this->patientUuid)->getData();
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while getting auth methods');
+            $this->logConnectionError($exception, 'Error connecting when getting auth methods');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return [];
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting auth methods');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return [];
         }
@@ -562,10 +547,7 @@ abstract class DeclarationComponent extends Component
     protected function ensureAbility(string $ability, string $errorMessage): bool
     {
         if (Auth::user()?->cannot($ability, DeclarationRequest::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => $errorMessage,
-                'type' => 'error'
-            ]);
+            session()?->flash('error', $errorMessage);
 
             return false;
         }
@@ -604,8 +586,8 @@ abstract class DeclarationComponent extends Component
         }
 
         if (Repository::declarationRequest()->syncDivisionData($toBeSignedData['division'])) {
-            $division = Division::findByUuid($toBeSignedData['division']['id']);
-            $users = Repository::user()->getDivisionEditorsByLegalEntity($division);
+            $divisionId = Division::whereUuid($toBeSignedData['division']['id'])->value('id');
+            $users = Repository::user()->getDivisionEditorsByLegalEntity($divisionId);
             Notification::send($users, new DivisionUpdated());
         }
 

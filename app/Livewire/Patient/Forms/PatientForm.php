@@ -284,7 +284,7 @@ class PatientForm extends Form
         $personAge = CarbonImmutable::parse($this->patient['birthDate'])->age;
 
         // If age less than 18 then check that confidant_person is submitted
-        if ($personAge < self::NO_SELF_REGISTRATION_AGE && empty($this->documentsRelationship['personId'])) {
+        if ($personAge < self::NO_SELF_REGISTRATION_AGE && empty($this->confidantPerson[0]['id'])) {
             return [
                 'error' => true,
                 'message' => __('validation.custom.patient.confidantPersonRequiredForChildren')
@@ -305,7 +305,7 @@ class PatientForm extends Form
             }
 
             // if none of persons documents has type from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter - check that confidant_person is submitted
-            if (!$hasLegalCapacityDocument && empty($this->documentsRelationship['personId'])) {
+            if (!$hasLegalCapacityDocument && empty($this->confidantPerson[0]['id'])) {
                 return [
                     'error' => true,
                     'message' => __('validation.custom.patient.confidantPersonRequiredForMinor')
@@ -313,7 +313,7 @@ class PatientForm extends Form
             }
 
             // Else if at least one of submitted person document types exist in PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter - check that confidant_person is not submitted
-            if ($hasLegalCapacityDocument && !empty($this->documentsRelationship['personId'])) {
+            if ($hasLegalCapacityDocument && !empty($this->confidantPerson[0]['id'])) {
                 return [
                     'error' => true,
                     'message' => __('validation.custom.patient.confidantPersonMustBeCapable')

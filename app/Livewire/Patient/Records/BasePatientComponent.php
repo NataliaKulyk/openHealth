@@ -6,11 +6,14 @@ namespace App\Livewire\Patient\Records;
 
 use App\Models\LegalEntity;
 use App\Models\Person\Person;
+use App\Traits\FormTrait;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 abstract class BasePatientComponent extends Component
 {
+    use FormTrait;
+
     #[Locked]
     public string $patientId;
 

@@ -1,12 +1,6 @@
 @use('App\Enums\Person\AuthenticationMethod')
 
-@php $svgSprite = file_get_contents(resource_path('images/sprite.svg')); @endphp
-
 <x-layouts.patient :id="$patientId" :patientFullName="$patientFullName">
-    <div aria-hidden="true" class="hidden">
-        {!! $svgSprite !!}
-    </div>
-
     <div class="breadcrumb-form p-4">
         <div class="flex items-center gap-14 mb-10">
             <p class="default-p">
@@ -19,9 +13,7 @@
                         class="flex items-center gap-2 button-primary"
                 >
                     {{ __('patients.update_status') }}
-                    <svg width="16" height="17">
-                        <use xlink:href="#svg-refresh"></use>
-                    </svg>
+                    @icon('refresh', 'w-4 h-4')
                 </button>
             </div>
         </div>
@@ -29,15 +21,14 @@
         <div id="accordion-open" data-accordion="open">
             <h2 id="accordion-open-heading-1">
                 <button type="button"
-                        class="accordion-button rounded-t-xl border-b-0"
+                        class="accordion-button rounded-t-xl border-b-0 group"
                         data-accordion-target="#accordion-open-body-1"
                         aria-expanded="true"
                         aria-controls="accordion-open-body-1"
+                        data-accordion-icon
                 >
                     <span class="text-lg">{{ __('patients.passport_data') }}</span>
-                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0">
-                        <use xlink:href="#svg-chevron"></use>
-                    </svg>
+                    @icon('chevron-down', 'w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform group-aria-expanded:rotate-180')
                 </button>
             </h2>
             <div id="accordion-open-body-1" class="hidden" aria-labelledby="accordion-open-heading-1" wire:ignore.self>
@@ -80,15 +71,14 @@
 
             <h2 id="accordion-open-heading-2">
                 <button type="button"
-                        class="accordion-button border-b-0"
+                        class="accordion-button border-b-0 group"
                         data-accordion-target="#accordion-open-body-2"
                         aria-expanded="false"
                         aria-controls="accordion-open-body-2"
+                        data-accordion-icon
                 >
                     <span class="text-lg">{{ __('patients.contact_data') }}</span>
-                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0">
-                        <use xlink:href="#svg-chevron"></use>
-                    </svg>
+                    @icon('chevron-down', 'w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform group-aria-expanded:rotate-180')
                 </button>
             </h2>
             <div id="accordion-open-body-2" class="hidden" aria-labelledby="accordion-open-heading-2" wire:ignore.self>
@@ -114,18 +104,17 @@
                 </div>
             </div>
 
-            <h2 id="accordion-open-heading-3">
+            <h2 id="accordion-open-heading-3" wire:ignore>
                 <button wire:click.once="getConfidantPersons"
                         type="button"
-                        class="accordion-button border-b-0"
+                        class="accordion-button border-b-0 group"
                         data-accordion-target="#accordion-open-body-3"
                         aria-expanded="false"
                         aria-controls="accordion-open-body-3"
+                        data-accordion-icon
                 >
                     <span class="text-lg">{{ __('patients.patient_legal_representative') }}</span>
-                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0">
-                        <use xlink:href="#svg-chevron"></use>
-                    </svg>
+                    @icon('chevron-down', 'w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform group-aria-expanded:rotate-180')
                 </button>
             </h2>
             <div id="accordion-open-body-3" class="hidden" aria-labelledby="accordion-open-heading-3" wire:ignore.self>
@@ -137,15 +126,14 @@
                                     <p class="default-p">{{ __('forms.full_name') }}</p>
                                 </div>
                                 <div>
-                                    <input
-                                        wire:model="confidantPersonRelationships.{{ $key }}.confidant_person.name"
-                                        type="text"
-                                        name="name_{{ $key }}"
-                                        id="name_{{ $key }}"
-                                        class="input"
-                                        placeholder=" "
-                                        required
-                                        autocomplete="off"
+                                    <input wire:model="confidantPersonRelationships.{{ $key }}.confidant_person.name"
+                                           type="text"
+                                           name="name_{{ $key }}"
+                                           id="name_{{ $key }}"
+                                           class="input"
+                                           placeholder=" "
+                                           required
+                                           autocomplete="off"
                                     />
                                 </div>
                             </div>
@@ -172,18 +160,17 @@
                 </div>
             </div>
 
-            <h2 id="accordion-open-heading-4">
+            <h2 id="accordion-open-heading-4" wire:ignore>
                 <button wire:click.once="getAuthenticationMethods"
                         type="button"
-                        class="accordion-button"
+                        class="accordion-button group"
                         data-accordion-target="#accordion-open-body-4"
                         aria-expanded="false"
                         aria-controls="accordion-open-body-4"
+                        data-accordion-icon
                 >
                     <span class="text-lg">{{ __('patients.authentication_methods') }}</span>
-                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0">
-                        <use xlink:href="#svg-chevron"></use>
-                    </svg>
+                    @icon('chevron-down', 'w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform group-aria-expanded:rotate-180')
                 </button>
             </h2>
             <div id="accordion-open-body-4" class="hidden" aria-labelledby="accordion-open-heading-4" wire:ignore.self>

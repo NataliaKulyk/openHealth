@@ -6,6 +6,8 @@ namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest as Request;
 use App\Classes\eHealth\EHealthResponse;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 
@@ -20,7 +22,7 @@ class PersonRequest extends Request
      * @param  string  $url
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function create(string $url = self::URL_V2, array $data = []): PromiseInterface|EHealthResponse
     {
@@ -33,7 +35,7 @@ class PersonRequest extends Request
      * @param  string  $id
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function approve(string $id, array $data = []): PromiseInterface|EHealthResponse
     {
@@ -45,7 +47,7 @@ class PersonRequest extends Request
      *
      * @param  string  $id
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function reject(string $id): PromiseInterface|EHealthResponse
     {
@@ -58,7 +60,7 @@ class PersonRequest extends Request
      * @param  string  $id
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function signed(string $id, array $data): PromiseInterface|EHealthResponse
     {
@@ -71,7 +73,7 @@ class PersonRequest extends Request
      * @param  string  $id
      * @param  null  $query
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function getById(string $id, $query = null): PromiseInterface|EHealthResponse
     {
@@ -84,7 +86,7 @@ class PersonRequest extends Request
      * @param  string  $url
      * @param  null  $query
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function getList(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
     {
@@ -97,7 +99,7 @@ class PersonRequest extends Request
      * @param  string  $id
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function resendAuthOtp(string $id, array $data = []): PromiseInterface|EHealthResponse
     {

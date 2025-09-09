@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models\Employee;
 
 use App\Enums\Status;
@@ -66,13 +68,14 @@ class Employee extends BaseEmployee
     {
         $query->where('user_id', $userId)
             ->where('legal_entity_uuid', $legalEntityUUID)
-            ->when($isInclude,
+            ->when(
+                $isInclude,
                 fn ($q) => $q->whereIn('employee_type', $roles),
                 fn ($q) => $q->whereNotIn('employee_type', $roles)
             );
     }
 
-    public function scopeIdentifyEmployee(Builder $query, array $employeeTypes, string  $status, int $userId, int $legalEntityId, ?int $partyId): void
+    public function scopeIdentifyEmployee(Builder $query, array $employeeTypes, string $status, int $userId, int $legalEntityId, ?int $partyId): void
     {
         $query->whereIn('employee_type', $employeeTypes)
             ->where('status', $status)

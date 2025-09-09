@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Livewire\Patient\Records;
 
-use App\Classes\eHealth\Api\PatientApi;
-use App\Classes\eHealth\Exceptions\ApiException;
-use App\Livewire\Patient\Forms\Api\PatientRequestApi;
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 
 class PatientSummary extends BasePatientComponent
 {
@@ -17,11 +18,6 @@ class PatientSummary extends BasePatientComponent
 
     public array $observations;
 
-    public function render(): View
-    {
-        return view('livewire.patient.records.patient-summary');
-    }
-
     /**
      * Get patient episodes.
      *
@@ -30,15 +26,19 @@ class PatientSummary extends BasePatientComponent
     public function getEpisodes(): void
     {
         try {
-            $buildGetShortEpisodes = PatientRequestApi::buildGetShortEpisodes();
-            $shortEpisodes = PatientApi::getShortEpisodes($this->uuid, $buildGetShortEpisodes);
+            $response = EHealth::person()->getShortEpisodes($this->uuid);
 
-            $this->episodes = $shortEpisodes;
-        } catch (ApiException) {
-            $this->dispatch('flashMessage', [
-                'message' => __('Не вдалося отримати епізоди. Спробуйте пізніше.'),
-                'type' => 'error'
-            ]);
+            $this->episodes = $response->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when getting short episodes');
+            session()?->flash('error', 'Не вдалося отримати епізоди. Спробуйте пізніше.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting short episodes');
+            session()?->flash('error', 'Не вдалося отримати епізоди. Спробуйте пізніше.');
+
+            return;
         }
     }
 
@@ -50,15 +50,19 @@ class PatientSummary extends BasePatientComponent
     public function getDiagnoses(): void
     {
         try {
-            $buildGetActiveDiagnoses = PatientRequestApi::buildGetActiveDiagnoses();
-            $activeDiagnoses = PatientApi::getActiveDiagnoses($this->uuid, $buildGetActiveDiagnoses);
+            $response = EHealth::person()->getActiveDiagnoses($this->uuid);
 
-            $this->diagnoses = $activeDiagnoses;
-        } catch (ApiException) {
-            $this->dispatch('flashMessage', [
-                'message' => __('Не вдалося отримати діагнози. Спробуйте пізніше.'),
-                'type' => 'error'
-            ]);
+            $this->diagnoses = $response->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when getting active diagnoses');
+            session()?->flash('error', 'Не вдалося отримати діагнози. Спробуйте пізніше.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting active diagnoses');
+            session()?->flash('error', 'Не вдалося отримати діагнози. Спробуйте пізніше.');
+
+            return;
         }
     }
 
@@ -70,15 +74,24 @@ class PatientSummary extends BasePatientComponent
     public function getObservations(): void
     {
         try {
-            $buildGetObservations = PatientRequestApi::buildGetObservations();
-            $observations = PatientApi::getObservations($this->uuid, $buildGetObservations);
+            $response = EHealth::person()->getObservations($this->uuid);
 
-            $this->observations = $observations;
-        } catch (ApiException) {
-            $this->dispatch('flashMessage', [
-                'message' => __('Не вдалося отримати обстеження. Спробуйте пізніше.'),
-                'type' => 'error'
-            ]);
+            $this->observations = $response->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when getting observations');
+            session()?->flash('error', 'Не вдалося отримати обстеження. Спробуйте пізніше.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting observations');
+            session()?->flash('error', 'Не вдалося отримати обстеження. Спробуйте пізніше.');
+
+            return;
         }
+    }
+
+    public function render(): View
+    {
+        return view('livewire.patient.records.patient-summary');
     }
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Livewire\Declaration\DeclarationEdit;
+use App\Livewire\Declaration\DeclarationView;
 use App\Livewire\Division\DivisionView;
 use App\Models\License;
 use App\Models\LegalEntity;
@@ -175,6 +176,10 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/', PatientIndex::class)->name('patient.index');
                 Route::get('/create/{id?}', PatientComponent::class)->name('patient.form');
 
+                Route::get('/declaration/{declaration}', DeclarationView::class)
+                    ->can('view', 'declaration')
+                    ->name('declaration.view')
+                    ->whereNumber('declaration');
                 Route::get('/{patientId}/declaration/create', DeclarationCreate::class)
                     ->name('declaration.create')
                     ->whereNumber('patientId');

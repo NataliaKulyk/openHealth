@@ -4,11 +4,25 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\Declaration\Status;
+use App\Models\DeclarationRequest;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
 class DeclarationRequestPolicy
 {
+    /**
+     * Determine whether the user can view any declaration.
+     */
+    public function viewAny(User $user): Response
+    {
+        if ($user->cannot('declaration_request:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
     /**
      * Determine whether the user can create declaration request.
      */
@@ -51,6 +65,28 @@ class DeclarationRequestPolicy
     public function sign(User $user): Response
     {
         if ($user->cannot('declaration_request:sign')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
+     * Determine whether the user can destroy draft declaration request.
+     */
+    public function destroy(User $user, DeclarationRequest $declarationRequest): Response
+    {
+        if ($declarationRequest->legal_entity_id !== legalEntity()->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        // Check if belongs to employee_id
+        if (!$user->party->employees->contains('id', $declarationRequest->employee_id)) {
+            return Response::denyWithStatus(404);
+        }
+
+        // Check if status is DRAFT
+        if ($declarationRequest->status !== Status::DRAFT) {
             return Response::denyWithStatus(404);
         }
 

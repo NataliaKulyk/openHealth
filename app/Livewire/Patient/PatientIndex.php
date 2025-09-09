@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Livewire\Patient;
 
-use App\Classes\eHealth\Api\PersonApi;
+use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\Exceptions\ApiException;
 use App\Core\Arr;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Patient\Forms\Api\PatientRequestApi;
 use App\Livewire\Patient\Forms\PatientForm as Form;
 use App\Models\LegalEntity;
 use App\Models\Person\Person;
 use App\Models\Person\PersonRequest;
+use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -24,6 +28,7 @@ use Livewire\WithPagination;
 
 class PatientIndex extends Component
 {
+    use FormTrait;
     use WithPagination;
 
     /**
@@ -153,7 +158,19 @@ class PatientIndex extends Component
         } else {
             // Otherwise search in eHealth
             $buildSearchRequest = PatientRequestApi::buildSearchForPerson($this->form->patientsFilter);
-            $this->originalPatients = PersonApi::searchForPersonByParams($buildSearchRequest);
+            try {
+                $this->originalPatients = EHealth::person()->searchForPersonByParams($buildSearchRequest)->getData();
+            } catch (ConnectionException $exception) {
+                $this->logConnectionError($exception, 'Error when searching for person');
+                session()?->flash('error', 'Виникла помилка. Спробуйте пізніше.');
+
+                return;
+            } catch (EHealthValidationException|EHealthResponseException $exception) {
+                $this->logEHealthException($exception, 'Error when searching for person');
+                session()?->flash('error', 'Виникла помилка. Спробуйте пізніше.');
+
+                return;
+            }
 
             $this->patients = array_merge(
                 $this->setPersonStatus($personRequests, 'APPLICATION'),
@@ -233,9 +250,9 @@ class PatientIndex extends Component
                 $person = $this->storeNewPerson($patientData);
             }
 
-            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $person->id]);
+            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $person->id], navigate: true);
         } else {
-            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $patientId]);
+            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $patientId], navigate: true);
         }
     }
 

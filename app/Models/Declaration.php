@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\Declaration\Status;
 use App\Models\Employee\Employee;
 use App\Models\Person\Person;
-use App\Traits\FormTrait;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,8 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Declaration extends Model
 {
-    use FormTrait;
     use HasCamelCasing;
+
+    public const int ADULT_AGE = 18;
 
     protected $fillable = [
         'id',
@@ -42,6 +42,11 @@ class Declaration extends Model
     protected $casts = [
         'status' => Status::class
     ];
+
+    public function declarationRequest(): BelongsTo
+    {
+        return $this->belongsTo(DeclarationRequest::class);
+    }
 
     public function division(): BelongsTo
     {

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Declaration\RequestStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -34,8 +35,25 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->foreignId('legal_entity_id')->constrained();
             $table->foreignId('person_id')->constrained('persons');
-            $table->enum('status', ['DRAFT', 'NEW', 'APPROVED', 'SIGNED', 'REJECTED', 'CANCELLED'])->nullable();
-            $table->string('status_reason')->nullable();
+            // https://e-health-ua.atlassian.net/wiki/spaces/ESOZ/pages/18426003727/declaration_request_statuses
+            $table->enum(
+                'status',
+                array_map(static fn (RequestStatus $status) => $status->value, RequestStatus::cases())
+            )
+                ->nullable();
+            // https://e-health-ua.atlassian.net/wiki/spaces/ESOZ/pages/18426758317/declaration_request_status_reason
+            $table->enum('status_reason', [
+                'auto_approve',
+                'doctor_approval_needed',
+                'doctor_approved_over_limit',
+                'doctor_confirmed',
+                'doctor_reject',
+                'doctor_rejected_over_limit',
+                'doctor_signed',
+                'patient_reject',
+                'request_cancelled',
+                'request_overdue'
+            ])->nullable();
             $table->integer('system_declaration_limit')->nullable();
             $table->timestamps();
         });

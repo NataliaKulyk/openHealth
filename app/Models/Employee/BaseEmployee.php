@@ -23,12 +23,6 @@ abstract class BaseEmployee extends Model
     use HasCamelCasing;
 
     /**
-     * Eager loading is disabled by default for performance reasons.
-     * All relationships should be loaded explicitly using ->with() in queries.
-     */
-    protected $with = [];
-
-    /**
      * Common fillable attributes for both employees and requests.
      */
     protected $fillable = [
@@ -55,13 +49,12 @@ abstract class BaseEmployee extends Model
         'end_date' => 'date:Y-m-d',
     ];
 
-
     // --- COMMON ACCESSORS ---
 
     protected function fullName(): Attribute
     {
         return Attribute::get(
-            fn() => implode(
+            fn () => implode(
                 ' ',
                 array_filter(
                     [
@@ -78,7 +71,6 @@ abstract class BaseEmployee extends Model
     {
         return Attribute::get(fn () => $this->user?->email_verified_at !== null);
     }
-
 
     // --- COMMON RELATIONS ---
 
@@ -102,4 +94,3 @@ abstract class BaseEmployee extends Model
         return $this->belongsTo(User::class);
     }
 }
-

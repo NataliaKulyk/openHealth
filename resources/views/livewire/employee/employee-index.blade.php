@@ -35,7 +35,7 @@
                                 </x-slot>
                             </x-forms.form-group>
                         </div>
-                        <button class="flex items-center gap-2 gray-button relative top-[8px]"
+                        <button class="flex items-center gap-2 button-minor relative top-[8px]"
                                 @click="showFilter = !showFilter">
                             <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
@@ -311,7 +311,7 @@
                 </div>
             @empty
                 <div class="text-center py-16">
-                    <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('Нічого не знайдено')}}</p>
+                    <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('forms.nothing_found')}}</p>
                 </div>
             @endforelse
         </div>

@@ -38,7 +38,7 @@ class Login extends Component
     public function mount()
     {
         // List of ALL founded Legal Entites
-        $this->legalEntitesList = $this->getLegalEntitesList();
+        $this->legalEntitesList = $this->getLegalEntitiesList();
     }
 
     /**
@@ -51,17 +51,17 @@ class Login extends Component
      *
      * @return array
      */
-    protected function getLegalEntitesList(): array
+    protected function getLegalEntitiesList(): array
     {
         $edrList = LegalEntity::select(['id', 'uuid', 'edr'])->get()->toArray();
 
-        return array_map(function($data) {
+        return array_map(function ($data) {
             $edr = $data['edr'];
             $arr['uuid'] = $data['uuid'];
 
             if (!empty($edr['name'])) {
                 $arr['name'] = $edr['name'];
-            } else if(!empty($arr['public_name'])) {
+            } elseif (!empty($arr['public_name'])) {
                 $arr['name'] = $edr['public_name'];
             }
 
@@ -146,15 +146,16 @@ class Login extends Component
         if (!empty($accessibleLegalEntities)) {
             session()->flash('user_accessible_legal_entities', $accessibleLegalEntities);
 
-            return redirect( route('legalEntity.select'));
-        } else {
-            return redirect( route('legal-entity.new.create'));
+            return redirect(route('legalEntity.select'));
         }
+
+        return redirect(route('legal-entity.new.create'));
+
     }
 
     protected function rules(): array
     {
-        $uuids = array_map(fn($arr) => $arr['uuid'], $this->legalEntitesList);
+        $uuids = array_map(fn ($arr) => $arr['uuid'], $this->legalEntitesList);
 
         return array_filter([
             'email' => 'required|email',

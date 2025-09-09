@@ -71,7 +71,6 @@ class LegalEntity extends Model
         'edr' => 'array',
         'inserted_at' => 'datetime',
         'updated_at' => 'datetime',
-        'id' => 'string',
         'inserted_by' => 'string',
         'updated_by' => 'string',
     ];

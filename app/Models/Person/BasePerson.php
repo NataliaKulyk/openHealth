@@ -9,6 +9,7 @@ use App\Models\Relations\AuthenticationMethod;
 use App\Models\Relations\ConfidantPerson;
 use App\Models\Relations\Document;
 use App\Models\Relations\Phone;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -51,6 +52,13 @@ class BasePerson extends Model
     {
         return Attribute::make(
             get: fn () => trim($this->last_name . ' ' . $this->first_name . ' ' . $this->second_name)
+        );
+    }
+
+    protected function age(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->birth_date ? CarbonImmutable::parse($this->birth_date)->age : null
         );
     }
 

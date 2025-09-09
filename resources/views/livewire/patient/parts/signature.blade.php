@@ -136,9 +136,7 @@
                             :class="{ 'cursor-not-allowed': cooldown > 0 }"
                             class="button-minor gap-2 w-full"
                     >
-                        <svg width="16" height="17">
-                            <use xlink:href="#svg-mail"></use>
-                        </svg>
+                        @icon('mail', 'w-4 h-4 dark:text-white')
                         <span x-text="cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : 'Відправити ще раз'">
                         </span>
                     </button>

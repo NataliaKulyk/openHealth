@@ -667,6 +667,7 @@ return [
         ],
 
         // Declaration
-        'authorizeWith' => 'метод автентифікації'
+        'authorizeWith' => 'метод автентифікації',
+        'employeeId' => 'ПІБ лікаря'
     ]
 ];

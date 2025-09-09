@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'doctor_full_name' => 'ПІБ лікаря',
+    'doctor' => 'Лікар',
+    'doctor_position' => 'Посада лікаря',
     'dismissalSuccess' => 'Співробітника успішно звільнено.',
     'dismissalEhealthError' => 'Помилка під час деактивації співробітника в eHealth.',
     'requestError' => 'Сталася помилка під час запиту: :error',

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Livewire\Patient\Records;
 
-use App\Classes\eHealth\Api\PersonApi;
 use App\Classes\eHealth\EHealth;
-use App\Classes\eHealth\Exceptions\ApiException;
 use App\Core\Arr;
-use App\Livewire\Patient\Forms\Api\PatientRequestApi;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Patient\Records\Forms\PatientForm as Form;
 use App\Models\Person\Person;
 use App\Repositories\PersonRepository;
 use App\Traits\FormTrait;
+use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Validation\ValidationException;
@@ -61,11 +61,6 @@ class PatientData extends BasePatientComponent
         $this->phones = $patient['phones'] ?? [];
     }
 
-    public function render(): View
-    {
-        return view('livewire.patient.records.patient-data');
-    }
-
     /**
      * Get patient verification status.
      *
@@ -74,18 +69,27 @@ class PatientData extends BasePatientComponent
     public function getVerificationStatus(): void
     {
         try {
-            $personVerificationDetails = PersonApi::getPersonVerificationDetails($this->uuid);
-            PersonRepository::updateVerificationStatusById(
-                $this->uuid,
-                $personVerificationDetails['verification_status']
-            );
+            $response = EHealth::person()->getPersonVerificationDetails($this->uuid);
 
-            $this->verificationStatus = $personVerificationDetails['verification_status'];
-        } catch (ApiException) {
-            $this->dispatch('flashMessage', [
-                'message' => __('Не вдалося отримати верифікаційний статус. Спробуйте пізніше.'),
-                'type' => 'error'
-            ]);
+            try {
+                PersonRepository::updateVerificationStatusById(
+                    $this->uuid,
+                    $response->getData()['verification_status']
+                );
+
+                $this->verificationStatus = $response->getData()['verification_status'];
+            } catch (Exception $exception) {
+                $this->logDatabaseErrors($exception, 'Error when updating person verification status');
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+                return;
+            }
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when getting person verification details');
+            session()?->flash('error', 'Не вдалося отримати верифікаційний статус. Спробуйте пізніше.');
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting person verification details');
+            session()?->flash('error', 'Не вдалося отримати верифікаційний статус. Спробуйте пізніше.');
         }
     }
 
@@ -97,18 +101,15 @@ class PatientData extends BasePatientComponent
     public function getConfidantPersons(): void
     {
         try {
-            $buildConfidantRelationshipRequest = PatientRequestApi::buildGetConfidantPersonRelationships(false);
-            $confidantPersonRelationships = PersonApi::getConfidantPersonRelationships(
-                $this->uuid,
-                $buildConfidantRelationshipRequest
-            );
+            $response = EHealth::person()->getConfidantPersonRelationships($this->uuid, ['isExpired' => false]);
 
-            $this->confidantPersonRelationships = $confidantPersonRelationships;
-        } catch (ApiException) {
-            $this->dispatch('flashMessage', [
-                'message' => __('Не вдалося отримати законного представника. Спробуйте пізніше.'),
-                'type' => 'error'
-            ]);
+            $this->confidantPersonRelationships = $response->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when getting confidant person relationships');
+            session()?->flash('error', 'Не вдалося отримати законного представника. Спробуйте пізніше.');
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting confidant person relationships');
+            session()?->flash('error', 'Не вдалося отримати законного представника. Спробуйте пізніше.');
         }
     }
 
@@ -123,11 +124,12 @@ class PatientData extends BasePatientComponent
             $response = EHealth::person()->getAuthMethods($this->uuid);
 
             $this->authenticationMethods = $response->getData();
-        } catch (ConnectionException) {
-            $this->dispatch('flashMessage', [
-                'message' => __('Не вдалося отримати методи автентифікації. Спробуйте пізніше.'),
-                'type' => 'error'
-            ]);
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when getting auth methods');
+            session()?->flash('error', 'Не вдалося отримати методи автентифікації. Спробуйте пізніше.');
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting auth methods');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -144,27 +146,22 @@ class PatientData extends BasePatientComponent
 
         try {
             $validated = $this->form->validate($this->form->rulesForDeactivate());
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
 
         try {
-            $response = EHealth::person()->createAuthMethod($this->uuid, Arr::toSnakeCase($validated));
-
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while deactivating auth method request');
-                $this->flashGeneralError();
-
-                return;
-            }
+            EHealth::person()->createAuthMethod($this->uuid, Arr::toSnakeCase($validated));
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while deactivating auth method request');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error when deactivating auth method request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when deactivating auth method request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -183,11 +180,8 @@ class PatientData extends BasePatientComponent
 
         try {
             $validated = $this->form->validate($this->form->rules());
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
@@ -195,19 +189,17 @@ class PatientData extends BasePatientComponent
         try {
             $response = EHealth::person()->createAuthMethod($this->uuid, Arr::toSnakeCase(removeEmptyKeys($validated)));
 
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while creating auth method request');
-                $this->flashGeneralError();
-
-                return;
-            }
-
             if ($response->getStatusCode() === 200) {
                 $this->authMethodId = $response->getData()['id'];
             }
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while creating auth method request');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error when creating auth method request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when creating auth method request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -223,24 +215,24 @@ class PatientData extends BasePatientComponent
         try {
             $response = EHealth::person()->resendAuthOtp($this->uuid, $this->authMethodId);
 
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while resending auth OTP on declaration request');
-                $this->flashGeneralError();
-
-                return;
+            if ($response->getData()['status'] === 'new') {
+                session()?->flash('success', 'SMS успішно надіслано!');
             }
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while resending sms to person');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error when resending sms to person');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when resending sms to person');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
+    }
 
-        if ($response->getData()['status'] === 'new') {
-            $this->dispatch('flashMessage', [
-                'message' => __('SMS успішно надіслано!'),
-                'type' => 'success'
-            ]);
-        }
+    public function render(): View
+    {
+        return view('livewire.patient.records.patient-data');
     }
 }

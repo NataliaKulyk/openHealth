@@ -53,14 +53,14 @@ class UserRepository
      * 2) have an employee in the updated division
      * 3) and this employee belongs to the same legal_entity
      *
-     * @param  Division  $division
+     * @param  int  $divisionId
      * @return Collection
      */
-    public function getDivisionEditorsByLegalEntity(Division $division): Collection
+    public function getDivisionEditorsByLegalEntity(int $divisionId): Collection
     {
         return User::permission('division:write')
-            ->whereHas('employees', static function (Builder $query) use ($division) {
-                $query->where('division_id', $division->id)
+            ->whereHas('employees', static function (Builder $query) use ($divisionId) {
+                $query->where('division_id', $divisionId)
                     ->where('legal_entity_id', legalEntity()->id);
             })
             ->get();

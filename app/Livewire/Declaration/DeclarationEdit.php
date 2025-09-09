@@ -31,6 +31,6 @@ class DeclarationEdit extends DeclarationComponent
         $this->form->employeeId = $declarationRequest->employee->uuid;
         $this->form->authorizeWith = $declarationRequest->authorizeWith;
 
-        $this->declarationRequestUuid = $declarationRequest->uuid;
+        $this->declarationRequestUuid = $declarationRequest->uuid ?? '';
     }
 }

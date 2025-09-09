@@ -6,13 +6,18 @@ namespace App\Livewire\Declaration;
 
 use App\Classes\eHealth\EHealth;
 use App\Enums\Declaration\Status;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Declaration;
 use App\Models\DeclarationRequest;
+use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
 use App\Traits\FormTrait;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -25,7 +30,17 @@ class DeclarationIndex extends Component
     use WithPagination;
     use FormTrait;
 
-    public string $search = '';
+    /**
+     * Search by patient first and last names.
+     * @var string
+     */
+    public string $searchByName = '';
+
+    /**
+     * Search by declaration and declaration request number
+     * @var string
+     */
+    public string $searchByNumber = '';
 
     /**
      * Default types for multiselect filter
@@ -33,32 +48,68 @@ class DeclarationIndex extends Component
      */
     public array $typeFilter = ['request', 'declaration'];
 
+    /**
+     * Default status for multiselect filter
+     * @var array|string[]
+     */
+    public array $statusFilter = ['active', 'CANCELLED'];
+
+    /**
+     * Filter for multiselect doctors
+     * @var array|string[]
+     */
+    public array $doctorFilter = [];
+
+    /**
+     * Available doctors list
+     * @var Collection
+     */
+    public Collection $doctors;
+
+    /**
+     * Count of active declarations.
+     * @var int
+     */
+    public int $countActive;
+
     public function mount(LegalEntity $legalEntity): void
     {
+        if (Auth::user()?->hasRole('OWNER')) {
+            $this->doctors = $this->getDoctors();
+        }
+
+        $this->countActive = Declaration::whereIn(
+            'employee_id',
+            Auth::user()?->employees()->pluck('id')
+        )->count();
     }
 
     #[Computed]
     public function declarations(): LengthAwarePaginator
     {
         $user = Auth::user();
-        $declarationRequests = DeclarationRequest::with(['person', 'employee'])
-            ->where('legal_entity_id', legalEntity()->id)
-            ->when(
-                !$user?->hasRole('OWNER'),
-                fn (Builder $query) => $query->whereIn('employee_id', $user->employees()->pluck('id'))
-            )
-            ->whereNotIn('status', [Status::SIGNED->value])
-            ->get()
-            ->each->setAttribute('type', 'request');
 
-        $declarations = Declaration::with(['person', 'employee'])
-            ->where('legal_entity_id', legalEntity()->id)
-            ->when(
-                !$user?->hasRole('OWNER'),
-                fn (Builder $query) => $query->whereIn('employee_id', $user->employees()->pluck('id'))
-            )
-            ->get()
-            ->each->setAttribute('type', 'declaration');
+        $declarations = collect();
+        $declarationRequests = collect();
+
+        if ($user?->can('viewAny', Declaration::class)) {
+            $declarations = Declaration::with(['person', 'employee'])
+                ->where('legal_entity_id', legalEntity()->id)
+                ->when(
+                    !$user?->hasRole('OWNER'),
+                    fn (Builder $query) => $query->whereIn('employee_id', $user->employees()->pluck('id'))
+                )->get()
+                ->each->setAttribute('type', 'declaration');
+        }
+
+        // Don't show declaration requests for OWNER
+        if (!$user?->hasRole('OWNER') && $user?->can('viewAny', DeclarationRequest::class)) {
+            $declarationRequests = DeclarationRequest::with(['person', 'employee'])
+                ->where('legal_entity_id', legalEntity()->id)
+                ->whereNotIn('status', [Status::SIGNED->value])
+                ->get()
+                ->each->setAttribute('type', 'request');
+        }
 
         $allItems = $declarationRequests->concat($declarations);
 
@@ -69,15 +120,48 @@ class DeclarationIndex extends Component
             );
         }
 
+        // Filter by status
+        if (!empty($this->statusFilter)) {
+            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) {
+                if ($item instanceof Declaration) {
+                    return in_array($item->status->value, $this->statusFilter, true);
+                }
+
+                return true;
+            });
+        }
+
         // Search by first and last name
-        if (!empty($this->search)) {
-            $searchTerm = Str::lower(trim($this->search));
+        if (!empty($this->searchByName)) {
+            $searchTerm = Str::lower(trim($this->searchByName));
 
             $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) use ($searchTerm) {
                 $last = Str::lower(data_get($item, 'person.last_name', ''));
                 $first = Str::lower(data_get($item, 'person.first_name', ''));
 
                 return Str::contains($last, $searchTerm) || Str::contains($first, $searchTerm);
+            });
+        }
+
+        // Search by declaration number
+        if (!empty($this->searchByNumber)) {
+            $searchTerm = Str::lower(trim($this->searchByNumber));
+
+            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) use ($searchTerm) {
+                $number = Str::lower($item->declaration_number ?? '');
+
+                return Str::contains($number, $searchTerm);
+            });
+        }
+
+        // Filter by doctors
+        if (!empty($this->doctorFilter)) {
+            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) {
+                if ($item instanceof Declaration) {
+                    return in_array($item->employee->uuid, $this->doctorFilter, true);
+                }
+
+                return false;
             });
         }
 
@@ -131,16 +215,42 @@ class DeclarationIndex extends Component
 
         try {
             $response = EHealth::declarationRequest()->reject($declarationUuid);
-
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while rejecting declaration request');
-                $this->flashGeneralError();
-
-                return;
-            }
+            // TODO: update DB if response was successful
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error while rejecting declaration request');
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error while rejecting declaration request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        }
+    }
+
+    /**
+     * Delete declaration request with status DRAFT from DB.
+     *
+     * @param  int  $id
+     * @return void
+     */
+    public function destroy(int $id): void
+    {
+        $declarationRequest = DeclarationRequest::select(['id', 'legal_entity_id', 'employee_id', 'status'])
+            ->findOrFail($id);
+
+        if (Auth::user()?->cannot('destroy', $declarationRequest)) {
+            session()?->flash('error', 'У вас немає дозволу на видалення заявки на подання декларації');
+
+            return;
+        }
+
+        try {
+            DeclarationRequest::destroy($id);
+        } catch (Exception $exception) {
+            $this->logDatabaseErrors($exception, 'Error while deleting declaration request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -156,15 +266,31 @@ class DeclarationIndex extends Component
     protected function ensureAbility(string $ability, string $errorMessage): bool
     {
         if (Auth::user()?->cannot($ability, DeclarationRequest::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => $errorMessage,
-                'type' => 'error'
-            ]);
+            session()?->flash('error', $errorMessage);
 
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Get list of doctors in current legal entity.
+     *
+     * @return Collection
+     */
+    protected function getDoctors(): Collection
+    {
+        return Employee::where('employee_type', 'DOCTOR')
+            ->with('party')
+            ->where('legal_entity_id', legalEntity()->id)
+            ->whereHas('declarations')
+            ->select(['id', 'uuid', 'user_id', 'party_id'])
+            ->get()
+            ->map(fn (Employee $doctor) => [
+                'uuid' => $doctor->uuid,
+                'full_name' => trim($doctor->party->fullName)
+            ]);
     }
 
     public function render(): View

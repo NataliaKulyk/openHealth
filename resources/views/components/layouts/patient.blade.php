@@ -9,17 +9,13 @@
                 <a href="{{ route('encounter.create', [legalEntity(), 'patientId' => $id]) }}"
                    class="flex items-center gap-2 button-sync"
                 >
-                    <svg width="16" height="16">
-                        <use xlink:href="#svg-plus"></use>
-                    </svg>
+                    @icon('plus', 'w-4 h-4')
                     {{ __('patients.start_interacting') }}
                 </a>
                 <a href="{{ route('declaration.create', [legalEntity(), 'patientId' => $id]) }}"
                    class="flex items-center gap-2 button-minor"
                 >
-                    <svg class="text-gray-800 dark:text-white" width="16" height="16" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8.16634 1.16675H3.49967C3.19026 1.16675 2.89351 1.28966 2.67472 1.50846C2.45592 1.72725 2.33301 2.024 2.33301 2.33341V11.6667C2.33301 11.9762 2.45592 12.2729 2.67472 12.4917C2.89351 12.7105 3.19026 12.8334 3.49967 12.8334H10.4997C10.8091 12.8334 11.1058 12.7105 11.3246 12.4917C11.5434 12.2729 11.6663 11.9762 11.6663 11.6667V4.66675M8.16634 1.16675L11.6663 4.66675M8.16634 1.16675V4.66675H11.6663M9.33301 7.58341H4.66634M9.33301 9.91675H4.66634M5.83301 5.25008H4.66634" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    @icon('file-text', 'w-4 h-4')
                     {{ __('patients.sign_declaration') }}
                 </a>
             </div>
@@ -72,4 +68,5 @@
     </x-section-navigation>
 
     {{ $slot }}
+    <x-messages/>
 </section>

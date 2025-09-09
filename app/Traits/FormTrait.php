@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Traits;
 
 use App\Classes\eHealth\EHealthResponse;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
@@ -282,6 +284,25 @@ trait FormTrait
             'method' => $caller['function'] ?? 'unknown_method',
             'line' => $caller['line'] ?? 0,
             'error_message' => $exception->getMessage()
+        ]);
+    }
+
+    /**
+     * Log validation and response error from EHealth.
+     *
+     * @param  EHealthValidationException|EHealthResponseException  $exception
+     * @param  string  $message
+     * @return void
+     */
+    protected function logEHealthException(EHealthValidationException|EHealthResponseException $exception, string $message): void
+    {
+        $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? [];
+
+        Log::channel('e_health_errors')->error($message, [
+            'class' => $caller['class'] ?? 'unknown_class',
+            'method' => $caller['function'] ?? 'unknown_method',
+            'exception_type' => get_class($exception),
+            'error_message' => $exception->getDetails()
         ]);
     }
 }
