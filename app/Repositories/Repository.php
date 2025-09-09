@@ -60,4 +60,14 @@ final class Repository
     {
         return app(UserRepository::class);
     }
+
+    public static function personRequest(): PersonRequestRepository
+    {
+        return app(PersonRequestRepository::class);
+    }
+
+    public static function person(): PersonRepository
+    {
+        return app(PersonRepository::class);
+    }
 }

@@ -23,7 +23,6 @@ return [
     'application_for_registration_of_declaration' => 'Заявка на реєстрацію декларації',
     'create_locally' => 'Створити локально',
     'create_an_application' => 'Створити заявку',
-    'confirmation_code_from_SMS' => 'Код підтвердження з СМС',
     'confirmation_of_application_for_registration_of_declaration' => 'Підтвердження заявки на реєстрацію декларації',
     'patient_confirm_information_message' => 'інформація з пам\'ятки пацієнта повідомлена пацієнту або його законному представнику',
     'confirmation_of_patient_signature_on_declaration_application' => 'Підтвердження підписання заявки на декларацію пацієнтом',

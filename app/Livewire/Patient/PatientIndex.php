@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Livewire\Patient;
 
 use App\Classes\eHealth\EHealth;
-use App\Classes\eHealth\Exceptions\ApiException;
 use App\Core\Arr;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
@@ -20,7 +19,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -109,11 +107,16 @@ class PatientIndex extends Component
      * Search for person with provided filters.
      *
      * @return void
-     * @throws ApiException|ValidationException
      */
     public function searchForPerson(): void
     {
-        $this->form->rulesForModelValidate('patientsFilter');
+        try {
+            $this->form->rulesForModelValidate('patientsFilter');
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
+
+            return;
+        }
 
         // Prepare filters for local DB search
         $filtersSnake = Arr::toSnakeCase($this->form->patientsFilter);
@@ -138,7 +141,7 @@ class PatientIndex extends Component
         $personRequests = PersonRequest::with('phones')
             ->select(['id', 'status', 'first_name', 'last_name', 'second_name', 'birth_date', 'tax_id'])
             ->where($filtersSnake)
-            ->where('status', 'APPLICATION')
+            ->whereIn('status', ['APPLICATION', 'NEW', 'APPROVED'])
             ->when($phoneNumber, static function ($query) use ($phoneNumber) {
                 $query->whereHas('phones', static function (Builder $query) use ($phoneNumber) {
                     $query->where('number', $phoneNumber);
@@ -211,10 +214,8 @@ class PatientIndex extends Component
     public function removeApplication(int $id): void
     {
         PersonRequest::destroy($id);
-        $this->dispatch('flashMessage', [
-            'message' => 'Заявку успішно видалено.',
-            'type' => 'success'
-        ]);
+
+        session()?->flash('success', 'Заявку успішно видалено.');
     }
 
     /**
@@ -285,13 +286,8 @@ class PatientIndex extends Component
 
             return $person;
         } catch (Exception $exception) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Виникла помилка, зверніться до адміністратора.',
-                'type' => 'error'
-            ]);
-            Log::channel('db_errors')->error('Error while creating new person', [
-                'error' => $exception->getMessage()
-            ]);
+            session()?->flash('error', 'Виникла помилка, зверніться до адміністратора.');
+            $this->logDatabaseErrors($exception, 'Error while creating new person');
 
             return null;
         }
@@ -315,7 +311,7 @@ class PatientIndex extends Component
 
     public function render(): View
     {
-        return view('livewire.patient.index', [
+        return view('livewire.patient.patient-index', [
             'paginatedPatients' => $this->paginatedPatients,
             'activeFilter' => $this->activeFilter
         ]);

@@ -104,6 +104,7 @@ return [
     'mark_as_read' => 'Позначити як прочитане',
     'empty' => 'Пусто',
     'important' => 'Важливо',
+    'reset_all_filters' => 'Скинути всі фільтри',
 
     // Legal Entity
     'legal_entity_name' => 'Медична організація',
@@ -408,6 +409,7 @@ return [
     'secure_page_description' => 'Здійснюється вхід на захищену сторінку. Будь ласка, підтвердіть пароль',
     'key_file_description' => 'КЕП',
     'send_for_approval' => 'Відправити на затвердження',
+    'confirmation_code_from_SMS' => 'Код підтвердження з СМС',
 
     // Notifications & Errors
     'no_actions_available' => 'У вас немає дозволених дій для цього розділу.',

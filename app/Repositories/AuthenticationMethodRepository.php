@@ -14,9 +14,9 @@ class AuthenticationMethodRepository
             foreach ($authenticationMethods as $authenticationMethodData) {
                 $authenticationMethod = AuthenticationMethod::updateOrCreate(
                     [
-                        'authenticatable_type' => get_class($model),
-                        'authenticatable_id' => $model->id
-                    ],
+                    'authenticatable_type' => get_class($model),
+                    'authenticatable_id' => $model->id
+                ],
                     $authenticationMethodData
                 );
 

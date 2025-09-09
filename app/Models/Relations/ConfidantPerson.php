@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models\Relations;
 
 use App\Models\Person\PersonRequest;
@@ -15,7 +17,8 @@ class ConfidantPerson extends Model
     protected $table = 'confidant_persons';
 
     protected $hidden = [
-        'id',
+        'person_id',
+        'person_request_id',
         'created_at',
         'updated_at'
     ];

@@ -1,13 +1,6 @@
-@php
-    use App\Models\Person\PersonRequest;
-    $svgSprite = file_get_contents(resource_path('images/sprite.svg'));
-@endphp
+@use('App\Models\Person\PersonRequest')
 
 <div>
-    <div aria-hidden="true" class="hidden">
-        {!! $svgSprite !!}
-    </div>
-
     <x-section-navigation class="breadcrumb-form">
         <x-slot name="title">{{ __('patients.add_patient') }}</x-slot>
     </x-section-navigation>
@@ -44,9 +37,17 @@
     @elseif($viewState === 'new')
         <section class="section-form">
             <form class="form">
-                @include('livewire.patient.parts.signature')
+                @include('livewire.patient.parts.sign')
             </form>
         </section>
+    @endif
+
+    @if($showLeafletModal)
+        @include('livewire.patient.parts.modals.leaflet')
+    @endif
+
+    @if($showSignatureModal)
+        @include('livewire.patient.parts.modals.signature')
     @endif
 
     <x-messages/>

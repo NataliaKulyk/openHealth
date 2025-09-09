@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories;
 
 use App\Models\Relations\Phone;
@@ -19,7 +21,8 @@ class PhoneRepository
         }
 
         foreach ($phones as $phoneData) {
-            $phone = Phone::updateOrCreate([
+            $phone = Phone::updateOrCreate(
+                [
                 'phoneable_type' => get_class($model),
                 'phoneable_id' => $model->id,
                 'number' => $phoneData['number']
@@ -44,17 +47,18 @@ class PhoneRepository
     {
         //Remove all phones records belongs to the $model
         Phone::where([
-                    'phoneable_type' => get_class($model),
-                    'phoneable_id' => $model->id
-                ])
-                ->delete();
+            'phoneable_type' => get_class($model),
+            'phoneable_id' => $model->id
+        ])
+            ->delete();
 
         if (empty($phones)) {
             return;
         }
 
         foreach ($phones as $phoneData) {
-            $phone = Phone::updateOrCreate([
+            $phone = Phone::updateOrCreate(
+                [
                 'phoneable_type' => get_class($model),
                 'phoneable_id' => $model->id,
                 'number' => $phoneData['number']

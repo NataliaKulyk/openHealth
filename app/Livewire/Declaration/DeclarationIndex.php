@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -93,8 +94,7 @@ class DeclarationIndex extends Component
         $declarationRequests = collect();
 
         if ($user?->can('viewAny', Declaration::class)) {
-            $declarations = Declaration::with(['person', 'employee'])
-                ->where('legal_entity_id', legalEntity()->id)
+            $declarations = Declaration::where('legal_entity_id', legalEntity()->id)
                 ->when(
                     !$user?->hasRole('OWNER'),
                     fn (Builder $query) => $query->whereIn('employee_id', $user->employees()->pluck('id'))
@@ -104,14 +104,15 @@ class DeclarationIndex extends Component
 
         // Don't show declaration requests for OWNER
         if (!$user?->hasRole('OWNER') && $user?->can('viewAny', DeclarationRequest::class)) {
-            $declarationRequests = DeclarationRequest::with(['person', 'employee'])
-                ->where('legal_entity_id', legalEntity()->id)
+            $declarationRequests = DeclarationRequest::where('legal_entity_id', legalEntity()->id)
                 ->whereNotIn('status', [Status::SIGNED->value])
                 ->get()
                 ->each->setAttribute('type', 'request');
         }
 
+        /** @var EloquentCollection $allItems */
         $allItems = $declarationRequests->concat($declarations);
+        $allItems->loadMissing(['person', 'employee.party']);
 
         // Filter by type
         if (!empty($this->typeFilter)) {

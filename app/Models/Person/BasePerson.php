@@ -20,6 +20,11 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  */
 class BasePerson extends Model
 {
+    protected $hidden = [
+        'created_at',
+        'updated_at'
+    ];
+
     protected $fillable = [
         'uuid',
         'first_name',
