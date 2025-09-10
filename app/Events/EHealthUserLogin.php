@@ -6,8 +6,10 @@ namespace App\Events;
 
 use App\Models\User;
 use App\Models\LegalEntity;
-use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Events\Dispatchable;
+use App\Auth\EHealth\Services\TokenStorage;
 
 /**
  * Dispatched right before an eHealth user is logged into the application.
@@ -16,6 +18,8 @@ use Illuminate\Queue\SerializesModels;
 class EHealthUserLogin
 {
     use Dispatchable, SerializesModels;
+
+    public string $token = '';
 
     /**
      * @param User $user The user model.
@@ -28,5 +32,6 @@ class EHealthUserLogin
         public string $authUserUUID,
         public bool $isFirstLogin = false
     ) {
+        $this->token = Crypt::encryptString(app(TokenStorage::class)->getBearerToken());
     }
 }

@@ -28,8 +28,8 @@ class DivisionRepository
     {
         $legalEntity ??= legalEntity();
 
-        DB::transaction(function() use($divisionsList) {
-            $uspertData = DivisionApi::normalizeResponseDataForUpsert($divisionsList);
+        DB::transaction(function() use($divisionsList, $legalEntity) {
+            $uspertData = app(DivisionApi::class)->normalizeResponseDataForUpsert($divisionsList, $legalEntity);
 
             // At first save all the Divisions to teh DB
             Division::upsert($uspertData, uniqueBy: ['uuid'], update: new Division()->getFillable());

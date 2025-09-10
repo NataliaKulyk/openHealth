@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Classes\eHealth\Api;
 
 use Exception;
+use App\Models\Division;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use App\Classes\eHealth\EHealthResponse;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Client\ConnectionException;
 use App\Classes\eHealth\EHealthRequest as Request;
+use App\Repositories\Repository;
 
 class HealthcareService extends Request
 {
@@ -21,6 +24,11 @@ class HealthcareService extends Request
     public const string ACTIONS_DEACTIVATE = '/actions/deactivate';
 
     public const string QUERY_DIVISION_UUID = 'division_id';
+
+    /**
+     * If true, groups the response by entities associated with the healthcare service, e.g., healthcare service itself and divisions.
+     */
+    public bool $groupByEntities = false;
 
     /**
      * Get list of Healthcare Services belong to the current LegalEntity
@@ -35,12 +43,17 @@ class HealthcareService extends Request
      *
      * @return PromiseInterface|EHealthResponse
      */
-    public function getMany(string $divisionUuid, string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
+    public function getMany(?string $divisionUuid = null, string $url = self::URL, $query = null, bool $groupByEntities = false): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateHealthcareServicesList(...));
 
+        $this->groupByEntities = $groupByEntities;
+
         $this->setDefaultPageSize();
-        $this->setDivisionUuidToQuery($divisionUuid);
+
+        if ($divisionUuid) {
+            $this->setDivisionUuidToQuery($divisionUuid);
+        }
 
         $mergedQuery = array_merge(
             $this->options['query'] ?? [],
@@ -116,6 +129,52 @@ class HealthcareService extends Request
     }
 
     /**
+     * Normalize healthcare services response data for database upsert operation.
+     *
+     * This method processes raw API response data by:
+     * - Converting division UUIDs to database IDs using batch lookup
+     * - Filtering out records with invalid division references
+     * - Converting array fields to JSON strings for JSONB database columns
+     *
+     * @param array $healthcareServicesList Raw healthcare services data from API
+     *
+     * @return array Processed data ready for database upsert operation
+     */
+    public function normalizeResponseDataForUpsert(array $healthcareServicesList, array $divisions): array
+    {
+            // First filter only records with valid division references
+            $filteredData = array_filter($healthcareServicesList, function ($item) use ($divisions) {
+                if (!isset($item['division_id'])) {
+                    return false;
+                }
+
+                if (!isset($divisions[$item['division_id']])) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Now process only valid records
+            return array_map(function ($item) use ($divisions) {
+                // Convert division_id from UUID to ID
+                $item['division_id'] = $divisions[$item['division_id']];
+
+                // Convert JSON fields
+                $jsonFields = ['category', 'type', 'coverage_area', 'available_time', 'not_available', 'licensed_healthcare_service'];
+
+                foreach ($jsonFields as $field) {
+                    $value = Arr::get($item, $field);
+                    if (is_array($value)) {
+                        $item[$field] = json_encode($value);
+                    }
+                }
+
+                return $item;
+            }, $filteredData);
+    }
+
+    /**
      * validate get Divisions input,
      * see: https://esoz.docs.apiary.io/#reference/administration/divisions/get-divisions
      */
@@ -145,7 +204,19 @@ class HealthcareService extends Request
             Log::channel('e_health_errors')->error('Validation failed: ' . implode(', ', $validator->errors()->all()));
         }
 
-        return $validator->validate();
+        $validatedData = $validator->validate();
+
+        if (!$this->groupByEntities) {
+            return $validatedData;
+        }
+
+        // Group by entities (e.g., healthcare service and divisions)
+        $associatedDivisions = Repository::healthcareService()->getAssociatedDivisions($validatedData);
+
+        return [
+            'healthcare_services' => $validatedData,
+            'divisions' => $associatedDivisions
+        ];
     }
 
     /**

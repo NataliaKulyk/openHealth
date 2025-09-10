@@ -11,97 +11,105 @@ use App\Events\EHealthUserLogin;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class FirstLoginOwnerCreateEmployee
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct()
-    {
-        //
-    }
-
     /**
      * Handle the event.
      */
     public function handle(EHealthUserLogin $event): void
     {
-        if (!$event->isFirstLogin || !$event->user->hasRole('OWNER')) {
+        if (!$event->isFirstLogin || !$event->user->hasRole('OWNER') || Auth::getDefaultDriver() !== 'ehealth') {
             return;
         }
 
-        try {
-            // Find the first pending request for the user and legal entity
-            $pendingRequests = Repository::employee()->findPendingRequestsForUser($event->user, $event->legalEntity)->first();
+        \Log::info('FirstLoginOwnerCreateEmployee listener working.', [
+            'user_id' => $event->user->id,
+            'legal_entity_id' => $event->legalEntity->id,
+            'guard' => Auth::getDefaultDriver()
+        ]);
 
-            if (!$pendingRequests) {
-                return;
-            }
+        // Find the first pending request for the user and legal entity
+        $pendingRequests = Repository::employee()->findPendingRequestsForUser($event->user, $event->legalEntity)->first();
 
-            // Ensure the user has an associated party
-            $userParty = Party::find($pendingRequests->party_id);
+        if (!$pendingRequests) {
+            return;
+        }
 
-            if (!$userParty) {
-                return;
-            }
+        // Ensure the user has an associated party
+        $userParty = Party::find($pendingRequests->party_id);
 
-            // Fetch the employee data from the eHealth API by owner criteria
-            $filterParams = [
-                'legal_entity_id' => $event->legalEntity->uuid,
-                'employee_type' => 'OWNER',
-                'tax_id' => $userParty->tax_id,
-                'status' => Status::APPROVED->value,
-            ];
+        if (!$userParty) {
+            return;
+        }
 
-            // Fetch the employee data from the eHealth API
-            $ehealthResponse = EHealth::employee()->getMany($filterParams);
-            ['id' => $uuid, 'position' => $position, 'party' => ['id' => $partyUuid]] = data_get($ehealthResponse->getData(), '0');
+        // Fetch the employee data from the eHealth API by owner criteria
+        $filterParams = [
+            'legal_entity_id' => $event->legalEntity->uuid,
+            'employee_type' => 'OWNER',
+            'tax_id' => $userParty->tax_id,
+            'status' => Status::APPROVED->value,
+        ];
 
-            $employeeData = compact('uuid', 'position', 'partyUuid');
+        // Fetch the employee data from the eHealth API
+        $ehealthResponse = EHealth::employee()->getMany($filterParams);
 
-            if (count(array_filter($employeeData)) !== count($employeeData)) {
-                return;
-            }
+        ['uuid' => $uuid, 'position' => $position, 'party' => ['uuid' => $partyUuid]] = data_get($ehealthResponse->validate(), '0');
 
-            DB::transaction(function () use ($event, $userParty, $employeeData, $pendingRequests) {
-                $userParty->update([
-                    'uuid' => $employeeData['partyUuid'],
-                    'user_id' => $event->user->id
-                ]);
+        $employeeData = compact('uuid', 'position', 'partyUuid');
 
-                // Create the Employee record for the OWNER
-                $employee = Employee::create([
-                    'uuid' => $employeeData['uuid'],
-                    'legal_entity_uuid' => $event->legalEntity->uuid,
-                    'legal_entity_id' => $event->legalEntity->id,
-                    'position' => $employeeData['position'],
-                    'start_date' => $pendingRequests->start_date,
-                    'employee_type' => 'OWNER',
-                    'status' => Status::APPROVED->value,
-                    'user_id' => $event->user->id,
-                    'party_id' => $userParty->id,
-                ]);
+        if (count(array_filter($employeeData)) !== count($employeeData)) {
+            return;
+        }
 
-                // Update the user's UUID to set it as the flag for completed first login
-                $event->user->uuid = $event->authUserUUID;
-                $event->user->save();
+        $employee = new Employee();
 
-                // Update the pending request. Set is as approved and link to the created employee
-                $pendingRequests->update([
-                    'employee_id' => $employee->id,
-                    'status' => Status::APPROVED->value,
-                    'applied_at' => now(),
-                ]);
-            });
-        } catch (Throwable $err) {
-            Log::error('Failed to process OWNER\'s employee creating on login.', [
-                'user_id' => $event->user->id,
-                'error_message' => $err->getMessage(),
-                'trace' => $err->getTraceAsString(),
+        DB::transaction(function () use ($event, $userParty, $employeeData, $pendingRequests, $employee) {
+            $userParty->update([
+                'uuid' => $employeeData['partyUuid'],
+                'user_id' => $event->user->id
             ]);
 
-            throw $err;
-        }
+            $employee->fill([
+                'uuid' => $employeeData['uuid'],
+                'legal_entity_uuid' => $event->legalEntity->uuid,
+                'legal_entity_id' => $event->legalEntity->id,
+                'position' => $employeeData['position'],
+                'start_date' => $pendingRequests->start_date,
+                'employee_type' => 'OWNER',
+                'status' => Status::APPROVED->value,
+                'user_id' => $event->user->id,
+                'party_id' => $userParty->id,
+            ])->save();
+
+            // Update the user's UUID to set it as the flag for completed first login
+            $event->user->uuid = $event->authUserUUID;
+            $event->user->save();
+
+            // Update the pending request. Set is as approved and link to the created employee
+            $pendingRequests->update([
+                'employee_id' => $employee->id,
+                'status' => Status::APPROVED->value,
+                'applied_at' => now(),
+            ]);
+        });
+
+        $userParty->refresh();
+        $employee->refresh();
+        $event->user->refresh();
+
+        Auth::guard('ehealth')->login($event->user);
+    }
+
+    public function failed(EHealthUserLogin $event, Throwable $exception): void
+    {
+        Log::error('Listener FirstLoginOwnerCreateEmployee failed.', [
+            'user_id' => $event->user->id,
+            'error_message' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+        ]);
+
+        throw $exception;
     }
 }
