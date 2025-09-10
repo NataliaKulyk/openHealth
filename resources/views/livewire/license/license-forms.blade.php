@@ -1,7 +1,6 @@
 <div>
-    <x-section-navigation class="breadcrumb-form">
-        <x-slot name="title">{{ __('Нова додаткова ліцензія') }}</x-slot>
-    </x-section-navigation>
+    <x-header-navigation class="breadcrumb-form" title="{{ __('Нова додаткова ліцензія') }}">
+</x-header-navigation>
     <form class="form">
         <div class="form-row-2">
             <div class="form-group">

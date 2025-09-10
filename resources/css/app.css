@@ -555,6 +555,74 @@ input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 1000px white inset !important;
 }
 
+@layer components {
+    /* Section Navigation Component */
+    .section-card {
+        @apply p-4 bg-white block border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700
+    }
+
+    .page-header {
+        @apply flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:flex-nowrap w-full
+    }
+
+    .page-header-content {
+        @apply flex-1 min-w-0
+    }
+
+    .button-group {
+        @apply flex items-center gap-2 md:ml-auto
+    }
+
+    .page-title {
+        @apply text-2xl font-bold leading-tight text-gray-900 dark:text-white truncate mb-6
+    }
+
+    .page-description {
+        @apply mt-1 text-gray-600 dark:text-gray-400
+    }
+
+    /* Breadcrumb Component */
+    .breadcrumb {
+        @apply flex pointer-events-auto mb-4
+    }
+
+    .breadcrumb-list {
+        @apply inline-flex flex-nowrap items-center whitespace-nowrap space-x-1 md:space-x-2 rtl:space-x-reverse
+    }
+
+    .breadcrumb-first {
+        @apply inline-flex items-center shrink-0
+    }
+
+    .breadcrumb-home-icon {
+        @apply w-3 h-3 me-3
+    }
+
+    .breadcrumb-link {
+        @apply inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white
+    }
+
+    .breadcrumb-text {
+        @apply inline-flex items-center text-sm font-medium text-gray-700 dark:text-gray-400
+    }
+
+    .breadcrumb-separator {
+        @apply flex items-center shrink-0
+    }
+
+    .breadcrumb-chevron {
+        @apply rtl:rotate-180 w-3 h-3 text-gray-400 mx-1
+    }
+
+    .breadcrumb-item-link {
+        @apply ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white
+    }
+
+    .breadcrumb-item-text {
+        @apply ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-400
+    }
+}
+
 /* For numbers in LegalEntity creation header */
 @utility firefox-fix {
     @-moz-document url-prefix() {
