@@ -25,7 +25,8 @@ class EHealthUserLogin
     public function __construct(
         public User $user,
         public LegalEntity $legalEntity,
-        public string $authUserUUID
+        public string $authUserUUID,
+        public bool $isFirstLogin = false
     ) {
     }
 }

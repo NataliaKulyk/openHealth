@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Auth\EHealth\Services\TokenStorage;
+use App\Classes\eHealth\Api\Employee;
 use App\Classes\eHealth\Exceptions\ApiException;
 use App\Events\EHealthUserLogin;
 use App\Http\Controllers\Controller;
+use App\Mail\UserCredentialsMail;
 use App\Models\User;
 use App\Models\LegalEntity;
 use Closure;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use App\Classes\eHealth\Api\EmployeeApi;
@@ -20,11 +25,17 @@ use App\Models\Employee\EmployeeRequest;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use App\Classes\eHealth\Request as EHealthRequest;
+use App\Models\Relations\Party;
+use App\Repositories\Repository;
 use Illuminate\Contracts\Validation\Validator as ResponseValidator;
 use Illuminate\Validation\Rule;
+use App\Mail\OwnerCredentialsMail;
 
 class EHealthLoginController extends Controller
 {
+    protected bool $isFirstLogin = false;
+    protected bool $isPartiallyVerified = false;
+
     /**
      * This method is called when the user is redirected back from eHealth after it's successful authentication
      *
@@ -93,9 +104,8 @@ class EHealthLoginController extends Controller
 
         $legalEntity = LegalEntity::byUuid($authLegalEntityUUID)->firstOrFail();
 
-        $isFirstLogin = !User::where('uuid', $authUserUUID)->first()?->uuid;
-
         auth()->shouldUse('ehealth');
+
         $user = $this->findOrCreateUser($legalEntity, $authUserUUID);
 
         if (!$user) {
@@ -108,13 +118,18 @@ class EHealthLoginController extends Controller
             return $this->breakAuth('auth.login.error.test_user_email');
         }
 
-        EHealthUserLogin::dispatch($user, $legalEntity, $authUserUUID);
+        if ($this->isPartiallyVerified) {
+            return Redirect::route('/verify-personality'); // TODO: need to realize full functionality
+        }
+
+        EHealthUserLogin::dispatch($user, $legalEntity, $authUserUUID, $this->isFirstLogin);
 
         auth('ehealth')->login($user);
 
         if ($legalEntity) {
             Log::info(__('auth.login.success.user_auth', [], 'en'), ['User ID' => $user->id]);
-            return Redirect::route('dashboard', [$legalEntity])->with('success', $isFirstLogin ? __('auth.login.success.new_user_auth') : null);
+
+            return Redirect::route('dashboard', [$legalEntity])->with('success', $this->isFirstLogin ? __('auth.login.success.new_user_auth') : null);
         }
 
         Auth::guard('ehealth')->logout();
@@ -134,6 +149,8 @@ class EHealthLoginController extends Controller
     protected function findOrCreateUser(LegalEntity $legalEntity, string $authUserUUID): ?User
     {
         $user = User::where('uuid', $authUserUUID)->first();
+
+        // If user already logined before
         if ($user) {
             setPermissionsTeamId($legalEntity->id);
             $user->unsetRelation('roles')->unsetRelation('permissions');
@@ -147,23 +164,44 @@ class EHealthLoginController extends Controller
         }
 
         $userDetailsValidator = $this->validateUserDetailsResponse(EmployeeApi::getUserDetails());
+
         if ($userDetailsValidator->fails()) {
             Log::error(__('auth.login.error.validation.user_details', [], 'en'), ['errors' => $userDetailsValidator->errors()]);
+
             return null;
         }
 
-        $userData = $userDetailsValidator->validated();
+        ['id' => $ehealthUserId, 'email' => $ehealthEmail] = $userDetailsValidator->validated();
 
-        if ($userData['id'] !== $authUserUUID) {
+        if ($ehealthUserId !== $authUserUUID) {
             Log::error(__('auth.login.error.user_identity', [], 'en'));
+
             return null;
         }
 
-        $user = User::where('email', $userData['email'])->first();
+        // If user exist in DB but not logined before
+        $user = User::where('email', $ehealthEmail)->first();
+
         if (!$user) {
-            Log::error(__('auth.login.error.user_not_found_by_email', [], 'en') . ": {$userData['email']}");
-            return null;
+            $party = Party::where('email', $ehealthEmail)->first();
+
+            $password = Str::random(8);
+
+            // When the user try login to eHealth directly without having an local user account
+            // It only concerns the case when HR create a new employee who is not yet in the system
+            $user = User::create([
+                    'email'    => $ehealthEmail,
+                    'password' => Hash::make($password),
+                    'email_verified_at' => now()->format('Y-m-d')
+            ]);
+
+            Mail::to($user->email)->send(new UserCredentialsMail($ehealthEmail, $password));
+
+            // If we have party with such email, then the user is fully verified beacause the email is confirmed by eHealth (if we're here)
+            $this->isPartiallyVerified = empty($party);
         }
+
+        $this->isFirstLogin = true;
 
         setPermissionsTeamId($legalEntity->id);
         $user->unsetRelation('roles')->unsetRelation('permissions');

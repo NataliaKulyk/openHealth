@@ -94,6 +94,8 @@ Route::post('logout', Logout::class)->name('logout');
 
 Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
+    Route::get('/verify-personality', fn() => '<h1>Підтвердження особистості</h1>')->name('legalEntity.employee.verify');
+
     Route::get('/select-legal-entity', SelectLegalEntity::class)->name('legalEntity.select');
 
     Route::middleware(['auth:web'])->prefix('/dashboard')->group(function () {
