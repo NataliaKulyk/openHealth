@@ -464,7 +464,7 @@ trait ManagesEmployeeForm
 
         $request->update(
             [
-                'uuid'   => $uuid,
+                'uuid' => $uuid,
                 'legal_entity_uuid' => legalEntity()->uuid,
                 'inserted_at' => Carbon::now(),
                 'status' => RequestStatus::SIGNED,

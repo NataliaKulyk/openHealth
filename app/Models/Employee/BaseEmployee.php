@@ -39,6 +39,7 @@ abstract class BaseEmployee extends Model
         'user_id',
         'division_id',
         'inserted_at',
+        'is_active'
     ];
 
     /**

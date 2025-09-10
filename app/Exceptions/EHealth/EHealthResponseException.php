@@ -40,10 +40,6 @@ class EHealthResponseException extends Exception
             return __('forms.invalid_kep_password');
         }
 
-        return sprintf(
-            __('errors.ehealth.general_error'),
-            $response->status(),
-            $errorMessage
-        );
+        return $response->status() . ': ' . $errorMessage;
     }
 }

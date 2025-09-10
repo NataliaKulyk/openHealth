@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('speciality');
             $table->boolean('speciality_officio');
             $table->string('level');
-            $table->string('qualification_type');
+            $table->string('qualification_type')->nullable();
             $table->string('attestation_name');
             $table->date('attestation_date');
             $table->date('valid_to_date')->nullable();

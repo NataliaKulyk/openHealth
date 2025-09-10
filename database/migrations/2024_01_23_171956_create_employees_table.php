@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('employee_type');
             $table->date('inserted_at')->nullable();
             $table->string('status')->nullable();
+            $table->boolean('is_active')->default(false);
             $table->foreignId('legal_entity_id')->nullable()->constrained('legal_entities')->onDelete('cascade');
             $table->foreignId('division_id')->nullable()->constrained('divisions')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');

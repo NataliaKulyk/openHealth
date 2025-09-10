@@ -83,4 +83,9 @@ class Employee extends BaseEmployee
             ->where('legal_entity_id', $legalEntityId)
             ->where('party_id', $partyId);
     }
+
+    public function scopeFilterByUuids(Builder $query, array $uuids): Builder
+    {
+        return $query->whereIn('uuid', $uuids);
+    }
 }

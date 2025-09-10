@@ -5,19 +5,27 @@ declare(strict_types=1);
 namespace App\Livewire\Employee;
 
 use AllowDynamicProperties;
-use App\Classes\eHealth\Api\EmployeeApi;
+use App\Classes\eHealth\EHealth;
 use App\Enums\Status;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Jobs\EmployeeDetailsUpsert;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
-use App\Repositories\EmployeeRepository;
+use App\Notifications\EmployeeSyncCompleted;
+use App\Repositories\Repository;
+use Illuminate\Bus\Batch;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
+use Nette\Schema\ValidationException;
 
 #[AllowDynamicProperties]
 class EmployeeIndex extends EmployeeComponent
@@ -26,10 +34,7 @@ class EmployeeIndex extends EmployeeComponent
 
     // --- Component State for Filters ---
     public string $search = '';
-
-    // Status filter is now an array for multi-select, pre-filled with defaults.
     public array $status = ['APPROVED', 'NEW', 'DISMISSED'];
-
     public array $filter = [
         'phone' => '',
         'email' => '',
@@ -42,26 +47,23 @@ class EmployeeIndex extends EmployeeComponent
     public ?int $employeeToDeactivateId   = null;
     public ?string $employeeToDeactivateName = null;
 
+    public ?int $employeeToDismissId = null;
+    public ?string $employeeToDismissName = null;
+
     public bool $showDeleteModal = false;
     public ?int $requestToDeleteId = null;
     public ?string $deleteRequestName = null;
 
+    public ?string $batchId = null;
+
     private LegalEntity $legalEntity;
 
-    /**
-     * Boot the component, load dictionaries, and EAGER LOAD permissions.
-     * This is the most efficient way to handle permissions for the list.
-     */
     public function boot(): void
     {
         $this->legalEntity = legalEntity();
         $this->loadDictionaries();
     }
 
-
-    /**
-     * Reset pagination when filters or search are updated.
-     */
     public function updated($property): void
     {
         if (in_array($property, ['search', 'status']) || str_starts_with($property, 'filter.')) {
@@ -168,13 +170,12 @@ class EmployeeIndex extends EmployeeComponent
         );
     }
 
-    /**
-     * Prepares and shows the deactivation modal.
-     */
     public function showModalDeactivate(int $id): void
     {
         $employee = Employee::with('party')->find($id);
-        if (!$employee) return;
+        if (!$employee) {
+            return;
+        }
 
         $this->employeeToDeactivateName = $employee->party->fullName ?? __('employees.modals.deactivate.default_name');
         $this->employeeToDeactivateId   = $id;
@@ -187,7 +188,7 @@ class EmployeeIndex extends EmployeeComponent
     public function closeModal(): void
     {
         $this->showDeactivateModal = false;
-        $this->reset(['employeeToDismissId', 'employeeToDismissName']);
+        $this->reset(['employeeToDeactivateId', 'employeeToDeactivateName']);
     }
 
     public function resetFilters(): void
@@ -232,100 +233,60 @@ class EmployeeIndex extends EmployeeComponent
     public function sync(): void
     {
         try {
-            $eHealthEmployees = $this->getRemoteEmployees();
-            if (empty($eHealthEmployees)) {
-                $this->dispatch('flashMessage', ['message' => __('employees.sync.no_employees_found'), 'type' => 'info']);
-                return;
-            }
-
-            $localEmployeeUuids = $this->getLocalEmployeeUuids();
-            $newEmployeeIds = array_diff(array_column($eHealthEmployees, 'id'), $localEmployeeUuids);
-
-            if (empty($newEmployeeIds)) {
-                $this->dispatch('flashMessage', ['message' => __('employees.sync.completed_no_new'), 'type' => 'success']);
-                return;
-            }
-
-            $newEmployeesAdded = $this->createNewEmployees($newEmployeeIds);
-
-            $message = __('employees.sync.completed_with_new', ['count' => $newEmployeesAdded]);
-            $this->dispatch('flashMessage', ['message' => $message, 'type' => 'success']);
-
+            $response = EHealth::employee()->getMany(['legal_entity_id' => legalEntity()->uuid]);
+        } catch (ConnectionException $e) {
+            Log::error('Employee sync failed: No connection to E-Health.', ['error' => $e->getMessage()]);
+            $this->dispatch('flashMessage', ['message' => __('errors.ehealth.messages.no_connection'), 'type' => 'error']);
+            return;
+        } catch (EHealthResponseException $e) {
+            Log::error('Employee sync failed: E-Health API error.', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => $e->getMessage()]), 'type' => 'error']);
+            return;
         } catch (\Exception $e) {
-            Log::error('Employee sync failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->dispatch('flashMessage', ['message' => __('employees.requestError', ['error' => __('employees.sync.error')]), 'type' => 'error']);
-        }
-    }
-
-    /**
-     * Fetches the list of employees from the E-Health API.
-     *
-     * @return array
-     */
-    private function getRemoteEmployees(): array
-    {
-        $apiResponse = EmployeeRequestApi::getEmployees($this->legalEntity->uuid);
-
-        return isset($apiResponse['data']) && is_array($apiResponse['data'])
-            ? $apiResponse['data']
-            : [];
-    }
-
-    /**
-     * Gets all existing employee UUIDs from the local database for the current legal entity.
-     *
-     * @return array
-     */
-    private function getLocalEmployeeUuids(): array
-    {
-        return Employee::where('legal_entity_id', $this->legalEntity->id)
-            ->pluck('uuid') // Select only the 'uuid' column
-            ->all();      // Convert the collection to a simple array
-    }
-
-    /**
-     * Iterates over new employee IDs, fetches their full data, and stores them locally.
-     *
-     * @param array $newEmployeeIds
-     * @return int The number of successfully added employees.
-     */
-    private function createNewEmployees(array $newEmployeeIds): int
-    {
-        $successfullyAddedCount = 0;
-        $employeeRepository = app(EmployeeRepository::class);
-        $employeeApi = app(EmployeeApi::class);
-
-        foreach ($newEmployeeIds as $employeeId) {
-            try {
-                // This is the unavoidable N+1 API call for details.
-                $fullEmployeeData = EmployeeRequestApi::getEmployeeById($employeeId);
-                if (empty($fullEmployeeData)) {
-                    Log::warning("Could not fetch details for employee ID: {$employeeId}");
-                    continue;
-                }
-
-                // Normalize and prepare data for storing.
-                $employeeResponse = schemaService()->setDataSchema($fullEmployeeData, $employeeApi)
-                    ->responseSchemaNormalize()
-                    ->replaceIdsKeysToUuid(['id', 'legalEntityId', 'divisionId', 'partyId'])
-                    ->snakeCaseKeys(true)
-                    ->getNormalizedData();
-
-                // Store the new employee.
-                $employeeRepository->store($employeeResponse, legalEntity(), new Employee());
-
-                $successfullyAddedCount++;
-            } catch (\Exception $e) {
-                // Log the specific error and continue with the next employee.
-                // This makes the sync process more resilient.
-                Log::error("Failed to create employee with UUID {$employeeId}", [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-            }
+            Log::error('Employee sync failed: An unexpected error occurred during initiation.', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            $this->dispatch('flashMessage', ['message' => __('employees.sync.error'), 'type' => 'error']);
+            return;
         }
 
-        return $successfullyAddedCount;
+        $employees = $response->validate();
+        data_forget($employees, '*.party');
+        data_forget($employees, '*.doctor');
+        data_fill($employees, '*.legal_entity_id', legalEntity()->id);
+
+        Employee::upsert($employees, uniqueBy: ['uuid']);
+        $models = Employee::with('party')->filterByUuids(array_column($employees, 'uuid'))->get();
+
+        $user = Auth::user();
+
+        $batch = Bus::batch(
+            $models->map(fn (Employee $model) => new EmployeeDetailsUpsert(
+                $model, $user,
+                session()->get(config('ehealth.api.oauth.bearer_token'))
+            ))
+
+        )->then(function (Batch $batch) use ($user) {
+            $message = __('employees.sync.completed_successfully', [
+                'processed' => $batch->processedJobs,
+                'total' => $batch->totalJobs,
+            ]);
+            $user->notify(new EmployeeSyncCompleted($message, 'success'));
+
+        })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
+            $message = __('employees.sync.failed');
+            $user->notify(new EmployeeSyncCompleted($message, 'error'));
+
+            Log::error('Employee sync batch failed.', [
+                'batch_id' => $batch->id,
+                'exception' => $e
+            ]);
+        })->name('Employee Full Sync')->dispatch();
+
+        $this->batchId = $batch->id;
+
+        $this->dispatch('flashMessage', [
+            'message' => __('employees.sync.started'),
+            'type' => 'success'
+        ]);
     }
 
     public function confirmRequestDeletion(int $id): void

@@ -46,7 +46,7 @@ class DocumentRepository
             return;
         }
 
-        //Remove all dosuments records belongs to the $model
+        //Remove all documents records belongs to the $model
         Document::where([
                     'documentable_type' => get_class($model),
                     'documentable_id' => $model->id

@@ -2,39 +2,29 @@
 
 namespace App\Repositories;
 
-use App\Models\Relations\Qualification;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class QualificationRepository
 {
     /**
-     * @param object $model
-     * @param array $qualifications
+     *
+     * @param Model      $model
+     * @param array|null $qualificationsData
      *
      * @return void
+     * @throws \Throwable
      */
-    public function addQualifications(object $model, array $qualifications): void
+    public function syncQualifications(Model $model, ?array $qualificationsData): void
     {
-        if (empty($qualifications)) {
-            return;
-        }
+        $qualificationsData = $qualificationsData ?? [];
 
-        foreach ($qualifications as $qualificationData) {
-            $qualification = Qualification::where(
-                [
-                    'qualificationable_type' => get_class($model),
-                    'qualificationable_id'   => $model->id
-                ],
-            )->first();
+        DB::transaction(function () use ($model, $qualificationsData) {
+            $model->qualifications()->delete();
 
-            if (!$qualification) {
-                $qualification = new Qualification();
-                $qualification->qualificationable_type = get_class($model);
-                $qualification->qualificationable_id = $model->id;
+            if (!empty($qualificationsData)) {
+                $model->qualifications()->createMany($qualificationsData);
             }
-
-            $qualification->fill($qualificationData);
-
-            $model->qualifications()->save($qualification);
-        }
+        });
     }
 }
