@@ -8,6 +8,7 @@ use App\Enums\Status;
 use App\Models\Relations\Phone;
 use App\Casts\Division\Location;
 use App\Models\Employee\Employee;
+use App\Models\LegalEntity;
 use App\Models\Relations\Address;
 use App\Casts\Division\WorkingHours;
 use Illuminate\Database\Eloquent\Model;
@@ -153,9 +154,9 @@ class Division extends Model
         return $this->hasMany(HealthcareService::class);
     }
 
-    public function address(): MorphOne
+    public function addresses(): MorphMany
     {
-        return $this->morphOne(Address::class, 'addressable');
+        return $this->morphMany(Address::class, 'addressable');
     }
 
     public function phones(): MorphMany
@@ -177,10 +178,6 @@ class Division extends Model
             return $query;
         }
 
-        $driver = $query->getConnection()->getDriverName();
-
-        return $driver === 'pgsql'
-            ? $query->whereRaw('LOWER(name) LIKE ?', [ '%' . strtolower($toSearch) . '%'])
-            : $query->where('name', 'like', "%{$toSearch}%");
+        return $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($toSearch) . '%']);
     }
 }

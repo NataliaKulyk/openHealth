@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('parties', function (Blueprint $table) {
             $table->id();
-            $table->uuid()->nullable();
+            $table->uuid()->unique()->nullable();
             $table->string('last_name');
             $table->string('first_name');
             $table->string('second_name')->nullable();
@@ -24,6 +24,9 @@ return new class extends Migration {
             $table->boolean('no_tax_id')->nullable()->default(false);
             $table->text('about_myself')->nullable();
             $table->integer('working_experience')->nullable();
+            $table->string('verification_status')->nullable(); // TODO - make enum
+            $table->integer('declaration_count')->nullable();
+            $table->integer('declaration_limit')->nullable();
         });
     }
 

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('codeable_concepts', static function (Blueprint $table) {
             $table->id();
             $table->string('text')->nullable();
-            $table->nullableMorphs('codeable_conceptable');
+            $table->nullableMorphs('codeable_conceptable', 'cc_morph');
             $table->timestamps();
         });
     }

@@ -268,23 +268,6 @@ class PatientApi
     }
 
     /**
-     * Get the current diagnoses related only to active episodes.
-     *
-     * @param  string  $patientId
-     * @param  array  $params
-     * @return array
-     * @throws ApiException
-     */
-    public static function getActiveDiagnoses(string $patientId, array $params): array
-    {
-        return new Request(
-            HttpRequest::METHOD_GET,
-            self::ENDPOINT_PATIENT . "/$patientId/summary/diagnoses",
-            $params
-        )->sendRequest();
-    }
-
-    /**
      * Get conditions by search parameters.
      *
      * @param  string  $patientId
@@ -332,23 +315,6 @@ class PatientApi
         return new Request(
             HttpRequest::METHOD_GET,
             self::ENDPOINT_PATIENT . "/$patientUuid/episodes/$episodeUuid/conditions",
-            $params
-        )->sendRequest();
-    }
-
-    /**
-     * Get the current diagnoses related only to active episodes.
-     *
-     * @param  string  $patientId
-     * @param  array  $params
-     * @return array
-     * @throws ApiException
-     */
-    public static function getObservations(string $patientId, array $params): array
-    {
-        return new Request(
-            HttpRequest::METHOD_GET,
-            self::ENDPOINT_PATIENT . "/$patientId/summary/observations",
             $params
         )->sendRequest();
     }

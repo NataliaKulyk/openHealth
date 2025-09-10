@@ -17,7 +17,7 @@
             >
 
             <label for="person" class="label">
-                {{ __('declarations.patient_full_name') }}
+                {{ __('patients.patient_full_name') }}
             </label>
         </div>
     </div>
@@ -35,7 +35,7 @@
                 >
 
                 <label for="employee" class="label">
-                    {{ __('declarations.doctor_full_name') }}
+                    {{ __('employees.doctor_full_name') }}
                 </label>
             </div>
         </div>
@@ -43,7 +43,7 @@
         {{-- Choose doctor --}}
         <div class="form-row-2">
             <div class="form-group group">
-                <label class="label" for="employeeId">{{ __('declarations.doctor_full_name') }}</label>
+                <label class="label" for="employeeId">{{ __('employees.doctor_full_name') }}</label>
                 <select wire:model="form.employeeId"
                         id="employeeId"
                         name="employeeId"

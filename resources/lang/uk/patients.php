@@ -37,8 +37,9 @@ return [
     'diagnostic_reports' => 'Діагностичні звіти',
     'notes' => 'Нотатки',
     'author' => 'Автор',
-    'division_name' => 'Місце надання послуг',
     'conclusion' => 'Заключення',
+    'patient_birth_date' => 'Дата народження пацієнта',
+    'patient_full_name' => 'ПІБ пацієнта',
 
     'relation_type' => [
         'primary' => 'Основний',
@@ -82,6 +83,7 @@ return [
     'patient_filter' => 'Фільтр пацієнтів',
     'search' => 'Шукати',
     'all' => 'Всі',
+    'birth_certificate' => 'Свідоцтво',
     'applications' => 'Заявки',
     'continue_registration' => 'Продовжити реєстрацію',
     'view_record' => 'Переглянути карту',

@@ -68,7 +68,7 @@
     </div>
 
     <div x-data="{ showAdditionalParams: false }">
-        <button class="flex items-center gap-2 gray-button"
+        <button class="flex items-center gap-2 button-minor"
                 @click.prevent="showAdditionalParams = !showAdditionalParams"
         >
             <svg width="16" height="16">

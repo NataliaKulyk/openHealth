@@ -43,13 +43,14 @@ class DivisionView extends DivisionComponent
         $this->divisionForm->setDivision($division->toArray());
 
         // TODO: This need to be refactored after teh multiaddress will works
-        $this->divisionForm->setDivisionParam('addresses', $division->addresses->toArray());
-        $this->address = $this->divisionForm->getDivisionParam('addresses');
+        $this->divisionForm->division['addresses'] = $division->addresses->toArray();
 
-        $this->divisionForm->setDivisionParam('phones', $division->phones->toArray()); // TODO: need refactor this to multiphone array
+        $this->address = data_get($this->divisionForm->division, 'addresses.0');
 
-        $this->divisionForm->setDivisionParam('id', $division->id ?? '');
-        $this->divisionForm->setDivisionParam('uuid', $division->uuid ?? '');
+        $this->divisionForm->division['phones'] = $division->phones->toArray();
+
+        $this->divisionForm->division['id'] = $division->id ?? '';
+        $this->divisionForm->division['uuid'] = $division->uuid ?? '';
     }
 
     /**

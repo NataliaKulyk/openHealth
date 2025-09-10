@@ -84,58 +84,6 @@ class DivisionForm extends Form
     }
 
     /**
-     * Returns the value of the specified parameter from the division's array,
-     * or an empty string if the parameter does not exist.
-     *
-     * @param string $param The parameter name to retrieve.
-     *
-     * @return mixed The value of the parameter, or an empty string if not set.
-     */
-    public function getDivisionParam(string $param): mixed
-    {
-        return $this->division[$param] ?? '';
-    }
-
-    /**
-     * Assigns the given value to the specified parameter in the division array.
-     *
-     * @param string $param The parameter name to set.
-     * @param mixed $value The value to assign to the parameter.
-     *
-     * @return void
-     */
-    public function setDivisionParam(string $param, mixed $value): void
-    {
-        $this->division[$param] = $value;
-    }
-
-    /**
-     * Check if the specified division parameter exists and its value is null or empty.
-     *
-     * This is mostly used for parameters 'work_hours' to determine if the key is present
-     * in the division's array and its value is considered "empty" (null, empty string, or empty array).
-     *
-     * @param string $paramName
-     *
-     * @return bool
-     */
-    public function isDivisionParamExistAndNull(string $paramName): bool
-    {
-        return array_key_exists($paramName, $this->division) && !$this->division[$paramName];
-    }
-
-    /**
-     * Remove the given parameter from the division's array if it exists.
-     *
-     * @param string $paramName
-     * @return void
-     */
-    public function unsetDivisionParam(string $paramName)
-    {
-        unset($this->division[$paramName]);
-    }
-
-    /**
      * Do form's validation (check correctness of filling the form fields)
      *
      * @return mixed

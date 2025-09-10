@@ -32,9 +32,7 @@
                 </div>
 
                 <div class="mb-8 flex items-center gap-1 font-semibold text-gray-900 dark:text-white">
-                    <svg width="18" height="18">
-                        <use xlink:href="#svg-search-outline"></use>
-                    </svg>
+                    @icon('search-outline', 'w-4.5 h-4.5')
                     <p>{{ __('patients.patient_search') }}</p>
                 </div>
 
@@ -42,16 +40,13 @@
 
                 <div class="mb-9 mt-6 flex gap-7">
                     <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
-                        <svg width="16" height="16">
-                            <use xlink:href="#svg-search"></use>
-                        </svg>
+                        @icon('search', 'w-4 h-4')
                         <span>{{ __('patients.search') }}</span>
                     </button>
                     <button type="button" wire:click="resetFilters" class="button-outline-primary">
                         Скинути всі фільтри
                     </button>
                 </div>
-
             </x-slot>
         </x-section-navigation>
 
@@ -115,12 +110,12 @@
                                 <table class="table-input w-full table-fixed">
                                     <thead class="thead-input">
                                     <tr>
-                                        <th scope="col" class="th-input w-[20%]">Телефон</th>
-                                        <th scope="col" class="th-input w-[15%]">Дата народження</th>
-                                        <th scope="col" class="th-input w-[20%]">РНОКПП</th>
-                                        <th scope="col" class="th-input w-[20%]">Свідоцтво</th>
-                                        <th scope="col" class="th-input w-[15%]">Статус</th>
-                                        <th scope="col" class="th-input w-[10%] text-center">Дії</th>
+                                        <th scope="col" class="th-input w-[20%]">{{ __('forms.phone') }}</th>
+                                        <th scope="col" class="th-input w-[15%]">{{ __('forms.birth_date') }}</th>
+                                        <th scope="col" class="th-input w-[20%]">{{ __('forms.rnokpp') }}</th>
+                                        <th scope="col" class="th-input w-[20%]">{{ __('patients.birth_certificate') }}</th>
+                                        <th scope="col" class="th-input w-[15%]">{{ __('forms.status.label') }}</th>
+                                        <th scope="col" class="th-input w-[10%] text-center">{{ __('forms.actions') }}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -182,14 +177,7 @@
                                                             <button wire:click="createDiagnosticReport({{ $patient['id'] }})"
                                                                     class="dropdown-button !flex gap-2"
                                                             >
-                                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-                                                                     xmlns="http://www.w3.org/2000/svg">
-                                                                    <path
-                                                                        d="M12.8337 7.5H10.5003L8.75033 12.75L5.25033 2.25L3.50033 7.5H1.16699"
-                                                                        stroke="currentColor" stroke-linecap="round"
-                                                                        stroke-linejoin="round"
-                                                                    />
-                                                                </svg>
+                                                                @icon('activity', 'w-3.5 h-3.5')
                                                                 {{ __('patients.create_diagnostic_report') }}
                                                             </button>
                                                         </div>
@@ -197,9 +185,7 @@
                                                             <a href="{{ route('declaration.create', [legalEntity(), 'patientId' => $patient['id']]) }}"
                                                                class="dropdown-button !flex gap-2"
                                                             >
-                                                                <svg class="text-gray-800 dark:text-white" width="16" height="16" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                    <path d="M8.16634 1.16675H3.49967C3.19026 1.16675 2.89351 1.28966 2.67472 1.50846C2.45592 1.72725 2.33301 2.024 2.33301 2.33341V11.6667C2.33301 11.9762 2.45592 12.2729 2.67472 12.4917C2.89351 12.7105 3.19026 12.8334 3.49967 12.8334H10.4997C10.8091 12.8334 11.1058 12.7105 11.3246 12.4917C11.5434 12.2729 11.6663 11.9762 11.6663 11.6667V4.66675M8.16634 1.16675L11.6663 4.66675M8.16634 1.16675V4.66675H11.6663M9.33301 7.58341H4.66634M9.33301 9.91675H4.66634M5.83301 5.25008H4.66634" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-                                                                </svg>
+                                                                @icon('file-text', 'w-3.5 h-3.5 text-gray-800 dark:text-white')
                                                                 {{ __('patients.sign_declaration') }}
                                                             </a>
                                                         </div>
@@ -216,7 +202,7 @@
                 @endforeach
                 @empty($paginatedPatients)
                     <div class="text-center py-16">
-                        <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('Нічого не знайдено')}}</p>
+                        <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('forms.nothing_found')}}</p>
                     </div>
                 @endempty
             </div>

@@ -26,7 +26,8 @@ class CipherApi
      * @param  string  $base64File  KEYP file in base64 format.
      * @param  string  $knedp  Certificate Authority Identifier (KNEPD).
      * @param  string  $taxId
-     * @param  string|null  $edrpou
+     * @param  string|null $edrpou
+ *
      * @return array|string Returns KEYP in base64 format.
      */
     public function sendSession(
@@ -41,7 +42,6 @@ class CipherApi
         $this->password = $password;
         $this->base64File = $base64File;
         $this->knedp = $knedp;
-
         try {
             $this->createSession();
             $this->loadData();

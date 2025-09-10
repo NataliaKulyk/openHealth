@@ -23,4 +23,16 @@ enum AuthenticationMethod: string
     {
         return array_map(static fn (self $case) => $case->label(), self::cases());
     }
+
+    /**
+     * Get list of labels.
+     *
+     * @return array
+     */
+    public static function labels(): array
+    {
+        return collect(self::cases())
+            ->mapWithKeys(fn (self $case) => [$case->value => $case->label()])
+            ->toArray();
+    }
 }

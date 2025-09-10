@@ -2,27 +2,33 @@
 
 namespace App\Repositories;
 
-use App\Models\Relations\ScienceDegree;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class ScienceDegreeRepository
 {
     /**
-     * @param Model $model The employee or employee request model (Employee or EmployeeRequest).
-     * @param array $scienceDegreesData An array of science degree data arrays (e.g., [['degree' => 'PhD', ...], ['degree' => 'Master', ...]]).
+     *
+     * @param Model      $model
+     * @param array|null $scienceDegreesData
      *
      * @return void
+     * @throws \Throwable
      */
-    public function addScienceDegrees(Model $model, array $scienceDegreesData): void
+    public function syncScienceDegrees(Model $model, ?array $scienceDegreesData): void
     {
-        $model->scienceDegrees()->delete();
+        $scienceDegreesData = $scienceDegreesData ?? [];
 
-        if (empty($scienceDegreesData)) {
-            return;
-        }
-            $scienceDegree = new ScienceDegree();
-            $scienceDegree->fill($scienceDegreesData);
+        DB::transaction(function () use ($model, $scienceDegreesData) {
+            $model->scienceDegrees()->delete();
 
-            $model->scienceDegrees()->save($scienceDegree);
-        }
+            if (!empty($scienceDegreesData)) {
+                if (isset($scienceDegreesData['degree'])) {
+                    $model->scienceDegrees()->create($scienceDegreesData);
+                } else {
+                    $model->scienceDegrees()->createMany($scienceDegreesData);
+                }
+            }
+        });
+    }
 }

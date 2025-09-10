@@ -31,11 +31,8 @@ class DeclarationCreate extends DeclarationComponent
 
         try {
             $validated = $this->form->validate($this->form->rulesForCreating());
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
@@ -49,7 +46,7 @@ class DeclarationCreate extends DeclarationComponent
             $this->redirectRoute('declaration.index', [legalEntity()], navigate: true);
         } catch (Exception $exception) {
             $this->logDatabaseErrors($exception, 'Error saving declaration request');
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }

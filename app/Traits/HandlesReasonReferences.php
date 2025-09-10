@@ -6,7 +6,7 @@ namespace App\Traits;
 
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Exceptions\ApiException;
-use App\Core\Arr as CoreArr;
+use App\Core\Arr;
 use App\Models\MedicalEvents\Sql\Condition;
 use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Observation;
@@ -54,10 +54,10 @@ trait HandlesReasonReferences
             $encounterId = $this->ensureEncounterExist($conditionData['context']['identifier']['value']);
 
             if ($encounterId) {
-                Repository::condition()->store([CoreArr::toCamelCase($conditionData)], $encounterId);
+                Repository::condition()->store([Arr::toCamelCase($conditionData)], $encounterId);
             }
         } catch (ApiException|Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::error('Failed while ensuring condition existence', [
                 'error' => $e->getMessage(),
@@ -86,7 +86,7 @@ trait HandlesReasonReferences
 
             return Repository::encounter()->store($encounterData, $this->patientId);
         } catch (ApiException|Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::error('Failed while ensuring encounter existence', [
                 'error' => $e->getMessage(),
@@ -115,10 +115,10 @@ trait HandlesReasonReferences
             $encounterId = $this->ensureEncounterExist($observationData['context']['identifier']['value']);
 
             if ($encounterId) {
-                Repository::observation()->store([CoreArr::toCamelCase($observationData)], $encounterId);
+                Repository::observation()->store([Arr::toCamelCase($observationData)], $encounterId);
             }
         } catch (ApiException|Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::error('Failed while ensuring observation existence', [
                 'error' => $e->getMessage(),

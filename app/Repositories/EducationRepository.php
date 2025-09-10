@@ -2,39 +2,22 @@
 
 namespace App\Repositories;
 
+use App\Models\Employee\Employee;
 use App\Models\Relations\Education;
+use DB;
 
 class EducationRepository
 {
-    /**
-     * @param object $model
-     * @param array $educations
-     *
-     * @return void
-     */
-    public function addEducations(object $model, array $educations): void
+    // Перейменуй `addEducations` на `syncEducations` для консистентності
+    public function syncEducations(Employee $employee, ?array $educationsData): void
     {
-        if (empty($educations)) {
-            return;
-        }
+        $educationsData = $educationsData ?? [];
 
-        foreach ($educations as $educationData) {
-            $education = Education::where(
-                [
-                    'educationable_type' => get_class($model),
-                    'educationable_id'   => $model->id
-                ]
-            )->first();
-
-            if (!$education) {
-                    $education = new Education();
-                    $education->educationable_type = get_class($model);
-                    $education->educationable_id = $model->id;
+        DB::transaction(function () use ($employee, $educationsData) {
+            $employee->educations()->delete();
+            if (!empty($educationsData)) {
+                $employee->educations()->createMany($educationsData);
             }
-
-            $education->fill($educationData);
-
-            $model->educations()->save($education);
-        }
+        });
     }
 }

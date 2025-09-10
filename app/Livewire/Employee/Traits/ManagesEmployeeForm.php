@@ -13,10 +13,14 @@ use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\EmployeeRequest;
+use App\Models\Relations\Party;
 use App\Models\Revision;
+use App\Models\User;
 use App\Repositories\Repository;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -102,31 +106,29 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Updates an existing draft request and its revision with the latest form data.
+     * Updates an existing draft request and its revision.
+     * It will only update the associated Party if the Party is not yet "locked"
+     * (i.e., not registered with E-Health and not linked to a user).
      */
     protected function updateExistingDraft(array $preparedDataForDb): void
     {
+        // Step 1: Update the associated Party, but only if it's still editable.
+        $party = $this->employeeRequest->party;
+        if ($party && is_null($party->user_id) && is_null($party->uuid)) {
+            $partyData = $this->extractPartyData($preparedDataForDb);
+            $party->update($partyData);
+        }
+
+        // Step 2: Update the EmployeeRequest model itself.
         $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
         $this->employeeRequest->fill($requestAttributes)->save();
+
+        // Step 3: Update the revision to reflect the latest state.
         $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-        if ($this->employeeRequest?->revision()) {
-            $this->employeeRequest?->revision()->update(['data' => $nestedDataForRevision]);
+        if ($this->employeeRequest->revision) {
+            $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
         } else {
             $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
-        }
-    }
-
-    /**
-     * Creates a new draft request and its associated revision.
-     */
-    protected function createNewDraft(array $preparedDataForDb): void
-    {
-        $newRequest = Repository::employee()->store($preparedDataForDb, legalEntity(), new EmployeeRequest(), null, true);
-        $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
-        $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
-        $this->employeeRequest = $newRequest;
-        if (property_exists($this, 'employeeRequestId')) {
-            $this->employeeRequestId = $newRequest->id;
         }
     }
 
@@ -145,6 +147,72 @@ trait ManagesEmployeeForm
                 'trace'   => $e->getTraceAsString(),
             ]
         );
+    }
+
+    /**
+     * Creates a new draft request.
+     * The business logic for finding/creating Party and User is now here.
+     */
+    protected function createNewDraft(array $preparedDataForDb): void
+    {
+        // Step 1: Business logic to find or create the Party.
+        $partyData = $this->extractPartyData($preparedDataForDb);
+        $party = $this->findOrCreateParty($partyData);
+
+        // Step 2: Business logic to find the associated user.
+        $user = null;
+        if (!empty($party->email)) {
+            $user = User::where('email', $party->email)->first();
+        }
+
+        // Step 3: Prepare data specifically for the EmployeeRequest model.
+        $employeeRequestData = Arr::only($preparedDataForDb, [
+            'position', 'start_date', 'end_date', 'employee_type', 'division_id'
+        ]);
+
+        // Step 4: Call the clean repository method to persist the new draft.
+        $newRequest = Repository::employee()->createEmployeeRequestDraft(
+            $employeeRequestData,
+            $party,
+            legalEntity(),
+            $user
+        );
+
+        // Step 5: Handle the revision logic.
+        $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
+        $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
+        $this->employeeRequest = $newRequest;
+        if (property_exists($this, 'employeeRequestId')) {
+            $this->employeeRequestId = $newRequest->id;
+        }
+    }
+
+    /**
+     * Simplified logic moved from the repository.
+     * Finds an existing party or creates a new one. It does NOT update.
+     */
+    private function findOrCreateParty(array $partyData): Party
+    {
+        $party = null;
+        if (!empty($partyData['email'])) {
+            $party = Party::where('email', $partyData['email'])->first();
+        }
+        if ($party === null && !empty($partyData['tax_id'])) {
+            $party = Party::where('tax_id', $partyData['tax_id'])->first();
+        }
+
+        return $party ?? Party::create($partyData);
+    }
+
+    /**
+     * Extracts party-related fields from the main data array.
+     */
+    private function extractPartyData(array $preparedData): array
+    {
+        return Arr::only($preparedData, [
+            'last_name', 'first_name', 'second_name', 'gender', 'birth_date',
+            'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself',
+        ]);
     }
 
     /**
@@ -378,13 +446,12 @@ trait ManagesEmployeeForm
         $requestToSign->load('revision');
         $nestedDataForRevision = $requestToSign->revision->data;
         $payloadToSign = EHealthEmployeePayload::prepare($nestedDataForRevision);
-
         return signatureService()->signData(
             $payloadToSign,
             $this->form->password,
             $this->form->knedp,
             $this->form->keyContainerUpload,
-            $nestedDataForRevision['party']['tax_id']
+            Auth::user()->party->tax_id
         );
     }
 
@@ -397,7 +464,9 @@ trait ManagesEmployeeForm
 
         $request->update(
             [
-                'uuid'   => $uuid,
+                'uuid' => $uuid,
+                'legal_entity_uuid' => legalEntity()->uuid,
+                'inserted_at' => Carbon::now(),
                 'status' => RequestStatus::SIGNED,
             ]
         );

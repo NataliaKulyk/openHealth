@@ -50,7 +50,9 @@ return new class extends Migration
 
         Schema::create('diagnostic_report_results_interpreter', static function (Blueprint $table) {
             $table->id();
-            $table->foreignId('diagnostic_report_id')->constrained('diagnostic_reports')->cascadeOnDelete();
+            $table->foreignId('diagnostic_report_id')
+                ->constrained('diagnostic_reports', 'id', 'fk_drri_diagnostic_report_id')
+                ->cascadeOnDelete();
             $table->foreignId('reference_id')->nullable()->constrained('identifiers')->cascadeOnDelete();
             $table->string('text')->nullable();
             $table->timestamps();

@@ -65,8 +65,13 @@ return new class extends Migration
 
         Schema::create('immunization_vaccination_protocol_target_diseases', static function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vaccination_protocol_id')->constrained('immunization_vaccination_protocols')->cascadeOnDelete();
-            $table->foreignId('codeable_concept_id')->nullable()->constrained('codeable_concepts')->cascadeOnDelete();
+            $table->foreignId('vaccination_protocol_id')
+                ->constrained('immunization_vaccination_protocols', 'id', 'fk_ivptd_vaccination_protocol_id')
+                ->cascadeOnDelete();
+            $table->foreignId('codeable_concept_id')
+                ->nullable()
+                ->constrained('codeable_concepts', 'id', 'fk_ivptd_codeable_concept')
+                ->cascadeOnDelete();
             $table->timestamps();
         });
     }

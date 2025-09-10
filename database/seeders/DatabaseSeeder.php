@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class DatabaseSeeder extends Seeder
 {
@@ -30,20 +31,52 @@ class DatabaseSeeder extends Seeder
             $this->call(TestUserMigrate::class);
         }
 
-        $this->fixPostgresSequence('employees');
+        $this->fixAllPostgresSequences();
     }
 
     /**
-     * Fixes the sequence for a given table in PostgreSQL.
+     * Fixes PostgreSQL sequences for all relevant tables.
+     *
+     * @return void
+     */
+    protected function fixAllPostgresSequences(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        $tables = [
+            'users',
+            'legal_entities',
+            'parties',
+            'employees',
+            'employee_requests',
+            'revisions',
+
+        ];
+
+        foreach ($tables as $tableName) {
+            $this->fixPostgresSequence($tableName);
+        }
+    }
+
+
+    /**
+     * Resets the sequence for a given table to the current maximum ID.
+     * This version is more robust and handles empty tables correctly.
      *
      * @param string $tableName
      * @return void
      */
     protected function fixPostgresSequence(string $tableName): void
     {
-        if (DB::getDriverName() === 'pgsql') {
-            $sequenceName = $tableName . '_id_seq';
-            DB::statement("SELECT setval('{$sequenceName}', (SELECT MAX(id) FROM {$tableName}))");
+        try {
+
+            DB::statement(
+                "SELECT setval(pg_get_serial_sequence('{$tableName}', 'id'), COALESCE((SELECT MAX(id) FROM \"{$tableName}\"), 0));"
+            );
+        } catch (\Exception $e) {
+            Log::warning("Could not reset sequence for table '{$tableName}': " . $e->getMessage());
         }
     }
 }

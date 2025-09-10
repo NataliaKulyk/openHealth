@@ -20,4 +20,16 @@ enum RequestStatus: string
             self::DISMISSED => 'Звільнено',
         };
     }
+
+    /**
+     * Returns an array of statuses pending
+     * final synchronization upon user login.
+     */
+    public static function getStatusesForSync(): array
+    {
+        return [
+            self::NEW->value,
+            self::SIGNED->value,
+        ];
+    }
 }

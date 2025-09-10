@@ -31,7 +31,7 @@ class EditLegalEntity extends LegalEntity
      */
     protected function getLegalEntity(): ?LegalEntityModel
     {
-        return legalEntity()?->loadMissing(['licenses', 'address', 'phones', 'revisions']) ?? null;
+        return legalEntity()?->loadMissing(['licenses', 'addresses', 'phones', 'revisions']) ?? null;
     }
 
     protected function setLegalEntity(): bool
@@ -39,7 +39,9 @@ class EditLegalEntity extends LegalEntity
         $isNotNew = parent::setLegalEntity();
 
         if ($isNotNew) {
-            $this->mergeAddress($this->convertArrayKeysToCamelCase($this->legalEntity->toArray())['address'] ?? []);
+            $address = data_get($this->legalEntity->toArray(), 'addresses.0', []);
+
+            $this->mergeAddress($this->convertArrayKeysToCamelCase($address));
         }
 
         return $isNotNew;
@@ -123,7 +125,8 @@ class EditLegalEntity extends LegalEntity
     {
         $ownerData = $owner->party->toArray() ?? [];
 
-        $ownerData['documents'] = $this->prepareDocumentsData($ownerData['documents']);
+        $ownerData['phones'] = $owner->party->phones->toArray() ?? [];
+        $ownerData['documents'] = $this->prepareDocumentsData($owner->party->documents->toArray());
         $ownerData['position'] = $owner->position;
         $ownerData['employee_id'] = $owner->uuid;
 
@@ -173,7 +176,7 @@ class EditLegalEntity extends LegalEntity
                 $user = Auth::user();
 
                 try {
-                    $this->createEmployeeRequest($this->legalEntity, $data, $response['urgent']['employee_request_id'], $user?->id ?? null);
+                    $this->createEmployeeRequest($this->legalEntity, $data, $response['urgent']['employee_request_id'], $user?->id ? (string)$user->id : null);
                 } catch (Exception $err) {
                     throw new Exception('Error: createEmployeeRequest: ' . $err->getMessage(), $err->getCode());
                 }

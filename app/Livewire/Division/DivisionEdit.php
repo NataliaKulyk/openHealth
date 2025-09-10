@@ -100,10 +100,11 @@ class DivisionEdit extends DivisionComponent
         $this->divisionForm->setDivision($division->toArray());
 
         // TODO: This need to be refactored after the multiaddress will works
-        $this->divisionForm->setDivisionParam('addresses', $division->addresses->toArray());
-        $this->address = $this->divisionForm->getDivisionParam('addresses');
+        $this->divisionForm->division['addresses'] = $division->addresses->toArray();
 
-        $this->divisionForm->setDivisionParam('phones', $division->phones->toArray()); // TODO: need refactor this to multiphone array
+        $this->address = data_get($this->divisionForm->division, 'addresses.0');
+
+        $this->divisionForm->division['phones'] = $division->phones->toArray();
     }
 
     /**

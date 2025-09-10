@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Encounter\Forms\Api;
 
-use App\Classes\eHealth\Api\PersonApi;
-
-class EncounterRequestApi extends PersonApi
+class EncounterRequestApi
 {
     /**
      * Build an array of parameters for a service request list.

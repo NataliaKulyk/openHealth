@@ -36,6 +36,26 @@ final class Repository
         return app(EmployeeRepository::class);
     }
 
+    public static function education(): EducationRepository
+    {
+        return app(EducationRepository::class);
+    }
+
+    public static function speciality(): SpecialityRepository
+    {
+        return app(SpecialityRepository::class);
+    }
+
+    public static function qualification(): QualificationRepository
+    {
+        return app(QualificationRepository::class);
+    }
+
+    public static function scienceDegree(): ScienceDegreeRepository
+    {
+        return app(ScienceDegreeRepository::class);
+    }
+
     public static function division(): DivisionRepository
     {
         return app(DivisionRepository::class);

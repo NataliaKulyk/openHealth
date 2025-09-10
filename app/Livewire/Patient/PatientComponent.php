@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Livewire\Patient;
 
 use App\Classes\Cipher\Traits\Cipher;
-use App\Classes\eHealth\Api\PersonApi;
 use App\Classes\eHealth\Api\PersonRequestApi;
 use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\Exceptions\ApiException;
 use App\Core\Arr;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Patient\Forms\Api\PatientRequestApi;
 use App\Livewire\Patient\Forms\PatientForm as Form;
 use App\Models\LegalEntity;
@@ -23,7 +24,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -210,15 +210,27 @@ class PatientComponent extends Component
      * Search for person with provided filters.
      *
      * @return void
-     * @throws ApiException|ValidationException
+     * @throws ValidationException
      */
     public function searchForPerson(): void
     {
         $this->form->rulesForModelValidate('patientsFilter');
 
         $buildSearchRequest = PatientRequestApi::buildSearchForPerson($this->form->patientsFilter);
+        try {
+            $this->confidantPerson = EHealth::person()->searchForPersonByParams(Arr::toCamelCase($buildSearchRequest))->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when searching for person');
+            session()?->flash('error', 'Виникла помилка. Спробуйте пізніше.');
 
-        $this->confidantPerson = Arr::toCamelCase(PersonApi::searchForPersonByParams($buildSearchRequest));
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when searching for person');
+            session()?->flash('error', 'Виникла помилка. Спробуйте пізніше.');
+
+            return;
+        }
+
         $this->searchPerformed = true;
     }
 
@@ -231,10 +243,7 @@ class PatientComponent extends Component
     public function createPerson(): void
     {
         if (Auth::user()?->cannot('create', PersonRequest::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення пацієнта.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'У вас немає дозволу на створення пацієнта.');
 
             return;
         }
@@ -247,24 +256,18 @@ class PatientComponent extends Component
         try {
             $response = EHealth::personRequest()->create(data: $formatted);
 
-            if (!$response->successful()) {
-                $this->logEHealthError($response, 'Error while creating person request');
-                $this->flashGeneralError();
-
-                return;
-            }
-
             $responseData = $response->getData();
             $responseStatusCode = $response->getStatusCode();
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error while creating person request');
-            $this->flashGeneralError();
+            $this->logConnectionError($exception, 'Error connecting when creating person request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
-        }
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when creating person request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
-        if ($responseStatusCode !== 201) {
-            $this->flashGeneralError();
+            return;
         }
 
         if ($responseStatusCode === 201) {
@@ -303,10 +306,7 @@ class PatientComponent extends Component
     public function createApplication(): void
     {
         if (Auth::user()?->cannot('create', PersonRequest::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення пацієнта.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'У вас немає дозволу на створення пацієнта.');
 
             return;
         }
@@ -370,10 +370,7 @@ class PatientComponent extends Component
         $totalFiles = count($this->form->uploadedDocuments);
         // Check that all provided files were uploaded
         if ($totalFiles !== count($this->uploadedDocuments)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Будь ласка завантажте всі файли!',
-                'type' => 'error',
-            ]);
+            session()?->flash('error', 'Будь ласка завантажте всі файли!');
 
             return;
         }
@@ -409,11 +406,7 @@ class PatientComponent extends Component
         // Show final status message
         if ($successCount === $totalFiles) {
             $this->isUploaded = true;
-
-            $this->dispatch('flashMessage', [
-                'message' => 'Всі файли успішно завантажено',
-                'type' => 'success',
-            ]);
+            session()?->flash('success', 'Всі файли успішно завантажено');
         }
 
         // Approve if auth type method is offline
@@ -441,10 +434,7 @@ class PatientComponent extends Component
     public function resendSms(): void
     {
         if (Auth::user()?->cannot('create', PersonRequest::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на повторну відправку СМС.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'У вас немає дозволу на повторну відправку СМС.');
 
             return;
         }
@@ -455,23 +445,20 @@ class PatientComponent extends Component
 
         try {
             $response = EHealth::personRequest()->resendAuthOtp($this->form->patient['id']);
-        } catch (ConnectionException $e) {
-            Log::channel('e_health_errors')->error('Error while resending sms to person request', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            $this->flashGeneralError();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when resending sms to person');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when resending sms to person');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
 
         if ($response->getData()['status'] === 'new') {
-            $this->dispatch('flashMessage', [
-                'message' => __('SMS успішно надіслано!'),
-                'type' => 'success'
-            ]);
-
+            session()?->flash('success', 'SMS успішно надіслано!');
             $this->resendCooldown = 60;
         }
     }
@@ -520,10 +507,7 @@ class PatientComponent extends Component
     public function sign(): void
     {
         if (Auth::user()?->cannot('create', PersonRequest::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення підписаного пацієнта.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'У вас немає дозволу на створення підписаного пацієнта.');
 
             return;
         }
@@ -531,16 +515,18 @@ class PatientComponent extends Component
         try {
             $approvedPersonRequest = EHealth::personRequest()->getById($this->form->patient['id']);
             $personRequestData = $approvedPersonRequest->getData();
-        } catch (ConnectionException $e) {
-            Log::channel('e_health_errors')->error('Error while getting person request by ID', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            $this->flashGeneralError();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when getting person request by ID');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting person request by ID');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
+
         $personRequestData['patient_signed'] = $this->isInformed;
 
         // Encrypt data
@@ -566,13 +552,14 @@ class PatientComponent extends Component
                 ->signed($this->form->patient['id'], $signRequestData);
             $responseData = $signResponse->getData();
             $responseStatus = $signResponse->getStatusCode();
-        } catch (ConnectionException $e) {
-            Log::channel('e_health_errors')->error('Error while getting person request by ID', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            $this->flashGeneralError();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when sign person request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when sign person request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -587,13 +574,9 @@ class PatientComponent extends Component
                 );
                 PersonRepository::updatePersonRequestStatusByUuid($responseData);
                 PersonRepository::createRelation($responseData);
-            } catch (Exception|Throwable $e) {
-                Log::channel('db_errors')->error('Failed to finalize person creation', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
-                $this->flashGeneralError();
+            } catch (Exception|Throwable $exception) {
+                $this->logDatabaseErrors($exception, $exception->getMessage());
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                 return;
             }
@@ -651,7 +634,7 @@ class PatientComponent extends Component
      * Get Certificate Authority from API.
      *
      * @return array
-     * @throws \App\Classes\Cipher\Exceptions\ApiException
+     * @throws ApiException
      */
     private function setCertificateAuthority(): array
     {
@@ -711,13 +694,10 @@ class PatientComponent extends Component
         try {
             $this->form->rulesForModelValidate($models);
             $this->form->validateBeforeSendApi();
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -730,10 +710,7 @@ class PatientComponent extends Component
     private function approvePersonRequest(array $requestData = []): void
     {
         if (Auth::user()?->cannot('create', PersonRequest::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на підтвердження пацієнта.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -742,13 +719,14 @@ class PatientComponent extends Component
             $response = EHealth::personRequest()->approve($this->form->patient['id'], $requestData);
             $responseData = $response->getData();
             $responseStatus = $response->getStatusCode();
-        } catch (ConnectionException $e) {
-            Log::channel('e_health_errors')->error('Error while approving person request', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            $this->flashGeneralError();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when approving person request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when approving person request');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -756,13 +734,9 @@ class PatientComponent extends Component
         if ($responseStatus === 200) {
             try {
                 PersonRepository::updatePersonRequestStatusByUuid($responseData);
-            } catch (Exception $e) {
-                Log::channel('db_errors')->error('Failed to update person request status', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
-                $this->flashGeneralError();
+            } catch (Exception $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to update person request status');
+                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                 return;
             }

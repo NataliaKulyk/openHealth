@@ -46,7 +46,9 @@ return new class extends Migration
 
         Schema::create('clinical_impression_supporting_info', static function (Blueprint $table) {
             $table->id();
-            $table->foreignId('clinical_impression_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('clinical_impression_id')
+                ->constrained('clinical_impressions', 'id', 'fk_cisi_clinical_impression_id')
+                ->cascadeOnDelete();
             $table->foreignId('identifier_id')->constrained('identifiers')->cascadeOnDelete();
             $table->timestamps();
         });

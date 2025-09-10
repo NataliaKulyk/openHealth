@@ -17,7 +17,6 @@ class PatientForm extends Form
         return [
             'action' => ['required', 'string', 'in:DEACTIVATE'],
             'authenticationMethod' => ['required', 'array'],
-            'authenticationMethod.type' => ['required', 'string', 'in:THIRD_PERSON'],
             'authenticationMethod.id' => ['required', 'uuid']
         ];
     }

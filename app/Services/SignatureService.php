@@ -31,6 +31,7 @@ class SignatureService
         ?UploadedFile $keyFile,
         string $taxId
     ): string|array {
+
         try {
             $base64FileContent = $this->getBase64KepFileContent($keyFile);
 

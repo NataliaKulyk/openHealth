@@ -2,9 +2,11 @@
 
 namespace App\Classes\eHealth\Api;
 
+use App\Models\Relations\Party;
 use App\Models\User;
 use App\Models\LegalEntity;
 use App\Classes\eHealth\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Classes\eHealth\Exceptions\ApiException;
 
@@ -100,47 +102,43 @@ class EmployeeApi
     }
 
     /**
-     * Get all Employee data list for specified LegalEntity (by it's UUID)
+     * Get a list of employees from E-Health with pagination and optional filters.
      *
-     * @param string $legalEntityUuid
+     * @param array $filters An associative array of query parameters to filter the results.
      *
      * @return array
+     * @throws ApiException
      */
-    public static function getEmployeesList(string $legalEntityUuid):array
+    public static function getEmployeesList(array $filters): array
     {
-        $baseUrl = config('ehealth.api.domain');
-
-        $page = 1;
-        $perPage = 150;
         $employees = [];
-        $total_pages = 1;
+        $page = 1;
+        $perPage = config('ehealth.api.page_size', 150);
+        $totalPages = 1;
 
-        while ($total_pages - $page >= 0) {
-            // Base query parameters
-            $queryParams = [
-                'legal_entity_id' => $legalEntityUuid,
-                'page'          => $page,
-                'page_size'      => $perPage
-            ];
+        while ($page <= $totalPages) {
+            $queryParams = array_merge($filters, [
+                'page' => $page,
+                'page_size' => $perPage
+            ]);
 
-            // Build the full URL with query parameters
-            $url = $baseUrl . '/api/employees?' . http_build_query($queryParams);
+            $response = new Request('GET', self::URL, $queryParams)->sendRequest();
 
-            $response = new Request('GET', $url, [])->sendRequest();
+            if (isset($response['data']) && is_array($response['data'])) {
+                array_push($employees, ...$response['data']);
+            }
 
-            $employees = array_merge($employees, $response['data']);
-
-            $total_pages = $response['paging']['total_pages'];
-
+            $totalPages = $response['paging']['total_pages'] ?? 1;
             $page++;
         }
 
-        // Here is moving the OWNER data to the top of the array. This need for properly creating Legal Entity employees workflow.
         if (count($employees) > 1) {
-            $ownerIndex = array_search('OWNER', array_column($employees, 'employee_type'));
-            $tmp = $employees[$ownerIndex];
-            $employees[$ownerIndex] = $employees[0];
-            $employees[0] = $tmp;
+            $ownerIndex = array_search('OWNER', array_column($employees, 'employee_type'), true);
+            if ($ownerIndex !== false) {
+                $tmp = $employees[$ownerIndex];
+                $employees[$ownerIndex] = $employees[0];
+                $employees[0] = $tmp;
+            }
         }
 
         return $employees;
@@ -152,6 +150,7 @@ class EmployeeApi
      * @param string $employeeId
      *
      * @return array
+     * @throws ApiException
      */
     public static function getEmployeeData(string $employeeId): array
     {

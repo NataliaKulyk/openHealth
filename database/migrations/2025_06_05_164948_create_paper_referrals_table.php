@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('requester_employee_name');
             $table->string('service_request_date');
             $table->text('note');
-            $table->morphs('paper_referralable');
+            $table->morphs('paper_referralable', 'ppr_morph');
             $table->timestamps();
         });
     }

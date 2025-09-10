@@ -2,39 +2,29 @@
 
 namespace App\Repositories;
 
-use App\Models\Relations\Speciality;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class SpecialityRepository
 {
     /**
-     * @param object $model
-     * @param array $specialities
+     *
+     * @param Model      $model
+     * @param array|null $specialitiesData
      *
      * @return void
+     * @throws \Throwable
      */
-    public function addSpecialities(object $model, array $specialities): void
+    public function syncSpecialities(Model $model, ?array $specialitiesData): void
     {
-        if (empty($specialities)) {
-            return;
-        }
+        $specialitiesData = $specialitiesData ?? [];
 
-        foreach ($specialities as $specialityData) {
-            $speciality = Speciality::where(
-                [
-                    'specialityable_type' => get_class($model),
-                    'specialityable_id'   => $model->id
-                ]
-            )->first();
+        DB::transaction(function () use ($model, $specialitiesData) {
+            $model->specialities()->delete();
 
-            if (!$speciality) {
-                $speciality = new Speciality();
-                $speciality->specialityable_type = get_class($model);
-                $speciality->specialityable_id = $model->id;
+            if (!empty($specialitiesData)) {
+                $model->specialities()->createMany($specialitiesData);
             }
-
-            $speciality->fill($specialityData);
-
-            $model->specialities()->save($speciality);
-        }
+        });
     }
 }

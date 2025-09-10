@@ -5,6 +5,7 @@
     $hasLicenseActiveFromDateError = $errors->has('legalEntityForm.license.activeFromDate');
     $hasLicenseExpirationDateError = $errors->has('legalEntityForm.license.expiryDate');
     $hasLicenseOrderNumberError = $errors->has('legalEntityForm.license.orderNo');
+    $hasLicenseNumberError = $errors->has('legalEntityForm.license.licenseNumber');
 @endphp
 
 <fieldset
@@ -62,9 +63,16 @@
                 id="licenseNumber"
                 wire:model="legalEntityForm.license.licenseNumber"
                 class="input peer"
+                aria-describedby="{{ $hasLicenseNumberError ? 'licenseNumberErrorHelp' : '' }}"
                 :class="isDisabled ? 'text-gray-400 border-gray-200 dark:text-gray-500' : 'text-gray-900 border-gray-300'"
                 :disabled="isDisabled"
             />
+
+            @if($hasLicenseNumberError)
+                <p id="licenseNumberErrorHelp" class="text-error">
+                    {{ $errors->first('legalEntityForm.license.licenseNumber') }}
+                </p>
+            @endif
 
             <label for="licenseNumber" class="label z-10">
                 {{ __('forms.license.number') }}
