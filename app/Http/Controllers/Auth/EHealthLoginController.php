@@ -184,7 +184,6 @@ class EHealthLoginController extends Controller
 
         if (!$user) {
             $party = Party::where('email', $ehealthEmail)->first();
-
             $password = Str::random(8);
 
             // When the user try login to eHealth directly without having an local user account

@@ -338,8 +338,8 @@ class EmployeeRepository
         // If the model doesn't have a party and party doesn't exist, create new one. It's a brand-new person
         if (!$partyByUuid && !$model->party) {
             $newParty = new Party($party);
-            $model->party()->associate($newParty);
             $newParty->save();
+            $model->party()->associate($newParty)->save();
 
             // If the model doesn't have a related party but the party already exists, update it and relate - the scenario of a new employee with already created person/party
         } else if ($partyByUuid && !$model->party) {
