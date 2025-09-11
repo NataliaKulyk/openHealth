@@ -183,15 +183,21 @@ class EHealthLoginController extends Controller
         $user = User::where('email', $ehealthEmail)->first();
 
         if (!$user) {
+            /*
+            * Here concerns the case when HR create a new employee who is not yet in the system
+            * In this case the email is verified by eHealth and party also has an email
+            * but the user does not exist in our system
+            * Meanwhile the user censidered as fully verified and we create a local user account for him and send credentials by email
+            */
             $party = Party::where('email', $ehealthEmail)->first();
+
             $password = Str::random(8);
 
             // When the user try login to eHealth directly without having an local user account
-            // It only concerns the case when HR create a new employee who is not yet in the system
-            $user = User::create([
+            $user = User::forceCreate([
                     'email'    => $ehealthEmail,
                     'password' => Hash::make($password),
-                    'email_verified_at' => now()->format('Y-m-d')
+                    'email_verified_at' => now()
             ]);
 
             Mail::to($user->email)->send(new UserCredentialsMail($ehealthEmail, $password));
