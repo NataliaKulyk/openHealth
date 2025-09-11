@@ -116,7 +116,7 @@ class ProcedureComponent extends Component
         try {
             $this->setCertificateAuthority();
         } catch (CipherApiException) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -158,7 +158,7 @@ class ProcedureComponent extends Component
             Log::channel('e_health_errors')
                 ->error('Error while searching for procedure reasons in Procedure Component');
 
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -193,7 +193,7 @@ class ProcedureComponent extends Component
             $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: legalEntity()->uuid);
             $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params)['data'];
         } catch (eHealthApiException) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 

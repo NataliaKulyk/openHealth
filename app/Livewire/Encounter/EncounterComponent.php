@@ -11,6 +11,7 @@ use App\Classes\Cipher\Traits\Cipher;
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Api\ServiceRequestApi;
 use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
+use App\Models\Division;
 use App\Models\Employee\Employee;
 use App\Models\Person\Person;
 use App\Traits\FormTrait;
@@ -117,12 +118,6 @@ class EncounterComponent extends Component
      * @var string
      */
     protected string $role;
-
-    /**
-     * Data about auth employee.
-     * @var Employee
-     */
-    protected Employee $authEmployee;
 
     /**
      * Found the ICD-10 code and description.
@@ -297,8 +292,7 @@ class EncounterComponent extends Component
             throw new RuntimeException('Authenticated user not found');
         }
 
-        $employees = Employee::withoutEagerLoads()
-            ->select('uuid', 'party_id')
+        $employees = Employee::select('uuid', 'party_id')
             ->with('party:id,last_name,first_name,second_name')
             ->where('legal_entity_id', legalEntity()->id)
             ->get();
@@ -314,8 +308,7 @@ class EncounterComponent extends Component
         $this->role = $authUser->roles->first()->name;
         $this->divisions = legalEntity()->divisions->toArray();
 
-        $this->authEmployee = $authUser->getEncounterWriterEmployee();
-        $this->employeeFullName = $this->authEmployee->fullName;
+        $this->employeeFullName = $authUser->getEncounterWriterEmployee()->fullName;
 
         $this->observationCodeMap = config('ehealth.observation_category_codes');
         $this->observationValueMap = config('ehealth.observation_code_values');
@@ -330,7 +323,7 @@ class EncounterComponent extends Component
                 ->getLargeDictionary('eHealth/assistive_products', false)
                 ->getFlattenedChildValues();
         } catch (eHealthApiException) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
 
         $this->dictionaries['custom/services'] = dictionary()->getServiceDictionary();
@@ -354,7 +347,7 @@ class EncounterComponent extends Component
         try {
             $this->setCertificateAuthority();
         } catch (CipherApiException) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -389,7 +382,7 @@ class EncounterComponent extends Component
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -415,19 +408,23 @@ class EncounterComponent extends Component
         );
 
         try {
-            $conditions = collect(PatientApi::getConditionsInEpisodeContext(
-                $this->patientUuid,
-                $episodeId,
-                $buildGetConditions
-            )['data'])->map(static function (array $item) {
+            $conditions = collect(
+                PatientApi::getConditionsInEpisodeContext(
+                    $this->patientUuid,
+                    $episodeId,
+                    $buildGetConditions
+                )['data']
+            )->map(static function (array $item) {
                 return array_merge($item, ['type' => 'condition']);
             });
 
-            $observations = collect(PatientApi::getObservationsInEpisodeContext(
-                $this->patientUuid,
-                $episodeId,
-                $buildGetObservations
-            )['data'])->map(static function (array $item) {
+            $observations = collect(
+                PatientApi::getObservationsInEpisodeContext(
+                    $this->patientUuid,
+                    $episodeId,
+                    $buildGetObservations
+                )['data']
+            )->map(static function (array $item) {
                 return array_merge($item, ['type' => 'observation']);
             });
 
@@ -436,7 +433,7 @@ class EncounterComponent extends Component
             Log::channel('e_health_errors')
                 ->error('Error while searching for conditions and observations in Encounter Component');
 
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -468,7 +465,7 @@ class EncounterComponent extends Component
             Log::channel('e_health_errors')
                 ->error('Error while searching for clinical impressions in Encounter Component');
 
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -498,7 +495,7 @@ class EncounterComponent extends Component
             Log::channel('e_health_errors')
                 ->error('Error while searching for complication details in Encounter Component');
 
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -527,7 +524,7 @@ class EncounterComponent extends Component
             Log::channel('e_health_errors')
                 ->error('Error while searching for problems in Encounter Component');
 
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -593,7 +590,7 @@ class EncounterComponent extends Component
                     'episodeId' => $episodeId
                 ]);
 
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -684,7 +681,7 @@ class EncounterComponent extends Component
             $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: legalEntity()->uuid);
             $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params)['data'];
         } catch (eHealthApiException) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 

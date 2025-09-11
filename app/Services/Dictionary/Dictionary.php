@@ -18,6 +18,7 @@ class Dictionary extends Collection
     public function setValue(string $key, array $value): self
     {
         $this->items[$key] = collect($value);
+
         return $this;
     }
 
@@ -134,7 +135,7 @@ class Dictionary extends Collection
                 return $result;
             };
 
-            return collect($item)->flatMap(fn ($value) => $collectDescriptions([$value]));
+            return collect($item)->flatMap(fn (array $value) => $collectDescriptions([$value]));
         })
             ->toArray();
     }

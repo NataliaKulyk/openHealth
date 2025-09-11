@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
-
 @import "tailwindcss";
 @import "./svg-icons.css";
 
@@ -170,6 +169,7 @@ input:-webkit-autofill:active {
 .input-select {
     @apply input dark:border-gray-700 dark:focus:border-blue-500 dark:bg-gray-800
 }
+
 .input-select option {
     @apply py-4 px-6 text-lg leading-relaxed
 }
@@ -184,16 +184,16 @@ input:-webkit-autofill:active {
 
 /* Fixes the bug with autofill and floating label, see Vitaliy-1/openHealth#219 */
 input:-webkit-autofill ~ .label {
-    --tw-translate-y: calc(var(--spacing)*-6);
-    translate: var(--tw-translate-x)var(--tw-translate-y);
+    --tw-translate-y: calc(var(--spacing) * -6);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
     --tw-scale-x: 75%;
     --tw-scale-y: 75%;
     --tw-scale-z: 75%;
-    scale: var(--tw-scale-x)var(--tw-scale-y);
+    scale: var(--tw-scale-x) var(--tw-scale-y);
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
     color: var(--color-blue-600);
-    inset-inline-start: calc(var(--spacing)*0);
+    inset-inline-start: calc(var(--spacing) * 0);
 }
 
 .text-error {
@@ -560,9 +560,4 @@ input:-webkit-autofill {
     @-moz-document url-prefix() {
         line-height: 1;
     }
-
-
-    /* .pagination {
-        @apply bottom-0 right-0 items-center w-full py-[35px] px-10 bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700
-    } */
 }

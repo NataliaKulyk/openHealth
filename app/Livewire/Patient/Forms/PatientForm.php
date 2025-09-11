@@ -457,7 +457,7 @@ class PatientForm extends Form
         // Check if person age > prm.global_parameters.no_self_auth_age check existence SELF_AUTH_AGE_DOCUMENT_TYPES
         if ($personAge > self::NO_SELF_AUTH_AGE) {
             $submittedTypes = array_column($this->documents, 'type');
-            $hasSelfAuthType = (bool) array_intersect($submittedTypes, $selfAuthAgeDocumentTypes);
+            $hasSelfAuthType = (bool)array_intersect($submittedTypes, $selfAuthAgeDocumentTypes);
 
             if (!$hasSelfAuthType) {
                 $allowedTypesList = implode(', ', $selfAuthAgeDocumentTypes);

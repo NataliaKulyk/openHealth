@@ -60,6 +60,7 @@ class LicenseIndex extends Component
         $userId = Auth::id();
         $type = $this->selectedLicenseTypeOption;
         $status = $this->selectedStatusOption;
+
         return self::CACHE_PREFIX . "-{$userId}-{$type}-{$status}";
     }
 
@@ -77,20 +78,20 @@ class LicenseIndex extends Component
         $legal_entity_id = legalEntity()->id;
 
         $query = DB::table('licenses')
-                // ->join('users', 'licenses.legal_entity_id', '=', 'users.legal_entity_id')
-                // ->where('users.legal_entity_id', $legal_entity_id)
-                ->where('legal_entity_id', $legal_entity_id)
-                ->select(
-                    'licenses.id as id',
-                    'licenses.type',
-                    'licenses.issued_date',
-                    'licenses.active_from_date',
-                    'licenses.order_no',
-                    'licenses.license_number',
-                    'licenses.expiry_date',
-                    'licenses.what_licensed',
-                    'licenses.is_primary'
-                );
+            // ->join('users', 'licenses.legal_entity_id', '=', 'users.legal_entity_id')
+            // ->where('users.legal_entity_id', $legal_entity_id)
+            ->where('legal_entity_id', $legal_entity_id)
+            ->select(
+                'licenses.id as id',
+                'licenses.type',
+                'licenses.issued_date',
+                'licenses.active_from_date',
+                'licenses.order_no',
+                'licenses.license_number',
+                'licenses.expiry_date',
+                'licenses.what_licensed',
+                'licenses.is_primary'
+            );
 
         if ($this->selectedStatusOption === 'is_primary') {
             $query->where('licenses.is_primary', true);
@@ -182,8 +183,9 @@ class LicenseIndex extends Component
         try {
             License::upsert($licences, uniqueBy: ['uuid'], update: new License()->getFillable());
         } catch (Exception $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
             Log::error('Error while synchronizing licenses with eHealth: ' . $e->getMessage());
+
             return;
         }
 
