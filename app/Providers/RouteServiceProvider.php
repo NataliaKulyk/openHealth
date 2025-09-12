@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Models\LegalEntity;
@@ -18,7 +20,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/dashboard';
+    public const string HOME = '/dashboard';
 
     /**
      * Define your route model bindings, pattern filters, and other route configuration.
@@ -30,6 +32,14 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
+
+//        RateLimiter::for('ehealth-employee-get', static function ($job) {
+//            return [
+//                Limit::perMinute(20),
+//
+//                Limit::perSecond(1)->by($job->employee->legal_entity_id ?? null),
+//            ];
+//        });
 
         $this->routes(function () {
             Route::middleware('api')

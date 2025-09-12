@@ -274,15 +274,16 @@ class EmployeeIndex extends EmployeeComponent
         })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
             $message = __('employees.sync.failed');
             $user->notify(new EmployeeSyncCompleted($message, 'error'));
-
             Log::error('Employee sync batch failed.', [
                 'batch_id' => $batch->id,
                 'exception' => $e
             ]);
-        })->name('Employee Full Sync')->dispatch();
+        })
+            ->allowFailures()
+            ->name('Employee Full Sync')
+            ->dispatch();
 
         $this->batchId = $batch->id;
-
         $this->dispatch('flashMessage', [
             'message' => __('employees.sync.started'),
             'type' => 'success'

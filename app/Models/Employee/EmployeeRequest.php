@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models\Employee;
 
 use App\Enums\Employee\RequestStatus;
@@ -50,10 +52,10 @@ class EmployeeRequest extends BaseEmployee
      * Extends the casts from the parent BaseEmployee class.
      */
     protected $casts = [
-        'status'       => RequestStatus::class,
-        'start_date'   => 'date:Y-m-d',
-        'end_date'     => 'date:Y-m-d',
-        'applied_at'   => 'datetime',
+        'status' => RequestStatus::class,
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
+        'applied_at' => 'datetime',
     ];
 
     // --- REQUEST-SPECIFIC RELATIONS ---
@@ -71,9 +73,9 @@ class EmployeeRequest extends BaseEmployee
         return $this->morphOne(Revision::class, 'revisionable');
     }
 
-    public function scienceDegrees(): MorphMany
+    public function scienceDegree(): MorphOne
     {
-        return $this->morphMany(ScienceDegree::class, 'science_degreeable');
+        return $this->morphOne(ScienceDegree::class, 'science_degreeable');
     }
 
     public function educations(): MorphMany
@@ -97,7 +99,8 @@ class EmployeeRequest extends BaseEmployee
     {
         $query->where('user_id', $userId)
             ->where('legal_entity_uuid', $legalEntityUUID)
-            ->when($isInclude,
+            ->when(
+                $isInclude,
                 fn ($q) => $q->whereIn('employee_type', $roles),
                 fn ($q) => $q->whereNotIn('employee_type', $roles)
             );

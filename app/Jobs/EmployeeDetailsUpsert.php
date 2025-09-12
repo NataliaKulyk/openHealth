@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\Employee\Employee;
@@ -9,10 +11,13 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use App\Classes\eHealth\EHealth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class EmployeeDetailsUpsert implements ShouldQueue
 {
@@ -25,31 +30,55 @@ class EmployeeDetailsUpsert implements ShouldQueue
         public Employee $employee,
         public User $user,
         protected string $token
-    ) {}
-
-    public function middleware(): array
-    {
-        return [new RateLimited('ehealth-employee-get')];
+    ) {
     }
 
+
+    /**
+     * @throws Throwable
+     * @throws ConnectionException
+     */
     public function handle(): void
     {
         if ($this->batch() && $this->batch()->cancelled()) {
             return;
         }
 
-        $response = EHealth::employee()->withToken($this->token)->getDetails($this->employee->uuid, groupByEntities: true);
+        sleep(1);
 
-        [
-            'party' => $party,
-            'documents' => $documents,
-            'phones' => $phones,
-            'educations' => $educations,
-            'specialities' => $specialities,
-            'qualifications' => $qualifications,
-            'scienceDegrees' => $scienceDegrees,
-        ] = $response->validate();
+        try {
+            $response = EHealth::employee()->withToken($this->token)->getDetails($this->employee->uuid, groupByEntities: true);
+            $validatedData = $response->validate();
 
-        Repository::employee()->updateDetails($this->employee, $party, $documents, $phones, $educations, $specialities, $qualifications, $scienceDegrees);
+            Repository::employee()->updateDetails(
+                $this->employee,
+                $validatedData['party'] ?? [],
+                $validatedData['documents'] ?? [],
+                $validatedData['phones'] ?? [],
+                $validatedData['educations'] ?? null,
+                $validatedData['specialities'] ?? null,
+                $validatedData['qualifications'] ?? null,
+                $validatedData['scienceDegree'] ?? null
+            );
+
+        } catch (Throwable $e) {
+
+            if ($e instanceof ValidationException) {
+                Log::error('E-Health data validation failed permanently for employee.', [
+                    'employee_uuid' => $this->employee->uuid,
+                    'errors' => $e->errors(),
+                ]);
+                $this->fail($e);
+                return;
+            }
+
+            Log::warning('A throwable occurred in EmployeeDetailsUpsert job. Will attempt to retry.', [
+                'employee_uuid' => $this->employee->uuid,
+                'attempt' => $this->attempts(),
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 }
