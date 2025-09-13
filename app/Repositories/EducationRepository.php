@@ -3,13 +3,14 @@
 namespace App\Repositories;
 
 use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeRequest;
 use App\Models\Relations\Education;
 use DB;
 
 class EducationRepository
 {
     // Перейменуй `addEducations` на `syncEducations` для консистентності
-    public function syncEducations(Employee $employee, ?array $educationsData): void
+    public function syncEducations(Employee|EmployeeRequest $employee, ?array $educationsData): void
     {
         $educationsData = $educationsData ?? [];
 

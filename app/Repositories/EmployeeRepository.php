@@ -147,16 +147,16 @@ class EmployeeRepository
                 $this->phoneRepository->syncPhones($party, $phonesData ?? []);
 
                 // Add educations
-                $this->educationRepository->addEducations($employee, $doctorData['educations'] ?? []);
+                $this->educationRepository->syncEducations($employee, $doctorData['educations'] ?? []);
 
                 // Add science degrees
-                $this->scienceDegreeRepository->addScienceDegrees($employee, $doctorData['science_degree'] ?? []);
+                $this->scienceDegreeRepository->syncScienceDegrees($employee, $doctorData['science_degree'] ?? []);
 
                 // Add qualifications
-                $this->qualificationRepository->addQualifications($employee, $doctorData['qualifications'] ?? []);
+                $this->qualificationRepository->syncQualifications($employee, $doctorData['qualifications'] ?? []);
 
                 // Add specialities
-                $this->specialityRepository->addSpecialities($employee, $doctorData['specialities'] ?? []);
+                $this->specialityRepository->syncSpecialities($employee, $doctorData['specialities'] ?? []);
             }
 
             $party->employees()->save($employee);

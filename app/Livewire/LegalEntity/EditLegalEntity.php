@@ -103,7 +103,7 @@ class EditLegalEntity extends LegalEntity
      */
     protected function getAccreditationForm(): void
     {
-        if (!empty($this->legalEntityForm->accreditation)) {
+        if (!empty($this->legalEntityForm->accreditation) && $this->legalEntityForm->accreditation['category'] !== null) {
             $this->legalEntityForm->accreditationShow = true;
         }
     }
