@@ -44,7 +44,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
         try {
             $this->storeValidatedData($formattedData);
         } catch (Exception|Throwable) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
             Log::channel('db_errors')->error('Error while saving diagnostic report');
 
             return;
@@ -78,7 +78,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
         try {
             $this->storeValidatedData($formattedData);
         } catch (Exception|Throwable) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
             Log::channel('db_errors')->error('Error while signing diagnostic report');
 
             return;

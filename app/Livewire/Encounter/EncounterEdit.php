@@ -73,11 +73,8 @@ class EncounterEdit extends EncounterComponent
             $this->form->validateForm('episode', $this->form->episode);
             $this->form->validateForm('conditions', $this->form->conditions);
             $this->form->validateForm('immunizations', $this->form->immunizations);
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+        } catch (ValidationException $exception) {
+            session()?->flash('error', $exception->validator->errors()->first());
 
             return;
         }
@@ -112,7 +109,7 @@ class EncounterEdit extends EncounterComponent
 
             return Repository::episode()->get($this->encounterId);
         } catch (ApiException|Throwable) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return [];
         }

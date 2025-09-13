@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Livewire\Declaration\DeclarationEdit;
 use App\Livewire\Declaration\DeclarationView;
 use App\Livewire\Division\DivisionView;
+use App\Livewire\Patient\PatientCreate;
+use App\Livewire\Patient\PatientEdit;
 use App\Models\License;
 use App\Models\LegalEntity;
 use App\Livewire\Auth\Login;
@@ -27,12 +29,13 @@ use App\Livewire\Employee\EmployeeRequestShow;
 use App\Livewire\License\LicenseEdit;
 use App\Livewire\License\LicenseView;
 use App\Livewire\License\LicenseCreate;
-use App\Livewire\Patient\PatientComponent;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Procedure\ProcedureCreate;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Procedure;
+use App\Models\Person\Person;
+use App\Models\Person\PersonRequest;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -84,8 +87,8 @@ Route::middleware('guest')->group(function () {
     Route::get('verify-email', VerifyEmail::class)->name('verification.notice');
 
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-            ->middleware(['signed', 'throttle:6,1'])
-            ->name('verification.verify');
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
 });
 
 Route::post('logout', Logout::class)->name('logout');
@@ -175,8 +178,15 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
         Route::group(['middleware' => ['role:OWNER|ADMIN|DOCTOR']], static function () {
             Route::prefix('patient')->group(static function () {
-                Route::get('/', PatientIndex::class)->name('patient.index');
-                Route::get('/create/{id?}', PatientComponent::class)->name('patient.form');
+                Route::get('/', PatientIndex::class)
+                    ->can('viewAny', Person::class)
+                    ->name('patient.index');
+                Route::get('/create', PatientCreate::class)
+                    ->can('create', PersonRequest::class)
+                    ->name('patient.create');
+                Route::get('/edit/{id}', PatientEdit::class)
+                    ->can('create', PersonRequest::class)
+                    ->name('patient.edit');
 
                 Route::get('/declaration/{declaration}', DeclarationView::class)
                     ->can('view', 'declaration')

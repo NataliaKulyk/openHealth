@@ -11,6 +11,7 @@
                 "=>": "single_space"
             }
         },
+        "method_chaining_indentation": true,
         "blank_line_before_statement": {
             "statements": ["return"]
         },

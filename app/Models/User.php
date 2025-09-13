@@ -150,7 +150,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user has access to the Legal Entity with specified UUID.
      *
-     * @param string $legalEntityUuid
+     * @param  string  $legalEntityUuid
      * @return bool
      */
     public function hasAccessToLegalEntityByUuid(string $legalEntityUuid): bool
@@ -190,13 +190,23 @@ class User extends Authenticatable implements MustVerifyEmail
 
         switch ($legalEntity->type) {
             case LegalEntity::TYPE_PRIMARY_CARE:
-                $exclude = array_merge($exclude, ['contract_request:sign', 'contract_request:terminate', 'contract:write', 'contract_request:approve', 'contract_request:create']);
+                $exclude = array_merge(
+                    $exclude,
+                    [
+                        'contract_request:sign',
+                        'contract_request:terminate',
+                        'contract:write',
+                        'contract_request:approve',
+                        'contract_request:create'
+                    ]
+                );
                 break;
         }
 
         return $scopes->filter(
-            fn (Permission $permission) =>
-            !collect($exclude)->some(fn ($excluded) => Str::startsWith($permission->name, $excluded))
+            fn (Permission $permission) => !collect($exclude)->some(
+                fn ($excluded) => Str::startsWith($permission->name, $excluded)
+            )
         );
     }
 
@@ -272,13 +282,18 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get employee by priority with specific write permission. Example: procedure:write.
      *
-     * @param  array  $priorityRoles Ordered role from most valuable to least
+     * @param  array  $priorityRoles  Ordered role from most valuable to least
      * @return Employee|null
      */
     protected function getWriterEmployeeByRolePriority(array $priorityRoles): ?Employee
     {
-        return collect($priorityRoles)
-            ->map(fn (string $type) => $this->employees->firstWhere('employee_type', $type))
-            ->first();
+        $employees = $this->employees()
+            ->with('party')
+            ->whereIn('employee_type', $priorityRoles)
+            ->get();
+
+        return $employees->sortBy(
+            fn (Employee $employee) => array_search($employee->employee_type, $priorityRoles, true)
+        )->first();
     }
 }

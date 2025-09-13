@@ -45,7 +45,7 @@ class ProcedureCreate extends ProcedureComponent
         try {
             $this->storeValidatedData($formattedData);
         } catch (Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::channel('db_errors')->error('Error saving procedure', [
                 'error' => $e->getMessage(),
@@ -86,7 +86,7 @@ class ProcedureCreate extends ProcedureComponent
             $base64EncryptedData = $this->sendEncryptedData(Arr::toSnakeCase($formattedData), Auth::user()->party->taxId);
             PatientApi::submitProcedurePackage($this->patientUuid, ['signed_data' => $base64EncryptedData]);
         } catch (Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::channel('db_errors')->error('Error saving procedure', [
                 'context' => __CLASS__ . '::' . __FUNCTION__,

@@ -206,11 +206,7 @@
 
                                     {{-- The date when was issued --}}
                                     <div class="relative">
-                                        <svg width="20" height="20"
-                                             class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none"
-                                        >
-                                            <use xlink:href="#svg-calendar-week"></use>
-                                        </svg>
+                                        @icon('calendar-month', 'w-5 h-5 svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none')
 
                                         <label for="documentIssuedAt" class="label-modal">
                                             {{ __('forms.document_issued_at') }}
@@ -229,11 +225,7 @@
 
                                     {{-- The date when expired --}}
                                     <div class="relative">
-                                        <svg width="20" height="20"
-                                             class="svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none"
-                                        >
-                                            <use xlink:href="#svg-calendar-week"></use>
-                                        </svg>
+                                        @icon('calendar-month', 'w-5 h-5 svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none')
 
                                         <label for="documentExpirationDate" class="label-modal">
                                             {{ __('forms.valid_until') }}

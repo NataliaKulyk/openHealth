@@ -160,23 +160,6 @@ if (!function_exists('convertToISO8601')) {
     }
 }
 
-if (!function_exists('hisBirthDate')) {
-    function humanFormatDate($data = ''): string
-    {
-        // Check if 'person' and 'birth_date' exist
-        if (isset($data) && !empty($data)) {
-            // Use Carbon to create a date object from the string
-            $date = \Illuminate\Support\Carbon::parse($data);
-
-            // Format the date and return it
-            return $date->translatedFormat('j F Y');
-        }
-
-        // Return an empty string if the birth_date is missing or invalid
-        return '';
-    }
-}
-
 if (!function_exists('schemaService')) {
     function schemaService(): SchemaService
     {

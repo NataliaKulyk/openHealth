@@ -19,7 +19,8 @@ class DocumentRepository
     {
         if (!empty($documents)) {
             foreach ($documents as $documentData) {
-                $document = Document::updateOrCreate([
+                $document = Document::updateOrCreate(
+                    [
                     'documentable_type' => get_class($model),
                     'documentable_id' => $model->id,
                     'type' => $documentData['type']
@@ -37,7 +38,6 @@ class DocumentRepository
      *
      * @param  object  $model  The parent model to associate the documents with.
      * @param  array  $documents  An array of document data to be added or updated.
-     *
      * @return void
      */
     public function syncDocuments(object $model, array $documents): void
@@ -48,13 +48,14 @@ class DocumentRepository
 
         //Remove all documents records belongs to the $model
         Document::where([
-                    'documentable_type' => get_class($model),
-                    'documentable_id' => $model->id
-                ])
-                ->delete();
+            'documentable_type' => get_class($model),
+            'documentable_id' => $model->id
+        ])
+            ->delete();
 
         foreach ($documents as $documentData) {
-            $document = Document::updateOrCreate([
+            $document = Document::updateOrCreate(
+                [
                 'documentable_type' => get_class($model),
                 'documentable_id' => $model->id,
                 'type' => $documentData['type']

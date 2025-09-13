@@ -29,7 +29,10 @@ class EncounterCreate extends EncounterComponent
     public function mount(LegalEntity $legalEntity, int $patientId): void
     {
         $this->initializeComponent($patientId);
-        $this->setEmployeePartyData();
+
+        $this->form->encounter['performer']['identifier']['value'] = Auth::user()->uuid;
+        $this->form->episode['careManager']['identifier']['value'] = Auth::user()->uuid;
+
         $this->setDefaultDate();
     }
 
@@ -42,10 +45,7 @@ class EncounterCreate extends EncounterComponent
     public function save(): void
     {
         if (Auth::user()?->cannot('create', Encounter::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення взаємодії.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'У вас немає дозволу на створення взаємодії.');
 
             return;
         }
@@ -65,10 +65,7 @@ class EncounterCreate extends EncounterComponent
     public function sign(): void
     {
         if (Auth::user()?->cannot('create', Encounter::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення взаємодії.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'У вас немає дозволу на створення взаємодії.');
 
             return;
         }
@@ -100,23 +97,10 @@ class EncounterCreate extends EncounterComponent
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
-    }
-
-    /**
-     * Set required employee party data.
-     *
-     * @return void
-     */
-    protected function setEmployeePartyData(): void
-    {
-        $employeeUuid = $this->authEmployee->uuid;
-
-        $this->form->encounter['performer']['identifier']['value'] = $employeeUuid;
-        $this->form->episode['careManager']['identifier']['value'] = $employeeUuid;
     }
 
     /**
@@ -226,10 +210,7 @@ class EncounterCreate extends EncounterComponent
                 }
             }
         } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+            session()?->flash('error', $e->validator->errors()->first());
 
             return;
         }
@@ -291,7 +272,7 @@ class EncounterCreate extends EncounterComponent
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -308,10 +289,7 @@ class EncounterCreate extends EncounterComponent
         try {
             PatientApi::createEpisode($this->patientUuid, Arr::toSnakeCase($formattedEpisode));
         } catch (ApiException) {
-            $this->dispatch('flashMessage', [
-                'message' => __('Виникла помилка при створенні епізоду. Зверніться до адміністратора.'),
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'Виникла помилка при створенні епізоду. Зверніться до адміністратора.');
         }
     }
 
@@ -382,7 +360,7 @@ class EncounterCreate extends EncounterComponent
                 Repository::episode()->store(Arr::toCamelCase($episodeData));
             }
         } catch (ApiException|Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::error('Failed while ensuring episode existence', [
                 'error' => $e->getMessage(),
@@ -411,7 +389,7 @@ class EncounterCreate extends EncounterComponent
                 Repository::procedure()->store([Arr::toCamelCase($procedureData)]);
             }
         } catch (ApiException|Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::error('Failed while ensuring procedure existence', [
                 'error' => $e->getMessage(),
@@ -440,7 +418,7 @@ class EncounterCreate extends EncounterComponent
                 Repository::diagnosticReport()->store([Arr::toCamelCase($diagnosticReportData)]);
             }
         } catch (ApiException|Throwable $e) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             Log::error('Failed while ensuring diagnostic report existence', [
                 'error' => $e->getMessage(),

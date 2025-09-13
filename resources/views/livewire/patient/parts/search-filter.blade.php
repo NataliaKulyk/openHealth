@@ -68,12 +68,10 @@
     </div>
 
     <div x-data="{ showAdditionalParams: false }">
-        <button class="flex items-center gap-2 button-minor"
+        <button class="flex items-center gap-2 button-minor mb-4"
                 @click.prevent="showAdditionalParams = !showAdditionalParams"
         >
-            <svg width="16" height="16">
-                <use xlink:href="#svg-adjustments"></use>
-            </svg>
+            @icon('adjustments', 'w-4 h-4')
             <span>{{ __('patients.additional_search_parameters') }}</span>
         </button>
 
@@ -181,11 +179,6 @@
                                    "
                                    readonly
                             />
-                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-                                 class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
-                            >
-                                <path d="M19 9l-7 7-7-7"></path>
-                            </svg>
                             <div x-show="open"
                                  @click.away="open = false"
                                  x-transition:enter="transition ease-out duration-100"

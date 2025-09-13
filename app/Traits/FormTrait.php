@@ -101,14 +101,6 @@ trait FormTrait
     }
 
     /**
-     * Closes the modal by setting the showModal property to false.
-     */
-    public function closeModalModel(): void
-    {
-        $this->showModal = false;
-    }
-
-    /**
      * Convert all keys in address array (course, only of need to) to the snake-case format.
      * This need to do because DB table store it's attributes in the snake-case
      *
@@ -218,16 +210,6 @@ trait FormTrait
             ->flatten()
             ->unique()
             ->all();
-    }
-
-    /**
-     * Flash general error message to the user.
-     *
-     * @return void
-     */
-    protected function flashGeneralError(): void
-    {
-        session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
     }
 
     /**

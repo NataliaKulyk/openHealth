@@ -198,7 +198,9 @@
                         </div>
                     </div>
                     <div class="w-full flex justify-start mt-4">
-                        <button type="button" wire:click="resetFilters" class="button-primary">Скинути всі фільтри</button>
+                        <button type="button" wire:click="resetFilters" class="button-primary">
+                            {{ __('forms.reset_all_filters') }}
+                        </button>
                     </div>
                 </div>
             </div>

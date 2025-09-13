@@ -13,6 +13,7 @@ use App\Models\License;
 use App\Models\Person\Person;
 use App\Models\Relations\Address;
 use App\Models\Relations\AuthenticationMethod;
+use App\Models\Relations\ConfidantPerson;
 use App\Models\Relations\Document;
 use App\Models\Relations\Party;
 use App\Models\Relations\Phone;
@@ -100,7 +101,7 @@ class DeclarationRequestRepository
     public function syncPersonData(array $personData): bool
     {
         $person = Person::where('uuid', $personData['id'])
-            ->with(['addresses', 'authenticationMethods', 'documents', 'phones'])
+            ->with(['addresses', 'authenticationMethods', 'documents', 'phones', 'confidantPerson'])
             ->firstOrFail();
         $isUpdated = false;
 
@@ -117,7 +118,7 @@ class DeclarationRequestRepository
             $personData['authentication_methods'],
             AuthenticationMethod::class
         );
-        // TODO: add sync confidant person
+        $isUpdated |= $this->syncRelatedData($person, 'confidantPerson', $personData['confidant_person'], ConfidantPerson::class);
         $isUpdated |= $this->syncRelatedData($person, 'documents', $personData['documents'], Document::class);
         $isUpdated |= $this->syncRelatedData($person, 'phones', $personData['phones'], Phone::class);
 

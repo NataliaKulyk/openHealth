@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Form;
 
 class PatientForm extends Form
@@ -37,17 +38,18 @@ class PatientForm extends Form
         'patient.secret' => ['required', 'string', 'min:6'],
         'patient.email' => ['nullable', 'email', 'string'],
 
-        'patient.phones.*.type' => ['nullable', 'string'],
-        'patient.phones.*.number' => ['nullable', 'string', 'regex:/^\+38[0-9]{10}$/'],
+        'patient.phones.*.type' => ['nullable', 'string', 'distinct'],
+        'patient.phones.*.number' => ['nullable', 'string', 'regex:/^\+38[0-9]{10}$/', 'distinct'],
 
         'patient.emergencyContact.firstName' => ['required', 'min:3', new Cyrillic()],
         'patient.emergencyContact.lastName' => ['required', 'min:3', new Cyrillic()],
         'patient.emergencyContact.secondName' => ['nullable', 'min:3', new Cyrillic()],
-        'patient.emergencyContact.phones.*.type' => ['required', 'string'],
-        'patient.emergencyContact.phones.*.number' => ['required', 'string', 'regex:/^\+38[0-9]{10}$/'],
+        'patient.emergencyContact.phones.*.type' => ['required', 'string', 'distinct'],
+        'patient.emergencyContact.phones.*.number' => ['required', 'string', 'regex:/^\+38[0-9]{10}$/', 'distinct'],
 
         'patient.authenticationMethods.*.type' => ['required', 'string', new InDictionary('AUTHENTICATION_METHOD')],
         'patient.authenticationMethods.*.phoneNumber' => [
+            'nullable',
             'required_if:patient.authenticationMethods.*.type,OTP',
             'regex:/^\+38[0-9]{10}$/'
         ],
@@ -113,12 +115,18 @@ class PatientForm extends Form
     #[Validate([
         'verificationCode' => ['required', 'numeric', 'digits:4']
     ])]
-    public string $verificationCode;
+    public int $verificationCode;
 
     #[Validate([
-        'uploadedDocuments.*' => ['nullable', 'file', 'mimes:jpeg,jpg', 'max:10000']
+        'uploadedDocuments.*' => ['required', 'file', 'mimes:jpeg,jpg', 'max:10000']
     ])]
     public array $uploadedDocuments;
+
+    public string $knedp;
+
+    public TemporaryUploadedFile $keyContainerUpload;
+
+    public string $password;
 
     /**
      * Validate data for chosen model.
@@ -191,6 +199,20 @@ class PatientForm extends Form
 
             throw new ValidationException($validator);
         }
+    }
+
+    /**
+     * List of rules for signing Cipher form.
+     *
+     * @return array[]
+     */
+    public function rulesForSigning(): array
+    {
+        return [
+            'knedp' => ['required', 'string'],
+            'password' => ['required', 'string'],
+            'keyContainerUpload' => ['required', 'file', 'extensions:dat,pfx,pk8,zs2,jks,p7s']
+        ];
     }
 
     /**
@@ -435,7 +457,7 @@ class PatientForm extends Form
         // Check if person age > prm.global_parameters.no_self_auth_age check existence SELF_AUTH_AGE_DOCUMENT_TYPES
         if ($personAge > self::NO_SELF_AUTH_AGE) {
             $submittedTypes = array_column($this->documents, 'type');
-            $hasSelfAuthType = (bool) array_intersect($submittedTypes, $selfAuthAgeDocumentTypes);
+            $hasSelfAuthType = (bool)array_intersect($submittedTypes, $selfAuthAgeDocumentTypes);
 
             if (!$hasSelfAuthType) {
                 $allowedTypesList = implode(', ', $selfAuthAgeDocumentTypes);

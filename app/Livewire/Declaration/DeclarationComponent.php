@@ -169,7 +169,6 @@ abstract class DeclarationComponent extends Component
 
             return;
         }
-        $validated['divisionId'] = null;
 
         try {
             $response = EHealth::declarationRequest()->create(data: removeEmptyKeys(Arr::toSnakeCase($validated)));
@@ -474,10 +473,7 @@ abstract class DeclarationComponent extends Component
                     return;
                 }
 
-                to_route('declaration.index', [legalEntity()])->with('flashMessage', [
-                    'message' => 'Декларація підписана',
-                    'type' => 'success'
-                ]);
+                $this->redirectRoute('declaration.index', [legalEntity()], navigate: true);
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when signing declaration request');
@@ -499,7 +495,7 @@ abstract class DeclarationComponent extends Component
             ->where('legal_entity_id', legalEntity()->id)
             ->whereNotNull('division_id')
             ->whereHas('specialities', fn (Builder $query) => $query->where('speciality_officio', true))
-            ->with(['division', 'legalEntity'])
+            ->with(['division', 'legalEntity', 'party'])
             ->get();
         $this->employeesInfo = $employees->map(static fn (Employee $employee) => [
             'employeeId' => $employee->uuid,

@@ -10,7 +10,7 @@ use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Patient\Records\Forms\PatientForm as Form;
 use App\Models\Person\Person;
-use App\Repositories\PersonRepository;
+use App\Repositories\Repository;
 use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -72,7 +72,7 @@ class PatientData extends BasePatientComponent
             $response = EHealth::person()->getPersonVerificationDetails($this->uuid);
 
             try {
-                PersonRepository::updateVerificationStatusById(
+                Repository::person()->updateVerificationStatusById(
                     $this->uuid,
                     $response->getData()['verification_status']
                 );

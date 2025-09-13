@@ -167,7 +167,7 @@ class DiagnosticReportComponent extends Component
         try {
             $this->setCertificateAuthority();
         } catch (CipherApiException) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
     }
 
@@ -231,7 +231,7 @@ class DiagnosticReportComponent extends Component
                 ->getLargeDictionary('eHealth/ICF/classifiers', false)
                 ->getFlattenedChildValues();
         } catch (eHealthApiException) {
-            $this->flashGeneralError();
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
         }
 
         $this->observationCodeMap = config('ehealth.observation_category_codes');

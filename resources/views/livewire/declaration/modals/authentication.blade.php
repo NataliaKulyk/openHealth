@@ -22,7 +22,7 @@
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label for="verificationCode" class="label-modal">
-                                    {{ __('declarations.confirmation_code_from_SMS') }}
+                                    {{ __('forms.confirmation_code_from_SMS') }}
                                 </label>
                                 <input wire:model="form.verificationCode"
                                        id="verificationCode"

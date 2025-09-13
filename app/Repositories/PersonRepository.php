@@ -7,9 +7,7 @@ namespace App\Repositories;
 use App\Models\Person\Person;
 use App\Models\Person\PersonRequest;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class PersonRepository
@@ -23,54 +21,45 @@ class PersonRepository
      * @return void
      * @throws Throwable
      */
-    public static function savePersonResponseData(array $response, string $modelClass, ?string $personUuid = null): void
+    public function savePersonResponseData(array $response, string $modelClass, ?string $personUuid = null): void
     {
         DB::transaction(static function () use ($response, $modelClass, $personUuid) {
-            try {
-                $personRequest = self::createOrUpdate($response, $modelClass, $personUuid);
+            $personRequest = self::createOrUpdate($response, $modelClass, $personUuid);
 
-                $documents = $response['person']['documents'] ?? $response['documents'] ?? null;
-                if ($documents) {
-                    Repository::document()->addDocuments($personRequest, $documents);
-                }
+            $documents = $response['person']['documents'] ?? $response['documents'] ?? null;
+            if ($documents) {
+                Repository::document()->addDocuments($personRequest, $documents);
+            }
 
-                $addresses = $response['person']['addresses'] ?? [$response['addresses']] ?? null;
-                if ($addresses) {
-                    Repository::address()->addAddresses($personRequest, $addresses);
-                }
+            $addresses = $response['person']['addresses'] ?? [$response['addresses']] ?? null;
+            if ($addresses) {
+                Repository::address()->addAddresses($personRequest, $addresses);
+            }
 
-                $phones = $response['person']['phones'] ?? $response['patient']['phones'] ?? null;
-                if ($phones) {
-                    Repository::phone()->addPhones($personRequest, $phones);
-                }
+            $phones = $response['person']['phones'] ?? $response['patient']['phones'] ?? null;
+            if ($phones) {
+                Repository::phone()->addPhones($personRequest, $phones);
+            }
 
-                $authenticationMethods = $response['person']['authentication_methods'] ?? $response['patient']['authentication_methods'] ?? null;
-                if ($authenticationMethods) {
-                    Repository::authenticationMethod()->addAuthenticationMethod($personRequest, $authenticationMethods);
-                }
+            $authenticationMethods = $response['person']['authentication_methods'] ?? $response['patient']['authentication_methods'] ?? null;
+            if ($authenticationMethods) {
+                Repository::authenticationMethod()->addAuthenticationMethod($personRequest, $authenticationMethods);
+            }
 
-                if (!empty($response['confidant_person'])) {
-                    $confidantData = [
-                        'documents_relationship' => $response['documents_relationship'],
-                        'confidantPersonInfo' => $response['confidant_person'][0]
-                    ];
+            if (!empty($response['confidant_person'])) {
+                $confidantData = [
+                    'documents_relationship' => $response['documents_relationship'],
+                    'confidantPersonInfo' => $response['confidant_person'][0]
+                ];
 
-                    Repository::confidantPerson()->addConfidantPerson($personRequest, $confidantData);
-                }
+                Repository::confidantPerson()->addConfidantPerson($personRequest, $confidantData);
+            }
 
-                if (!empty($response['person']['confidant_person'])) {
-                    Repository::confidantPerson()->addConfidantPerson(
-                        $personRequest,
-                        $response['person']['confidant_person']
-                    );
-                }
-            } catch (Exception $e) {
-                Log::channel('db_errors')->error('Error saving person request data', [
-                    'error' => $e->getMessage(),
-                    'response' => $response
-                ]);
-
-                throw $e;
+            if (!empty($response['person']['confidant_person'])) {
+                Repository::confidantPerson()->addConfidantPerson(
+                    $personRequest,
+                    $response['person']['confidant_person']
+                );
             }
         });
     }
@@ -115,56 +104,23 @@ class PersonRepository
             $personData['status'] = $data['status'] ?? 'APPLICATION';
         }
 
-        // Update or create data based on uuid
-        return $modelClass::updateOrCreate(['uuid' => $personData['uuid'] ?? null], $personData);
-    }
-
-    /**
-     * Update person request status by provided UUID.
-     *
-     * @param  array  $response
-     * @return void
-     * @throws Exception
-     */
-    public static function updatePersonRequestStatusByUuid(array $response): void
-    {
-        try {
-            PersonRequest::where('uuid', $response['id'])->update([
-                'status' => $response['status']
-            ]);
-        } catch (Exception $e) {
-            Log::channel('db_errors')->error('Error updating person request status', [
-                'error' => $e->getMessage(),
-                'response' => $response
-            ]);
-
-            throw $e;
-        }
+        // Update or create data based on email
+        return $modelClass::updateOrCreate(['email' => $personData['email'] ?? null], $personData);
     }
 
     /**
      * Establish a connection between PersonRequest and Person.
      *
      * @param  array  $response
-     * @throws Exception
+     * @return void
      */
-    public static function createRelation(array $response): void
+    public function createRelation(array $response): void
     {
-        try {
-            $personRequest = PersonRequest::where('uuid', $response['id'])->firstOrFail();
-            $person = Person::where('uuid', $response['person_id'])->firstOrFail();
+        $personRequest = PersonRequest::where('uuid', $response['id'])->firstOrFail();
+        $person = Person::where('uuid', $response['person_id'])->firstOrFail();
 
-            $personRequest->person()->associate($person);
-            $personRequest->save();
-
-        } catch (Exception $e) {
-            Log::channel('db_errors')->error('Error establishing relation between PersonRequest and Person', [
-                'error' => $e->getMessage(),
-                'response' => $response
-            ]);
-
-            throw $e;
-        }
+        $personRequest->person()->associate($person);
+        $personRequest->save();
     }
 
     /**
@@ -172,30 +128,18 @@ class PersonRepository
      *
      * @param  int|string  $personId
      * @param  string  $verificationStatus
-     * @return bool
+     * @return void
      */
-    public static function updateVerificationStatusById(int|string $personId, string $verificationStatus): bool
+    public function updateVerificationStatusById(int|string $personId, string $verificationStatus): void
     {
-        try {
-            $query = Person::query();
+        $query = Person::query();
 
-            if (is_numeric($personId)) {
-                $query->where('id', $personId);
-            } else {
-                $query->where('uuid', $personId);
-            }
-
-            $query->update(['verification_status' => $verificationStatus]);
-
-            return true;
-        } catch (Exception $e) {
-            Log::channel('db_errors')->error('Error updating person verification status', [
-                'error' => $e->getMessage(),
-                'person_id' => $personId,
-                'verification_status' => $verificationStatus
-            ]);
-
-            return false;
+        if (is_numeric($personId)) {
+            $query->where('id', $personId);
+        } else {
+            $query->where('uuid', $personId);
         }
+
+        $query->update(['verification_status' => $verificationStatus]);
     }
 }

@@ -12,12 +12,14 @@ use App\Models\Declaration;
 use App\Models\DeclarationRequest;
 use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
+use App\Models\User;
 use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -72,16 +74,19 @@ class DeclarationIndex extends Component
      */
     public int $countActive;
 
+    public array $employeeIds;
+
     public function mount(LegalEntity $legalEntity): void
     {
-        if (Auth::user()?->hasRole('OWNER')) {
+        $user = Auth::user();
+
+        if ($user?->hasRole('OWNER')) {
             $this->doctors = $this->getDoctors();
         }
 
-        $this->countActive = Declaration::whereIn(
-            'employee_id',
-            Auth::user()?->employees()->pluck('id')
-        )->count();
+        $this->employeeIds = $user?->employees()->pluck('id')->all();
+
+        $this->countActive = Declaration::whereIn('employee_id', $this->employeeIds)->count();
     }
 
     #[Computed]
@@ -93,25 +98,31 @@ class DeclarationIndex extends Component
         $declarationRequests = collect();
 
         if ($user?->can('viewAny', Declaration::class)) {
-            $declarations = Declaration::with(['person', 'employee'])
-                ->where('legal_entity_id', legalEntity()->id)
+            $declarations = Declaration::where('legal_entity_id', legalEntity()->id)
+                ->select(['id', 'person_id', 'employee_id', 'declaration_number', 'status'])
                 ->when(
                     !$user?->hasRole('OWNER'),
-                    fn (Builder $query) => $query->whereIn('employee_id', $user->employees()->pluck('id'))
+                    fn (Builder $query) => $query->whereIn('employee_id', $this->employeeIds)
                 )->get()
                 ->each->setAttribute('type', 'declaration');
         }
 
         // Don't show declaration requests for OWNER
         if (!$user?->hasRole('OWNER') && $user?->can('viewAny', DeclarationRequest::class)) {
-            $declarationRequests = DeclarationRequest::with(['person', 'employee'])
-                ->where('legal_entity_id', legalEntity()->id)
+            $declarationRequests = DeclarationRequest::where('legal_entity_id', legalEntity()->id)
+                ->select(['id', 'person_id', 'employee_id', 'declaration_number', 'status'])
                 ->whereNotIn('status', [Status::SIGNED->value])
                 ->get()
                 ->each->setAttribute('type', 'request');
         }
 
+        /** @var EloquentCollection $allItems */
         $allItems = $declarationRequests->concat($declarations);
+        $allItems->loadMissing([
+            'person:id,first_name,last_name,second_name,birth_date',
+            'employee:id,party_id',
+            'employee.party:id,first_name,last_name,second_name'
+        ]);
 
         // Filter by type
         if (!empty($this->typeFilter)) {
