@@ -3,7 +3,7 @@
     x-on:close-signature-modal.window="showSignatureModal = false"
     x-on:open-signature-modal.window="showSignatureModal = true"
 >
-    <x-section-navigation class="breadcrumb-form">
+    <x-header-navigation class="breadcrumb-form shift-content">
         <x-slot name="title">
             @if($isPersonalDataLocked)
                 {{ __('forms.add_position') }}
@@ -13,10 +13,10 @@
 
             {{ $this->employeeFullName }}
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     <section
-        class="section-form"
+        class="section-form shift-content"
         x-data="{
             employeeType: $wire.entangle('form.employeeType'),
             isDoctor() {

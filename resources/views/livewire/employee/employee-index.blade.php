@@ -1,13 +1,24 @@
 <div>
-    <x-section-navigation x-data="{ showFilter: false }">
+    <x-header-navigation x-data="{ showFilter: false }">
 
         <x-slot name="title">
             {{ __('forms.employees') }}
         </x-slot>
 
+        @can('create', \App\Models\Employee\EmployeeRequest::class)
+            <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
+                <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
+                   class="button-primary">{{ __('forms.new_employee') }}</a>
+                <button wire:click="sync" type="button" class="button-sync">
+                    {{ __('forms.synchronise_with_eHealth') }}
+                </button>
+            </div>
+    @endcan
+
+
         <x-slot name="navigation">
             <div class="flex flex-col">
-                <div class="flex flex-wrap items-end justify-between gap-4 employee-nav-row">
+                <div class="flex flex-wrap items-end justify-between gap-4">
                     <div class="flex items-end gap-4">
                         <div class="w-96">
                             <x-forms.form-group>
@@ -23,7 +34,7 @@
                                     </label>
                                 </x-slot>
                                 <x-slot name="input">
-                                    <div class="form-group group w-full relative top-[12px]">
+                                    <div class="form-group group w-full">
                                         <input type="text"
                                                id="employee_search"
                                                placeholder=" "
@@ -35,7 +46,7 @@
                                 </x-slot>
                             </x-forms.form-group>
                         </div>
-                        <button class="flex items-center gap-2 button-minor relative top-[8px]"
+                        <button class="flex items-center gap-2 button-minor"
                                 @click="showFilter = !showFilter">
                             <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
@@ -47,16 +58,6 @@
                         </button>
                     </div>
 
-                    @can('create', \App\Models\Employee\EmployeeRequest::class)
-                        <div class="ml-auto flex items-center gap-2 self-start -mt-14 translate-x-7">
-                        <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
-                               class="button-primary">{{ __('forms.new_employee') }}</a>
-                            <button wire:click="sync" type="button" class="button-sync">
-                                {{ __('forms.synchronise_with_eHealth') }}
-                            </button>
-                        </div>
-                    @endcan
-                </div>
 
                 <div x-show="showFilter" x-transition class="pt-4 mt-4">
                     <div class="form-row-4">
@@ -204,11 +205,11 @@
                     </div>
                 </div>
             </div>
+            </div>
         </x-slot>
-    </x-section-navigation>
-
-    <x-section>
-        <div class="space-y-6 employee-section-no-left-padding mt-4">
+    </x-header-navigation>
+    <x-section class="shift-content">
+        <div class="space-y-6 employee-section-no-left-padding mt-6">
             <div class="employee-table-container table-container-responsive">
             @forelse($parties as $party)
                 <fieldset class="fieldset" wire:key="party-{{ $party->id }}">
