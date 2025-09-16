@@ -47,7 +47,7 @@
                                 </x-slot>
                             </x-forms.form-group>
                         </div>
-                        <button class="flex items-center gap-2 button-minor"
+                        <button class="flex items-center gap-2 button-minor self-center mt-3.5"
                                 @click="showFilter = !showFilter">
                             <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
@@ -213,7 +213,7 @@
         <div class="space-y-6 employee-section-no-left-padding mt-6">
             <div class="employee-table-container table-container-responsive">
             @forelse($parties as $party)
-                <fieldset class="fieldset" wire:key="party-{{ $party->id }}">
+                    <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]" wire:key="party-{{ $party->id }}">
                     <legend class="legend">{{ $party->fullName }}</legend>
                     <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                         <div>
