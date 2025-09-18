@@ -16,6 +16,7 @@ class EmployeeCreate extends EmployeeComponent
     public function mount(LegalEntity $legalEntity): void
     {
         $this->loadDictionaries();
+        $this->loadDivisions($legalEntity);
         $this->isPersonalDataLocked = false;
     }
 

@@ -13,6 +13,7 @@ use App\Models\Relations\Speciality;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * @mixin IdeHelperEmployee
@@ -42,9 +43,9 @@ class Employee extends BaseEmployee
         return $this->morphMany(Education::class, 'educationable');
     }
 
-    public function scienceDegrees(): MorphMany
+    public function scienceDegree(): MorphOne
     {
-        return $this->morphMany(ScienceDegree::class, 'science_degreeable');
+        return $this->morphOne(ScienceDegree::class, 'science_degreeable');
     }
 
     public function qualifications(): MorphMany

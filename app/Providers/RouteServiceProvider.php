@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Models\LegalEntity;
@@ -18,7 +20,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/dashboard';
+    public const string HOME = '/dashboard';
 
     /**
      * Define your route model bindings, pattern filters, and other route configuration.

@@ -30,6 +30,7 @@ class DeclarationRequestRepository
      */
     public function store(array $validatedData): DeclarationRequest
     {
+        $validatedData['legal_entity_id'] = legalEntity()->id;
         $validatedData = $this->mapUuidsToIds($validatedData);
 
         return DeclarationRequest::create($validatedData);
@@ -89,6 +90,22 @@ class DeclarationRequestRepository
     {
         DeclarationRequest::where('id', $id)->update([
             'status' => $status
+        ]);
+    }
+
+    /**
+     * Update status and status reason after reject.
+     *
+     * @param  string  $uuid
+     * @param  string  $status
+     * @param  string  $statusReason
+     * @return void
+     */
+    public function updateStatuses(string $uuid, string $status, string $statusReason): void
+    {
+        DeclarationRequest::where('uuid', $uuid)->update([
+            'status' => $status,
+            'status_reason' => $statusReason
         ]);
     }
 
@@ -291,6 +308,10 @@ class DeclarationRequestRepository
         array $incomingData,
         string $modelClass
     ): bool {
+        if (empty($incomingData)) {
+            return false;
+        }
+
         $fillable = new $modelClass()->getFillable();
         $changed = false;
 
@@ -347,8 +368,7 @@ class DeclarationRequestRepository
      */
     private function mapUuidsToIds(array $data, bool $includeLegalEntity = false): array
     {
-        $data['employee_id'] = Employee::withoutEagerLoads()
-            ->where('uuid', $data['employee_id'])
+        $data['employee_id'] = Employee::where('uuid', $data['employee_id'])
             ->pluck('id')
             ->firstOrFail();
         $data['person_id'] = Person::where('uuid', $data['person_id'])->pluck('id')->firstOrFail();

@@ -73,9 +73,9 @@ class EmployeeRequest extends BaseEmployee
         return $this->morphOne(Revision::class, 'revisionable');
     }
 
-    public function scienceDegrees(): MorphMany
+    public function scienceDegree(): MorphOne
     {
-        return $this->morphMany(ScienceDegree::class, 'science_degreeable');
+        return $this->morphOne(ScienceDegree::class, 'science_degreeable');
     }
 
     public function educations(): MorphMany

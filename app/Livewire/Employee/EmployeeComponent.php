@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Employee;
 
+use App\Models\LegalEntity;
 use App\Traits\FormTrait;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -20,7 +21,7 @@ abstract class EmployeeComponent extends Component
     public bool $isPersonalDataLocked = false;
     #[Locked]
     public ?int $employeeRequestId = null;
-
+    public array $divisions = [];
 
     public ?array $dictionaryNames = [
         'PHONE_TYPE', 'COUNTRY', 'SETTLEMENT_TYPE', 'SPECIALITY_TYPE', 'DIVISION_TYPE',
@@ -74,5 +75,10 @@ abstract class EmployeeComponent extends Component
         }
 
         return '';
+    }
+
+    protected function loadDivisions(LegalEntity $legalEntity): void
+    {
+        $this->divisions = $legalEntity->divisions()->where('is_active', true)->get(['id', 'name'])->toArray();
     }
 }

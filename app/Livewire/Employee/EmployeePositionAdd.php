@@ -17,17 +17,15 @@ class EmployeePositionAdd extends EmployeeComponent
 
     #[Locked]
     public ?int $partyId = null;
-
     protected ?Party $party = null;
 
     public function mount(LegalEntity $legalEntity, Party $party): void
     {
         $this->loadDictionaries();
+        $this->loadDivisions($legalEntity);
         $this->isPersonalDataLocked = true;
-
         $this->party = $party;
         $this->partyId = $party->id;
-
         $this->form->hydrate($this->party);
         $this->form->resetPositionFields();
     }

@@ -38,7 +38,6 @@ class DeclarationCreate extends DeclarationComponent
         }
 
         try {
-            $validated['legal_entity_id'] = legalEntity()->id;
             $validated['status'] = Status::DRAFT->value;
 
             Repository::declarationRequest()->store(Arr::toSnakeCase($validated));

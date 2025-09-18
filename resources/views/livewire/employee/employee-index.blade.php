@@ -1,13 +1,25 @@
 <div>
-    <x-section-navigation x-data="{ showFilter: false }">
+    <x-header-navigation x-data="{ showFilter: false }">
 
         <x-slot name="title">
             {{ __('forms.employees') }}
         </x-slot>
 
+        @can('create', \App\Models\Employee\EmployeeRequest::class)
+            <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
+                <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
+                   class="button-primary">{{ __('forms.new_employee') }}</a>
+                <button wire:click="sync" type="button" class="button-sync flex items-center gap-2 whitespace-nowrap">
+                    @icon('refresh', 'w-4 h-4')
+                    {{ __('forms.synchronise_with_eHealth') }}
+                </button>
+            </div>
+    @endcan
+
+
         <x-slot name="navigation">
             <div class="flex flex-col">
-                <div class="flex flex-wrap items-end justify-between gap-4" style="max-width: var(--container-6xl);">
+                <div class="flex flex-wrap items-end justify-between gap-4">
                     <div class="flex items-end gap-4">
                         <div class="w-96">
                             <x-forms.form-group>
@@ -23,7 +35,7 @@
                                     </label>
                                 </x-slot>
                                 <x-slot name="input">
-                                    <div class="form-group group w-full relative top-[12px]">
+                                    <div class="form-group group w-full">
                                         <input type="text"
                                                id="employee_search"
                                                placeholder=" "
@@ -35,7 +47,7 @@
                                 </x-slot>
                             </x-forms.form-group>
                         </div>
-                        <button class="flex items-center gap-2 button-minor relative top-[8px]"
+                        <button class="flex items-center gap-2 button-minor self-center mt-3.5"
                                 @click="showFilter = !showFilter">
                             <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
@@ -47,16 +59,6 @@
                         </button>
                     </div>
 
-                    @can('create', \App\Models\Employee\EmployeeRequest::class)
-                        <div class="ml-auto flex items-center gap-2 self-start -mt-14 translate-x-7">
-                        <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
-                               class="button-primary">{{ __('forms.new_employee') }}</a>
-                            <button wire:click="sync" type="button" class="button-sync">
-                                {{ __('forms.synchronise_with_eHealth') }}
-                            </button>
-                        </div>
-                    @endcan
-                </div>
 
                 <div x-show="showFilter" x-transition class="pt-4 mt-4">
                     <div class="form-row-4">
@@ -113,18 +115,19 @@
                         </div>
                     </div>
                     <div class="form-row-4">
-                        <div class="form-group group">
-                            <select wire:model.live="filter.division_id"
-                                    name="filter_division"
-                                    id="filter_division"
-                                    class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                            >
-                                <option value="">Всі підрозділи</option>
-                                @foreach($divisions ?? [] as $division)
-                                    <option value="{{ $division->id }}">{{ $division->name }}</option>
+                        <div class="form-group">
+                            <select name="division"
+                                    id="division"
+                                    class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                    wire:model.live="filter.division_id">
+                                <option value="">{{ __('forms.select_division') }}</option>
+
+                                @foreach($this->divisions as $division)
+                                    <option value="{{ $division['id'] }}">{{ $division['name'] }}</option>
                                 @endforeach
                             </select>
-                            <label for="filter_division" class="label">Медичний заклад</label>
+                            <label for="division" class="label">{{ __('forms.division') }}</label>
+                            @error('filter.division_id') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
                         <div class="form-group group" x-data="{ open: false, selectedStatuses: @entangle('status').live }">
                             <label for="statusFilter" class="label">Статус</label>
@@ -204,16 +207,17 @@
                     </div>
                 </div>
             </div>
+            </div>
         </x-slot>
-    </x-section-navigation>
-
-    <x-section>
-        <div class="space-y-6">
+    </x-header-navigation>
+    <x-section class="shift-content">
+        <div class="space-y-6 employee-section-no-left-padding mt-6">
+            <div class="table-container-responsive ml-3.5">
             @forelse($parties as $party)
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:w-[1150px] lg:mx-0 lg:ml-10" wire:key="party-{{ $party->id }}">
+                    <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]" wire:key="party-{{ $party->id }}">
+                    <legend class="legend">{{ $party->fullName }}</legend>
                     <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                         <div>
-                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $party->fullName }}</h3>
                             <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
                                 @if ($mobilePhone = $party->phones->firstWhere('type', 'MOBILE'))
                                     <span class="flex items-center gap-1.5">
@@ -274,7 +278,7 @@
                                         <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['EMPLOYEE_TYPE'][$positionToShow->employee_type] ?? $positionToShow->employee_type }}</td>
                                         <td class="td-input break-words whitespace-normal align-top">{{ $positionToShow->division->name ?? 'N/A' }}</td>
 
-                                        <td class="td-input break-words whitespace-normal align-top">
+                                        <td class="td-input break-words whitespace-nowrap align-top">
                                             @php
                                                 // First, check if the record is an Employee model. This is the highest priority.
                                                 $isEmployee = $positionToShow instanceof \App\Models\Employee\Employee;
@@ -298,7 +302,6 @@
                                                 @endif
                                             @endif
                                         </td>
-
                                         <td class="td-input text-center">
                                             @include('livewire.employee.parts.actions-dropdown', [
                                                 'position' => $positionToShow
@@ -310,15 +313,16 @@
                             </table>
                         </div>
                     </div>
-                </div>
+                </fieldset>
             @empty
                 <div class="text-center py-16">
                     <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('forms.nothing_found')}}</p>
                 </div>
             @endforelse
+            </div>
         </div>
 
-        <div class="mt-8">
+        <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
             {{ $parties->links() }}
         </div>
     </x-section>

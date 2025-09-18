@@ -16,10 +16,12 @@
                             <p class="default-p">{{ __('declarations.search') }}</p>
                         </div>
 
-                        <div class="flex items-center gap-4 pl-30">
-                            <p class="default-p">{{ __('declarations.count_active') }}:</p>
-                            <span class="badge-green">{{ $countActive }}</span>
-                        </div>
+                        @isset($countActive)
+                            <div class="flex items-center gap-4 pl-30">
+                                <p class="default-p">{{ __('declarations.count_active') }}:</p>
+                                <span class="badge-green">{{ $countActive }}</span>
+                            </div>
+                        @endisset
                     </div>
 
                     {{-- Search by name --}}
@@ -46,9 +48,9 @@
                         {{-- Show different filters for owner --}}
                         @if(Auth::user()->hasRole('OWNER'))
                             @include('livewire.declaration.parts.owner-filters')
+                        @else
+                            @include('livewire.declaration.parts.basic-filters')
                         @endif
-
-                        @include('livewire.declaration.parts.basic-filters')
                     </div>
                 </div>
 

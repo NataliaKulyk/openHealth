@@ -6,6 +6,7 @@ namespace App\Models\Relations;
 
 use App\Models\User;
 use App\Models\Employee\Employee;
+use App\Traits\SyncsMorphManyRelations;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee\EmployeeRequest;
 use Eloquence\Behaviours\HasCamelCasing;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Party extends Model
 {
     use HasCamelCasing;
+    use SyncsMorphManyRelations;
 
     protected $fillable = [
         'uuid',

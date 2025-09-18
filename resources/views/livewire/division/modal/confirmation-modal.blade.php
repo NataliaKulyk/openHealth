@@ -25,11 +25,11 @@
                 <div
                     @click.stop
                     x-trap.noscroll.inert="divisionId"
-                    class="relative w-full max-w-md overflow-hidden rounded-lg bg-white p-6 text-center shadow-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800"
+                    class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-6 text-center shadow-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800"
                 >
                     <h3
                         x-text="actionTitle"
-                        class="text-lg font-medium text-gray-900 dark:text-white"
+                        class="text-xl font-bold text-gray-900 dark:text-white"
                     ></h3>
 
                     <p
@@ -37,11 +37,11 @@
                         class="mt-2 text-sm text-gray-600 dark:text-gray-400"
                     ></p>
 
-                    <div class="mt-6 flex justify-center gap-6">
+                    <div class="mt-6 flex justify-center gap-4">
                         <button
                             type="button"
                             @click="divisionId = 0"
-                            class="alternative-button cursor-pointer mb-0"
+                            class="button-secondary"
                         >
                             {{ __('forms.cancel') }}
                         </button>
@@ -50,7 +50,7 @@
                             type="button"
                             @click.prevent="$wire.$call(actionType, divisionId); divisionId = 0;"
                             wire:loading.attr="disabled"
-                            class="button-danger cursor-pointer mb-[8px]"
+                            class="inline-flex justify-center rounded-lg border border-transparent bg-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                             x-text="actionButtonText"
                         ></button>
                     </div>

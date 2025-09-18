@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('authentication_methods', static function (Blueprint $table) {
             $table->id();
-            $table->uuid()->unique();
+            $table->uuid()->unique()->nullable();
             $table->enum('type', ['THIRD_PERSON', 'OTP', 'OFFLINE', 'NA']);
             $table->string('phone_number')->nullable();
             $table->string('value')->nullable();

@@ -8,13 +8,13 @@
             <input type="text"
                    id="statusFilter"
                    class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
-                   @click="open = !open"
+                   @click="openType = !openType"
                    :value="selectedStatuses.length ? selectedStatuses.map(status => status === 'active' ? 'Активні декларації' : (status === 'CANCELLED' ? 'Відмінені декларації' : status)).join(', ') : ''"
                    readonly
             />
             @icon('chevron-down', 'w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none')
-            <div x-show="open"
-                 @click.away="open = false"
+            <div x-show="openType"
+                 @click.away="openType = false"
                  x-transition:enter="transition ease-out duration-100"
                  x-transition:enter-start="transform opacity-0 scale-95"
                  x-transition:enter-end="transform opacity-100 scale-100"
@@ -58,7 +58,7 @@
                wire:model.live.debounce.300ms="searchByNumber"
                autocomplete="off"
         />
-        <label for="search" class="label">
+        <label for="searchByNumber" class="label">
             {{ __('declarations.number') }}
         </label>
     </div>
@@ -66,6 +66,7 @@
 
 {{-- Filter by doctor --}}
 <div class="form-row-3 form-group group"
+     :class="openType ? 'mt-20' : 'mt-6'"
      x-data="{
         openDoctor: false,
         selectedDoctors: $wire.entangle('doctorFilter').live,

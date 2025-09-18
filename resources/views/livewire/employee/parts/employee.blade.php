@@ -22,7 +22,7 @@
                 @error('form.party.secondName') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group">
-                <select wire:model="form.party.gender" name="employeeGender" id="employeeGender" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" required>
+                <select wire:model="form.party.gender" name="employeeGender" id="employeeGender" class="input-select @error('form.party.gender') input-error @enderror" required>
                     <option value="" disabled selected hidden>{{ __('forms.select') }} {{ __('forms.gender') }}</option>
                     @foreach($this->dictionaries['GENDER'] as $k => $gender)
                         <option value="{{ $k }}">{{ $gender }}</option>

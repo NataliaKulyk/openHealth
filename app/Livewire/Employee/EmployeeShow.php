@@ -19,6 +19,7 @@ class EmployeeShow extends EmployeeComponent
     public function mount(LegalEntity $legalEntity, Employee $employee): void
     {
         $this->loadDictionaries();
+        $this->loadDivisions($legalEntity);
         $this->employee = $employee;
         $this->employeeId = $employee->id;
         $this->form->hydrate($this->employee);
@@ -26,7 +27,7 @@ class EmployeeShow extends EmployeeComponent
 
     public function boot(): void
     {
-        if($this->employeeId){
+        if ($this->employeeId) {
             $this->employee = Employee::findOrFail($this->employeeId);
         }
     }

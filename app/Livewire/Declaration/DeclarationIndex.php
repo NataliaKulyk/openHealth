@@ -12,15 +12,15 @@ use App\Models\Declaration;
 use App\Models\DeclarationRequest;
 use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
-use App\Models\User;
+use App\Repositories\Repository;
 use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -80,13 +80,13 @@ class DeclarationIndex extends Component
     {
         $user = Auth::user();
 
-        if ($user?->hasRole('OWNER')) {
-            $this->doctors = $this->getDoctors();
-        }
-
         $this->employeeIds = $user?->employees()->pluck('id')->all();
 
-        $this->countActive = Declaration::whereIn('employee_id', $this->employeeIds)->count();
+        if ($user?->hasRole('OWNER')) {
+            $this->doctors = $this->getDoctors();
+        } else {
+            $this->countActive = Declaration::whereIn('employee_id', $this->employeeIds)->count();
+        }
     }
 
     #[Computed]
@@ -110,19 +110,18 @@ class DeclarationIndex extends Component
         // Don't show declaration requests for OWNER
         if (!$user?->hasRole('OWNER') && $user?->can('viewAny', DeclarationRequest::class)) {
             $declarationRequests = DeclarationRequest::where('legal_entity_id', legalEntity()->id)
-                ->select(['id', 'person_id', 'employee_id', 'declaration_number', 'status'])
+                ->select(['id', 'uuid', 'person_id', 'employee_id', 'declaration_number', 'status'])
                 ->whereNotIn('status', [Status::SIGNED->value])
+                ->with([
+                    'person:id,first_name,last_name,second_name,birth_date',
+                    'employee:id,party_id',
+                    'employee.party:id,first_name,last_name,second_name'
+                ])
                 ->get()
                 ->each->setAttribute('type', 'request');
         }
 
-        /** @var EloquentCollection $allItems */
         $allItems = $declarationRequests->concat($declarations);
-        $allItems->loadMissing([
-            'person:id,first_name,last_name,second_name,birth_date',
-            'employee:id,party_id',
-            'employee.party:id,first_name,last_name,second_name'
-        ]);
 
         // Filter by type
         if (!empty($this->typeFilter)) {
@@ -209,7 +208,7 @@ class DeclarationIndex extends Component
             return;
         }
 
-        session()?->flash('showSignModal');
+        Session::flash('showSignModal');
 
         $this->redirectRoute(
             'declaration.edit',
@@ -226,15 +225,23 @@ class DeclarationIndex extends Component
 
         try {
             $response = EHealth::declarationRequest()->reject($declarationUuid);
-            // TODO: update DB if response was successful
+
+            ['status' => $status, 'statusReason' => $statusReason] = $response->getData();
+
+            Repository::declarationRequest()->updateStatuses($declarationUuid, $status, $statusReason);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error while rejecting declaration request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error while rejecting declaration request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (Exception $exception) {
+            $this->logDatabaseErrors($exception, 'Error updating status in declaration request');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -252,7 +259,7 @@ class DeclarationIndex extends Component
             ->findOrFail($id);
 
         if (Auth::user()?->cannot('destroy', $declarationRequest)) {
-            session()?->flash('error', 'У вас немає дозволу на видалення заявки на подання декларації');
+            Session::flash('error', 'У вас немає дозволу на видалення заявки на подання декларації');
 
             return;
         }
@@ -261,7 +268,7 @@ class DeclarationIndex extends Component
             DeclarationRequest::destroy($id);
         } catch (Exception $exception) {
             $this->logDatabaseErrors($exception, 'Error while deleting declaration request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
@@ -277,7 +284,7 @@ class DeclarationIndex extends Component
     protected function ensureAbility(string $ability, string $errorMessage): bool
     {
         if (Auth::user()?->cannot($ability, DeclarationRequest::class)) {
-            session()?->flash('error', $errorMessage);
+            Session::flash('error', $errorMessage);
 
             return false;
         }
@@ -293,7 +300,7 @@ class DeclarationIndex extends Component
     protected function getDoctors(): Collection
     {
         return Employee::where('employee_type', 'DOCTOR')
-            ->with('party')
+            ->with('party:id,last_name,first_name')
             ->where('legal_entity_id', legalEntity()->id)
             ->whereHas('declarations')
             ->select(['id', 'uuid', 'user_id', 'party_id'])

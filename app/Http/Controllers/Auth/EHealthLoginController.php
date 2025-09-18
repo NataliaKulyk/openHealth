@@ -213,6 +213,10 @@ class EHealthLoginController extends Controller
                 'password' => Hash::make($password),
                 'email_verified_at' => now()
             ]);
+          
+            if ($party) {
+                $user->party()->save($party);
+            }
 
             $roleName = Session::pull('first_login_role');
 
@@ -228,7 +232,6 @@ class EHealthLoginController extends Controller
                     'model_id' => $user->id,
                     'legal_entity_id' => $legalEntity->id
                 ]);
-            }
 
             Mail::to($user->email)->send(new UserCredentialsMail($ehealthEmail, $password));
 

@@ -96,16 +96,11 @@ function scrollToElement(selector) {
 }
 
 document.addEventListener('livewire:init', () => {
-    // Listener for validation errors.
     Livewire.on('employee-form-failed', (event) => {
-        // It calls the universal function with a selector for the first error class.
         scrollToElement('.input-error, .select-error');
     });
 
-    // Listener for specific element scrolling (e.g., for 'Add Position').
     Livewire.on('scroll-to-element', (event) => {
-        // It calls the universal function with the selector passed from the backend.
-        // We use event.detail[0] or event.selector based on how you dispatch
         const selector = event.selector || (event.detail && event.detail.selector) || null;
         if (selector) {
             scrollToElement(selector);
@@ -167,5 +162,82 @@ document.addEventListener('livewire:navigated', () => {
 });
 
 import.meta.glob([
-    '../images/**',
+    '../images/**'
 ]);
+
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.css";
+import { Ukrainian } from "flatpickr/dist/l10n/uk.js";
+
+function initUkTimepickers(root = document) {
+    const inputs = root.querySelectorAll('input.timepicker-uk:not([data-tp-initialized])');
+
+    inputs.forEach((el) => {
+        if (el._flatpickr) return;
+
+        flatpickr(el, {
+            enableTime: true,
+            noCalendar: true,
+            time_24hr: true,
+            dateFormat: "H:i",
+            allowInput: true,
+            locale: Ukrainian,
+
+            onChange: (selectedDates, dateStr, instance) => {
+                const v = selectedDates[0]
+                    ? instance.formatDate(selectedDates[0], "H:i")
+                    : dateStr;
+                el.value = v || "";
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+                el.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+
+            onClose: (selectedDates, dateStr, instance) => {
+                if (!dateStr) return;
+                try {
+                    const [h, m] = dateStr.split(":").map((x) => x.trim());
+                    if (
+                        h !== undefined &&
+                        m !== undefined &&
+                        /^\d{1,2}$/.test(h) &&
+                        /^\d{1,2}$/.test(m)
+                    ) {
+                        const hh = String(Math.min(Math.max(parseInt(h, 10), 0), 23)).padStart(2, "0");
+                        const mm = String(Math.min(Math.max(parseInt(m, 10), 0), 59)).padStart(2, "0");
+                        const norm = `${hh}:${mm}`;
+                        if (norm !== el.value) {
+                            el._flatpickr.setDate(norm, false, "H:i");
+                            el.value = norm;
+                            el.dispatchEvent(new Event("input", { bubbles: true }));
+                            el.dispatchEvent(new Event("change", { bubbles: true }));
+                        }
+                    }
+                } catch (_) {}
+            },
+        });
+        el.setAttribute('data-tp-initialized', 'true');
+        el.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^\d:]/g, '').slice(0, 5);
+        }, { passive: true });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    initUkTimepickers();
+    const tpObserver = new MutationObserver(() => {
+        initUkTimepickers();
+    });
+    tpObserver.observe(document.body, { childList: true, subtree: true });
+});
+
+if (window.Livewire) {
+    document.addEventListener("livewire:load", () => {
+        Livewire.hook("message.processed", (message, component) => {
+            initUkTimepickers(component?.el || document);
+        });
+    });
+
+    document.addEventListener("livewire:navigated", () => {
+        initUkTimepickers();
+    });
+}

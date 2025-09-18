@@ -623,6 +623,20 @@ input:-webkit-autofill {
     }
 }
 
+@media (min-width: 2048px) {
+    .shift-content {
+        @apply m-auto ml-[12%];
+        max-width: 1280px; /* або інше значення */
+    }
+}
+
+@media (min-width: 2560px) {
+    .shift-content {
+        @apply m-auto ml-[10%];
+        max-width: 1280px; /* або інше значення */
+    }
+}
+
 /* For numbers in LegalEntity creation header */
 @utility firefox-fix {
     @-moz-document url-prefix() {

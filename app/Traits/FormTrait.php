@@ -12,6 +12,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
+use Throwable;
 
 trait FormTrait
 {
@@ -253,11 +254,11 @@ trait FormTrait
     /**
      * Log error messages if any exception occur during database interaction.
      *
-     * @param  Exception  $exception
+     * @param  Exception|Throwable  $exception
      * @param  string  $message
      * @return void
      */
-    protected function logDatabaseErrors(Exception $exception, string $message): void
+    protected function logDatabaseErrors(Exception|Throwable $exception, string $message): void
     {
         $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? [];
 
