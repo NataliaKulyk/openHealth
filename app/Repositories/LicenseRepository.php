@@ -23,6 +23,19 @@ class LicenseRepository
     }
 
     /**
+     * Update data after successful updating in EHealth.
+     *
+     * @param  array  $data
+     * @return bool
+     */
+    public function update(array $data): bool
+    {
+        $data = $this->mapUuidsToIds($data);
+
+        return License::update($data);
+    }
+
+    /**
      * Map uuids to ids for setting relationship.
      *
      * @param  array  $data

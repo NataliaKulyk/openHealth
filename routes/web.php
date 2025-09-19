@@ -97,7 +97,7 @@ Route::post('logout', Logout::class)->name('logout');
 
 Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
-    Route::get('/verify-personality', fn() => '<h1>Підтвердження особистості</h1>')->name('legalEntity.employee.verify');
+    Route::get('/verify-personality', fn () => '<h1>Підтвердження особистості</h1>')->name('legalEntity.employee.verify');
 
     Route::get('/select-legal-entity', SelectLegalEntity::class)->name('legalEntity.select');
 
@@ -164,12 +164,16 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/create', LicenseCreate::class)->name('license.create')->can('create', License::class);
 
             Route::middleware(['can:view,license'])->prefix('{license}')->whereNumber('license')->group(function () {
-                Route::get('/', function (LegalEntity $legalEntity, License $license) {
-                    if (Gate::allows('update', [$license, $legalEntity]) && !$license->isPrimary) {
+                Route::get('/', static function (LegalEntity $legalEntity, License $license) {
+                    if (Gate::allows('update', [$license, $legalEntity]) &&
+                        !$license->isPrimary && $legalEntity->type === LegalEntity::TYPE_PHARMACY) {
                         return App::call(LicenseEdit::class, [$legalEntity, $license]);
                     } elseif (Gate::allows('view', [$license, $legalEntity])) {
                         return App::call(LicenseView::class, [$legalEntity, $license]);
                     }
+
+                    // If both check is false
+                    abort(404);
                 })->name('license.view');
             });
         });

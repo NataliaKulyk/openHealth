@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules\DivisionRules\HealthcareRules;
 
-use Closure;
 use App\Models\Division;
 use App\Models\License;
 
 class LicenseRule extends HealthcareRule
 {
-
     public function __construct(Division $division, array $healthcareService)
     {
         parent::__construct($division, $healthcareService);

@@ -11,8 +11,8 @@
                    id="licenseType"
                    class="peer input dark:text-gray-400"
                    value="{{ __('licenses.not_primary') }}"
-                   disabled
                    placeholder=" "
+                   disabled
             />
 
             <label for="licenseType" class="label">{{ __('licenses.kind') }}</label>
@@ -153,14 +153,7 @@
         </div>
     </div>
 
-    <div class="flex justify-start gap-4 mt-10">
-        <a href="{{ url()->previous() }}" type="button" class="button-minor">
-            {{ __('forms.cancel') }}
-        </a>
-        <button wire:click="create" type="submit" class="button-primary">
-            {{ __('licenses.add') }}
-        </button>
-    </div>
+    @yield('action-buttons')
 
     <x-messages/>
     <x-forms.loading/>

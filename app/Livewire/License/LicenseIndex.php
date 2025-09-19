@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Livewire\License;
 
 use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\LegalEntity;
 use App\Models\License;
 use App\Traits\FormTrait;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
@@ -58,7 +61,21 @@ class LicenseIndex extends Component
      */
     public function sync(): void
     {
-        $response = EHealth::license()->getMany();
+        try {
+            $response = EHealth::license()->getMany();
+
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when getting licenses');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting licenses');
+            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        }
+
         $licences = $response->validate();
 
         foreach ($licences as $number => $license) {

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\License\Forms;
 
-use App\Core\Arr;
-use App\Models\License;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Form;
@@ -32,16 +30,6 @@ class LicenseForm extends Form
     public string $expiryDate = '';
 
     /**
-     * Populate the form with the data of the requested license.
-     */
-    public function setLicense(License $license): void
-    {
-        $this->fill(
-            Arr::toCamelCase($license->toArray()),
-        );
-    }
-
-    /**
      * Set validation rules for the form.
      */
     protected function rules(): array
@@ -55,15 +43,16 @@ class LicenseForm extends Form
                 // Check that legal entity does not have license with type same as in request.
                 Rule::unique('licenses', 'type')
                     ->where('legal_entity_id', legalEntity()->id)
+                    ->ignore($this->component->uuid, 'uuid')
             ],
             'licenseNumber' => ['nullable', 'string'],
             'issuedBy' => ['required', 'string'],
             'issuedDate' => ['required', 'date', 'before_or_equal:activeFromDate'],
-            'expiryDate' => ['required_if:type.PHARMACY_DRUGS', 'date', 'after_or_equal:today'],
+            'expiryDate' => ['required_if:type,PHARMACY_DRUGS', 'date', 'after_or_equal:today'],
             'activeFromDate' => ['required', 'date', 'before_or_equal:expiryDate'],
             'whatLicensed' => ['required', 'string'],
             'orderNo' => ['required', 'string'],
-            'isPrimary' => ['required', 'boolean:strict']
+            'isPrimary' => ['required', Rule::in([false])]
         ];
     }
 
@@ -76,10 +65,6 @@ class LicenseForm extends Form
     private function getAllowedLicenseTypes(): array
     {
         $licenseTypes = dictionary()->getDictionary('LICENSE_TYPE');
-
-        if (legalEntity()->type === 'PRIMARY_CARE') {
-            return ['MSP' => $licenseTypes['MSP']];
-        }
 
         if (legalEntity()->type === 'OUTPATIENT' || legalEntity()->type === 'PHARMACY') {
             return ['PHARMACY_DRUGS' => $licenseTypes['PHARMACY_DRUGS']];

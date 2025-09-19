@@ -37,7 +37,7 @@
                 <label for="type" class="label">
                     {{ __('licenses.type') }}
                 </label>
-                <input value="{{ Type::from($license->type)->label() }}"
+                <input value="{{ $license->type->label() }}"
                        type="text"
                        name="type"
                        id="type"

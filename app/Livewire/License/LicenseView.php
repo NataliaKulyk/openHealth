@@ -7,8 +7,9 @@ namespace App\Livewire\License;
 use App\Models\LegalEntity;
 use App\Models\License;
 use Illuminate\View\View;
+use Livewire\Component;
 
-class LicenseView extends LicenseEdit
+class LicenseView extends Component
 {
     protected License $license;
 

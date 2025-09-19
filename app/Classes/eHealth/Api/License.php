@@ -19,12 +19,20 @@ class License extends Request
 {
     protected const string URL = '/api/licenses';
 
+    /**
+     * Use this end-point to obtain all Licenses of the legal entity.
+     *
+     * @param  string  $url
+     * @param $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     */
     public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateMany(...));
         $this->setDefaultPageSize();
 
-        return parent::get($url, $query);
+        return $this->get($url, $query);
     }
 
     /**
@@ -41,14 +49,16 @@ class License extends Request
     }
 
     /**
+     * This method must be used to update additional license for legal entity.
+     *
      * @param  string  $uuid  unique eHealth identifier of the license
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function patch(string $uuid, $data = []): PromiseInterface|EHealthResponse
+    public function update(string $uuid, array $data = []): PromiseInterface|EHealthResponse
     {
-        return parent::patch(self::URL . '/' . $uuid, $data);
+        return $this->patch(self::URL . '/' . $uuid, $data);
     }
 
     /**
