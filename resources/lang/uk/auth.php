@@ -53,7 +53,7 @@ return [
             'email_verification' => 'Ваш email не підтверджено. Перевірте свою електронну пошту!',
             'common' => 'AUTH: Загальна помилка',
             'unexpected' => 'AUTH: Невідома помилка',
-            'user_identity' => 'AUTH: Помилка ідентифкації користувача',
+            'user_identity' => 'AUTH: Помилка ідентифікації користувача',
             'unexistent_legal_entity' => 'AUTH: Неіснуючий Legal Entity',
             'legal_entity_identity' => 'AUTH: Помилка ідентифікації закладу',
             'user_authentication' => 'AUTH: Помилка аутентифікації користувача',
@@ -62,7 +62,7 @@ return [
             'data_saving' => 'AUTH: Сталася помилка під час збереження автентифікаційних даних',
             'employee_instance' => 'Не знайдено даних співробітника для автентифікованого користувача',
             'get_employee_instance' => 'Неможливо отримати екземпляр Employee чи EmployeeRequest',
-            'email_already_verified' => 'Вказаний Email вже верифікоавно',
+            'email_already_verified' => 'Вказаний Email вже верифіковано',
             'reset_password' => 'Помилка при встановленні нового пароля',
             'throttle' => 'Забагато спроб. Будь ласка, спробуйте пізніше',
             'wrong_session' => 'Сесія недійсна',
@@ -71,5 +71,20 @@ return [
         'no_ehealth_login' => 'Без авторизації у eHealth',
         'forgot_password' => 'Забули свій пароль?',
         'vlink_sent' => 'Посилання на верифікацію надіслано успішно',
+        'additional_verification' => 'Потрібна додаткова верифікація',
+        'first_login_info' => 'Це Ваш перший вхід до системи і ми маємо Вас ідентифікувати за допомогою електронного цифрового підпису.',
+
+        'role' => [
+            'OWNER' => 'Власник',
+            'ADMIN' => 'Адміністратор',
+            'DOCTOR' => 'Лікар',
+            'HR' => 'Менеджер з персоналу',
+            'SPECIALIST' => 'Спеціаліст',
+            'ASSISTANT' => 'Асистент',
+            'LABORANT' => 'Лаборант',
+            'RECEPTIONIST' => 'Ресепшионіст',
+            'MED_ADMIN' => 'Медичний адміністратор',
+            'MED_COORDINATOR' => 'Медичний координатор',
+        ]
     ]
 ];

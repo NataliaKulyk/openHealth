@@ -29,7 +29,6 @@
 
             @livewire('components.header')
 
-            <!-- ===== Sidebar Start ===== -->
             @livewire('components.sidebar')
 
             <main id="main-content" class="p-4 md:ml-64 h-auto pt-20">

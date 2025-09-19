@@ -18,7 +18,7 @@ class LegalEntityPolicy
     {
         $legalEntitiesIds = $user->employees()->pluck('legal_entity_id')->toArray();
 
-        $shouldAllow = in_array($currentEntity->id, $legalEntitiesIds);
+        $shouldAllow = in_array($currentEntity->id, $legalEntitiesIds, true);
 
         if (!$shouldAllow) {
             return Response::denyWithStatus(404);

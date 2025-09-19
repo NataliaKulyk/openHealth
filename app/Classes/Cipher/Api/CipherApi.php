@@ -156,7 +156,8 @@ class CipherApi
     /**
      * Check if some important data received from the forms are have the same value as in the DS FileContainer
      *
-     * @param string $dataSignature Data from legalEntityForm
+     * @param string $taxId Data from legalEntityForm
+     * @param null|string $edrpou
      *
      * @return void
      */

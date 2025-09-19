@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\Person\Person;
 use App\Models\Relations\Party;
@@ -34,7 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Track if email verification was already sent
      */
-    private static $emailVerificationSent = [];
+    private static array $emailVerificationSent = [];
 
     /**
      * The attributes that are mass assignable.
@@ -130,9 +133,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get email verified at timestamp in camelCase
      *
-     * @return mixed
+     * @return null|string
      */
-    public function getEmailVerifiedAtAttribute()
+    public function getEmailVerifiedAtAttribute(): ?string
     {
         return $this->attributes['email_verified_at'];
     }
@@ -156,9 +159,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasAccessToLegalEntityByUuid(string $legalEntityUuid): bool
     {
         return $this->employees()
-            ->whereHas('legalEntity', function ($query) use ($legalEntityUuid) {
-                $query->where('uuid', $legalEntityUuid);
-            })
+            ->whereHas('legalEntity', fn (Builder $query) => $query->where('uuid', $legalEntityUuid))
             ->exists();
     }
 
@@ -257,7 +258,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return void
      */
-    public function sendEmailVerificationNotification()
+    public function sendEmailVerificationNotification(): void
     {
         // Check if we already sent verification to this email in this request
         $emailKey = $this->email . '_' . $this->id;
@@ -272,10 +273,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
             // Mark as sent
             self::$emailVerificationSent[$emailKey] = true;
-        } catch (\Exception $err) {
-            \Log::error('EmailVerification Error:', ['error' => $err->getMessage(), 'user_email' => $this->email]);
+        } catch (Exception $err) {
+            Log::error('EmailVerification Error:', ['error' => $err->getMessage(), 'user_email' => $this->email]);
 
-            throw new \Exception(__("Cannot send verification email to the user"));
+            throw new Exception(__("Cannot send verification email to the user"));
         }
     }
 

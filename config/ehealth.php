@@ -7,7 +7,7 @@ return [
         'domain' => env('EHEALTH_API_URL', 'private-anon-cb2ce4f7fc-uaehealthapi.apiary-mock.com'),
         'token' => env('EHEALTH_X_CUSTOM_PSK', 'X-Custom-PSK'),
         'api_key' => env('EHEALTH_API_KEY', ''),
-        'callback_prod' => env('EHEALTH_CALBACK_PROD', true),
+        'callback_prod' => env('EHEALTH_CALLBACK_PROD', true),
         'auth_host' => env('EHEALTH_AUTH_HOST', 'https://auth-preprod.ehealth.gov.ua/sign-in'),
         'redirect_uri' => env('EHEALTH_REDIRECT_URI', 'https://openhealths.com/ehealth/oauth'),
         'url_dev' => env('EHEALTH_URL_DEV', 'http://localhost'),
@@ -26,8 +26,8 @@ return [
     ],
 
     'auth' => [
-        'decay_seconds' => 300,     /* Amount of the seconds to another login attempt */
-        'max_login_attempts' => 5   /* Amount of the wrtong attempt before locking out */
+        'decay_seconds' => 300,     // Amount of the seconds to another login attempt
+        'max_login_attempts' => 5   // Amount of the wrong attempt before locking out
     ],
 
     'capitation_contract_max_period_days' => 366,
@@ -425,6 +425,7 @@ return [
         'emails' => env('TEST_CLIENT_EMAILS') ? explode(',', env('TEST_CLIENT_EMAILS')) : [],
     ],
 
+    // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583404101/Scopes+model#Roles-scopes
     'roles' => [
         'OWNER' => [
             'capitation_report:read',
@@ -434,12 +435,12 @@ return [
             'connection:refresh_secret',
             'connection:write',
             'contract:read',
-            'contract:write',
-            'contract_request:approve',
-            'contract_request:create',
+            'contract:write', // missing in MSP type PRIMARY_CARE
+            'contract_request:approve', // missing in MSP type PRIMARY_CARE
+            'contract_request:create', // // missing in MSP type PRIMARY_CARE
             'contract_request:read',
-            'contract_request:sign',
-            'contract_request:terminate',
+            'contract_request:sign', // missing in MSP type PRIMARY_CARE
+            'contract_request:terminate', // missing in MSP type PRIMARY_CARE
             'declaration:read',
             'declaration_request:approve',
             'declaration_request:read',
@@ -615,15 +616,7 @@ return [
             'device_request:complete',
             'device_dispense:read',
             'device_association:read',
-            'detected_issue:read',
-            // Only preprod
-            'composition:write',
-            'composition:mark_in_error',
-            'composition:resend_sms',
-            'composition_configuration:read',
-            'person_verification:read',
-            'confidant_person_relationship_request:write',
-            'confidant_person_relationship:read'
+            'detected_issue:read'
         ],
         'HR' => [
             'division:activate',

@@ -45,6 +45,7 @@ return [
     'file' => 'Поле :attribute має містити файл.',
     'filled' => "Поле :attribute є обов'язковим для заповнення.",
     'exists' => 'Вибране для :attribute значення не коректне.',
+    'extensions' => 'Файл у полі :attribute повинен мати одне з наступних розширень: :values.',
     'gt' => [
         'numeric' => 'The :attribute must be greater than :value.',
         'file' => 'The :attribute must be greater than :value kilobytes.',

@@ -491,8 +491,7 @@ abstract class DeclarationComponent extends Component
 
     protected function setEmployeesInfo(): void
     {
-        $employees = Auth::user()
-            ?->employees()
+        $employees = Auth::user()?->employees()
             ->where('legal_entity_id', legalEntity()->id)
             ->whereNotNull('division_id')
 //            ->whereHas('specialities', fn (Builder $query) => $query->where('speciality_officio', true))

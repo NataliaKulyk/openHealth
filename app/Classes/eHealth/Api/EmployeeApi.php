@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Classes\eHealth\Api;
 
-use App\Models\Relations\Party;
 use App\Models\User;
 use App\Models\LegalEntity;
 use App\Classes\eHealth\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 use App\Classes\eHealth\Exceptions\ApiException;
+use Illuminate\Support\Facades\Session;
+use Spatie\Permission\Models\Role;
 
 class EmployeeApi
 {
@@ -27,7 +28,6 @@ class EmployeeApi
     {
         return new Request('POST', self::URL_REQUEST_V2, $params)->sendRequest();
     }
-
 
     public static function _dismissed($id): array
     {
@@ -62,31 +62,43 @@ class EmployeeApi
     /**
      * Authenticate user with eHealth
      *
-     * @param string $code
-     * @param string $legalEntityUUID
-     *
+     * @param  string  $code
+     * @param  string  $legalEntityUUID
      * @return mixed
+     * @throws ApiException
      */
     public static function authenticate(string $code, string $legalEntityUUID): mixed
     {
-        $user = User::find(session()->get(config('ehealth.api.auth_ehealth')));
+        $user = User::find(Session::get(config('ehealth.api.auth_ehealth')));
+        $legalEntity = LegalEntity::whereUuid($legalEntityUUID)->first();
 
         if (!$user) {
-            Log::error(__('EmployeeApi::authenticate', [], 'en'), ['errors' => 'User has not been found']);
+            $role = Session::get('first_login_role');
 
-            return false;
+            $permissions = Role::where('name', $role)
+                ->whereGuardName('ehealth')
+                ->firstOrFail()
+                ->permissions()
+                ->pluck('name')
+                ->toArray();
+
+            if ($legalEntity->type === LegalEntity::TYPE_PRIMARY_CARE && $role === 'OWNER') {
+                $permissions = self::excludeContractPermissions($permissions);
+            }
+
+            $scope = implode(' ', $permissions);
+        } else {
+            $scope = $user->getScopes($legalEntity->clientId);
         }
-
-        $legalEntity = LegalEntity::byUuid($legalEntityUUID)->first();
 
         $data = [
             'token' => [
-                'client_id'     => $legalEntity->client_id ?? '',
+                'client_id' => $legalEntity->client_id ?? '',
                 'client_secret' => $legalEntity->client_secret ?? '',
-                'grant_type'    => 'authorization_code',
-                'code'          => $code,
-                'redirect_uri'  => config('ehealth.api.redirect_uri'),
-                'scope'         => $user->getScopes($legalEntity->clientId)
+                'grant_type' => 'authorization_code',
+                'code' => $code,
+                'redirect_uri' => config('ehealth.api.redirect_uri'),
+                'scope' => $scope
             ]
         ];
 
@@ -162,9 +174,9 @@ class EmployeeApi
     /**
      * Retrieve EmployeeRequest Details by it's uuid
      *
-     * @param string $employeeId
-     *
+     * @param  string  $requestId
      * @return array
+     * @throws ApiException
      */
     public static function getEmployeeRequeestData(string $requestId): array
     {
@@ -173,15 +185,28 @@ class EmployeeApi
         return new Request('GET', $url, [])->sendRequest();
     }
 
+    private static function excludeContractPermissions(array $permissions): array
+    {
+        $contractPermissions = [
+            'contract:write',
+            'contract_request:approve',
+            'contract_request:create',
+            'contract_request:sign',
+            'contract_request:terminate',
+        ];
+
+        return array_diff($permissions, $contractPermissions);
+    }
+
     public static function schemaRequest(): array
     {
         return [
-            '$schema'     => 'http://json-schema.org/draft-04/schema#',
+            '$schema' => 'http://json-schema.org/draft-04/schema#',
             'definitions' => [
-                'phone'          => [
-                    'type'                 => 'object',
-                    'properties'           => [
-                        'type'   => [
+                'phone' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'type' => [
                             'type' => 'string',
                             'enum' => [
                                 'MOBILE',
@@ -189,20 +214,20 @@ class EmployeeApi
                             ]
                         ],
                         'number' => [
-                            'type'    => 'string',
+                            'type' => 'string',
                             'pattern' => '^\+38[0-9]{10}$'
                         ]
                     ],
-                    'required'             => [
+                    'required' => [
                         'type',
                         'number'
                     ],
                     'additionalProperties' => false
                 ],
-                'document'       => [
-                    'type'                 => 'object',
-                    'properties'           => [
-                        'type'   => [
+                'document' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'type' => [
                             'type' => 'string',
                             'enum' => [
                                 'PASSPORT',
@@ -215,34 +240,34 @@ class EmployeeApi
                             'type' => 'string'
                         ]
                     ],
-                    'required'             => [
+                    'required' => [
                         'type',
                         'number'
                     ],
                     'additionalProperties' => false
                 ],
-                'education'      => [
-                    'type'                 => 'object',
-                    'properties'           => [
-                        'country'          => [
+                'education' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'country' => [
                             'type' => 'string',
                             'enum' => [
                                 'UA'
                             ]
                         ],
-                        'city'             => [
+                        'city' => [
                             'type' => 'string'
                         ],
                         'institution_name' => [
                             'type' => 'string'
                         ],
-                        'issued_date'      => [
+                        'issued_date' => [
                             'type' => 'string'
                         ],
-                        'diploma_number'   => [
+                        'diploma_number' => [
                             'type' => 'string'
                         ],
-                        'degree'           => [
+                        'degree' => [
                             'type' => 'string',
                             'enum' => [
                                 'Молодший спеціаліст',
@@ -251,11 +276,11 @@ class EmployeeApi
                                 'Магістр'
                             ]
                         ],
-                        'speciality'       => [
+                        'speciality' => [
                             'type' => 'string'
                         ]
                     ],
-                    'required'             => [
+                    'required' => [
                         'country',
                         'city',
                         'institution_name',
@@ -265,10 +290,10 @@ class EmployeeApi
                     ],
                     'additionalProperties' => false
                 ],
-                'qualification'  => [
-                    'type'                 => 'object',
-                    'properties'           => [
-                        'type'               => [
+                'qualification' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'type' => [
                             'type' => 'string',
                             'enum' => [
                                 'Інтернатура',
@@ -279,32 +304,32 @@ class EmployeeApi
                                 'Стажування'
                             ]
                         ],
-                        'institution_name'   => [
+                        'institution_name' => [
                             'type' => 'string'
                         ],
-                        'speciality'         => [
+                        'speciality' => [
                             'type' => 'string'
                         ],
-                        'issued_date'        => [
-                            'type'   => 'string',
+                        'issued_date' => [
+                            'type' => 'string',
                             'format' => 'date'
                         ],
                         'certificate_number' => [
-                            'type'   => 'string',
+                            'type' => 'string',
                             'format' => 'date'
                         ]
                     ],
-                    'required'             => [
+                    'required' => [
                         'type',
                         'institution_name',
                         'speciality'
                     ],
                     'additionalProperties' => false
                 ],
-                'speciality'     => [
-                    'type'                 => 'object',
-                    'properties'           => [
-                        'speciality'         => [
+                'speciality' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'speciality' => [
                             'type' => 'string',
                             'enum' => [
                                 'Терапевт',
@@ -315,7 +340,7 @@ class EmployeeApi
                         'speciality_officio' => [
                             'type' => 'boolean'
                         ],
-                        'level'              => [
+                        'level' => [
                             'type' => 'string',
                             'enum' => [
                                 'Друга категорія',
@@ -330,22 +355,22 @@ class EmployeeApi
                                 'Підтвердження'
                             ]
                         ],
-                        'attestation_name'   => [
+                        'attestation_name' => [
                             'type' => 'string'
                         ],
-                        'attestation_date'   => [
-                            'type'   => 'string',
+                        'attestation_date' => [
+                            'type' => 'string',
                             'format' => 'date'
                         ],
-                        'valid_to_date'      => [
-                            'type'   => 'string',
+                        'valid_to_date' => [
+                            'type' => 'string',
                             'format' => 'date'
                         ],
                         'certificate_number' => [
                             'type' => 'string'
                         ]
                     ],
-                    'required'             => [
+                    'required' => [
                         'speciality',
                         'speciality_officio',
                         'level',
@@ -356,18 +381,18 @@ class EmployeeApi
                     'additionalProperties' => false
                 ],
                 'science_degree' => [
-                    'type'                 => 'object',
-                    'properties'           => [
-                        'country'          => [
+                    'type' => 'object',
+                    'properties' => [
+                        'country' => [
                             'type' => 'string',
                             'enum' => [
                                 'UA'
                             ]
                         ],
-                        'city'             => [
+                        'city' => [
                             'type' => 'string'
                         ],
-                        'degree'           => [
+                        'degree' => [
                             'type' => 'string',
                             'enum' => [
                                 'Доктор філософії',
@@ -378,10 +403,10 @@ class EmployeeApi
                         'institution_name' => [
                             'type' => 'string'
                         ],
-                        'diploma_number'   => [
+                        'diploma_number' => [
                             'type' => 'string'
                         ],
-                        'speciality'       => [
+                        'speciality' => [
                             'type' => 'string',
                             'enum' => [
                                 'Терапевт',
@@ -389,12 +414,12 @@ class EmployeeApi
                                 'Сімейний лікар'
                             ]
                         ],
-                        'issued_date'      => [
-                            'type'   => 'string',
+                        'issued_date' => [
+                            'type' => 'string',
                             'format' => 'date'
                         ]
                     ],
-                    'required'             => [
+                    'required' => [
                         'country',
                         'city',
                         'degree',
@@ -404,51 +429,51 @@ class EmployeeApi
                     ],
                     'additionalProperties' => false
                 ],
-                'party'          => [
-                    'type'                 => 'object',
-                    'properties'           => [
-                        'first_name'  => [
+                'party' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'first_name' => [
                             'type' => 'string'
                         ],
-                        'last_name'   => [
+                        'last_name' => [
                             'type' => 'string'
                         ],
                         'second_name' => [
                             'type' => 'string'
                         ],
-                        'birth_date'  => [
-                            'type'   => 'string',
+                        'birth_date' => [
+                            'type' => 'string',
                             'format' => 'date'
                         ],
-                        'gender'      => [
+                        'gender' => [
                             'type' => 'string',
                             'enum' => [
                                 'MALE',
                                 'FEMALE'
                             ]
                         ],
-                        'tax_id'      => [
-                            'type'    => 'string',
+                        'tax_id' => [
+                            'type' => 'string',
                             'pattern' => '^[1-9]([0-9]{7}|[0-9]{9})$'
                         ],
-                        'email'       => [
-                            'type'   => 'string',
+                        'email' => [
+                            'type' => 'string',
                             'format' => 'email'
                         ],
-                        'documents'   => [
-                            'type'  => 'array',
+                        'documents' => [
+                            'type' => 'array',
                             'items' => [
                                 '$ref' => '#/definitions/document'
                             ]
                         ],
-                        'phones'      => [
-                            'type'  => 'array',
+                        'phones' => [
+                            'type' => 'array',
                             'items' => [
                                 '$ref' => '#/definitions/phone'
                             ]
                         ]
                     ],
-                    'required'             => [
+                    'required' => [
                         'first_name',
                         'last_name',
                         'birth_date',
@@ -461,41 +486,41 @@ class EmployeeApi
                     'additionalProperties' => false
                 ]
             ],
-            'type'        => 'object',
-            'properties'  => [
+            'type' => 'object',
+            'properties' => [
                 'employee_request' => [
-                    'type'       => 'object',
+                    'type' => 'object',
                     'properties' => [
                         'legal_entity_uuid' => [
-                            'type'    => 'string',
+                            'type' => 'string',
                             'pattern' => '^[0-9a-f]{8}(-?)[0-9a-f]{4}(-?)[0-9a-f]{4}(-?)[0-9a-f]{4}(-?)[0-9a-f]{12}$'
                         ],
-                        'division_uuid'     => [
-                            'type'    => 'string',
+                        'division_uuid' => [
+                            'type' => 'string',
                             'pattern' => '^[0-9a-f]{8}(-?)[0-9a-f]{4}(-?)[0-9a-f]{4}(-?)[0-9a-f]{4}(-?)[0-9a-f]{12}$'
                         ],
-                        'employee_id'       => [
-                            'type'    => 'string',
+                        'employee_id' => [
+                            'type' => 'string',
                             'pattern' => '^[0-9a-f]{8}(-?)[0-9a-f]{4}(-?)[0-9a-f]{4}(-?)[0-9a-f]{4}(-?)[0-9a-f]{12}$'
                         ],
-                        'position'          => [
+                        'position' => [
                             'type' => 'string'
                         ],
-                        'start_date'        => [
-                            'type'   => 'string',
+                        'start_date' => [
+                            'type' => 'string',
                             'format' => 'date'
                         ],
-                        'end_date'          => [
-                            'type'   => 'string',
+                        'end_date' => [
+                            'type' => 'string',
                             'format' => 'date'
                         ],
-                        'status'            => [
+                        'status' => [
                             'type' => 'string',
                             'enum' => [
                                 'NEW'
                             ]
                         ],
-                        'employee_type'     => [
+                        'employee_type' => [
                             'type' => 'string',
                             'enum' => [
                                 'DOCTOR',
@@ -504,49 +529,49 @@ class EmployeeApi
                                 'OWNER'
                             ]
                         ],
-                        'party'             => [
-                            'type'       => 'object',
+                        'party' => [
+                            'type' => 'object',
                             'properties' => [
                                 'items' => [
                                     '$ref' => '#/definitions/party'
                                 ]
                             ]
                         ],
-                        'doctor'            => [
-                            'type'       => 'object',
+                        'doctor' => [
+                            'type' => 'object',
                             'properties' => [
-                                'educations'     => [
-                                    'type'  => 'array',
+                                'educations' => [
+                                    'type' => 'array',
                                     'items' => [
                                         '$ref' => '#/definitions/education'
                                     ]
                                 ],
                                 'qualifications' => [
-                                    'type'  => 'array',
+                                    'type' => 'array',
                                     'items' => [
                                         '$ref' => '#/definitions/qualification'
                                     ]
                                 ],
-                                'specialities'   => [
-                                    'type'  => 'array',
+                                'specialities' => [
+                                    'type' => 'array',
                                     'items' => [
                                         '$ref' => '#/definitions/speciality'
                                     ]
                                 ],
                                 'science_degree' => [
-                                    'type'  => 'object',
+                                    'type' => 'object',
                                     'items' => [
                                         '$ref' => '#/definitions/science_degree'
                                     ]
                                 ]
                             ],
-                            'required'   => [
+                            'required' => [
                                 'educations',
                                 'specialities'
                             ]
                         ]
                     ],
-                    'required'   => [
+                    'required' => [
                         'legal_entity_id',
                         'position',
                         'start_date',
@@ -556,7 +581,7 @@ class EmployeeApi
                     ]
                 ]
             ],
-            'required'    => [
+            'required' => [
                 'employee_request'
             ]
         ];
@@ -565,28 +590,28 @@ class EmployeeApi
     public static function schemaResponse(): array
     {
         return [
-            '$schema'    => 'http://json-schema.org/draft-07/schema#',
-            'type'       => 'object',
+            '$schema' => 'http://json-schema.org/draft-07/schema#',
+            'type' => 'object',
             'properties' => [
-                'id'            => [
+                'id' => [
                     'type' => 'string'
                 ],
-                'division_id'     => [
+                'division_id' => [
                     'type' => 'string'
                 ],
                 'legal_entity_id' => [
                     'type' => 'string'
                 ],
-                'position'        => [
+                'position' => [
                     'type' => 'string'
                 ],
-                'start_date'      => [
+                'start_date' => [
                     'type' => 'string'
                 ],
-                'end_date'        => [
+                'end_date' => [
                     'type' => 'string'
                 ],
-                'status'          => [
+                'status' => [
                     'enum' => [
                         'NEW',
                         'REJECTED',
@@ -594,97 +619,97 @@ class EmployeeApi
                         'APPROVED'
                     ]
                 ],
-                'employee_type'   => [
+                'employee_type' => [
                     'type' => 'string'
                 ],
-                'party'           => [
-                    'type'       => 'object',
+                'party' => [
+                    'type' => 'object',
                     'properties' => [
-                        'id'           => [
+                        'id' => [
                             'type' => 'string'
                         ],
-                        'first_name'         => [
+                        'first_name' => [
                             'type' => 'string'
                         ],
-                        'last_name'          => [
+                        'last_name' => [
                             'type' => 'string'
                         ],
-                        'second_name'        => [
+                        'second_name' => [
                             'type' => 'string'
                         ],
-                        'birth_date'         => [
+                        'birth_date' => [
                             'type' => 'string'
                         ],
-                        'gender'             => [
+                        'gender' => [
                             'type' => 'string'
                         ],
-                        'no_tax_id'          => [
+                        'no_tax_id' => [
                             'type' => 'boolean'
                         ],
-                        'tax_id'             => [
+                        'tax_id' => [
                             'type' => 'string'
                         ],
-                        'email'              => [
+                        'email' => [
                             'type' => 'string'
                         ],
-                        'documents'          => [
+                        'documents' => [
                             'type' => 'array'
                         ],
-                        'phones'             => [
+                        'phones' => [
                             'type' => 'array'
                         ],
                         'working_experience' => [
                             'type' => 'number'
                         ],
-                        'about_myself'       => [
+                        'about_myself' => [
                             'type' => 'string'
                         ]
                     ],
-                    'required'   => [
+                    'required' => [
                         'first_name',
                         'last_name',
                         'birth_date',
                         'gender'
                     ]
                 ],
-                'doctor'          => [
-                    'type'       => 'object',
+                'doctor' => [
+                    'type' => 'object',
                     'properties' => [
-                        'educations'     => [
+                        'educations' => [
                             'type' => 'array'
                         ],
                         'qualifications' => [
                             'type' => 'array'
                         ],
-                        'specialities'   => [
+                        'specialities' => [
                             'type' => 'array'
                         ],
                         'science_degree' => [
-                            'type'       => 'object',
+                            'type' => 'object',
                             'properties' => [
-                                'country'          => [
+                                'country' => [
                                     'type' => 'string'
                                 ],
-                                'city'             => [
+                                'city' => [
                                     'type' => 'string'
                                 ],
-                                'degree'           => [
+                                'degree' => [
                                     'type' => 'string'
                                 ],
                                 'institution_name' => [
                                     'type' => 'string'
                                 ],
-                                'diploma_number'   => [
+                                'diploma_number' => [
                                     'type' => 'string'
                                 ],
-                                'speciality'       => [
+                                'speciality' => [
                                     'type' => 'string'
                                 ],
-                                'issued_date'      => [
+                                'issued_date' => [
                                     'type' => 'string'
                                 ]
                             ],
-                            'required'   => [
+                            'required' => [
                                 'country',
                                 'city',
                                 'degree',
@@ -694,19 +719,19 @@ class EmployeeApi
                             ]
                         ]
                     ],
-                    'required'   => [
+                    'required' => [
                         'educations',
                         'specialities'
                     ]
                 ],
-                'inserted_at'     => [
+                'inserted_at' => [
                     'type' => 'string'
                 ],
-                'updated_at'      => [
+                'updated_at' => [
                     'type' => 'string'
                 ]
             ],
-            'required'   => [
+            'required' => [
                 'position',
                 'status',
                 'employee_type',

@@ -1,19 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\View\Components;
 
 use Illuminate\View\Component;
+use Illuminate\View\View;
 
 class AuthenticationCard extends Component
 {
-    public bool $showLogo;
-
-    public function __construct(bool $showLogo = true)
+    public function __construct(public bool $showLogo = true)
     {
-        $this->showLogo = $showLogo;
     }
 
-    public function render()
+    public function render(): View
     {
         return view('components.authentication-card');
     }

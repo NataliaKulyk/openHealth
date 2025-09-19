@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Auth\EHealthLoginController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\EmailController;
+use App\Http\Controllers\HomeController;
+use App\Livewire\Actions\Logout;
+use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Declaration\DeclarationEdit;
 use App\Livewire\Declaration\DeclarationView;
 use App\Livewire\Division\DivisionView;
@@ -11,26 +17,41 @@ use App\Models\License;
 use App\Models\LegalEntity;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
-use App\Livewire\Actions\Logout;
-use App\Livewire\Auth\VerifyEmail;
 use App\Livewire\Auth\ResetPassword;
-use App\Livewire\Auth\ForgotPassword;
-use App\Http\Controllers\Auth\EHealthLoginController;
+use App\Livewire\Auth\SelectLegalEntity;
+use App\Livewire\Auth\VerifyEmail;
+use App\Livewire\Auth\VerifyPersonality;
+use App\Livewire\Contract\ContractForm;
+use App\Livewire\Contract\ContractIndex;
+use App\Livewire\Dashboard;
 use App\Livewire\Declaration\DeclarationCreate;
+use App\Livewire\Declaration\DeclarationIndex;
+use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Division\DivisionCreate;
 use App\Livewire\Division\DivisionEdit;
-use App\Livewire\Employee\EmployeeEdit;
-use App\Livewire\Employee\EmployeeShow;
-use App\Livewire\Employee\EmployeeIndex;
+use App\Livewire\Division\DivisionIndex;
+use App\Livewire\Division\HealthcareService;
 use App\Livewire\Employee\EmployeeCreate;
+use App\Livewire\Employee\EmployeeEdit;
+use App\Livewire\Employee\EmployeeIndex;
 use App\Livewire\Employee\EmployeePositionAdd;
 use App\Livewire\Employee\EmployeeRequestEdit;
 use App\Livewire\Employee\EmployeeRequestShow;
-use App\Livewire\License\LicenseEdit;
-use App\Livewire\License\LicenseView;
+use App\Livewire\Employee\EmployeeShow;
+use App\Livewire\Encounter\EncounterCreate;
+use App\Livewire\Encounter\EncounterEdit;
+use App\Livewire\LegalEntity\CreateLegalEntity;
+use App\Livewire\LegalEntity\EditLegalEntity;
 use App\Livewire\License\LicenseCreate;
-use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
+use App\Livewire\License\LicenseEdit;
+use App\Livewire\License\LicenseIndex;
+use App\Livewire\License\LicenseView;
+use App\Livewire\Patient\PatientIndex;
+use App\Livewire\Patient\Records\PatientData;
+use App\Livewire\Patient\Records\PatientEpisodes;
+use App\Livewire\Patient\Records\PatientSummary;
 use App\Livewire\Procedure\ProcedureCreate;
+use App\Models\Division;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Procedure;
@@ -39,26 +60,6 @@ use App\Models\Person\PersonRequest;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
-use App\Livewire\Patient\PatientIndex;
-use App\Livewire\Contract\ContractForm;
-use App\Livewire\Auth\SelectLegalEntity;
-use App\Livewire\Contract\ContractIndex;
-use App\Http\Controllers\HomeController;
-use App\Livewire\Division\DivisionIndex;
-use App\Http\Controllers\EmailController;
-use App\Livewire\Encounter\EncounterEdit;
-use App\Livewire\Encounter\EncounterCreate;
-use App\Livewire\LegalEntity\EditLegalEntity;
-use App\Livewire\License\LicenseIndex;
-use App\Livewire\Patient\Records\PatientData;
-use App\Livewire\Declaration\DeclarationIndex;
-use App\Livewire\LegalEntity\CreateLegalEntity;
-use App\Livewire\Patient\Records\PatientSummary;
-use App\Livewire\Division\HealthcareService;
-use App\Livewire\Patient\Records\PatientEpisodes;
-use App\Http\Controllers\Auth\VerifyEmailController;
-use App\Livewire\Dashboard;
-use App\Models\Division;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,18 +97,18 @@ Route::post('logout', Logout::class)->name('logout');
 /* Dashboard */
 
 Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
-
-    Route::get('/verify-personality', fn () => '<h1>Підтвердження особистості</h1>')->name('legalEntity.employee.verify');
+    Route::get('/verify-personality', VerifyPersonality::class)->name('party.verify');
 
     Route::get('/select-legal-entity', SelectLegalEntity::class)->name('legalEntity.select');
 
-    Route::middleware(['auth:web'])->prefix('/dashboard')->group(function () {
+    Route::prefix('/dashboard')->group(function () {
         Route::get('/', Dashboard::class)->name('dashboard');
 
         Route::get('/legal-entities/create', CreateLegalEntity::class)
             ->can('create', LegalEntity::class)
             ->name('legal-entity.new.create');
     });
+
     Route::middleware(['can:access,legalEntity'])->prefix('/dashboard/{legalEntity}')->whereNumber('legalEntity')->group(function () {
 
         Route::get('/', Dashboard::class)->name('dashboard');

@@ -70,44 +70,40 @@
     $hasSearchError = $errors->has($bind);
 @endphp
 
-<div
-    x-id="['input', 'listbox']"
-    x-data="combobox({
-        options: @js($options),
-        entangled: $wire.entangle('{{ $bind }}'),
-        value: '{{ $bindValue }}',
-        param: '{{ $bindParam }}'
-    })"
-    {{ $attributes->merge(['class' => "form-group group"]) }}
+<div {{ $attributes->merge(['class' => "form-group group"]) }}
+     x-id="['input', 'listbox']"
+     x-data="combobox({
+         options: @js($options),
+         entangled: $wire.entangle('{{ $bind }}'),
+         value: '{{ $bindValue }}',
+         param: '{{ $bindParam }}'
+     })"
 >
-    <input
-        :id="$id('input')"
-        :required="{{ $isRequired }}"
-        :name="{{ $isRequired ? "'$bind'" : 'null' }}"
-        type="text"
-        placeholder=" "
-        x-model="search"
-        autocomplete="off"
-        aria-describedby="{{ $hasSearchError ? 'hasSearchErrorHelp' : '' }}"
-        class="input {{ $hasSearchError  ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-        @focus="open=true"
-        @mousedown="open=(!open ? true : false)"
-        @keydown.escape.window="open = false;"
-        @blur="setTimeout(() => open = false, 100)"
-        x-init="if (search) $el.classList.add('not-empty')"
-        x-effect="$el.classList.toggle('not-empty', !!search)"
+    <input :id="$id('input')"
+           :required="{{ $isRequired }}"
+           :name="{{ $isRequired ? "'$bind'" : 'null' }}"
+           type="text"
+           placeholder=" "
+           x-model="search"
+           autocomplete="off"
+           aria-describedby="{{ $hasSearchError ? 'hasSearchErrorHelp' : '' }}"
+           class="input {{ $hasSearchError  ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+           @focus="open=true"
+           @mousedown="open=(!open ? true : false)"
+           @keydown.escape.window="open = false;"
+           @blur="setTimeout(() => open = false, 100)"
+           x-init="if (search) $el.classList.add('not-empty')"
+           x-effect="$el.classList.toggle('not-empty', !!search)"
     />
 
-    <ul
+    <ul x-show="open"
         x-cloak
-        x-show="open"
         :id="$id('listbox')"
         class="py-2 text-sm text-gray-700 dark:text-gray-200 absolute z-17 mt-1 w-full bg-white border border-gray-400 rounded shadow max-h-60 overflow-auto"
     >
         <template x-if="filtered.length > 0">
             <template x-for="(option, index) in filtered" :key="index">
-                <li
-                    @mousedown.prevent="select(option)"
+                <li @mousedown.prevent="select(option)"
                     x-text="option"
                     tabindex=0
                     :id="`option-${index}`"
@@ -117,9 +113,7 @@
         </template>
 
         <template x-if="filtered.length === 0">
-            <li
-                class="px-4 py-2 text-red-400 cursor-not-allowed"
-            >
+            <li class="px-4 py-2 text-red-400 cursor-not-allowed">
                 {{ __('Співпадінь не знайдено') }}
             </li>
         </template>
@@ -148,23 +142,23 @@
                 open: false,
 
                 get filtered() {
-                    if (! this.search) {
+                    if (!this.search) {
                         return this.options.map((value) => value[this.param]);
                     }
 
                     arr = this.options.filter(opt => opt.name.toLowerCase().includes(this.search.toLowerCase())).map((value) => value[this.param]);
 
-                    if(arr.length === 0) {
+                    if (arr.length === 0) {
                         this.value = '';
                     }
 
-                    return arr ;
+                    return arr;
                 },
 
                 select(value) {
-                    this.search = value,
+                    this.search = value;
                     this.value = this.options.find((option) => option[this.param] === value)[this.valueName];
-                    this.open = false
+                    this.open = false;
                 }
             }
         }
