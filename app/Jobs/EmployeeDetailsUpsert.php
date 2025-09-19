@@ -69,13 +69,12 @@ class EmployeeDetailsUpsert implements ShouldQueue
         if ($user && $roleName && $legalEntityId) {
             setPermissionsTeamId($legalEntityId);
 
-            $user->unsetRelation('roles');
+            $user->unsetRelation('roles')->unsetRelation('permissions');
 
             if (!$user->hasRole($roleName)) {
                 $user->assignRole($roleName);
             }
 
-            app(PermissionRegistrar::class)->forgetCachedPermissions();
         }
     }
 }

@@ -42,7 +42,7 @@ readonly class ProcessEmployeeRequestsOnLogin
             ];
 
             $ehealthResponse = EHealth::employee()->getMany($apiFilters);
-            $employeesFromApi = $ehealthResponse->getData();
+            $employeesFromApi = $ehealthResponse->validate();
 
         } catch (Throwable $e) {
             Log::error('Failed to fetch initial list for employee requests processing.', [
@@ -122,13 +122,11 @@ readonly class ProcessEmployeeRequestsOnLogin
                         if ($user && $roleName && $legalEntityId) {
                             setPermissionsTeamId($legalEntityId);
 
-                            $user->unsetRelation('roles');
+                            $user->unsetRelation('roles')->unsetRelation('permissions');
 
                             if (!$user->hasRole($roleName)) {
                                 $user->assignRole($roleName);
                             }
-
-                            app(PermissionRegistrar::class)->forgetCachedPermissions();
                         }
 
                         $request->status = Status::APPROVED->value;
