@@ -1,23 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Enums\License\Type;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateLicensesTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('licenses', function (Blueprint $table) {
+        Schema::create('licenses', static function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique()->nullable();
-            $table->unsignedBigInteger('legal_entity_id');
-            $table->string('type');
+            $table->foreignId('legal_entity_id')->constrained()->cascadeOnDelete();
+            $table->enum('type', array_column(Type::cases(), 'value'));
             $table->string('is_active')->nullable();
             $table->string('issued_by');
             $table->date('issued_date');
@@ -33,8 +36,6 @@ class CreateLicensesTable extends Migration
             $table->date('ehealth_updated_at')->nullable();
             $table->string('ehealth_updated_by')->nullable();
             $table->timestamps();
-
-            $table->foreign('legal_entity_id')->references('id')->on('legal_entities')->onDelete('cascade');
         });
     }
 
@@ -43,8 +44,8 @@ class CreateLicensesTable extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('licenses');
     }
-}
+};

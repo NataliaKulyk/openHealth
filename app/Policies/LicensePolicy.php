@@ -53,6 +53,35 @@ class LicensePolicy
             return Response::denyWithStatus(404);
         }
 
+        // Can create additional license only when legal entity type is PHARMACY
+        if (legalEntity()->type !== LegalEntity::TYPE_PHARMACY) {
+            return Response::denyWithStatus(404);
+        }
+
+        // The license can be created only with the following type of legal entity.
+        if (!in_array(
+            legalEntity()->type,
+            [
+                LegalEntity::TYPE_PRIMARY_CARE,
+                LegalEntity::TYPE_EMERGENCY,
+                LegalEntity::TYPE_OUTPATIENT,
+                LegalEntity::TYPE_PHARMACY
+            ],
+            true
+        )) {
+            return Response::denyWithStatus(404);
+        }
+
+        // The license can be created for legal entities with the following statuses.
+        if (!in_array(legalEntity()->status, ['ACTIVE', 'SUSPENDED'], true)) {
+            return Response::denyWithStatus(404);
+        }
+
+        // The additional license can be created for legal entities with an active primary license.
+        if (!legalEntity()?->hasActivePrimaryLicense()) {
+            return Response::denyWithStatus(404);
+        }
+
         return Response::allow();
     }
 
@@ -71,6 +100,11 @@ class LicensePolicy
         }
 
         if ($user->cannot('license:write')) {
+            return Response::denyWithStatus(404);
+        }
+
+        // Check that legal entity is in ‘ACTIVE’ or ‘SUSPENDED’ status
+        if (!in_array(legalEntity()->status, ['ACTIVE', 'SUSPENDED'], true)) {
             return Response::denyWithStatus(404);
         }
 

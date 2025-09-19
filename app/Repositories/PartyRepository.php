@@ -14,6 +14,9 @@ class PartyRepository
      */
     public function createOrUpdate(array $data): Party
     {
+        // Exclude 'documents' and 'phones' from the data array (mostly need for LegalEntity creation/editing)
+        $data = array_diff_key($data, array_flip(['documents', 'phones']));
+
         return Party::updateOrCreate(
             [
                 'uuid' => $data['uuid'] ?? null,

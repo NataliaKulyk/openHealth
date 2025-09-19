@@ -151,4 +151,17 @@ class LegalEntity extends Model
     {
         return $this->morphMany(Revision::class, 'revisionable');
     }
+
+    /**
+     * Scope a query to get an Legal Entity depends on it's UUID
+     */
+    public function scopeByUuid(Builder $query, string $legalEntityUUID): void
+    {
+        $query->where('uuid', $legalEntityUUID);
+    }
+
+    public function hasActivePrimaryLicense(): bool
+    {
+        return $this->licenses->contains(fn (License $license) => $license->isPrimary && $license->isActive);
+    }
 }

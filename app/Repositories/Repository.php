@@ -90,4 +90,9 @@ final class Repository
     {
         return app(PersonRepository::class);
     }
+
+    public static function license(): LicenseRepository
+    {
+        return app(LicenseRepository::class);
+    }
 }

@@ -6,6 +6,8 @@ namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest as Request;
 use App\Classes\eHealth\EHealthResponse;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Rules\InDictionary;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
@@ -15,35 +17,48 @@ use Illuminate\Validation\Rule;
 
 class License extends Request
 {
-    public const URL = '/api/licenses';
+    protected const string URL = '/api/licenses';
 
+    /**
+     * Use this end-point to obtain all Licenses of the legal entity.
+     *
+     * @param  string  $url
+     * @param $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     */
     public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateMany(...));
         $this->setDefaultPageSize();
-        return parent::get($url, $query);
+
+        return $this->get($url, $query);
     }
 
     /**
-     * @param string $url
-     * @param array $data
+     * This method must be used to create additional licenses for legal entity.
+     *
+     * @param  string  $url
+     * @param  array  $data
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function post(string $url = self::URL, $data = []): PromiseInterface|EHealthResponse
+    public function create(string $url = self::URL, array $data = []): PromiseInterface|EHealthResponse
     {
-        return parent::post($url, $data);
+        return $this->post($url, $data);
     }
 
     /**
-     * @param string $uuid unique eHealth identifier of the license
-     * @param array $data
+     * This method must be used to update additional license for legal entity.
+     *
+     * @param  string  $uuid  unique eHealth identifier of the license
+     * @param  array  $data
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function patch(string $uuid, $data = []): PromiseInterface|EHealthResponse
+    public function update(string $uuid, array $data = []): PromiseInterface|EHealthResponse
     {
-        return parent::patch(self::URL . '/' . $uuid, $data);
+        return $this->patch(self::URL . '/' . $uuid, $data);
     }
 
     /**

@@ -173,6 +173,7 @@ class TestUserMigrate extends Seeder
                 DB::table('licenses')->insertGetId([
                     'uuid' => '869b92a2-5511-45c3-beca-b5c9e3ad099b',
                     'type' => 'MSP',
+                    'is_active' => true,
                     'legal_entity_id' => $legalEntityId,
                     'issued_by' => 'Кваліфікаційна комісія',
                     'issued_date' => new Carbon('2017-02-28'),

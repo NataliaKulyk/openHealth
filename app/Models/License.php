@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Casts\NullableDateCast;
+use App\Enums\License\Type;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
@@ -20,8 +21,10 @@ class License extends Model
         'uuid',
         'legal_entity_id',
         'type',
+        'is_active',
         'issued_by',
         'issued_date',
+        'issuer_status',
         'active_from_date',
         'order_no',
         'license_number',
@@ -39,30 +42,18 @@ class License extends Model
     ];
 
     protected $casts = [
-        'uuid' => 'string',
-        'legal_entity_id',
-        'type' => 'string',
-        'issued_by' => 'string',
+        'type' => Type::class,
         'issued_date' => NullableDateCast::class,
         'active_from_date' => NullableDateCast::class,
-        'order_no' => 'string',
-        'license_number' => 'string',
         'expiry_date' => NullableDateCast::class,
-        'what_licensed' => 'string',
-        'is_primary' => 'boolean',
         'ehealth_inserted_at' => 'datetime',
         'ehealth_inserted_by' => 'string',
         'ehealth_updated_at' => 'datetime',
         'ehealth_updated_by' => 'string',
     ];
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'legal_entity_id', 'legal_entity_id');
-    }
-
     public function legalEntity(): BelongsTo
     {
-        return $this->belongsTo(LegalEntity::class, 'legal_entity_id', 'id');
+        return $this->belongsTo(LegalEntity::class);
     }
 }

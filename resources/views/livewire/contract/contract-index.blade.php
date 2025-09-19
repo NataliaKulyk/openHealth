@@ -194,7 +194,7 @@
             <x-slot name='button'>
                 <div class='justify-between items-center pt-0 space-y-4 sm:flex sm:space-y-0'>
                     <x-secondary-button wire:click="closeModal()">
-                        {{ __('forms.cansel') }}
+                        {{ __('forms.cancel') }}
                     </x-secondary-button>
 
                     <button
