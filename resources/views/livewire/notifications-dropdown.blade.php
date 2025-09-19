@@ -10,6 +10,7 @@
 
     {{-- List of notifications --}}
     <div x-show="open"
+         x-cloak
          @click.away="open = false"
          class="absolute right-0 mt-2 w-80 max-w-sm bg-white rounded-xl shadow-lg z-50 overflow-hidden dark:bg-gray-700 dark:divide-gray-600"
     >

@@ -47,12 +47,8 @@
                                 </x-slot>
                             </x-forms.form-group>
                         </div>
-                        <button
-                            class="button-minor flex items-center justify-center gap-2
-               w-full lg:w-auto self-stretch lg:self-auto
-               mt-2 lg:mt-3.5"
-                            @click="showFilter = !showFilter"
-                        >
+                        <button class="button-minor flex items-center justify-center gap-2 w-full lg:w-auto self-stretch lg:self-auto mt-2 lg:mt-3.5"
+                            @click="showFilter = !showFilter">
                             <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -64,7 +60,7 @@
                     </div>
 
 
-                    <div x-show="showFilter" x-transition class="pt-4 mt-4">
+                    <div x-cloak x-show="showFilter" x-transition class="pt-4 mt-4">
                         <div class="form-row-4">
                             <div class="form-group phone-wrapper">
                                 <input wire:model.live.debounce.300ms="filter.phone"
