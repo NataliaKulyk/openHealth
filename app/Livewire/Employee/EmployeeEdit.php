@@ -23,6 +23,10 @@ class EmployeeEdit extends EmployeeComponent
     public ?int $employeeId = null;
 
     /**
+     * @var bool
+     */
+    public bool $showSignatureModal = false;
+    /**
      * This is the component's entry point. It runs ONCE on initial page load.
      * It receives the model via Route Model Binding.
      */

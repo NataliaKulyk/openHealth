@@ -13,6 +13,7 @@ use App\Repositories\Repository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\PermissionRegistrar;
 use Throwable;
 
 readonly class ProcessEmployeeRequestsOnLogin
@@ -124,6 +125,17 @@ readonly class ProcessEmployeeRequestsOnLogin
                             Arr::get($doctorData, 'qualifications'),
                             Arr::get($doctorData, 'scienceDegree')
                         );
+
+                        $user = $employeeModel->user;
+                        $roleName = $employeeModel->employee_type;
+                        $legalEntityId = $employeeModel->legal_entity_id;
+
+                        if ($user && $roleName && $legalEntityId) {
+
+                            $user->assignRole($roleName, $legalEntityId);
+
+                            app(PermissionRegistrar::class)->forgetCachedPermissions();
+                        }
 
                         $request->status = Status::APPROVED->value;
                         $request->applied_at = now();

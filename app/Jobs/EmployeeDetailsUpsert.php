@@ -15,6 +15,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Classes\eHealth\EHealth;
+use Spatie\Permission\PermissionRegistrar;
 use Throwable;
 
 class EmployeeDetailsUpsert implements ShouldQueue
@@ -45,18 +46,30 @@ class EmployeeDetailsUpsert implements ShouldQueue
             return;
         }
 
-            $response = EHealth::employee()->withToken($this->token)->getDetails($this->employee->uuid, groupByEntities: true);
-            $validatedData = $response->validate();
+        $response = EHealth::employee()->withToken($this->token)->getDetails($this->employee->uuid, groupByEntities: true);
+        $validatedData = $response->validate();
 
-            Repository::employee()->updateDetails(
-                $this->employee,
-                $validatedData['party'],
-                $validatedData['documents'],
-                $validatedData['phones'],
-                $validatedData['educations'] ?? null,
-                $validatedData['specialities'] ?? null,
-                $validatedData['qualifications'] ?? null,
-                $validatedData['scienceDegree'] ?? null
-            );
+        Repository::employee()->updateDetails(
+            $this->employee,
+            $validatedData['party'],
+            $validatedData['documents'],
+            $validatedData['phones'],
+            $validatedData['educations'] ?? null,
+            $validatedData['specialities'] ?? null,
+            $validatedData['qualifications'] ?? null,
+            $validatedData['scienceDegree'] ?? null
+        );
+
+        $this->employee->refresh();
+
+        $user = $this->employee->user;
+        $roleName = $this->employee->employee_type;
+        $legalEntityId = $this->employee->legal_entity_id;
+
+        if ($user && $roleName && $legalEntityId) {
+            $user->syncRoles([$roleName], $legalEntityId);
+
+            app(PermissionRegistrar::class)->forgetCachedPermissions();
+        }
     }
 }
