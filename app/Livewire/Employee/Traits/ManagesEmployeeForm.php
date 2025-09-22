@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Employee\Traits;
 
+use App\Classes\eHealth\Api\Employee as EmployeeApi;
 use App\Classes\eHealth\Api\EmployeeRequest as EHealthEmployeeRequest;
 use App\Core\Arr;
 use App\Enums\Employee\RequestStatus;
@@ -14,7 +15,6 @@ use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\Relations\Party;
 use App\Models\Revision;
-use App\Models\User;
 use App\Repositories\Repository;
 use Carbon\Carbon;
 use Exception;
@@ -124,8 +124,6 @@ trait ManagesEmployeeForm
 
     /**
      * Updates an existing draft request and its revision.
-     * It will only update the associated Party if the Party is not yet "locked"
-     * (i.e., not registered with E-Health and not linked to a user).
      */
     protected function updateExistingDraft(array $preparedDataForDb): void
     {
@@ -141,7 +139,7 @@ trait ManagesEmployeeForm
         $this->employeeRequest->fill($requestAttributes)->save();
 
         // Step 3: Update the revision to reflect the latest state.
-        $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
+        $nestedDataForRevision = EmployeeApi::mapRevisionData($preparedDataForDb);
         if ($this->employeeRequest->revision) {
             $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
         } else {
@@ -168,35 +166,25 @@ trait ManagesEmployeeForm
 
     /**
      * Creates a new draft request.
-     * The business logic for finding/creating Party and User is now here.
      */
     protected function createNewDraft(array $preparedDataForDb): void
     {
-        // Step 1: Business logic to find or create the Party.
         $partyData = $this->extractPartyData($preparedDataForDb);
         $party = $this->findOrCreateParty($partyData);
 
-        // Step 2: Business logic to find the associated user.
-        $user = null;
-        if (!empty($party->email)) {
-            $user = User::where('email', $party->email)->first();
-        }
-
-        // Step 3: Prepare data specifically for the EmployeeRequest model.
         $employeeRequestData = Arr::only($preparedDataForDb, [
             'position', 'start_date', 'end_date', 'employee_type', 'division_id'
         ]);
 
-        // Step 4: Call the clean repository method to persist the new draft.
         $newRequest = Repository::employee()->createEmployeeRequestDraft(
             $employeeRequestData,
             $party,
             legalEntity()
         );
 
-        // Step 5: Handle the revision logic.
-        $nestedDataForRevision = $this->prepareDataForRevision($preparedDataForDb);
+        $nestedDataForRevision = EmployeeApi::mapRevisionData($preparedDataForDb);
         $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
+
         $this->employeeRequest = $newRequest;
         if (property_exists($this, 'employeeRequestId')) {
             $this->employeeRequestId = $newRequest->id;
@@ -274,26 +262,6 @@ trait ManagesEmployeeForm
     }
 
     /**
-     * Prepares the nested data structure required for a Revision from flat form data.
-     */
-    private function prepareDataForRevision(array $flatData): array
-    {
-        $employeeChunk = Arr::only($flatData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
-        $partyChunk = Arr::only($flatData, ['last_name', 'first_name', 'second_name', 'gender', 'birth_date', 'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself']);
-        $documentsChunk = $flatData['documents'] ?? [];
-        $phonesChunk = $flatData['phones'] ?? [];
-        $doctorChunk = $flatData['doctor'] ?? [];
-
-        return [
-            'employee_request_data' => $employeeChunk,
-            'party' => $partyChunk,
-            'documents' => $documentsChunk,
-            'phones' => $phonesChunk,
-            'doctor' => $doctorChunk,
-        ];
-    }
-
-    /**
      * Encapsulates the logic for creating and saving a new revision for a request.
      */
     private function saveRevisionForRequest(BaseEmployee $request, array $nestedData): void
@@ -306,10 +274,6 @@ trait ManagesEmployeeForm
 
     /**
      * The single source of truth for creating or updating a draft.
-     * This method contains the core logic for validation and persistence.
-     *
-     * @return EmployeeRequest The saved or updated request instance.
-     * @throws ValidationException
      */
     private function saveOrUpdateDraft(): EmployeeRequest
     {
