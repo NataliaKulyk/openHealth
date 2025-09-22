@@ -6,6 +6,7 @@ use Exception;
 use App\Models\Division;
 use App\Models\HealthcareService;
 use Illuminate\Support\Facades\DB;
+use App\Classes\eHealth\Api\HealthcareService as HealthcareServiceApi;
 
 class HealthcareServiceRepository
 {
@@ -43,6 +44,34 @@ class HealthcareServiceRepository
             foreach ($responseList as $responseItem) {
                 $this->saveHealthcareServiceResponseData($responseItem);
             }
+        });
+    }
+
+    public function getAssociatedDivisions(array $healthcareServicesList): array
+    {
+        // Get all unique division UUIDs for batch lookup
+        $divisionUuids = array_unique(array_column($healthcareServicesList, 'division_id'));
+
+        // Batch lookup: get division IDs mapped by their UUIDs to avoid redundant queries
+        return Division::whereIn('uuid', $divisionUuids)->pluck('id', 'uuid')->toArray();
+    }
+
+    /**
+     * Saves all healthcare services from API response using batch upsert operation.
+     *
+     * @param array $healthcareServicesList Raw healthcare services data from eHealth API
+     *
+     * @return void
+     *
+     * @throws Exception If database transaction fails
+     */
+    public function saveHealthcareServiceAll(array $healthcareServicesList, array $divisions): void
+    {
+        DB::transaction(function() use($healthcareServicesList, $divisions) {
+            $uspertData = app(HealthcareServiceApi::class)->normalizeResponseDataForUpsert($healthcareServicesList, $divisions);
+
+            // At first save all the Divisions to teh DB
+            HealthcareService::upsert($uspertData, uniqueBy: ['uuid'], update: new HealthcareService()->getFillable());
         });
     }
 

@@ -5,17 +5,23 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\License;
+use App\Models\Revision;
+use App\Models\Division;
+use App\Enums\JobStatus;
+use App\Models\Contract;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
 use App\Models\Employee\Employee;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 use App\Casts\LegalEntityArchiveCast;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee\EmployeeRequest;
 use Eloquence\Behaviours\HasCamelCasing;
+use Illuminate\Database\Eloquent\Builder;
 use App\Casts\LegalEntityAccreditationCast;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * @mixin IdeHelperLegalEntity
@@ -32,6 +38,12 @@ class LegalEntity extends Model
     public const string TYPE_OUTPATIENT = 'OUTPATIENT';
     public const string TYPE_PRIMARY_CARE = 'PRIMARY_CARE';
     public const string TYPE_MSP_PHARMACY = 'MSP_PHARMACY';
+
+    public const string ENTITY_DIVISION = 'division_';
+    public const string ENTITY_HEALTHCARE_SERVICE = 'hcs_';
+    public const string ENTITY_EMPLOYEE = 'employee_';
+    public const string ENTITY_LICENSE = 'license_';
+    public const string ENTITY_CONTRACT = 'contract_';
 
     protected $fillable = [
         'uuid',
@@ -164,4 +176,32 @@ class LegalEntity extends Model
     {
         return $this->licenses->contains(fn (License $license) => $license->isPrimary && $license->isActive);
     }
+
+    /**
+     * Updates the status of a legal entity's (whole or partial) sync process.
+     *
+     * @param JobStatus $status     The new status to set for the legal entity's sync entity
+     * @param string $entityType    Optional entity type specification, defaults to empty string
+     *
+     * @return void
+     */
+    public function setEntityStatus(JobStatus $status, string $entityType = ''): void
+    {
+        $this->{$entityType . 'sync_status'} = $status->value;
+        $this->save();
+        $this->refresh();
+    }
+
+    /**
+     * Get the status of a legal entity's sync process based on entity type.
+     *
+     * @param string $entityType The type of legal entity's entity sync process to check
+     *
+     * @return string|null The status of the sync process of entity or null if not found
+     */
+    public function getEntityStatus(?string $entityType = ''): ?string
+    {
+        return $this->{$entityType . 'sync_status'};
+    }
+
 }

@@ -19,6 +19,10 @@ readonly class ProcessEmployeeRequestsOnLogin
 {
     public function handle(EHealthUserLogin $event): void
     {
+        if ($event->isFirstLogin) {
+            return;
+        }
+
         $userParty = $event->user?->party;
 
         if (!$userParty || !$userParty->uuid) {
