@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Classes\eHealth\Api;
 
 use Exception;
@@ -41,7 +43,7 @@ class HealthcareService extends Request
         $this->setDivisionUuidToQuery($divisionUuid);
 
         $mergedQuery = array_merge(
-    $this->options['query'] ?? [],
+            $this->options['query'] ?? [],
             $query ?? []
         );
 

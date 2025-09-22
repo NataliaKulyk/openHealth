@@ -231,7 +231,7 @@ class DeclarationIndex extends Component
             Repository::declarationRequest()->updateStatuses($declarationUuid, $status, $statusReason);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error while rejecting declaration request');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {

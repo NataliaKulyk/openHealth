@@ -31,7 +31,7 @@ class PatientSummary extends BasePatientComponent
             $this->episodes = $response->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when getting short episodes');
-            session()?->flash('error', 'Не вдалося отримати епізоди. Спробуйте пізніше.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -55,7 +55,7 @@ class PatientSummary extends BasePatientComponent
             $this->diagnoses = $response->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when getting active diagnoses');
-            session()?->flash('error', 'Не вдалося отримати діагнози. Спробуйте пізніше.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -79,7 +79,7 @@ class PatientSummary extends BasePatientComponent
             $this->observations = $response->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when getting observations');
-            session()?->flash('error', 'Не вдалося отримати обстеження. Спробуйте пізніше.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {

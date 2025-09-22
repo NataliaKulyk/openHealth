@@ -165,7 +165,7 @@ class PatientIndex extends Component
                 $this->originalPatients = EHealth::person()->searchForPersonByParams($buildSearchRequest)->getData();
             } catch (ConnectionException $exception) {
                 $this->logConnectionError($exception, 'Error when searching for person');
-                session()?->flash('error', 'Виникла помилка. Спробуйте пізніше.');
+                session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
                 return;
             } catch (EHealthValidationException|EHealthResponseException $exception) {

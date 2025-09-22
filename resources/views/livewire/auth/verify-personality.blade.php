@@ -6,7 +6,6 @@
             {{ __('forms.enter') }}
         </legend>
 
-
         <div class="bg-blue-100 rounded-lg">
             <div class="p-4">
                 <div class="flex items-center gap-2 mb-2">
@@ -23,7 +22,7 @@
                 <label for="knedp" class="label">{{ __('forms.knedp') }} *</label>
 
                 <select class="input-select peer" wire:model="knedp" id="knedp" required>
-                    <option value="" selected>{{__('forms.select')}}</option>
+                    <option value="" selected>{{ __('forms.select') }}</option>
                     @foreach(signatureService()->getCertificateAuthorities() as $certificateType)
                         <option value="{{ $certificateType['id'] }}" wire:key="{{ $certificateType['id'] }}">
                             {{ $certificateType['name'] }}
@@ -87,7 +86,8 @@
                 </button>
             </div>
         </form>
-
-        <x-forms.loading/>
     </fieldset>
+
+    <x-forms.loading/>
+    <x-messages/>
 </div>

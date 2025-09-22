@@ -192,7 +192,7 @@ abstract class DeclarationComponent extends Component
             $this->showInformationMessageModal = true;
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a declaration');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -265,7 +265,7 @@ abstract class DeclarationComponent extends Component
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when approving a declaration');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -333,7 +333,7 @@ abstract class DeclarationComponent extends Component
                 }
             } catch (ConnectionException $exception) {
                 $this->logConnectionError($exception, 'Error while uploading document');
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
             }
         }
 
@@ -346,7 +346,7 @@ abstract class DeclarationComponent extends Component
                     $exception,
                     'Error connecting when approving a declaration request after sending files'
                 );
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
                 return;
             } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -375,7 +375,7 @@ abstract class DeclarationComponent extends Component
             $response = EHealth::declarationRequest()->resendAuthOtp($this->declarationRequestUuid);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when resending sms to person');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -478,7 +478,7 @@ abstract class DeclarationComponent extends Component
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when signing declaration request');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -522,7 +522,7 @@ abstract class DeclarationComponent extends Component
             return EHealth::person()->getAuthMethods($this->patientUuid)->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when getting auth methods');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return [];
         } catch (EHealthValidationException|EHealthResponseException $exception) {

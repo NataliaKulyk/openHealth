@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Features\SupportRedirects\Redirector;
+use Spatie\Permission\Models\Role;
 
 #[Layout('layouts.guest')]
 class Login extends Component
@@ -293,19 +294,46 @@ class Login extends Component
 
         $selectedLegalEntityClientId = $this->getLegalEntityClientIdFromUuid($this->legalEntityUUID);
 
+        $permissions = Role::where('name', $this->role)
+            ->whereGuardName('ehealth')
+            ->firstOrFail()
+            ->permissions()
+            ->pluck('name')
+            ->toArray();
+
+        $type = LegalEntity::whereUuid($this->legalEntityUUID)->value('type');
+        if ($type === LegalEntity::TYPE_PRIMARY_CARE) {
+            $permissions = $this->excludeContractPermissions($permissions);
+        }
+
+        $scope = implode(' ', $permissions);
+
         // Base query parameters
         $queryParams = [
             'client_id' => $selectedLegalEntityClientId ?? '',
             'redirect_uri' => $redirectUri,
             'response_type' => 'code',
             'email' => $this->email,
-            'scope' => implode(' ', config("ehealth.roles.$this->role")),
+            'scope' => $scope
         ];
 
         Session::put('first_login_role', $this->role);
 
         // Build the full URL with query parameters
         return $baseUrl . '?' . http_build_query($queryParams);
+    }
+
+    private function excludeContractPermissions(array $permissions): array
+    {
+        $contractPermissions = [
+            'contract:write',
+            'contract_request:approve',
+            'contract_request:create',
+            'contract_request:sign',
+            'contract_request:terminate',
+        ];
+
+        return array_diff($permissions, $contractPermissions);
     }
 
     /**

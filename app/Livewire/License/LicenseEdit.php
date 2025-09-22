@@ -58,7 +58,7 @@ class LicenseEdit extends LicenseComponent
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when updating a license');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {

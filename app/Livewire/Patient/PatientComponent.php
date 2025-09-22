@@ -184,7 +184,7 @@ class PatientComponent extends Component
             );
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when searching for person');
-            session()?->flash('error', 'Виникла помилка. Спробуйте пізніше.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -233,7 +233,7 @@ class PatientComponent extends Component
             $responseStatusCode = $response->getStatusCode();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating person request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -410,7 +410,7 @@ class PatientComponent extends Component
                 $this->showLeafletModal = true;
             } catch (ConnectionException $exception) {
                 $this->logConnectionError($exception, 'Error connecting when approving person request');
-                session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
                 return;
             } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -454,7 +454,7 @@ class PatientComponent extends Component
             $response = EHealth::personRequest()->resendAuthOtp($this->form->patient['id']);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when resending sms to person');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -502,7 +502,7 @@ class PatientComponent extends Component
             $this->showLeafletModal = true;
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when approving person request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -551,7 +551,7 @@ class PatientComponent extends Component
             $personRequestData = $approvedPersonRequest->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when getting person request by ID');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -581,7 +581,7 @@ class PatientComponent extends Component
             $responseStatus = $signResponse->getStatusCode();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when sign person request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {

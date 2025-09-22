@@ -82,7 +82,7 @@ class EmployeeApi
                 ->pluck('name')
                 ->toArray();
 
-            if ($legalEntity->type === LegalEntity::TYPE_PRIMARY_CARE && $role === 'OWNER') {
+            if ($legalEntity->type === LegalEntity::TYPE_PRIMARY_CARE) {
                 $permissions = self::excludeContractPermissions($permissions);
             }
 

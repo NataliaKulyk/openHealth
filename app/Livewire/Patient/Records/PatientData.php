@@ -86,7 +86,7 @@ class PatientData extends BasePatientComponent
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when getting person verification details');
-            session()?->flash('error', 'Не вдалося отримати верифікаційний статус. Спробуйте пізніше.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when getting person verification details');
             session()?->flash('error', 'Не вдалося отримати верифікаційний статус. Спробуйте пізніше.');
@@ -106,7 +106,7 @@ class PatientData extends BasePatientComponent
             $this->confidantPersonRelationships = $response->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when getting confidant person relationships');
-            session()?->flash('error', 'Не вдалося отримати законного представника. Спробуйте пізніше.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when getting confidant person relationships');
             session()?->flash('error', 'Не вдалося отримати законного представника. Спробуйте пізніше.');
@@ -126,7 +126,7 @@ class PatientData extends BasePatientComponent
             $this->authenticationMethods = $response->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when getting auth methods');
-            session()?->flash('error', 'Не вдалося отримати методи автентифікації. Спробуйте пізніше.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when getting auth methods');
             session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
@@ -156,7 +156,7 @@ class PatientData extends BasePatientComponent
             EHealth::person()->createAuthMethod($this->uuid, Arr::toSnakeCase($validated));
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when deactivating auth method request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -194,7 +194,7 @@ class PatientData extends BasePatientComponent
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when creating auth method request');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -220,7 +220,7 @@ class PatientData extends BasePatientComponent
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when resending sms to person');
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
