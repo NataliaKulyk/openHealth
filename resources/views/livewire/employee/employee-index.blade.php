@@ -64,13 +64,11 @@
                     <div class="form-row-4">
                         <div class="form-group phone-wrapper">
                             <input wire:model.live.debounce.300ms="filter.phone"
+                                   id="filter_phone"
                                    type="tel"
                                    placeholder=" "
                                    class="peer input pl-10 with-leading-icon text-gray-500"
-                                   x-model="phones[index].number"
                                    x-mask="+380999999999"
-                                   :id="$id('phone', '_number' + index)"
-                                   :class="{ 'input-error border-red-500': errors[legalEntityForm.phones.${index}.number] }"
                             />
                             <label for="filter_phone" class="label pl-10">Телефон</label>
                         </div>
