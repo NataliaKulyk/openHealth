@@ -160,12 +160,9 @@ readonly class EmployeeRepository
     }
 
     /**
+    /**
      * Finds all pending employee requests for a given user and legal entity.
      * This encapsulates the database query, keeping the service layer clean.
-     *
-     * @param User $user
-     * @param LegalEntity $legalEntity
-     * @return Collection
      */
     public function findPendingRequestsForUser(User $user, LegalEntity $legalEntity): Collection
     {
@@ -176,10 +173,7 @@ readonly class EmployeeRepository
             ->where('legal_entity_id', $legalEntity->id)
             ->whereIn('status', RequestStatus::getStatusesForSync())
             ->whereNotNull('uuid')
-            ->where(function ($query) use ($user) {
-
-                $query->where('user_id', $user->id);
-            })
+            ->where('party_id', $user->party->id)
             ->get();
     }
 
