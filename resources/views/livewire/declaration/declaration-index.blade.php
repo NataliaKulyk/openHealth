@@ -2,14 +2,22 @@
 @use('Carbon\CarbonImmutable')
 
 <div>
-    <x-section-navigation x-data="{ showFilter: true }">
+    <x-header-navigation x-data="{ showFilter: true }">
         <x-slot name="title">
             {{ __('forms.declarations') }}
         </x-slot>
 
+        <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
+            <button wire:click="sync" class="button-sync flex items-center gap-2 whitespace-nowrap">
+                @icon('refresh', 'w-4 h-4')
+                {{ __('forms.synchronise_data_with_EHealth') }}
+            </button>
+        </div>
+
         <x-slot name="navigation">
             <div class="flex">
                 <div class="w-full">
+                    <div class="shift-content">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1">
                             @icon('search-outline', 'w-4 h-4.5 text-gray-800 dark:text-white')
@@ -53,16 +61,10 @@
                         @endif
                     </div>
                 </div>
-
-                <div class="ml-auto flex items-center gap-2 self-start -mt-14 translate-x-7">
-                    <button wire:click="sync" class="button-sync flex items-center gap-2 whitespace-nowrap">
-                        @icon('refresh', 'w-4 h-4')
-                        {{ __('forms.synchronise_data_with_EHealth') }}
-                    </button>
                 </div>
             </div>
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     @if($declarations->isNotEmpty())
         <div class="max-w-7xl mx-auto">
@@ -188,7 +190,7 @@
         </div>
     @endif
 
-    <div class="mt-4">
+    <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
         {{ $declarations->links() }}
     </div>
 

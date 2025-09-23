@@ -1,5 +1,5 @@
 <div>
-    <x-section-navigation class="breadcrumb-form">
+    <x-header-navigation class="breadcrumb-form">
         <x-slot name="title">
             @if($employee instanceof \App\Models\Employee\EmployeeRequest)
                 {{ __('forms.view_employee_request') }}
@@ -8,7 +8,7 @@
             @endif
             {{ $employee->party->fullName ?? '' }}
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     <div class="form space-y-8">
         {{-- The fieldset is always disabled in a "show" view --}}
