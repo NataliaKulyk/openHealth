@@ -13,7 +13,7 @@
 
 <div>
     <section>
-        <x-section-navigation x-data="{ showFilter: true }" class="breadcrumb-form">
+        <x-header-navigation x-data="{ showFilter: true }" class="breadcrumb-form">
             <x-slot name="title">{{ __('patients.patients') }}</x-slot>
             <x-slot name="navigation">
 
@@ -44,12 +44,12 @@
                     </button>
                 </div>
             </x-slot>
-        </x-section-navigation>
+        </x-header-navigation>
 
         <x-section>
             <div class="space-y-6">
                 @foreach($paginatedPatients as $patient)
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:w-[1150px] lg:mx-0 lg:ml-10"
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:w-[1150px] lg:mx-0 lg:ml-3.5"
                          wire:key="patient-{{ $patient['id'] }}"
                     >
                         <div

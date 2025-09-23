@@ -1,7 +1,7 @@
 <div>
-    <x-section-navigation x-data="{ showFilter: false }" class="">
+    <x-header-navigation x-data="{ showFilter: false }" class="">
         <x-slot name="title">{{ __('Зареєструвати заклад ') }}</x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     <section class="section-form">
         <div

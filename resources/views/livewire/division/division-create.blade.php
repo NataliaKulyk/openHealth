@@ -10,11 +10,11 @@
 @endsection
 
 @section('additional-buttons')
-    <div class="mb-[10px] flex flex-col gap-6 xl:flex-row justify-between items-center w-full">
-        <button
+    <div>
+    <button
             type="button"
             id="save_button"
-            class="button-primary cursor-pointer"
+            class="button-primary-outline"
             wire:click="store"
         >
             {{ __('forms.save') }}

@@ -1,11 +1,11 @@
 @use('App\Models\DeclarationRequest')
 
 <section class="section-form">
-    <x-section-navigation class="breadcrumb-form">
+    <x-header-navigation class="breadcrumb-form">
         <x-slot name="title">
             {{ __('declarations.application_for_registration_of_declaration') }} - {{ $patientFullName }}
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     <form class="form">
         @include('livewire.declaration.parts.main-information')

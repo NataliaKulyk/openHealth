@@ -9,22 +9,40 @@
 >
     <x-messages />
 
-    <x-section-navigation x-data="{ showFilter: false }" class="">
+    <x-header-navigation x-data="{ showFilter: false }" class="">
         <x-slot name="title">
             {{ __('forms.divisions') }}
         </x-slot>
-    </x-section-navigation>
+        <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
+            @can('create', App\Models\Division::class)
+                <a
+                    href="{{ route('division.create', [legalEntity()]) }}"
+                    type="button"
+                    class="button-primary"
+                >
+                    {{ __('forms.add_new_division') }}
+                </a>
+            @endcan
 
-    <div class="flex flex-wrap items-end justify-between gap-4">
-        <div class="w-96">
+            <button
+                wire:click="sync"
+                class="button-sync"
+            >
+                {{ __('forms.synchronise_with_eHealth') }}
+            </button>
+        </div>
+    </x-header-navigation>
+
+    <div class="shift-content flex flex-wrap items-end justify-between gap-4">
+        <div class="w-96 ml-3.5">
             <x-forms.form-group>
                 <x-slot name="label">
                     <label for="division_search"
-                        class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1">
+                           class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1">
                         <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                                  stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                         </svg>
                         <span>{{ __('forms.division_search') }}</span>
                     </label>
@@ -45,60 +63,36 @@
                 </x-slot>
             </x-forms.form-group>
         </div>
-
-        <div class="ml-auto flex items-center gap-2 self-start -mt-14 translate-x-3">
-            @can('create', App\Models\Division::class)
-                <a
-                    href="{{ route('division.create', [legalEntity()]) }}"
-                    type="button"
-                    class="button-primary"
-                >
-                    {{ __('forms.add_new_division') }}
-                </a>
-            @endcan
-
-            <button
-                wire:click="sync"
-                class="button-sync"
-            >
-                {{ __('forms.synchronise_with_eHealth') }}
-            </button>
-        </div>
     </div>
 
-    <div class="flow-root mt-4">
+    <div class="flow-root mt-4 shift-content">
         <div class="max-w-screen-xl">
             <table class="table-input w-full table-fixed">
 
-            <thead class="thead-input">
+                <thead class="thead-input">
                 <tr>
-                    @foreach ($this->tableHeaders() as $header)
-                        <th scope="col" class="th-input text-center">{{ $header }}</th>
-                    @endforeach
+                    <th scope="col" class="th-input text-left w-[20%]">Назва</th>
+                    <th scope="col" class="th-input text-left w-[15%]">Тип</th>
+                    <th scope="col" class="th-input text-left w-[20%]">Телефон</th>
+                    <th scope="col" class="th-input text-left w-[20%]">Email</th>
+                    <th scope="col" class="th-input text-left w-[15%]">Статус</th>
+                    <th scope="col" class="th-input text-left w-[6%]">Дія</th>
                 </tr>
-            </thead>
+                </thead>
 
-            <tbody>
+                <tbody>
                 @forelse ($divisions as $division)
                     <tr x-data="{ divisionTypes: @entangle('dictionaries.DIVISION_TYPE') }">
-                        {{--<td class="td-input break-words whitespace-normal align-top">
-                            <p>{{ $division->uuid ?? '' }}</p>
-                        </td>--}}
-                        <!-- NAME -->
                         <td class="td-input break-words whitespace-normal align-top">
                             <p>{{ $division->name ?? '' }}</p>
                         </td>
-                        <!-- TYPE -->
                         <td x-text="divisionTypes['{{ $division->type }}']" class="td-input break-words whitespace-normal align-top"></td>
-                        <!-- PHONE -->
                         <td class="td-input break-words whitespace-normal align-top">
                             <p>{{ $division->phones()->first()?->number ?? '' }}</p>
                         </td>
-                        <!-- EMAIL -->
                         <td class="td-input break-words whitespace-normal align-top">
                             <p>{{ $division->email ?? '' }}</p>
                         </td>
-                        <!-- STATUS -->
                         <td class="td-input break-words whitespace-normal align-top">
                             @if ($division->status ==  \App\Enums\Status::INACTIVE)
                                 <span class="badge-red">{{ __('forms.status.non_active') }}</span>
@@ -250,7 +244,7 @@
                                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
                                                 </svg>
 
-                                                 {{ __('forms.delete') }}
+                                                {{ __('forms.delete') }}
                                             </a>
                                         @endcan
                                     </div>
@@ -267,10 +261,13 @@
                         </td>
                     </tr>
                 @endforelse
-            </tbody>
-        </table>
+                </tbody>
+            </table>
 
-        <x-pagination :pagination="$divisions" class="pagination" />
+            {{--<x-pagination :pagination="$divisions" class="pagination" />--}}
+            <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
+                {{ $divisions->links() }}
+            </div>
 
         </div>
 

@@ -21,7 +21,7 @@
 >
     <x-messages />
 
-    <x-section-navigation x-data="{ showFilter: false }" class=''>
+    <x-header-navigation x-data="{ showFilter: false }" class=''>
         <x-slot name='title'>
             @yield('title')
         </x-slot>
@@ -29,8 +29,8 @@
         <x-slot name="description">
             @yield('description')
         </x-slot>
-    </x-section-navigation>
-
+    </x-header-navigation>
+    <div class="form shift-content">
     <section class="section-form">
         <div class="form-row" x-data="{ isDisabled: @json($readonly) }">
             <form wire:submit.prevent="{{ $action }}">
@@ -45,7 +45,8 @@
                         <h2>{{__('forms.main_information')}}</h2>
                     </legend>
 
-                        <div class='form'>
+                    <div class="form">
+
                             <div class="form-row-3">
                             <!-- Division Name -->
                              <div class="form-group">
@@ -327,6 +328,7 @@
                         <h2>{{ __('forms.address') }}</h2>
                     </legend>
 
+                    <div class="form">
                     <x-forms.addresses-search
                         :address="$address"
                         :districts="$districts"
@@ -568,7 +570,7 @@
                         </div>
                     </fieldset>
 
-                    <div class='mb-4.5 mt-6 flex flex-col gap-6 xl:flex-row justify-left items-center'>
+                    <div class="flex gap-2">
                     <a role="button" class="alternative-button cursor-pointer" href="javascript:history.back()">
                         {{ __('forms.back') }}
                     </a>
@@ -604,4 +606,5 @@
 
     @include('livewire.division.modal.confirmation-modal')
 
+</div>
 </div>

@@ -24,7 +24,7 @@
         </div>
     </x-header-navigation>
 
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto shift-content">
         <table class="table-input w-full">
             <thead class="thead-input">
             <tr>

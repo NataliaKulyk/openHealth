@@ -1,9 +1,9 @@
 @use('App\Models\Person\PersonRequest')
 
 <div>
-    <x-section-navigation class="breadcrumb-form">
+    <x-header-navigation class="breadcrumb-form">
         <x-slot name="title">{{ __('patients.add_patient') }}</x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     @if($viewState === 'default')
         <section class="section-form">
