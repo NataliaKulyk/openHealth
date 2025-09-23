@@ -158,10 +158,8 @@ class Employee extends EHealthRequest
             'party.documents' => 'required|array|min:1',
             'party.documents.*.type' => 'required|string',
             'party.documents.*.number' => 'required|string',
-//            'party.documents.*.issued_by' => 'sometimes|string',
-            'party.documents.*.issued_by' => 'sometimes|nullable|string',
-            //            'party.documents.*.issued_at' => 'required|date_format:Y-m-d',
-            'party.documents.*.issued_at' => 'nullable|date_format:Y-m-d',
+            'party.documents.*.issued_by' => 'sometimes|string',
+            'party.documents.*.issued_at' => 'required|date_format:Y-m-d',
         ];
 
         if (!empty($employeeTypeKey)) {

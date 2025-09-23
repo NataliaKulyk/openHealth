@@ -73,6 +73,8 @@ class EmployeeDetailsUpsert implements ShouldQueue
 
             if (!$user->hasRole($roleName)) {
                 $user->assignRole($roleName);
+
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
             }
 
         }

@@ -6,6 +6,7 @@ namespace App\Exceptions\EHealth;
 
 use App\Core\Arr as AppArr;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class EHealthValidationException extends EHealthException
 {
@@ -14,11 +15,6 @@ class EHealthValidationException extends EHealthException
         parent::__construct('eHealth API returned a validation error.');
     }
 
-    /**
-     * Get the full details of the exception.
-     *
-     * @return array
-     */
     public function getDetails(): array
     {
         return $this->details;
@@ -26,33 +22,13 @@ class EHealthValidationException extends EHealthException
 
     /**
      * Get the translated error message based on eHealth details.
-     *
-     * @return string
+     * Uses existing translation files for attributes and messages.
      */
     public function getTranslatedMessage(): string
     {
-        $eHealthFieldTranslations = [
-            'party.first_name' => __('forms.first_name'),
-            'party.last_name' => __('forms.last_name'),
-            'party.second_name' => __('forms.second_name'),
-            'party.birth_date' => __('forms.birth_date'),
-            'party.tax_id' => __('forms.tax_id'),
-            'party.working_experience' => __('forms.working_experience'),
-            'doctor' => __('forms.doctor_data'),
-            'start_date' => __('forms.start_date_work'),
-            'employee_type' => __('forms.role'),
-            'position' => __('forms.position'),
-            'employee_request' => __('forms.employee_requests'),
-            'doctor.science_degree' => __('forms.science_degree'),
-            'party.documents.[0].number' => __('forms.document_number'),
-            'doctor.qualifications' => __('forms.qualifications'),
-            'doctor.specialities' => __('forms.specialities'),
-            'doctor.specialities.speciality_officio' => __('forms.speciality_officio'),
-        ];
-
         $invalidErrors = Arr::get($this->details, 'error.invalid') ?? Arr::get($this->details, 'invalid') ?? [];
 
-        $errorList = collect($invalidErrors)->map(function ($detail) use ($eHealthFieldTranslations) {
+        $errorList = collect($invalidErrors)->map(function ($detail) {
             $eHealthKey = AppArr::get($detail, 'entry') ?? AppArr::get($detail, 'param') ?? 'unknown';
             $message = AppArr::get($detail, 'rules.0.description') ?? AppArr::get($detail, 'msg') ?? '';
             $ruleName = AppArr::get($detail, 'rules.0.rule');
@@ -62,38 +38,41 @@ class EHealthValidationException extends EHealthException
             }
 
             $eHealthKey = str_replace(['$.', 'employee_request.'], '', $eHealthKey);
-            $translatedKey = $eHealthFieldTranslations[$eHealthKey] ?? $eHealthKey;
 
-            $translatedMessage = '';
-
-            if (str_contains($message, 'employee doesn\'t have speciality with active speciality_officio')) {
-                $translatedMessage = __('errors.ehealth.messages.employee doesn\'t have speciality with active speciality_officio');
-            } elseif (str_contains($message, 'speciality') && str_contains($message, ' with active speciality_officio is not allowed for doctor')) {
-                preg_match('/speciality (.+?) with active speciality_officio is not allowed for doctor/', $message, $matches);
-                $specialityName = $matches[1] ?? '';
-                $translatedMessage = __('errors.ehealth.messages.speciality_officio_not_allowed', ['speciality' => $specialityName]);
-            } elseif (str_contains($message, 'speciality') && str_contains($message, 'not allowed for doctor')) {
-                $translatedMessage = __('errors.ehealth.messages.speciality not allowed for doctor');
-            } elseif (str_contains($message, 'type mismatch')) {
-                $translatedMessage = __('errors.ehealth.messages.type mismatch. Expected integer but got string');
+            $translatedKey = trans('validation.attributes.' . $eHealthKey, [], 'uk');
+            if ($translatedKey === 'validation.attributes.' . $eHealthKey) {
+                $translatedKey = trans('forms.' . $eHealthKey, [], 'uk');
             }
 
-            if (empty($translatedMessage) && !empty($ruleName)) {
-                $translatedMessage = __('errors.ehealth.messages.' . $ruleName);
-                if ($translatedMessage === 'errors.ehealth.messages.' . $ruleName) {
-                    $translatedMessage = $message;
-                }
-            }
-
-            if (empty($translatedMessage)) {
-                $translatedMessage = __('errors.ehealth.messages.untranslated_error_message', ['message' => $message]);
-            }
+            $translatedMessage = $this->findTranslationForMessage($message, $ruleName);
 
             return "{$translatedKey}: {$translatedMessage}";
         })->filter()->implode("\n");
 
-        $header = __('errors.ehealth.validation_error_header');
+        return trans('errors.ehealth.validation_error_header') . "\n" . $errorList;
+    }
 
-        return "{$header}\n{$errorList}";
+    /**
+     * Finds the most appropriate translation for a given eHealth error message.
+     */
+    private function findTranslationForMessage(string $message, ?string $ruleName): string
+    {
+
+        if (str_contains($message, 'speciality') && str_contains($message, ' with active speciality_officio is not allowed for doctor')) {
+            preg_match('/speciality (.+?) with active speciality_officio is not allowed for doctor/', $message, $matches);
+            return trans('errors.ehealth.messages.speciality_officio_not_allowed', ['speciality' => $matches[1] ?? '']);
+        }
+
+        $key = $ruleName ?? $message;
+        if (trans()->has('errors.ehealth.messages.' . $key)) {
+            return trans('errors.ehealth.messages.' . $key);
+        }
+
+        Log::warning("Untranslated eHealth error message found.", [
+            'original_message' => $message,
+            'rule_name' => $ruleName,
+        ]);
+
+        return $message;
     }
 }

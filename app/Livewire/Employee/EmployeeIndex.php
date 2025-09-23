@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
+use Spatie\Permission\PermissionRegistrar;
 
 #[AllowDynamicProperties]
 class EmployeeIndex extends EmployeeComponent
@@ -224,7 +225,6 @@ class EmployeeIndex extends EmployeeComponent
         $employee = Employee::find($this->employeeToDeactivateId);
         if (!$employee) {
             $this->closeModal();
-
             return;
         }
 
@@ -234,10 +234,21 @@ class EmployeeIndex extends EmployeeComponent
             if (!empty($response)) {
                 $employee->update(
                     [
-                        'status' => Status::DISMISSED->value,
+                        'status'   => Status::DISMISSED->value,
                         'end_date' => Carbon::now()->format('Y-m-d'),
                     ]
                 );
+
+                if ($user = $employee->user) {
+                    $roleToRemove = $employee->employee_type;
+                    if ($user->hasRole($roleToRemove)) {
+                        $user->removeRole($roleToRemove);
+
+                        app(PermissionRegistrar::class)->forgetCachedPermissions();
+                    }
+                }
+                // !!! КІНЕЦЬ ПОКРАЩЕННЯ !!!
+
                 $this->dispatch('flashMessage', ['message' => __('employees.dismissalSuccess'), 'type' => 'success']);
             } else {
                 $this->dispatch('flashMessage', ['message' => __('employees.dismissalEhealthError'), 'type' => 'error']);

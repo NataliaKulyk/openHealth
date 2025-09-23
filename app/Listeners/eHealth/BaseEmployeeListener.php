@@ -14,6 +14,7 @@ use App\Repositories\Repository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\PermissionRegistrar;
 use Throwable;
 
 abstract class BaseEmployeeListener
@@ -94,24 +95,20 @@ abstract class BaseEmployeeListener
     /**
      * Find local EmployeeRequest records that match the new employees found in the API response.
      */
-    protected function getPendingRequestsForNewEmployees(EHealthUserLogin $event, Collection $ehealthEmployees, array $newEmployeeUuids): Collection
+    protected function getPendingRequestsForNewEmployees(EHealthUserLogin $event, Collection $newEmployeesFromApi): Collection
     {
-        $newEmployeesFromApi = $ehealthEmployees->whereIn('uuid', $newEmployeeUuids);
-
         $pendingRequests = Repository::employee()->findPendingRequestsForUser($event->user, $event->legalEntity);
 
-        // We need to match local requests to the API response by position and type,
-        // then attach the final employee UUID to the request object for later use.
         return $pendingRequests->map(function (EmployeeRequest $request) use ($newEmployeesFromApi) {
             $apiMatch = $newEmployeesFromApi->firstWhere(function ($apiEmployee) use ($request) {
                 return $apiEmployee['position'] === $request->position
-                    && $apiEmployee['employee_type'] === $request->employee_type;
+                    && $apiEmployee['employee_type'] === $request->employee_type
+                    && $apiEmployee['start_date'] === $request->start_date?->format('Y-m-d');
             });
 
             if ($apiMatch) {
-                // Temporarily attach the final UUID to the request model
-                $request->employee_uuid_from_api = $apiMatch['uuid'];
 
+                $request->api_data = $apiMatch;
                 return $request;
             }
 
@@ -192,6 +189,8 @@ abstract class BaseEmployeeListener
 
             if (!$user->hasRole($roleName)) {
                 $user->assignRole($roleName);
+
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
             }
         }
     }
