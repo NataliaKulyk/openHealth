@@ -6,15 +6,20 @@ namespace App\Livewire\Employee;
 
 use AllowDynamicProperties;
 use App\Classes\eHealth\EHealth;
+use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Jobs\EmployeeDetailsUpsert;
+use App\Jobs\EmployeeSync;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
+use App\Models\User;
 use App\Notifications\EmployeeSyncCompleted;
+use App\Notifications\SyncNotification;
+use App\Traits\BatchLegalEntityQueries;
 use Illuminate\Bus\Batch;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -28,11 +33,14 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Spatie\Permission\PermissionRegistrar;
 use Throwable;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Database\Eloquent\Collection;
 
 #[AllowDynamicProperties]
 class EmployeeIndex extends EmployeeComponent
 {
-    use WithPagination;
+    use WithPagination,
+        BatchLegalEntityQueries;
 
     // --- Component State for Filters ---
     public string $search = '';
@@ -269,6 +277,14 @@ class EmployeeIndex extends EmployeeComponent
      */
     public function sync(): void
     {
+        $user = Auth::user();
+        $user->notify(new SyncNotification('employee', 'started'));
+
+        $this->dispatch('flashMessage', [
+                'message' => __('employees.sync.started'),
+                'type' => 'success'
+            ]);
+
         try {
             $response = EHealth::employee()->getMany(['legal_entity_id' => legalEntity()->uuid]);
         } catch (ConnectionException $e) {
@@ -292,48 +308,74 @@ class EmployeeIndex extends EmployeeComponent
         data_forget($employees, '*.party');
         data_forget($employees, '*.doctor');
         data_fill($employees, '*.legal_entity_id', legalEntity()->id);
+        data_fill($employees, '*.sync_status', JobStatus::PARTIAL->value);
 
         Employee::upsert($employees, uniqueBy: ['uuid']);
-        $models = Employee::with('party')->filterByUuids(array_column($employees, 'uuid'))->get();
 
-        $user = Auth::user();
+        $token = session()->get(config('ehealth.api.oauth.bearer_token'));
 
-        $batch = Bus::batch(
-            $models->map(fn (Employee $model) => new EmployeeDetailsUpsert(
-                $model,
-                $user,
-                session()->get(config('ehealth.api.oauth.bearer_token'))
-            ))
-        )->then(function (Batch $batch) use ($user) {
+        // Check if there are more pages to process
+        if ($response->isNotLast()) {
+            Bus::batch([
+                new EmployeeSync(
+                        legalEntity: $this->legalEntity,
+                        page: 2,
+                        nextEntity: null
+                    )
+            ])
+            ->withOption('legal_entity_id', $this->legalEntity->id)
+            ->withOption('token', Crypt::encryptString($token))
+            ->withOption('user', $user)
+            ->then(function (Batch $batch) use ($user) {
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-            app(PermissionRegistrar::class)->forgetCachedPermissions();
+                $message = __('employees.sync.completed_successfully', [
+                    'processed' => $batch->processedJobs,
+                    'total' => $batch->totalJobs,
+                ]);
 
-            Log::info('Employee sync batch completed successfully. Spatie permissions cache cleared.', [
-                'batch_id' => $batch->id,
-            ]);
+                $user->notify(new EmployeeSyncCompleted($message, 'success'));
+            })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
+                $message = __('employees.sync.failed');
 
-            $message = __('employees.sync.completed_successfully', [
-                'processed' => $batch->processedJobs,
-                'total' => $batch->totalJobs,
-            ]);
-            $user->notify(new EmployeeSyncCompleted($message, 'success'));
+                Log::error('Employee sync batch failed.', [
+                    'batch_id' => $batch->id,
+                    'exception' => $e
+                ]);
 
-        })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
-            $message = __('employees.sync.failed');
-            $user->notify(new EmployeeSyncCompleted($message, 'error'));
-            Log::error('Employee sync batch failed.', [
-                'batch_id' => $batch->id,
-                'exception' => $e
-            ]);
-        })
+                $user->notify(new EmployeeSyncCompleted($message, 'error'));
+            })
+            ->onQueue('sync')
             ->name('Employee Full Sync')
             ->dispatch();
+        } else {
+            Bus::batch($this->getEmployeeDetailsStartJob($this->legalEntity, null))
+                ->withOption('legal_entity_id', $this->legalEntity->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    $message = __('employees.sync.completed_successfully', [
+                        'processed' => $batch->processedJobs,
+                        'total' => $batch->totalJobs,
+                    ]);
 
-        $this->batchId = $batch->id;
-        $this->dispatch('flashMessage', [
-            'message' => __('employees.sync.started'),
-            'type' => 'success'
-        ]);
+                    $user->notify(new EmployeeSyncCompleted($message, 'success'));
+                })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
+                    $message = __('employees.sync.failed');
+
+                    Log::error('Employee sync batch failed.', [
+                        'batch_id' => $batch->id,
+                        'exception' => $e
+                    ]);
+
+                    $user->notify(new EmployeeSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name('Employee Full Sync')
+                ->dispatch();
+
+            // $this->batchId = $batch->id;
+        }
     }
 
     public function confirmRequestDeletion(int $id): void

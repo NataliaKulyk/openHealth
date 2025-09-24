@@ -36,9 +36,9 @@ class SyncNotification extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct(string $type, string $action)
+    public function __construct(?string $type, string $action)
     {
-        $this->type = $type;
+        $this->type = $type ?? '';
         $this->action = $action;
     }
 
@@ -49,7 +49,7 @@ class SyncNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**
@@ -78,8 +78,8 @@ class SyncNotification extends Notification
      */
     protected function formatMessage(): string
     {
-        $entity = self::SYNC_ENTITIES[$this->type] ?? 'Cинхронізація даних';
-        $action = self::SYNC_ACTIONS[$this->action] ?? '';
+        $entity = data_get(self::SYNC_ENTITIES, $this->type, 'Cинхронізація даних');
+        $action = data_get(self::SYNC_ACTIONS, $this->action, '');
 
         return "{$entity} {$action}.";
     }

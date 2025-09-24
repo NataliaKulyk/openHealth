@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models\Employee;
 
+use App\Classes\eHealth\Api\Job;
+use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Models\Declaration;
 use App\Models\Relations\Education;
@@ -58,6 +60,12 @@ class Employee extends BaseEmployee
         return $this->morphMany(Speciality::class, 'specialityable');
     }
 
+    public function setSyncStatus(JobStatus $status): void
+    {
+        $this->sync_status = $status;
+        $this->save();
+    }
+
     // --- EMPLOYEE-SPECIFIC SCOPES ---
 
     public function scopeDoctor(Builder $query): Builder
@@ -88,5 +96,10 @@ class Employee extends BaseEmployee
     public function scopeFilterByUuids(Builder $query, array $uuids): Builder
     {
         return $query->whereIn('uuid', $uuids);
+    }
+
+    public function scopeFilterBySyncStatus(Builder $query, JobStatus $status): Builder
+    {
+        return $query->where('sync_status', $status);
     }
 }

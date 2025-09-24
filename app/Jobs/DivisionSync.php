@@ -18,16 +18,6 @@ class DivisionSync extends EHealthJob
 
     public const string ENTITY = LegalEntity::ENTITY_DIVISION;
 
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-        echo 'Starting DivisionSync for user:' . $this->user->id . ', legalEntity:' . $this->legalEntity->id . ', page:' . $this->page . PHP_EOL;
-
-        parent::handle();
-    }
-
     // Get data from EHealth API
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse
     {
@@ -58,5 +48,26 @@ class DivisionSync extends EHealthJob
         return [
             new RateLimited('ehealth-division-get')
         ];
+    }
+
+
+    /**
+     * Get the next entity job to be scheduled after DivisionSync completes.
+     *
+     * If the job is standalone, returns a CompleteSync job for the current legal entity.
+     * Otherwise, returns a HealthcareServiceSync job, passing the current legal entity and nextEntity.
+     * If HealthcareServiceSync has started, the nextEntity as nbext incoming job will be started after it's chain.
+     *
+     * @return EHealthJob|null
+     */
+    protected function getNextEntityJob(): ?EHealthJob
+    {
+        return $this->standalone
+                ? new CompleteSync($this->legalEntity, isFirstLogin: $this->isFirstLogin)
+                : new HealthcareServiceSync(
+                    legalEntity: $this->legalEntity,
+                    isFirstLogin: $this->isFirstLogin,
+                    nextEntity: $this->nextEntity
+                );
     }
 }

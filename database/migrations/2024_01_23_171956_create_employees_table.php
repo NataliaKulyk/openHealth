@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\JobStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->string('employee_type');
             $table->date('inserted_at')->nullable();
             $table->string('status')->nullable();
+            $table->enum('sync_status', JobStatus::values())->nullable();
             $table->boolean('is_active')->default(false);
             $table->foreignId('legal_entity_id')->nullable()->constrained('legal_entities')->onDelete('cascade');
             $table->foreignId('division_id')->nullable()->constrained('divisions')->onDelete('cascade');

@@ -18,16 +18,6 @@ class HealthcareServiceSync extends EHealthJob
 
     public const string ENTITY = LegalEntity::ENTITY_HEALTHCARE_SERVICE;
 
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-        echo 'Starting HealthcareService Sync for user:' . $this->user->id . ', legalEntity:' . $this->legalEntity->id . ', page:' . $this->page . PHP_EOL;
-
-        parent::handle();
-    }
-
     // Get data from EHealth API
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse
     {
@@ -58,5 +48,13 @@ class HealthcareServiceSync extends EHealthJob
         return [
             new RateLimited('ehealth-division-get')
         ];
+    }
+
+    // Get next entity job if needed
+    protected function getNextEntityJob(): ?EHealthJob
+    {
+        return $this->standalone || !$this->nextEntity
+            ? new CompleteSync($this->legalEntity, isFirstLogin: $this->isFirstLogin)
+            : $this->nextEntity;
     }
 }

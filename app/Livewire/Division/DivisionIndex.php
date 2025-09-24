@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
+use App\Jobs\EmployeeSync;
+use App\Notifications\EmployeeSyncCompleted;
+use App\Notifications\SyncNotification;
 use Throwable;
 use Exception;
 use Livewire\WithPagination;
@@ -16,6 +19,11 @@ use App\Livewire\Division\Trait\HasAction;
 use Illuminate\Http\Client\ConnectionException;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
+use App\Jobs\DivisionSync;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Crypt;
 
 class DivisionIndex extends DivisionComponent
 {
@@ -89,13 +97,38 @@ class DivisionIndex extends DivisionComponent
             return;
         }
 
+        // If there are more pages, dispatch a job to handle the rest
         if ($response?->isNotLast()) {
-            // TODO run
-            dd('Multi-Paging detected', $response->getPaging());
-            // SyncDivisionsListJob::dispatch(legalEntity(), 2); // page starts from number 2
-        }
 
-        session()->flash('success', __(__('Інформацію успішно оновлено')));
+            $token = session()->get(config('ehealth.api.oauth.bearer_token'));
+            $user = Auth::user();
+
+            Bus::batch([
+                new DivisionSync(
+                        legalEntity: legalEntity(),
+                        page: 2,
+                        nextEntity: null
+                    )
+            ])
+            ->withOption('legal_entity_id', legalEntity()->id)
+            ->withOption('token', Crypt::encryptString($token))
+            ->withOption('user', $user)
+            ->then(function (Batch $batch) use ($user) {
+                $user->notify(new SyncNotification('division', 'complete'));
+            })->catch(callback: function (Batch $batch, Throwable $e) use ($user) {
+                Log::error('Division sync batch failed.', [
+                    'batch_id' => $batch->id,
+                    'exception' => $e
+                ]);
+
+                $user->notify(new SyncNotification('division', 'failed'));
+            })
+            ->onQueue('sync')
+            ->name('DivisionSync')
+            ->dispatch();
+        } else {
+            session()->flash('success', __(__('Інформацію успішно оновлено')));
+        }
     }
 
     /**
