@@ -8,13 +8,6 @@ use App\Http\Controllers\EmailController;
 use App\Http\Controllers\HomeController;
 use App\Livewire\Actions\Logout;
 use App\Livewire\Auth\ForgotPassword;
-use App\Livewire\Declaration\DeclarationEdit;
-use App\Livewire\Declaration\DeclarationView;
-use App\Livewire\Division\DivisionView;
-use App\Livewire\Patient\PatientCreate;
-use App\Livewire\Patient\PatientEdit;
-use App\Models\License;
-use App\Models\LegalEntity;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
 use App\Livewire\Auth\ResetPassword;
@@ -25,12 +18,16 @@ use App\Livewire\Contract\ContractForm;
 use App\Livewire\Contract\ContractIndex;
 use App\Livewire\Dashboard;
 use App\Livewire\Declaration\DeclarationCreate;
+use App\Livewire\Declaration\DeclarationEdit;
 use App\Livewire\Declaration\DeclarationIndex;
+use App\Livewire\Declaration\DeclarationView;
 use App\Livewire\DiagnosticReport\DiagnosticReportCreate;
 use App\Livewire\Division\DivisionCreate;
 use App\Livewire\Division\DivisionEdit;
 use App\Livewire\Division\DivisionIndex;
-use App\Livewire\Division\HealthcareService;
+use App\Livewire\Division\DivisionView;
+use App\Livewire\Division\HealthcareService\HealthcareServiceCreate;
+use App\Livewire\Division\HealthcareService\HealthcareServiceIndex;
 use App\Livewire\Employee\EmployeeCreate;
 use App\Livewire\Employee\EmployeeEdit;
 use App\Livewire\Employee\EmployeeIndex;
@@ -46,12 +43,17 @@ use App\Livewire\License\LicenseCreate;
 use App\Livewire\License\LicenseEdit;
 use App\Livewire\License\LicenseIndex;
 use App\Livewire\License\LicenseView;
+use App\Livewire\Patient\PatientCreate;
+use App\Livewire\Patient\PatientEdit;
 use App\Livewire\Patient\PatientIndex;
 use App\Livewire\Patient\Records\PatientData;
 use App\Livewire\Patient\Records\PatientEpisodes;
 use App\Livewire\Patient\Records\PatientSummary;
 use App\Livewire\Procedure\ProcedureCreate;
 use App\Models\Division;
+use App\Models\HealthcareService;
+use App\Models\LegalEntity;
+use App\Models\License;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Procedure;
@@ -128,7 +130,12 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/{division}', DivisionView::class)->name('division.view')->can('viewAny', Division::class);
             Route::get('/{division}/edit', DivisionEdit::class)->name('division.edit')->can('update', 'division');
 
-            Route::get('/{division}/healthcare-service', HealthcareService::class)->name('healthcare-service.index');
+            Route::get('/{division}/healthcare-service', HealthcareServiceIndex::class)
+                ->name('healthcare-service.index')
+                ->can('viewAny', HealthcareService::class);
+            Route::get('/{division}/healthcare-service/create', HealthcareServiceCreate::class)
+                ->name('healthcare-service.create')
+                ->can('create', HealthcareService::class);
         });
 
         Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {

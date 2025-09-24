@@ -2,27 +2,27 @@
 
 declare(strict_types=1);
 
-namespace App\Livewire\Division;
+namespace App\Livewire\Division\HealthcareService;
 
-use Log;
-use Exception;
-use App\Enums\Status;
-use Livewire\Component;
-use App\Models\Division;
-use App\Traits\FormTrait;
-use Illuminate\View\View;
-use Livewire\Attributes\On;
-use App\Models\LegalEntity;
-use Livewire\WithPagination;
 use App\Classes\eHealth\EHealth;
-use App\Repositories\Repository;
-use App\Models\HealthcareService as HealthcareServiceModel;
-use Livewire\Attributes\Computed;
-use Livewire\Features\SupportRedirects\Redirector;
+use App\Enums\Status;
 use App\Livewire\Division\Forms\HealthcareServiceForm as HealthCareFormRequest;
+use App\Models\Division;
+use App\Models\HealthcareService as HealthcareServiceModel;
+use App\Models\LegalEntity;
+use App\Repositories\Repository;
+use App\Traits\FormTrait;
+use Exception;
+use Illuminate\View\View;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\Features\SupportRedirects\Redirector;
+use Livewire\WithPagination;
+use Log;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
-class HealthcareService extends Component
+class HealthcareServiceIndex extends Component
 {
     use WithPagination;
     use FormTrait;
@@ -168,15 +168,6 @@ class HealthcareService extends Component
         $this->closeModal();
     }
 
-    public function edit(HealthcareServiceModel $healthcareService): void
-    {
-        $this->mode = 'edit';
-
-        $this->formService->setHelathcareService($healthcareService->toArray());
-
-        $this->openModal();
-    }
-
     public function update(): void
     {
         $error = $this->formService->doValidation($this->mode);
@@ -222,7 +213,7 @@ class HealthcareService extends Component
 
         $healthcareServiceRawData = $this->formService->getHealthcareService();
 
-        $requestParams = Repository::healthcareService()->prepareRequestUpdateData( $healthcareServiceRawData);
+        $requestParams = Repository::healthcareService()->prepareRequestUpdateData($healthcareServiceRawData);
 
         try {
             return EHealth::healthcareService()->update(uuid: $uuid, data: $requestParams)->validate();
@@ -314,7 +305,7 @@ class HealthcareService extends Component
             // SyncHealthsCareListJob::dispatch(legalEntity(), 2); // page starts from number 2
         }
 
-        session()->flash('success',  __('Інформацію успішно оновлено'));
+        session()->flash('success', __('Інформацію успішно оновлено'));
     }
 
     public function tableHeadersHealthcare(): void
@@ -412,6 +403,6 @@ class HealthcareService extends Component
         $currentDivision['name'] = $this->division->name;
         $currentDivision['type'] = dictionary()->getDictionary('DIVISION_TYPE', false)->getValue($this->division->type);
 
-        return view('livewire.division.healthcare-service-form', compact(['healthcareServices', 'currentDivision']));
+        return view('livewire.division.healthcare-service.healthcare-service-index', compact(['healthcareServices', 'currentDivision']));
     }
 }

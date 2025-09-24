@@ -1,57 +1,125 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Division\Forms;
 
-use App\Rules\DivisionRules\DivisionStatusRule;
+use App\Enums\License\Type;
+use App\Enums\Status;
+use App\Models\Division;
+use App\Models\HealthcareService;
 use App\Rules\DivisionRules\HealthcareRules\CategoryInPharmacyRule;
 use App\Rules\DivisionRules\HealthcareRules\CategoryRule;
 use App\Rules\DivisionRules\HealthcareRules\LicenseRule;
 use App\Rules\DivisionRules\HealthcareRules\NotAvailableTimeRule;
-use Livewire\Attributes\Validate;
-use Livewire\Features\SupportFormObjects\Form;
+use App\Rules\InDictionary;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use App\Exceptions\CustomValidationException;
 use App\Rules\DivisionRules\HealthcareRules\AvailableTimeRule;
-use App\Rules\DivisionRules\HealthcareRules\CategoryInDictionaryRule;
 use App\Rules\DivisionRules\HealthcareRules\ProvidingConditionRule;
-use App\Rules\DivisionRules\HealthcareRules\SpecialityTypeInDictionaryRule;
-use App\Rules\DivisionRules\LegalEntityStatusRule;
+use Livewire\Form;
 
 class HealthcareServiceForm extends Form
 {
-    const HEALTHCARE_SERVICE_LEGAL_ENTITIES_ALLOWED_TYPE = 'MSP';
-    const LEGAL_ENTITY_PRIMARY_CARE_PROVIDING_CONDITIONS = 'OUTPATIENT';
+    public string $divisionId;
 
-    const HEALTHCARE_SERVICE_FORM_CLEANUP = [
+    public array $category = [
+        'coding' => [['system' => 'HEALTHCARE_SERVICE_CATEGORIES']]
+    ];
+
+    public string $specialityType = '';
+
+    public string $providingCondition = '';
+
+    public array $type = [
+        'coding' => [['system' => 'HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES']]
+    ];
+
+    public string $licenseId;
+
+    public string $comment;
+
+    public const HEALTHCARE_SERVICE_LEGAL_ENTITIES_ALLOWED_TYPE = 'MSP';
+    public const LEGAL_ENTITY_PRIMARY_CARE_PROVIDING_CONDITIONS = 'OUTPATIENT';
+
+    public const HEALTHCARE_SERVICE_FORM_CLEANUP = [
         'speciality_type',
         'comment',
         'available_time',
         'not_available'
     ];
 
-    #[Validate([
-        'healthcare_service.providing_condition' => 'required',
-        'healthcare_service.speciality_type' => 'required',
-//        'healthcare_service.type' => 'required_if:healthcare_service.category,PHARMACY_DRUGS',
-//        'healthcare_service.license_id' => 'required_if:healthcare_service.category,PHARMACY_DRUGS',
-    ])]
-    public ?array $healthcare_service = [] ;
+    /**
+     * Rules based on: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17089101853/Create+healthcare+service#Request-data-validation
+     *
+     * @return array
+     */
+    public function rules(): array
+    {
+        $categoriesConfigKey = 'healthcare_service_' . strtolower(legalEntity()->type) . '_categories';
+        $providingConditionConfigKey = 'legal_entity_' . strtolower(legalEntity()->type) . '_providing_conditions';
+
+        return [
+            'divisionId' => ['required', 'uuid', Rule::exists('divisions', 'uuid')->where('status', Status::ACTIVE)],
+            'category' => ['array', 'required'],
+            'category.coding.*.system' => ['required', 'string', Rule::in('HEALTHCARE_SERVICE_CATEGORIES')],
+            'category.coding.*.code' => [
+                'required',
+                'string',
+                new InDictionary('HEALTHCARE_SERVICE_CATEGORIES'),
+                Rule::in(config("ehealth.$categoriesConfigKey", []))
+            ],
+            'specialityType' => [
+                'nullable',
+                'string',
+                new InDictionary('SPECIALITY_TYPE'),
+                'required_if:category.coding.0.code,' . Type::MSP->value
+            ],
+            'providingCondition' => [
+                'nullable',
+                'string',
+                new InDictionary('PROVIDING_CONDITION'),
+                Rule::in(config("ehealth.$providingConditionConfigKey", []))
+            ],
+            'type' => ['array', 'nullable'],
+            'type.coding.*.system' => ['nullable', 'string', Rule::in('HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES')],
+            'type.coding.*.code' => [
+                'nullable',
+                'string',
+                new InDictionary(['HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES', 'LEGAL_ENTITY_TYPE_V2']),
+                'required_if:category.coding.0.code,' . Type::PHARMACY_DRUGS->value
+            ],
+            'licenseId' => [
+                'nullable',
+                'uuid',
+                Rule::exists('licenses', 'uuid')->where('is_active', true)
+                    ->where(function (QueryBuilder $query) {
+                        $query->where('expiry_date', '>=', now())->orWhereNull('expiry_date');
+                    }),
+                'required_if:category.coding.0.code,' . Type::PHARMACY->value . ',' . Type::PHARMACY_DRUGS->value
+            ],
+            'comment' => ['nullable', 'string']
+        ];
+    }
 
     /**
-     * Property for custom rules (not used really).
-     * Need for custom rules working.
+     * Redefine field names for error messages.
+     *
+     * @return array
      */
-    public ?string $customRule;
-
-    public ?string $comment = '';
+    protected function validationAttributes(): array
+    {
+        return [
+            'divisionId' => __('forms.division_name')
+        ];
+    }
 
     public function getHealthcareService(): array
     {
         return $this->healthcare_service;
-    }
-
-    public function setHelathcareService(array $hcs)
-    {
-        $this->healthcare_service = $hcs;
     }
 
     public function healthcareServiceClean(string $category = ''): void
@@ -60,13 +128,15 @@ class HealthcareServiceForm extends Form
 
         if (
             $category === self::HEALTHCARE_SERVICE_LEGAL_ENTITIES_ALLOWED_TYPE &&
-            $this->healthcare_service['providing_condition'] == self::LEGAL_ENTITY_PRIMARY_CARE_PROVIDING_CONDITIONS
+            $this->healthcare_service['providing_condition'] === self::LEGAL_ENTITY_PRIMARY_CARE_PROVIDING_CONDITIONS
         ) {
-            $this->healthcare_service = array_filter($this->healthcare_service,
-            function($key) use($formCleanup) {
-                return !in_array($key, $formCleanup);
-            },
-            ARRAY_FILTER_USE_KEY);
+            $this->healthcare_service = array_filter(
+                $this->healthcare_service,
+                function ($key) use ($formCleanup) {
+                    return !in_array($key, $formCleanup);
+                },
+                ARRAY_FILTER_USE_KEY
+            );
         } else {
             $this->healthcare_service = [];
         }
@@ -86,7 +156,7 @@ class HealthcareServiceForm extends Form
     {
         foreach ($this->customRules($mode) as $rule) {
             try {
-                $rule->validate('', '', fn() => null);
+                $rule->validate('', '', fn () => null);
             } catch (CustomValidationException $e) {
                 return $e->getMessage();
             }
@@ -98,24 +168,77 @@ class HealthcareServiceForm extends Form
     /**
      * Do form's validation (correctness of filling the form fields)
      *
-     * @return mixed
+     * @return array
+     * @throws ValidationException
      */
-    public function doValidation(string $mode)
+    public function doValidation(): array
     {
-        $this->validate();
+        $validated = $this->validate();
 
-        $failMessage = $this->customRulesValidation($mode);
+        $this->validateConstraint();
 
-        return $failMessage;
+        if (empty($validated['type']['coding'][0]['code'])) {
+            unset($validated['type']);
+        }
+
+        return $validated;
+    }
+
+    /**
+     * Validate constraint based on: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17089101853/Create+healthcare+service#Validate-constraint
+     *
+     * @return void
+     */
+    protected function validateConstraint(): void
+    {
+        $divisionId = Division::whereUuid($this->divisionId)->value('id');
+        $categoryCode = data_get($this->category, 'coding.0.code');
+        $typeCode = data_get($this->type, 'coding.0.code');
+
+        if (!empty($this->specialityType) && !empty($this->providingCondition)) {
+            $firstCheck = HealthcareService::whereDivisionId($divisionId)
+                ->whereSpecialityType($this->specialityType)
+                ->whereProvidingCondition($this->providingCondition)
+                ->exists();
+
+            if ($firstCheck) {
+                throw ValidationException::withMessages([
+                    'unique_combination' => __('validation.attributes.healthcareService.constraint.typeAndCondition')
+                ]);
+            }
+        }
+
+        if (!empty($categoryCode) && !empty($typeCode)) {
+            $secondCheck = HealthcareService::whereDivisionId($divisionId)
+                ->whereHas('category.coding', fn (EloquentBuilder $query) => $query->where('code', $categoryCode))
+                ->whereHas('type.coding', fn (EloquentBuilder $query) => $query->where('code', $typeCode))
+                ->exists();
+
+            if ($secondCheck) {
+                throw ValidationException::withMessages([
+                    'unique_combination' => __('validation.attributes.healthcareService.constraint.categoryAndType')
+                ]);
+            }
+        }
+
+        $thirdCheck = HealthcareService::whereDivisionId($divisionId)
+            ->whereHas('category.coding', fn (EloquentBuilder $query) => $query->where('code', Type::PHARMACY))
+            ->exists();
+
+        if ($thirdCheck) {
+            throw ValidationException::withMessages([
+                'unique_combination' => __('validation.attributes.healthcareService.constraint.categoryPharmacy')
+            ]);
+        }
     }
 
     public function addAvailableTime($k): void
     {
-         $this->healthcare_service['available_time'][$k] = [
+        $this->healthcare_service['available_time'][$k] = [
             'days_of_week' => get_day_key($k),
             'all_day' => false,
-            'available_start_time' =>'',
-            'available_end_time' =>'',
+            'available_start_time' => '',
+            'available_end_time' => '',
         ];
     }
 
@@ -155,13 +278,6 @@ class HealthcareServiceForm extends Form
 
         $validationRules = [];
 
-        $commonValidationRules = [
-            // Check that legal entity is in ‘ACTIVE’ or ‘SUSPENDED’ status
-            new LegalEntityStatusRule(),
-            // Check that division status = ‘ACTIVE’
-            new DivisionStatusRule($division)
-        ];
-
         $timeValidationRules = [
             // Check that end time should be greater then start
             new AvailableTimeRule($division, $this->healthcare_service),
@@ -170,10 +286,6 @@ class HealthcareServiceForm extends Form
         ];
 
         $storeValidationRules = [
-            // Check that category is a value from HEALTHCARE_SERVICE_CATEGORIES dictionary
-            new CategoryInDictionaryRule($division, $this->healthcare_service),
-            // Check that speciality type is a value from SPECIALITY_TYPE dictionary
-            new SpecialityTypeInDictionaryRule($division, $this->healthcare_service),
             // Check that there is no another record with the same healthcare service, division_id and category = ‘PHARMACY’
             new CategoryInPharmacyRule($division),
             // Check that there is any valid license for the healthcare service's category
@@ -185,19 +297,15 @@ class HealthcareServiceForm extends Form
         ];
 
         if ($mode === 'edit') {
-            $validationRules = array_merge($validationRules, $commonValidationRules, $timeValidationRules);
+            $validationRules = array_merge($validationRules, $timeValidationRules);
         } else {
-            $validationRules = array_merge($validationRules, $commonValidationRules, $storeValidationRules, $timeValidationRules);
+            $validationRules = array_merge(
+                $validationRules,
+                $storeValidationRules,
+                $timeValidationRules
+            );
         }
 
         return $validationRules;
-    }
-
-    public function rules()
-    {
-        return [
-            'healthcare_service.category' => 'required|max:255',
-            'healthcare_service.comment' => 'sometimes|string|nullable',
-         ];
     }
 }

@@ -52,12 +52,12 @@ final class EHealth
         return app(RuleEngineRules::class);
     }
 
-    public static function division()
+    public static function division(): Division
     {
         return app(Division::class);
     }
 
-    public static function healthcareService()
+    public static function healthcareService(): HealthcareService
     {
         return app(HealthcareService::class);
     }

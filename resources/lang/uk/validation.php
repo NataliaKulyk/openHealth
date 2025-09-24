@@ -375,13 +375,25 @@ return [
         'division.phones.*.type' => 'Тип Номера',
         'division.location.latitude' => 'Широта',
         'division.location.longitude' => 'Довгота',
+
+        // Healthcare Service
+        'category.coding.*.code' => 'категорія послуги',
+        'type.coding.*.code' => 'тип медичної послуги',
+        'specialityType' => 'лікарська спеціальність',
+        'providingCondition' => 'Умови надання послуг',
+        'licenseId' => 'ліцензія закладу',
+        'comment' => 'коментар',
+
         'healthcareService' => [
             'category' => 'Категорія',
             'conditions' => 'Умови надання',
-            'specialityType' => 'Тип спеціальності',
             'status' => 'Статус',
             'type' => 'Тип спеціальності',
-            'providingCondition' => 'Умови надання послуг',
+            'constraint' => [
+                'typeAndCondition' => "Комбінація 'місце надання послуг', 'лікарська спеціальність' та 'умови надання послуги' мають бути унікальні",
+                'categoryAndType' => "Комбінація 'місце надання послуг', 'категорія послуги' та 'тип медичної послуги' мають бути унікальні",
+                'categoryPharmacy' => 'Категорія PHARMACY вже використовується у цьому місці надання послуг',
+            ],
             'error' => [
                 'legalEntity' => [
                     'status' => 'Заклад має неактивний статус. Створення послуги неможливо.'
@@ -427,11 +439,7 @@ return [
                     'category' => 'Вказаної категорії не існує',
                     'specialityType' => 'Вказаного типу спеціальності не існує'
                 ],
-                'constraint' => [
-                    'category' => 'Така послуга вже є для цієї категорії',
-                    'categoryPharmacy' => 'Категорія PHARMACY вже використовується у цьому місці надання послуг',
-                    'providingCondition' => 'Така послуга вже є для цього місця надання послуг',
-                ],
+
                 'category' => [
                     'license' => 'Дана категорія не має хоча б однієї відповідної ліцензії'
                 ],

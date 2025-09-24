@@ -1,12 +1,11 @@
 <div>
-    <x-header-navigation x-data="{ showFilter: false }" class="">
-        <x-slot name="title">{{ __('Зареєструвати заклад ') }}</x-slot>
+    <x-header-navigation x-data="{ showFilter: false }">
+        <x-slot name="title">{{ __('forms.create_legal_entity') }}</x-slot>
     </x-header-navigation>
 
     <section class="section-form">
         <div
             x-data="{
-
                 activeStep: {{ $activeStep }},
                 isEdit: @json($isEdit),
                 headers: [],

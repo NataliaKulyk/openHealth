@@ -334,7 +334,7 @@
                     <div class='dark:bg-boxdark'>
                         <div class='border-stroke px-6.5 py-4 dark:border-strokedark'>
                             <h3 class='font-medium text-2xl text-black dark:text-white'>
-                                {{ __('forms.placesOfService') }}
+                                {{ __('forms.divisions') }}
                             </h3>
                         </div>
 

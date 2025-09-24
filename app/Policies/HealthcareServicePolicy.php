@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\User;
@@ -8,7 +10,6 @@ use App\Models\LegalEntity;
 use App\Models\HealthcareService;
 use Illuminate\Auth\Access\Response;
 
-// TODO: need to more test and review this policy
 class HealthcareServicePolicy
 {
     /**
@@ -17,26 +18,37 @@ class HealthcareServicePolicy
     public function viewAny(User $user): Response
     {
         if ($user->cannot('healthcare_service:read')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         return Response::allow();
     }
 
     /**
-     * User allow to create the Division
+     * User allow to create the healthcare services
      */
     public function create(User $user): Response
     {
         if ($user->cannot('healthcare_service:write')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
+        }
+
+        // Check that legal entity type exists in HEALTHCARE_SERVICE_LEGAL_ENTITIES_ALLOWED_TYPES chart parameter.
+        $types = dictionary()->getDictionary('LEGAL_ENTITY_TYPE_V2', false)->getKeys();
+        if (!in_array(legalEntity()->type, $types, true)) {
+            return Response::denyWithStatus(404);
+        }
+
+        // The healthcare service can be created for legal entities with the following statuses.
+        if (!in_array(legalEntity()->status, ['ACTIVE', 'SUSPENDED'], true)) {
+            return Response::denyWithStatus(404);
         }
 
         return Response::allow();
     }
 
     /**
-     * User allow to delete the Division's draft record fromm the DB
+     * User allow to delete the healthcare services draft record fromm the DB
      */
     public function delete(User $user, HealthcareService $healthcareService): Response
     {
@@ -51,7 +63,7 @@ class HealthcareServicePolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, HealthcareService $healthcareService, ?LegalEntity $legalEntity = null): Response|bool
+    public function update(User $user, HealthcareService $healthcareService, ?LegalEntity $legalEntity = null): Response
     {
         if (is_null($legalEntity)) {
             $legalEntity = legalEntity();
@@ -63,12 +75,12 @@ class HealthcareServicePolicy
         }
 
         // Should belong to the same legal entity
-        if ($healthcareService->legal_entity_id !== (int) $legalEntity->id) {
+        if ($healthcareService->legal_entity_id !== (int)$legalEntity->id) {
             return Response::denyWithStatus(404);
         }
 
         if ($user->cannot('healthcare_service:write')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         // Inactive healthcare services cannot be updated

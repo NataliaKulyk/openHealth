@@ -1,12 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories;
 
+use App\Repositories\MedicalEvents\Repository;
 use Exception;
 use App\Models\Division;
 use App\Models\HealthcareService;
 use Illuminate\Support\Facades\DB;
 use App\Classes\eHealth\Api\HealthcareService as HealthcareServiceApi;
+use Throwable;
 
 class HealthcareServiceRepository
 {
@@ -30,7 +34,6 @@ class HealthcareServiceRepository
     {
         return $this->division;
     }
-
 
     /**
      * Saves a list of healthcare services.
@@ -59,19 +62,33 @@ class HealthcareServiceRepository
     /**
      * Saves all healthcare services from API response using batch upsert operation.
      *
-     * @param array $healthcareServicesList Raw healthcare services data from eHealth API
-     *
+     * @param  array  $healthcareServicesList  Raw healthcare services data from eHealth API
+     * @param  array  $divisions
      * @return void
-     *
-     * @throws Exception If database transaction fails
+     * @throws Exception|Throwable If database transaction fails
      */
     public function saveHealthcareServiceAll(array $healthcareServicesList, array $divisions): void
     {
-        DB::transaction(function() use($healthcareServicesList, $divisions) {
-            $uspertData = app(HealthcareServiceApi::class)->normalizeResponseDataForUpsert($healthcareServicesList, $divisions);
+        DB::transaction(static function () use ($healthcareServicesList, $divisions) {
+            $upsertData = collect(
+                app(HealthcareServiceApi::class)->normalizeResponseDataForUpsert($healthcareServicesList, $divisions)
+            )->map(function (array $item) {
+                // Save category and type to separate table
+                $category = Repository::codeableConcept()->store($item['category']);
+                $item['category_id'] = $category->id;
 
-            // At first save all the Divisions to teh DB
-            HealthcareService::upsert($uspertData, uniqueBy: ['uuid'], update: new HealthcareService()->getFillable());
+                if (!empty($item['type'])) {
+                    $type = Repository::codeableConcept()->store($item['type']);
+                    $item['type_id'] = $type->id;
+                }
+
+                unset($item['category'], $item['type']);
+
+                return $item;
+            })->all();
+
+            // At first save all the Divisions to the DB
+            HealthcareService::upsert($upsertData, uniqueBy: ['uuid'], update: new HealthcareService()->getFillable());
         });
     }
 
@@ -85,20 +102,19 @@ class HealthcareServiceRepository
      */
     public function prepareRequestCreateData(array $rawData): array
     {
-         $params = [
-            'division_id' => $this->getDivision()->uuid,
-            'category' => [
-                'coding' => [
-                    [
-                        'system' => 'HEALTHCARE_SERVICE_CATEGORIES',
-                        'code' => $rawData['category']
-                    ]
-                ]
-            ],
-            'providing_condition' => $rawData['providing_condition'],
-            'speciality_type' => $rawData['speciality_type'],
+        $params = [
+           'division_id' => $this->getDivision()->uuid,
+           'category' => [
+               'coding' => [
+                   [
+                       'system' => 'HEALTHCARE_SERVICE_CATEGORIES',
+                       'code' => $rawData['category']
+                   ]
+               ]
+           ],
+           'providing_condition' => $rawData['providing_condition'],
+           'speciality_type' => $rawData['speciality_type'],
         ];
-
 
         if (isset($rawData['comment']) && !empty($rawData['comment'])) {
             $params['comment'] = $rawData['comment'];

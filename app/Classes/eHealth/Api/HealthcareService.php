@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth\Api;
 
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
+use App\Models\LegalEntity;
 use Exception;
-use App\Models\Division;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use App\Classes\eHealth\EHealthResponse;
@@ -89,17 +91,17 @@ class HealthcareService extends Request
     }
 
     /**
-     * Create the Division
+     * Create the Healthcare Service.
      *
-     * @param mixed $data // Data for API request
-     *
+     * @param  array  $data  // Data for API request
      * @return EHealthResponse|PromiseInterface
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function create(array $data = []): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateHealthcareService(...));
 
-        return parent::post(self::URL, data: $data);
+        return $this->post(self::URL, data: $data);
     }
 
     /**
@@ -142,36 +144,48 @@ class HealthcareService extends Request
      */
     public function normalizeResponseDataForUpsert(array $healthcareServicesList, array $divisions): array
     {
-            // First filter only records with valid division references
-            $filteredData = array_filter($healthcareServicesList, function ($item) use ($divisions) {
-                if (!isset($item['division_id'])) {
-                    return false;
+        // Get existed legal entity ids
+        $legalEntityUuids = array_unique(array_column($healthcareServicesList, 'legal_entity_uuid'));
+        $legalEntityMap = LegalEntity::whereIn('uuid', $legalEntityUuids)
+            ->pluck('id', 'uuid')
+            ->toArray();
+
+        // First filter only records with valid division references
+        $filteredData = array_filter($healthcareServicesList, function ($item) use ($divisions) {
+            if (!isset($item['division_id'])) {
+                return false;
+            }
+
+            if (!isset($divisions[$item['division_id']])) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Now process only valid records
+        return array_map(static function (array $item) use ($divisions, $legalEntityMap) {
+            // Convert division_id from UUID to ID
+            $item['division_id'] = $divisions[$item['division_id']];
+
+            // Convert legal_entity_uuid to legal_entity_id
+            if (isset($item['legal_entity_uuid'], $legalEntityMap[$item['legal_entity_uuid']])) {
+                $item['legal_entity_id'] = $legalEntityMap[$item['legal_entity_uuid']];
+            }
+            unset($item['legal_entity_uuid']);
+
+            // Convert JSON fields
+            $jsonFields = ['available_time', 'not_available', 'licensed_healthcare_service'];
+
+            foreach ($jsonFields as $field) {
+                $value = Arr::get($item, $field);
+                if (is_array($value)) {
+                    $item[$field] = json_encode($value);
                 }
+            }
 
-                if (!isset($divisions[$item['division_id']])) {
-                    return false;
-                }
-
-                return true;
-            });
-
-            // Now process only valid records
-            return array_map(function ($item) use ($divisions) {
-                // Convert division_id from UUID to ID
-                $item['division_id'] = $divisions[$item['division_id']];
-
-                // Convert JSON fields
-                $jsonFields = ['category', 'type', 'coverage_area', 'available_time', 'not_available', 'licensed_healthcare_service'];
-
-                foreach ($jsonFields as $field) {
-                    $value = Arr::get($item, $field);
-                    if (is_array($value)) {
-                        $item[$field] = json_encode($value);
-                    }
-                }
-
-                return $item;
-            }, $filteredData);
+            return $item;
+        }, $filteredData);
     }
 
     /**
@@ -290,18 +304,6 @@ class HealthcareService extends Request
             'ehealth_updated_at' => 'required|date',
             'ehealth_updated_by' => 'required|uuid'
         ];
-    }
-
-    /**
-     * @param string $url
-     * @param array $data
-     *
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
-     */
-    public function post(string $url = self::URL, $data = []): PromiseInterface|EHealthResponse
-    {
-        return parent::post($url, $data);
     }
 
     /**

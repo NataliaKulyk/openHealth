@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\Status;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -12,17 +14,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('healthcare_services', function (Blueprint $table) {
+        Schema::create('healthcare_services', static function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
             $table->foreignId('division_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
-            $table->uuid('legal_entity_uuid')->nullable();
+            $table->foreignId('legal_entity_id')->constrained();
             $table->string('speciality_type')->nullable();
             $table->string('providing_condition')->nullable();
             $table->string('license_id')->nullable();
             $table->enum('status', Status::only(['ACTIVE', 'INACTIVE']))->nullable();
-            $table->jsonb('category');
-            $table->jsonb('type')->nullable();
+            $table->foreignId('category_id')->constrained('codeable_concepts');
+            $table->foreignId('type_id')->nullable()->constrained('codeable_concepts');
             $table->text('comment')->nullable();
             $table->jsonb('coverage_area')->nullable();
             $table->jsonb('available_time')->nullable();

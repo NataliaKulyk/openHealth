@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\Status;
 use App\Casts\NotAvailableTimeCast;
+use App\Models\MedicalEvents\Sql\CodeableConcept;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,8 +21,8 @@ class HealthcareService extends Model
         'providing_condition',
         'license_id',
         'division_id',
-        'category',
-        'type',
+        'category_id',
+        'type_id',
         'comment',
         'coverage_area',
         'available_time',
@@ -30,16 +31,13 @@ class HealthcareService extends Model
         'ehealth_inserted_at',
         'ehealth_inserted_by',
         'is_active',
-        'legal_entity_uuid',
+        'legal_entity_id',
         'licensed_healthcare_service',
         'ehealth_updated_at',
         'ehealth_updated_by'
     ];
 
     protected $casts = [
-        'category' => 'json',
-        'type' => 'json',
-        'coverage_area' => 'json',
         'available_time' => 'json',
         'not_available' => NotAvailableTimeCast::class,
         'status' => Status::class
@@ -50,8 +48,13 @@ class HealthcareService extends Model
         return $this->belongsTo(Division::class);
     }
 
-    public function getHealthcareCategoryAttribute()
+    public function category(): BelongsTo
     {
-        return $this->category['coding'][0]['code'] ?? '';
+        return $this->belongsTo(CodeableConcept::class, 'category_id');
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(CodeableConcept::class, 'type_id');
     }
 }

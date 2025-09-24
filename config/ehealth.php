@@ -419,6 +419,17 @@ return [
         '96761-2' => ['0-100', 'valueQuantity', 'ScoreOf']
     ],
 
+    // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17088643146/Configurations+for+Healthcare+services#Healthcare-services-configurable-parameters
+    'healthcare_service_primary_care_categories' => ['MSP'],
+    'healthcare_service_outpatient_categories' => ['MSP', 'PHARMACY_DRUGS'],
+    'healthcare_service_emergency_categories' => ['MSP'],
+    'healthcare_service_pharmacy_categories' => ['PHARMACY', 'PHARMACY_DRUGS'],
+
+    // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17088643146/Configurations+for+Healthcare+services#Allowed-providing-conditions-for-each-legal-entity-type
+    'legal_entity_primary_care_providing_conditions' => ['OUTPATIENT'],
+    'legal_entity_outpatient_providing_conditions' => ['INPATIENT', 'OUTPATIENT', 'FIELD'],
+    'legal_entity_emergency_providing_conditions' => ['FIELD'],
+
     // Set the test environment
     'test' => [
         'client_id' => env('TEST_CLIENT_ID'),
