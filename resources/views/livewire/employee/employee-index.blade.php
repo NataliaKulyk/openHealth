@@ -1,12 +1,12 @@
 <div>
-    <x-header-navigation x-data="{ showFilter: false }">
+    <x-header-navigation class="items-start" x-data="{ showFilter: false }">
 
         <x-slot name="title">
             {{ __('forms.employees') }}
         </x-slot>
 
         @can('create', \App\Models\Employee\EmployeeRequest::class)
-            <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
+            <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start">
                 <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
                    class="button-primary">{{ __('forms.new_employee') }}</a>
                 <button wire:click="sync" type="button" class="button-sync flex items-center gap-2 whitespace-nowrap">
@@ -14,14 +14,14 @@
                     {{ __('forms.synchronise_with_eHealth') }}
                 </button>
             </div>
-    @endcan
+        @endcan
 
 
         <x-slot name="navigation">
             <div class="flex flex-col">
                 <div class="flex flex-wrap items-end justify-between gap-4">
-                    <div class="flex items-end gap-4">
-                        <div class="w-96">
+                    <div class="flex flex-col lg:flex-row items-stretch lg:items-end gap-2 lg:gap-4 w-full">
+                        <div class="w-full lg:w-96">
                             <x-forms.form-group>
                                 <x-slot name="label">
                                     <label for="employee_search"
@@ -47,8 +47,8 @@
                                 </x-slot>
                             </x-forms.form-group>
                         </div>
-                        <button class="flex items-center gap-2 button-minor self-center mt-3.5"
-                                @click="showFilter = !showFilter">
+                        <button class="button-minor flex items-center justify-center gap-2 w-full lg:w-auto self-stretch lg:self-auto mt-2 lg:mt-3.5"
+                            @click="showFilter = !showFilter">
                             <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -60,82 +60,84 @@
                     </div>
 
 
-                <div x-show="showFilter" x-transition class="pt-4 mt-4">
-                    <div class="form-row-4">
-                        <div class="form-group phone-wrapper">
-                            <input wire:model.live.debounce.300ms="filter.phone"
-                                   id="filter_phone"
-                                   type="tel"
-                                   placeholder=" "
-                                   class="peer input pl-10 with-leading-icon text-gray-500"
-                                   x-mask="+380999999999"
-                            />
-                            <label for="filter_phone" class="label pl-10">Телефон</label>
+                    <div x-cloak x-show="showFilter" x-transition class="pt-4 mt-4">
+                        <div class="form-row-4">
+                            <div class="form-group phone-wrapper">
+                                <input wire:model.live.debounce.300ms="filter.phone"
+                                       type="tel"
+                                       placeholder=" "
+                                       class="peer input pl-10 with-leading-icon text-gray-500"
+                                       x-model="phones[index].number"
+                                       x-mask="+380999999999"
+                                       :id="$id('phone', '_number' + index)"
+                                       :class="{ 'input-error border-red-500': errors[legalEntityForm.phones.${index}.number] }"
+                                />
+                                <label for="filter_phone" class="label pl-10">Телефон</label>
+                            </div>
+                            <div class="form-group group">
+                                <input wire:model.live.debounce.300ms="filter.email"
+                                       type="email"
+                                       name="filter_email"
+                                       id="filter_email"
+                                       class="input peer"
+                                       placeholder=" "
+                                       autocomplete="off"
+                                />
+                                <label for="filter_email" class="label">Email</label>
+                            </div>
                         </div>
-                        <div class="form-group group">
-                            <input wire:model.live.debounce.300ms="filter.email"
-                                   type="email"
-                                   name="filter_email"
-                                   id="filter_email"
-                                   class="input peer"
-                                   placeholder=" "
-                                   autocomplete="off"
-                            />
-                            <label for="filter_email" class="label">Email</label>
-                        </div>
-                    </div>
-                    <div class="form-row-4">
-                        <div class="form-group group">
-                            <select wire:model.live="filter.role"
-                                    name="filter_role"
-                                    id="filter_role"
-                                    class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                            >
-                                <option value="">Всі ролі</option>
-                                @foreach($dictionaries['EMPLOYEE_TYPE'] ?? [] as $key => $value)
-                                    <option value="{{ $key }}">{{ $value }}</option>
-                                @endforeach
-                            </select>
-                            <label for="filter_role" class="label">Роль працівника</label>
-                        </div>
-                        <div class="form-group group">
-                            <select wire:model.live="filter.position"
-                                    name="filter_position"
-                                    id="filter_position"
-                                    class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                            >
-                                <option value="">Всі посади</option>
-                                @foreach($dictionaries['POSITION'] ?? [] as $key => $value)
-                                    <option value="{{ $key }}">{{ $value }}</option>
-                                @endforeach
-                            </select>
-                            <label for="filter_position" class="label">Посада</label>
-                        </div>
-                    </div>
-                    <div class="form-row-4">
-                        <div class="form-group">
-                            <select name="division"
-                                    id="division"
-                                    class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                                    wire:model.live="filter.division_id">
-                                <option value="">{{ __('forms.select_division') }}</option>
+                        <div class="form-row-4">
+                            <div class="form-group group">
+                                <select wire:model.live="filter.role"
+                                        name="filter_role"
+                                        id="filter_role"
+                                        class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                    <option value="">Всі ролі</option>
+                                    @foreach($dictionaries['EMPLOYEE_TYPE'] ?? [] as $key => $value)
+                                        <option value="{{ $key }}">{{ $value }}</option>
+                                    @endforeach
+                                </select>
+                                <label for="filter_role" class="label">Роль працівника</label>
+                            </div>
+                            <div class="form-group group">
+                                <select wire:model.live="filter.position"
+                                        name="filter_position"
+                                        id="filter_position"
+                                        class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                    <option value="">Всі посади</option>
+                                    @foreach($dictionaries['POSITION'] ?? [] as $key => $value)
+                                        <option value="{{ $key }}">{{ $value }}</option>
+                                    @endforeach
+                                </select>
+                                <label for="filter_position" class="label">Посада</label>
+                            </div>
 
-                                @foreach($this->divisions as $division)
-                                    <option value="{{ $division['id'] }}">{{ $division['name'] }}</option>
-                                @endforeach
-                            </select>
-                            <label for="division" class="label">{{ __('forms.division') }}</label>
-                            @error('filter.division_id') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
-                        <div class="form-group group" x-data="{ open: false, selectedStatuses: @entangle('status').live }">
-                            <label for="statusFilter" class="label">Статус</label>
-                            <div class="relative">
-                                <input type="text"
-                                       id="statusFilter"
-                                       class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
-                                       placeholder="Оберіть статуси"
-                                       x-on:click="open = !open"
-                                       :value="selectedStatuses.length ? selectedStatuses.map(s => {
+                        <div class="form-row-4">
+                            <div class="form-group group">
+                                <select wire:model.live="filter.division_id"
+                                        name="filter_division"
+                                        id="filter_division"
+                                        class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                    <option value="">Всі підрозділи</option>
+                                    @foreach($divisions ?? [] as $division)
+                                        <option value="{{ $division->id }}">{{ $division->name }}</option>
+                                    @endforeach
+                                </select>
+                                <label for="filter_division" class="label">Медичний заклад</label>
+                            </div>
+                            <div class="form-group group" x-data="{ open: false, selectedStatuses: @entangle('status').live }">
+                                <label for="statusFilter" class="label">Статус</label>
+                                <div class="relative">
+                                    <input type="text"
+                                           id="statusFilter"
+                                           class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
+                                           placeholder="Оберіть статуси"
+                                           x-on:click="open = !open"
+                                           :value="selectedStatuses.length ? selectedStatuses.map(s => {
                                             if (s === 'APPROVED') return 'Активний';
                                             if (s === 'NEW') return 'Чернетка';
                                             if (s === 'DISMISSED') return 'Звільнений';
@@ -143,82 +145,82 @@
                                             if (s === 'NOT_VERIFIED') return 'Не верифікований';
                                             return s;
                                         }).join(', ') : ''"
-                                       readonly
-                                />
-                                <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                                <div x-show="open"
-                                     x-on:click.away="open = false"
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="transform opacity-0 scale-95"
-                                     x-transition:enter-end="transform opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="transform opacity-100 scale-100"
-                                     x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute z-10 mt-2 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg">
-                                    <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                        <li>
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" value="APPROVED" wire:model.live="status"
-                                                       class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
-                                                <span>{{ __('forms.active') }}</span>
-                                            </label>
-                                        </li>
-                                        <li>
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" value="NEW" wire:model.live="status"
-                                                       class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
-                                                <span>{{ __('forms.draft') }}</span>
-                                            </label>
-                                        </li>
-                                        <li>
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" value="DISMISSED" wire:model.live="status"
-                                                       class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
-                                                <span>{{ __('forms.dismissed') }}</span>
-                                            </label>
-                                        </li>
-                                        <li>
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" value="VERIFIED" wire:model.live="status"
-                                                       class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
-                                                <span>{{ __('forms.verified') }}</span>
-                                            </label>
-                                        </li>
-                                        <li>
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" value="NOT_VERIFIED" wire:model.live="status"
-                                                       class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
-                                                <span>{{ __('forms.not_verified') }}</span>
-                                            </label>
-                                        </li>
-                                    </ul>
+                                           readonly
+                                    />
+                                    <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                    <div x-show="open"
+                                         x-on:click.away="open = false"
+                                         x-transition:enter="transition ease-out duration-100"
+                                         x-transition:enter-start="transform opacity-0 scale-95"
+                                         x-transition:enter-end="transform opacity-100 scale-100"
+                                         x-transition:leave="transition ease-in duration-75"
+                                         x-transition:leave-start="transform opacity-100 scale-100"
+                                         x-transition:leave-end="transform opacity-0 scale-95"
+                                         class="absolute z-10 mt-2 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg">
+                                        <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                                            <li>
+                                                <label class="flex items-center space-x-2 cursor-pointer">
+                                                    <input type="checkbox" value="APPROVED" wire:model.live="status"
+                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
+                                                    <span>{{ __('forms.active') }}</span>
+                                                </label>
+                                            </li>
+                                            <li>
+                                                <label class="flex items-center space-x-2 cursor-pointer">
+                                                    <input type="checkbox" value="NEW" wire:model.live="status"
+                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
+                                                    <span>{{ __('forms.draft') }}</span>
+                                                </label>
+                                            </li>
+                                            <li>
+                                                <label class="flex items-center space-x-2 cursor-pointer">
+                                                    <input type="checkbox" value="DISMISSED" wire:model.live="status"
+                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
+                                                    <span>{{ __('forms.dismissed') }}</span>
+                                                </label>
+                                            </li>
+                                            <li>
+                                                <label class="flex items-center space-x-2 cursor-pointer">
+                                                    <input type="checkbox" value="VERIFIED" wire:model.live="status"
+                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
+                                                    <span>{{ __('forms.verified') }}</span>
+                                                </label>
+                                            </li>
+                                            <li>
+                                                <label class="flex items-center space-x-2 cursor-pointer">
+                                                    <input type="checkbox" value="NOT_VERIFIED" wire:model.live="status"
+                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
+                                                    <span>{{ __('forms.not_verified') }}</span>
+                                                </label>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="w-full flex justify-start mt-4">
-                        <button type="button" wire:click="resetFilters" class="button-primary">
-                            {{ __('forms.reset_all_filters') }}
-                        </button>
+                        <div class="w-full flex justify-start mt-4">
+                            <button type="button" wire:click="resetFilters" class="button-primary">
+                                {{ __('forms.reset_all_filters') }}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         </x-slot>
     </x-header-navigation>
     <x-section class="shift-content">
         <div class="space-y-6 employee-section-no-left-padding mt-6">
             <div class="table-container-responsive ml-3.5">
-            @forelse($parties as $party)
+                @forelse($parties as $party)
                     <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]" wire:key="party-{{ $party->id }}">
-                    <legend class="legend">{{ $party->fullName }}</legend>
-                    <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                        <div>
-                            <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
-                                @if ($mobilePhone = $party->phones->firstWhere('type', 'MOBILE'))
-                                    <span class="flex items-center gap-1.5">
+                        <legend class="legend">{{ $party->fullName }}</legend>
+                        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <div>
+                                <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
+                                    @if ($mobilePhone = $party->phones->firstWhere('type', 'MOBILE'))
+                                        <span class="flex items-center gap-1.5">
                                        <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
                                             xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                             viewBox="0 0 24 24">
@@ -229,94 +231,94 @@
                                         <a href="tel:{{ $mobilePhone->number }}"
                                            class="hover:underline">{{ $mobilePhone->number }}</a>
                                     </span>
-                                @endif
-                                @if($party->email)
-                                    <span class="flex items-center gap-1.5">
+                                    @endif
+                                    @if($party->email)
+                                        <span class="flex items-center gap-1.5">
                                         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m3.5 5.5 7.893 6.036a1 1 0 0 0 1.214 0L20.5 5.5M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
                                         </svg>
                                         <a href="mailto:{{$party->email}}" class="hover:underline">{{ $party->email }}</a>
                                     </span>
-                                @endif
+                                    @endif
+                                </div>
                             </div>
-                        </div>
-                        @can('create', \App\Models\Employee\EmployeeRequest::class)
-                            <div class="flex items-center space-x-3">
-                                <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                                   class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            @can('create', \App\Models\Employee\EmployeeRequest::class)
+                                <div class="flex items-center space-x-3">
+                                    <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                       class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
                                         <span
                                             class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
-                                </a>
-                            </div>
-                        @endcan
-                    </div>
-                    <div class="flow-root mt-4">
-                        <div class="max-w-screen-xl">
-                            <table class="table-input w-full table-fixed">
-                                <thead class="thead-input">
-                                <tr>
-                                    <th scope="col" class="th-input w-[28%]">Посада</th>
-                                    <th scope="col" class="th-input w-[22%]">Роль</th>
-                                    <th scope="col" class="th-input w-[20%]">Підрозділ</th>
-                                    <th scope="col" class="th-input w-[15%]">Статус</th>
-                                    <th scope="col" class="th-input w-[15%] text-center"></th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @php
-                                    $positions = $party->employees->merge($party->employeeRequests);
-                                    $groupedPositions = $positions->groupBy('position');
-                                @endphp
-                                @foreach($groupedPositions as $positionCode => $items)
-                                    @php
-                                        $positionToShow = $items->firstWhere(fn($item) => $item instanceof \App\Models\Employee\Employee) ?? $items->first();
-                                    @endphp
-                                    <tr>
-                                        <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['POSITION'][$positionToShow->position] ?? $positionToShow->position }}</td>
-                                        <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['EMPLOYEE_TYPE'][$positionToShow->employee_type] ?? $positionToShow->employee_type }}</td>
-                                        <td class="td-input break-words whitespace-normal align-top">{{ $positionToShow->division->name ?? 'N/A' }}</td>
-
-                                        <td class="td-input break-words whitespace-nowrap align-top">
-                                            @php
-                                                // First, check if the record is an Employee model. This is the highest priority.
-                                                $isEmployee = $positionToShow instanceof \App\Models\Employee\Employee;
-                                            @endphp
-
-                                            @if($isEmployee)
-                                                {{-- For a standard Employee record, show its actual status --}}
-                                                @if($positionToShow->status?->value === 'APPROVED')
-                                                    <span class="badge-green">{{__('forms.status.active')}}</span>
-                                                @else
-                                                    <span class="badge-red">{{__('forms.status.dismissed')}}</span>
-                                                @endif
-                                            @else
-                                                {{-- If it's not an Employee, it must be an EmployeeRequest. Now check if it's a draft. --}}
-                                                @if(is_null($positionToShow->applied_at))
-                                                    {{-- applied_at is null, so it's a draft/new request. --}}
-                                                    <span class="badge-red">{{__('forms.status.draft')}}</span>
-                                                @else
-                                                    {{-- applied_at has a value, meaning the request has been submitted and is active/processed. --}}
-                                                    <span class="badge-green">{{__('forms.status.active')}}</span>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td class="td-input text-center">
-                                            @include('livewire.employee.parts.actions-dropdown', [
-                                                'position' => $positionToShow
-                                            ])
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
+                                    </a>
+                                </div>
+                            @endcan
                         </div>
+                        <div class="flow-root mt-4">
+                            <div class="max-w-screen-xl">
+                                <table class="table-input w-full table-fixed">
+                                    <thead class="thead-input">
+                                    <tr>
+                                        <th scope="col" class="th-input w-[28%]">Посада</th>
+                                        <th scope="col" class="th-input w-[22%]">Роль</th>
+                                        <th scope="col" class="th-input w-[20%]">Підрозділ</th>
+                                        <th scope="col" class="th-input w-[15%]">Статус</th>
+                                        <th scope="col" class="th-input w-[15%] text-center"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @php
+                                        $positions = $party->employees->merge($party->employeeRequests);
+                                        $groupedPositions = $positions->groupBy('position');
+                                    @endphp
+                                    @foreach($groupedPositions as $positionCode => $items)
+                                        @php
+                                            $positionToShow = $items->firstWhere(fn($item) => $item instanceof \App\Models\Employee\Employee) ?? $items->first();
+                                        @endphp
+                                        <tr>
+                                            <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['POSITION'][$positionToShow->position] ?? $positionToShow->position }}</td>
+                                            <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['EMPLOYEE_TYPE'][$positionToShow->employee_type] ?? $positionToShow->employee_type }}</td>
+                                            <td class="td-input break-words whitespace-normal align-top">{{ $positionToShow->division->name ?? 'N/A' }}</td>
+
+                                            <td class="td-input break-words whitespace-nowrap align-top">
+                                                @php
+                                                    // First, check if the record is an Employee model. This is the highest priority.
+                                                    $isEmployee = $positionToShow instanceof \App\Models\Employee\Employee;
+                                                @endphp
+
+                                                @if($isEmployee)
+                                                    {{-- For a standard Employee record, show its actual status --}}
+                                                    @if($positionToShow->status?->value === 'APPROVED')
+                                                        <span class="badge-green">{{__('forms.status.active')}}</span>
+                                                    @else
+                                                        <span class="badge-red">{{__('forms.status.dismissed')}}</span>
+                                                    @endif
+                                                @else
+                                                    {{-- If it's not an Employee, it must be an EmployeeRequest. Now check if it's a draft. --}}
+                                                    @if(is_null($positionToShow->applied_at))
+                                                        {{-- applied_at is null, so it's a draft/new request. --}}
+                                                        <span class="badge-red">{{__('forms.status.draft')}}</span>
+                                                    @else
+                                                        {{-- applied_at has a value, meaning the request has been submitted and is active/processed. --}}
+                                                        <span class="badge-green">{{__('forms.status.active')}}</span>
+                                                    @endif
+                                                @endif
+                                            </td>
+                                            <td class="td-input text-center">
+                                                @include('livewire.employee.parts.actions-dropdown', [
+                                                    'position' => $positionToShow
+                                                ])
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </fieldset>
+                @empty
+                    <div class="text-center py-16">
+                        <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('forms.nothing_found')}}</p>
                     </div>
-                </fieldset>
-            @empty
-                <div class="text-center py-16">
-                    <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('forms.nothing_found')}}</p>
-                </div>
-            @endforelse
+                @endforelse
             </div>
         </div>
 
