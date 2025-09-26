@@ -623,9 +623,9 @@ input:-webkit-autofill {
     }
 }
 
-@media (min-width: 2560px) {
+@media (min-width: 2048px) {
     .shift-content {
-        @apply mx-auto px-[10%] ml-[12%] ml-[10%];
+        @apply mx-auto ml-[6%];
 
     }
 }
