@@ -8,6 +8,7 @@ enum JobStatus: string
 {
     case PENDING = 'PENDING';
     case SUSPENDED = 'SUSPENDED';
+    case PARTIAL = 'PARTIAL';
     case PROCESSING = 'PROCESSING';
     case PAUSED = 'PAUSED';
     case COMPLETED = 'COMPLETED';
@@ -19,6 +20,7 @@ enum JobStatus: string
             self::PENDING => 'Очікується',
             self::SUSPENDED => 'Призупинено',
             self::PROCESSING => 'Обробляється',
+            self::PARTIAL => 'Частково виконано',
             self::PAUSED => 'На паузі',
             self::COMPLETED => 'Виконано',
             self::FAILED => 'Помилка'
