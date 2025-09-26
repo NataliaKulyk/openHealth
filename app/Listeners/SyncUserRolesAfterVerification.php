@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use App\Events\UserVerifiedAndLinked;
+use App\Events\EhealthUserVerified;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -18,7 +18,7 @@ class SyncUserRolesAfterVerification
      * the user receives the complete and correct set of roles corresponding to all
      * their official positions within a specific legal entity.
      */
-    public function handle(UserVerifiedAndLinked $event): void
+    public function handle(EhealthUserVerified $event): void
     {
         $user = $event->user;
         $legalEntityId = $event->legalEntityId;
@@ -27,6 +27,7 @@ class SyncUserRolesAfterVerification
 
         $roleNames = $user->employees()
             ->where('legal_entity_id', $legalEntityId)
+            ->where('status', 'APPROVED')
             ->pluck('employee_type')
             ->unique()
             ->toArray();
