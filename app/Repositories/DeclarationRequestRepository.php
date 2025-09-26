@@ -17,6 +17,7 @@ use App\Models\Relations\ConfidantPerson;
 use App\Models\Relations\Document;
 use App\Models\Relations\Party;
 use App\Models\Relations\Phone;
+use BackedEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -337,12 +338,23 @@ class DeclarationRequestRepository
 
             $data = collect($incoming)
                 ->only($fillable)
+                ->map(fn (mixed $value) => $value instanceof BackedEnum ? $value->value : $value)
                 ->toArray();
 
             if ($existing) {
-                // Convert Carbon object to string
+                // Convert Carbon object to string, and Enum to string
                 $existingData = collect($existing->only($fillable))
-                    ->map(fn (mixed $value) => $value instanceof Carbon ? $value->toDateString() : $value)
+                    ->map(function ($value) {
+                        if ($value instanceof Carbon) {
+                            return $value->toDateString();
+                        }
+
+                        if ($value instanceof BackedEnum) {
+                            return $value->value;
+                        }
+
+                        return $value;
+                    })
                     ->toArray();
 
                 $diff = array_diff_assoc($data, $existingData);

@@ -37,6 +37,16 @@ class EmployeeRequest extends EHealthRequest
         ];
     }
 
+    /**
+     * Transforms a source data array into a structured, partitioned array.
+     *
+     * This method takes a source array, typically from a Revision's data,
+     * and reshapes it into a consistent structure with keys like 'employee',
+     * 'party', 'documents', etc., making it ready for repository processing.
+     *
+     * @param array $sourceData The source data array containing all necessary information.
+     * @return array A structured array partitioned into logical keys.
+     */
     public function mapCreate(array $sourceData): array
     {
 

@@ -7,6 +7,7 @@ namespace App\Listeners\eHealth;
 use App\Classes\eHealth\EHealth;
 use App\Enums\Status;
 use App\Events\EHealthUserLogin;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 
 class ProcessNewEmployeeRequests extends BaseEmployeeListener
@@ -23,6 +24,8 @@ class ProcessNewEmployeeRequests extends BaseEmployeeListener
     /**
      * Fetches employee data using the party's Tax ID and updates the party with the retrieved UUID,
      * prioritizing the party that is marked as 'VERIFIED' in the E-Health response.
+     *
+     * @throws ConnectionException
      */
     protected function fetchEmployeesFromApi(EHealthUserLogin $event): array
     {

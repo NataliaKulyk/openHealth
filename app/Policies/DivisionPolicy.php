@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\User;
@@ -19,7 +21,7 @@ class DivisionPolicy
     public function viewAny(User $user): Response
     {
         if ($user->cannot('division:read') && $user->cannot('division:details')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         return Response::allow();

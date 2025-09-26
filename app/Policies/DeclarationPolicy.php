@@ -31,7 +31,12 @@ class DeclarationPolicy
             return Response::denyWithStatus(404);
         }
 
-        return $user->employees()->whereKey($declaration->employee_id)->exists()
+        if ($user->hasRole('OWNER') && $declaration->legalEntityId === legalEntity()->id) {
+            return Response::allow();
+        }
+
+        // Сan only view their own
+        return $user->employees()->whereKey($declaration->employeeId)->exists()
             ? Response::allow()
             : Response::denyWithStatus(404);
     }

@@ -150,6 +150,7 @@ abstract class DeclarationComponent extends Component
             $validated = $this->form->validate($this->form->rulesForCreating());
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
 
             return;
         }
@@ -494,7 +495,7 @@ abstract class DeclarationComponent extends Component
         $employees = Auth::user()?->employees()
             ->where('legal_entity_id', legalEntity()->id)
             ->whereNotNull('division_id')
-//            ->whereHas('specialities', fn (Builder $query) => $query->where('speciality_officio', true))
+            ->whereHas('specialities', fn (Builder $query) => $query->where('speciality_officio', true))
             ->with(['division', 'legalEntity', 'party'])
             ->get();
         $this->employeesInfo = $employees->map(static fn (Employee $employee) => [

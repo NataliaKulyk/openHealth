@@ -6,6 +6,7 @@ use App\Core\EHealthJob;
 use App\Notifications\SyncNotification;
 use GuzzleHttp\Promise\PromiseInterface;
 use App\Classes\eHealth\EHealthResponse;
+use App\Notifications\CustomMessage;
 
 /**
  * This job is responsible for finalizing a full synchronization operation between different data sources
@@ -25,14 +26,21 @@ class CompleteSync extends EHealthJob
 
         parent::handle();
 
-        $this->user->notify(new SyncNotification('legal_entity', 'completed'));
+        if ($this->isFirstLogin) {
+            $this->sendEntityNotification('legal_entity', 'completed');
+        } else {
+            //notify user about completion of sync of other entities (used for manual syncs)
+            $this->sendEntityNotification(null, 'completed');
+        }
     }
 
+    // Get data from EHealth API (here it mostly dummy method)
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse|null
     {
         return null;
     }
 
+    // Store or update data in the database (here it mostly dummy method)
     protected function processResponse(?EHealthResponse $response): void
     {
     }

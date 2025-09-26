@@ -51,9 +51,7 @@
                         type="text"
                         required
                 >
-                    <option selected value="">
-                        {{ __('forms.select') }}
-                    </option>
+                    <option selected value="">{{ __('forms.select') }}</option>
                     @foreach($employeesInfo as $key => $employeeInfo)
                         <option value="{{ $employeeInfo['employeeId'] }}">
                             {{ $employeeInfo['fullName'] }}
@@ -62,6 +60,10 @@
                         </option>
                     @endforeach
                 </select>
+
+                @error('form.employeeId')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
     @endif

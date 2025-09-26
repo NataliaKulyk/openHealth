@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Core\EHealthJob;
+use App\Enums\JobStatus;
 use App\Models\Employee\Employee;
 use App\Models\User;
 use App\Repositories\Repository;
@@ -18,42 +20,45 @@ use Illuminate\Queue\SerializesModels;
 use App\Classes\eHealth\EHealth;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use GuzzleHttp\Promise\PromiseInterface;
+use App\Classes\eHealth\EHealthResponse;
+use App\Models\LegalEntity;
 
-class EmployeeDetailsUpsert implements ShouldQueue
+class EmployeeDetailsUpsert extends EHealthJob
 {
-    use Batchable;
     use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
+
     use SerializesModels;
 
-    public int $tries = 3;
-    public int $backoff = 60;
+    public const string BATCH_NAME = 'EmployeeDetailsSync';
+
+    public const string SCOPE_REQUIRED = 'employee:details';
+
+    public const string ENTITY = LegalEntity::ENTITY_EMPLOYEE;
 
     public function __construct(
         public Employee $employee,
-        public User $user,
-        protected string $token
+        public ?LegalEntity $legalEntity,
+        protected ?EHealthJob $nextEntity = null,
+        public bool $standalone = false,
     ) {
+        parent::__construct(legalEntity: $legalEntity, nextEntity: $nextEntity, standalone: $standalone);
     }
 
-    public function middleware(): array
+    // Get data from EHealth API
+    protected function sendRequest(string $token): PromiseInterface|EHealthResponse|null
     {
-        return [new RateLimited('ehealth-employee-get')];
+        return EHealth::employee()->withToken($this->token)->getDetails($this->employee->uuid, groupByEntities: true);
     }
 
-    /**
-     * @throws Throwable
-     * @throws ConnectionException
-     */
-    public function handle(): void
+    // Store or update data in the database
+    protected function processResponse(?EHealthResponse $response): void
     {
-        if ($this->batch() && $this->batch()->cancelled()) {
-            return;
-        }
-
-        $response = EHealth::employee()->withToken($this->token)->getDetails($this->employee->uuid, groupByEntities: true);
         $validatedData = $response->validate();
+
+        echo 'Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity ? $this->legalEntity->id : 'N/A') . PHP_EOL;
+
+        $this->employee->save();
 
         Repository::employee()->updateDetails(
             $this->employee,
@@ -66,6 +71,7 @@ class EmployeeDetailsUpsert implements ShouldQueue
             $validatedData['scienceDegree'] ?? null
         );
 
+        $this->employee->setSyncStatus(JobStatus::COMPLETED);
         $this->employee->refresh();
 
         $user = $this->employee->party->user;
@@ -82,10 +88,32 @@ class EmployeeDetailsUpsert implements ShouldQueue
         $roleName = $this->employee->employee_type;
         $legalEntityId = $this->employee->legal_entity_id;
 
+        echo "Employee UUID: {$this->employee->uuid}, Role: {$roleName}" . PHP_EOL;
+
         setPermissionsTeamId($legalEntityId);
 
         if (!$user->hasRole($roleName)) {
             $user->assignRole($roleName);
         }
+    }
+
+    /**
+     * Get additional middleware configurations for the job.
+     *
+     * @return array Returns an array of middleware configurations to be applied to the job
+     */
+    protected function getAdditionalMiddleware(): array
+    {
+        return [
+            new RateLimited('ehealth-employee-get')
+        ];
+    }
+
+    // Get next entity job if needed
+    protected function getNextEntityJob(): ?EHealthJob
+    {
+        return $this->standalone || !$this->nextEntity
+            ? new CompleteSync($this->legalEntity, isFirstLogin: $this->isFirstLogin)
+            : $this->nextEntity;
     }
 }

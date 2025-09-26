@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Jobs\EmployeeSync;
 use Throwable;
 use App\Enums\JobStatus;
 use App\Jobs\CompleteSync;
@@ -37,11 +38,16 @@ class FirstLoginOwnerSyncronization implements ShouldQueue
         // TODO: remove it after testing
         echo 'First login synchronization started. ' . 'legalEntity:' . $event->legalEntity->id. PHP_EOL;
 
-        $completeSyncJob = new CompleteSync($event->legalEntity, isFirstLogin: true);
+        $employeeJob = new EmployeeSync(
+            legalEntity: $event->legalEntity,
+            isFirstLogin: true
+        );
 
-        $healthcareServiceJob = new HealthcareServiceSync($event->legalEntity, isFirstLogin: true, nextEntity: $completeSyncJob);
-
-        $initialJob = new DivisionSync( $event->legalEntity, isFirstLogin: true, nextEntity: $healthcareServiceJob);
+        $initialJob = new DivisionSync(
+            legalEntity: $event->legalEntity,
+            nextEntity: $employeeJob,
+            isFirstLogin: true
+        );
 
         Bus::batch([$initialJob])
             ->name('FirstLoginSync')
@@ -52,6 +58,7 @@ class FirstLoginOwnerSyncronization implements ShouldQueue
             ->dispatch();
 
         $event->legalEntity->setEntityStatus(JobStatus::PROCESSING);
+
         $event->user->notify(new SyncNotification('legal_entity', 'started'));
     }
 

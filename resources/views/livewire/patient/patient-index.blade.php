@@ -1,5 +1,8 @@
 @php
-    use App\Models\Person\Person;use App\Models\Person\PersonRequest;
+    use App\Models\MedicalEvents\Sql\Encounter;
+    use App\Models\Person\Person;
+    use App\Models\Person\PersonRequest;
+
     $tableHeaders = [
         __('forms.full_name'),
         __('forms.phone'),
@@ -94,11 +97,13 @@
                                     >
                                         <span>{{ __('patients.view_record') }}</span>
                                     </button>
-                                    <button wire:click="redirectToEncounter('{{ $patient['id'] }}')"
-                                            class="item-add text-green-600 hover:text-green-800 flex items-center gap-1"
-                                    >
-                                        <span>{{ __('patients.start_interacting') }}</span>
-                                    </button>
+                                    @can('create', Encounter::class)
+                                        <button wire:click="redirectToEncounter('{{ $patient['id'] }}')"
+                                                class="item-add text-green-600 hover:text-green-800 flex items-center gap-1"
+                                        >
+                                            <span>{{ __('patients.start_interacting') }}</span>
+                                        </button>
+                                    @endcan
                                 @endif
                             </div>
                         </div>
@@ -207,4 +212,5 @@
     </section>
 
     <x-forms.loading/>
+    <x-messages/>
 </div>

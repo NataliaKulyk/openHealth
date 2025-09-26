@@ -99,10 +99,11 @@ abstract class EHealthJob implements ShouldQueue
     }
 
     public function __construct(
-        public LegalEntity $legalEntity,
-        protected int $page = 1,
+        public ?LegalEntity $legalEntity = null,
+        protected ?EHealthJob $nextEntity = null,
         protected bool $isFirstLogin = false,
-        protected ?EHealthJob $nextEntity = null
+        protected int $page = 1,
+        public bool $standalone = false
     ) {
         $this->onQueue('sync');
     }
@@ -111,6 +112,7 @@ abstract class EHealthJob implements ShouldQueue
     {
         echo "Processing Job: " . static::BATCH_NAME . " Page: " . $this->page . ' is First Login: ' . ($this->isFirstLogin ? 'Yes' : 'No') . PHP_EOL;
         echo "Start from user: " . ($this->user ? $this->user->id : 'No user found') . PHP_EOL;
+        echo "Legal Entity ID: " . ($this->legalEntity ? $this->legalEntity->id : 'No legal entity found') . PHP_EOL;
 
         $this->setEntityStatus(JobStatus::PROCESSING);
 
@@ -120,10 +122,15 @@ abstract class EHealthJob implements ShouldQueue
 
         $this->processResponse($response);
 
+        $rdata = $response?->json();
+
+        echo "Response PAGE: " . (data_get($rdata, 'paging.page_number') ?? 'N/A') . " of " . (data_get($rdata, 'paging.total_pages') ?? 'N/A') . PHP_EOL;
+
         // Check if there are more pages to process
         if ($response?->isNotLast()) {
+            echo "Scheduling next page job: " . static::BATCH_NAME . " Page: " . $this->page . " Next Page: " . ($this->page + 1) . PHP_EOL;
             $this->batch()
-                ?->add(new static($this->legalEntity, page: $this->page + 1, isFirstLogin: $this->isFirstLogin, nextEntity: $this->nextEntity)
+                ?->add(new static(legalEntity: $this->legalEntity, page: $this->page + 1, isFirstLogin: $this->isFirstLogin, nextEntity: $this->nextEntity, standalone: $this->standalone)
                 ->delay(now()->addSeconds(self::RATE_LIMIT_DELAY)));
 
             return;
@@ -232,7 +239,7 @@ abstract class EHealthJob implements ShouldQueue
             return '';
         }
 
-        $session = \DB::table('sessions')->where('user_id', $this->user->id)->first();
+        $session = DB::table('sessions')->where('user_id', $this->user->id)->first();
 
         if (!$session) {
             return '';
@@ -271,6 +278,19 @@ abstract class EHealthJob implements ShouldQueue
             // If first login then legal entity status should be paused/failed if any of the entities failed/paused
             $this->legalEntity->setEntityStatus(status: $status);
         }
+    }
+
+    /**
+     * Send a synchronization notification to the user for a specific entity and action.
+     *
+     * @param string|null $entityType The type of entity being synchronized (e.g., 'legal_entity', 'division', etc.)
+     * @param string $action The action performed (e.g., 'started', 'completed', 'failed', 'paused')
+     *
+     * @return void
+     */
+    protected function sendEntityNotification(?string $entityType, string $action): void
+    {
+        $this->user->notify(new SyncNotification($entityType, $action));
     }
 
     /**

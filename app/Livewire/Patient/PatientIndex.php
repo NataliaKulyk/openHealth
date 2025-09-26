@@ -19,6 +19,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -113,7 +114,8 @@ class PatientIndex extends Component
         try {
             $this->form->rulesForModelValidate('patientsFilter');
         } catch (ValidationException $exception) {
-            session()?->flash('error', $exception->validator->errors()->first());
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
 
             return;
         }
@@ -165,12 +167,12 @@ class PatientIndex extends Component
                 $this->originalPatients = EHealth::person()->searchForPersonByParams($buildSearchRequest)->getData();
             } catch (ConnectionException $exception) {
                 $this->logConnectionError($exception, 'Error when searching for person');
-                session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
                 return;
             } catch (EHealthValidationException|EHealthResponseException $exception) {
                 $this->logEHealthException($exception, 'Error when searching for person');
-                session()?->flash('error', 'Виникла помилка. Спробуйте пізніше.');
+                Session::flash('error', 'Виникла помилка. Спробуйте пізніше.');
 
                 return;
             }
@@ -215,7 +217,7 @@ class PatientIndex extends Component
     {
         PersonRequest::destroy($id);
 
-        session()?->flash('success', 'Заявку успішно видалено.');
+        Session::flash('success', 'Заявку успішно видалено.');
     }
 
     /**
@@ -286,7 +288,7 @@ class PatientIndex extends Component
 
             return $person;
         } catch (Exception $exception) {
-            session()?->flash('error', 'Виникла помилка, зверніться до адміністратора.');
+            Session::flash('error', 'Виникла помилка, зверніться до адміністратора.');
             $this->logDatabaseErrors($exception, 'Error while creating new person');
 
             return null;

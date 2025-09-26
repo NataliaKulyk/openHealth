@@ -114,7 +114,7 @@ class DeclarationRequest extends Request
     {
         $this->setDefaultPageSize();
 
-        return $this->get($url, $query);
+        return parent::get($url, $query);
     }
 
     /**

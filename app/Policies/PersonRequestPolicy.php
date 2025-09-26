@@ -10,6 +10,18 @@ use Illuminate\Auth\Access\Response;
 class PersonRequestPolicy
 {
     /**
+     * User allowed to view the list of person requests
+     */
+    public function viewAny(User $user): Response
+    {
+        if ($user->cannot('person_request:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * Determine whether the user can view the person request.
      */
     public function view(User $user): Response

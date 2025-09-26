@@ -99,7 +99,7 @@ class DeclarationIndex extends Component
 
         if ($user?->can('viewAny', Declaration::class)) {
             $declarations = Declaration::where('legal_entity_id', legalEntity()->id)
-                ->select(['id', 'person_id', 'employee_id', 'declaration_number', 'status'])
+                ->select(['id', 'person_id', 'employee_id', 'legal_entity_id', 'declaration_number', 'status'])
                 ->when(
                     !$user?->hasRole('OWNER'),
                     fn (Builder $query) => $query->whereIn('employee_id', $this->employeeIds)
