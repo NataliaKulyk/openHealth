@@ -6,6 +6,7 @@ namespace App\Livewire\Auth;
 
 use App\Classes\Cipher\Api\CipherRequest;
 use App\Classes\Cipher\Exceptions\CipherApiException;
+use App\Events\EhealthUserVerified;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use Illuminate\Http\Client\ConnectionException;
@@ -78,6 +79,8 @@ class VerifyPersonality extends Component
 
         $legalEntityUuid = Session::pull('selected_legal_entity_uuid');
         $legalEntity = LegalEntity::whereUuid($legalEntityUuid)->firstOrFail();
+
+        EhealthUserVerified::dispatch(Auth::user(), $legalEntity->id);
 
         $this->redirectRoute('dashboard', ['legalEntity' => $legalEntity], navigate: true);
     }
