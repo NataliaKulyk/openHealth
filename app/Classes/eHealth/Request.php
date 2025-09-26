@@ -76,7 +76,7 @@ class Request
         }
 
         //TODO DELETE AFTER TESTING
-        if (config('ehealth.api.key') === null && empty(config('ehealth.api.key'))) {
+        if (config('ehealth.api.api_key') === null && empty(config('ehealth.api.api_key'))) {
             $data = [
                 'method' => $this->method,
                 'url' => $this->makeApiUrl(),
