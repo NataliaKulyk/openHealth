@@ -24,6 +24,7 @@ class SyncUserRolesAfterVerification
         $legalEntityId = $event->legalEntityId;
 
         setPermissionsTeamId($legalEntityId);
+        $user->unsetRelation('roles');
 
         $roleNames = $user->employees()
             ->where('legal_entity_id', $legalEntityId)
@@ -45,7 +46,5 @@ class SyncUserRolesAfterVerification
         }
 
         $user->syncRoles($allRoles);
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }
