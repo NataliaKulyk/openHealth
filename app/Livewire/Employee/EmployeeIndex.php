@@ -9,14 +9,12 @@ use App\Classes\eHealth\EHealth;
 use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
-use App\Jobs\EmployeeDetailsUpsert;
 use App\Jobs\EmployeeSync;
 use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
-use App\Models\User;
 use App\Notifications\EmployeeSyncCompleted;
 use App\Notifications\SyncNotification;
 use App\Traits\BatchLegalEntityQueries;
@@ -34,13 +32,12 @@ use Psr\Container\NotFoundExceptionInterface;
 use Spatie\Permission\PermissionRegistrar;
 use Throwable;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Database\Eloquent\Collection;
 
 #[AllowDynamicProperties]
 class EmployeeIndex extends EmployeeComponent
 {
-    use WithPagination,
-        BatchLegalEntityQueries;
+    use WithPagination;
+    use BatchLegalEntityQueries;
 
     // --- Component State for Filters ---
     public string $search = '';
@@ -50,6 +47,7 @@ class EmployeeIndex extends EmployeeComponent
         'email' => '',
         'role' => '',
         'position' => '',
+        'division_id' => ''
     ];
 
     // --- State for Modals ---
@@ -80,11 +78,9 @@ class EmployeeIndex extends EmployeeComponent
         $this->loadDictionaries();
     }
 
-    public function updated($property): void
+    public function applyFilters(): void
     {
-        if (in_array($property, ['search', 'status']) || str_starts_with($property, 'filter.')) {
-            $this->resetPage();
-        }
+        $this->resetPage();
     }
 
     /**
@@ -104,15 +100,7 @@ class EmployeeIndex extends EmployeeComponent
 
             $query->whereIn('status', $employeeStatuses);
 
-            if (!empty($this->filter['division_id'])) {
-                $query->where('division_id', $this->filter['division_id']);
-            }
-            if (!empty($this->filter['role'])) {
-                $query->where('employee_type', $this->filter['role']);
-            }
-            if (!empty($this->filter['position'])) {
-                $query->where('position', $this->filter['position']);
-            }
+            $this->applyCommonFiltersToQuery($query);
         };
 
         $requestConstraints = function ($query) {
@@ -123,15 +111,7 @@ class EmployeeIndex extends EmployeeComponent
             $query->whereNull('applied_at')
                 ->whereIn('status', [Status::NEW->value, Status::SIGNED->value]);
 
-            if (!empty($this->filter['division_id'])) {
-                $query->where('division_id', $this->filter['division_id']);
-            }
-            if (!empty($this->filter['role'])) {
-                $query->where('employee_type', 'like', $this->filter['role']);
-            }
-            if (!empty($this->filter['position'])) {
-                $query->where('position', 'like', $this->filter['position']);
-            }
+            $this->applyCommonFiltersToQuery($query);
         };
 
         $query = Party::query();
@@ -166,16 +146,16 @@ class EmployeeIndex extends EmployeeComponent
 
         $partiesOnPage = Party::whereIn('id', $paginator->pluck('id')->all())
             ->with([
-                'phones',
-                'employees' => function ($query) use ($legalEntityId, $employeeConstraints) {
-                    $query->where('legal_entity_id', $legalEntityId)->with('division');
-                    $employeeConstraints($query);
-                },
-                'employeeRequests' => function ($query) use ($legalEntityId, $requestConstraints) {
-                    $query->where('legal_entity_id', $legalEntityId)->with('division');
-                    $requestConstraints($query);
-                },
-            ])
+                       'phones',
+                       'employees' => function ($query) use ($legalEntityId, $employeeConstraints) {
+                           $query->where('legal_entity_id', $legalEntityId)->with('division');
+                           $employeeConstraints($query);
+                       },
+                       'employeeRequests' => function ($query) use ($legalEntityId, $requestConstraints) {
+                           $query->where('legal_entity_id', $legalEntityId)->with('division');
+                           $requestConstraints($query);
+                       },
+                   ])
             ->get()
             ->filter(fn ($party) => $party->employees->isNotEmpty() || $party->employeeRequests->isNotEmpty())
             ->sortBy(function ($party) {
@@ -318,36 +298,36 @@ class EmployeeIndex extends EmployeeComponent
         if ($response->isNotLast()) {
             Bus::batch([
                 new EmployeeSync(
-                        legalEntity: $this->legalEntity,
-                        page: 2,
-                        nextEntity: null
-                    )
+                    legalEntity: $this->legalEntity,
+                    page: 2,
+                    nextEntity: null
+                )
             ])
-            ->withOption('legal_entity_id', $this->legalEntity->id)
-            ->withOption('token', Crypt::encryptString($token))
-            ->withOption('user', $user)
-            ->then(function (Batch $batch) use ($user) {
-                app(PermissionRegistrar::class)->forgetCachedPermissions();
+                ->withOption('legal_entity_id', $this->legalEntity->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-                $message = __('employees.sync.completed_successfully', [
-                    'processed' => $batch->processedJobs,
-                    'total' => $batch->totalJobs,
-                ]);
+                    $message = __('employees.sync.completed_successfully', [
+                        'processed' => $batch->processedJobs,
+                        'total' => $batch->totalJobs,
+                    ]);
 
-                $user->notify(new EmployeeSyncCompleted($message, 'success'));
-            })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
-                $message = __('employees.sync.failed');
+                    $user->notify(new EmployeeSyncCompleted($message, 'success'));
+                })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
+                    $message = __('employees.sync.failed');
 
-                Log::error('Employee sync batch failed.', [
-                    'batch_id' => $batch->id,
-                    'exception' => $e
-                ]);
+                    Log::error('Employee sync batch failed.', [
+                        'batch_id' => $batch->id,
+                        'exception' => $e
+                    ]);
 
-                $user->notify(new EmployeeSyncCompleted($message, 'error'));
-            })
-            ->onQueue('sync')
-            ->name('Employee Full Sync')
-            ->dispatch();
+                    $user->notify(new EmployeeSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name('Employee Full Sync')
+                ->dispatch();
         } else {
             Bus::batch($this->getEmployeeDetailsStartJob($this->legalEntity, null))
                 ->withOption('legal_entity_id', $this->legalEntity->id)
@@ -409,5 +389,21 @@ class EmployeeIndex extends EmployeeComponent
             'parties' => $this->parties,
             'dictionaries' => $this->dictionaries,
         ]);
+    }
+
+    /**
+     * Applies common filters for division, role, and position to a given query.
+     */
+    protected function applyCommonFiltersToQuery($query): void
+    {
+        if (!empty($this->filter['division_id'])) {
+            $query->where('division_id', $this->filter['division_id']);
+        }
+        if (!empty($this->filter['role'])) {
+            $query->where('employee_type', $this->filter['role']);
+        }
+        if (!empty($this->filter['position'])) {
+            $query->where('position', $this->filter['position']);
+        }
     }
 }

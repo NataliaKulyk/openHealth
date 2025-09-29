@@ -19,6 +19,7 @@
 
         <x-slot name="navigation">
             <div class="flex flex-col -my-4">
+                <form wire:submit.prevent="applyFilters">
                 <div class="flex flex-wrap items-end justify-between gap-4">
                     <div class="flex flex-col lg:flex-row items-stretch lg:items-end gap-2 lg:gap-4 w-full">
                         <div class="w-full lg:w-96">
@@ -40,7 +41,7 @@
                                                id="employee_search"
                                                placeholder=" "
                                                class="input peer"
-                                               wire:model.live.debounce.300ms="search"
+                                               wire:model.defer="search"
                                                autocomplete="off" />
                                         <label for="employee_search" class="label">ПІБ</label>
                                     </div>
@@ -63,33 +64,21 @@
                     <div x-cloak x-show="showFilter" x-transition class="pt-4 mt-4">
                         <div class="form-row-4">
                             <div class="form-group phone-wrapper">
-                                <input wire:model.live.debounce.300ms="filter.phone"
-                                       type="tel"
-                                       placeholder=" "
+                                <input wire:model.defer="filter.phone"
+                                       wire:keydown.enter="applyFilters"
+                                       type="tel" placeholder=" "
                                        class="peer input pl-10 with-leading-icon text-gray-500"
-                                       x-model="phones[index].number"
-                                       x-mask="+380999999999"
-                                       :id="$id('phone', '_number' + index)"
-                                       :class="{ 'input-error border-red-500': errors[legalEntityForm.phones.${index}.number] }"
-                                />
-                                <label for="filter_phone" class="label pl-10">Телефон</label>
+                                       x-mask="+380999999999" id="filter_phone" />
+                                <label for="filter_phone" class="label pl-10">{{ __('forms.phone') }}</label>
                             </div>
                             <div class="form-group group">
-                                <input wire:model.live.debounce.300ms="filter.email"
-                                       type="email"
-                                       name="filter_email"
-                                       id="filter_email"
-                                       class="input peer"
-                                       placeholder=" "
-                                       autocomplete="off"
-                                />
+                                <input wire:model.defer="filter.email" wire:keydown.enter="applyFilters" name="filter_email" id="filter_email" class="input peer" placeholder=" " autocomplete="off" />
                                 <label for="filter_email" class="label">Email</label>
                             </div>
                         </div>
                         <div class="form-row-4">
                             <div class="form-group group">
-                                <select wire:model.live="filter.role"
-                                        name="filter_role"
+                                <select wire:model.defer="filter.role" wire:keydown.enter="applyFilters"
                                         id="filter_role"
                                         class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                                 >
@@ -101,8 +90,7 @@
                                 <label for="filter_role" class="label">Роль працівника</label>
                             </div>
                             <div class="form-group group">
-                                <select wire:model.live="filter.position"
-                                        name="filter_position"
+                                <select wire:model.defer="filter.position" wire:keydown.enter="applyFilters"
                                         id="filter_position"
                                         class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                                 >
@@ -111,38 +99,38 @@
                                         <option value="{{ $key }}">{{ $value }}</option>
                                     @endforeach
                                 </select>
-                                <label for="filter_position" class="label">Посада</label>
+                                <label for="filter_position" class="label">{{ __('forms.position') }}</label>
                             </div>
-
                         </div>
                         <div class="form-row-4">
                             <div class="form-group group">
-                                <select wire:model.live="filter.division_id"
+                                <select wire:model.defer="filter.division_id" wire:keydown.enter="applyFilters"
                                         name="filter_division"
                                         id="filter_division"
                                         class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                                 >
                                     <option value="">Всі підрозділи</option>
                                     @foreach($divisions ?? [] as $division)
-                                        <option value="{{ $division->id }}">{{ $division->name }}</option>
+                                        <option value="{{ $division['id'] }}">{{ $division['name'] }}</option>
                                     @endforeach
                                 </select>
                                 <label for="filter_division" class="label">Медичний заклад</label>
                             </div>
-                            <div class="form-group group" x-data="{ open: false, selectedStatuses: @entangle('status').live }">
+                            <div class="form-group group" x-data="{ open: false, selectedStatuses: @entangle('status') }">
                                 <label for="statusFilter" class="label">Статус</label>
                                 <div class="relative">
+
                                     <input type="text"
                                            id="statusFilter"
                                            class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
                                            placeholder="Оберіть статуси"
                                            x-on:click="open = !open"
                                            :value="selectedStatuses.length ? selectedStatuses.map(s => {
-                                            if (s === 'APPROVED') return 'Активний';
-                                            if (s === 'NEW') return 'Чернетка';
-                                            if (s === 'DISMISSED') return 'Звільнений';
-                                            if (s === 'VERIFIED') return 'Верифікований';
-                                            if (s === 'NOT_VERIFIED') return 'Не верифікований';
+                                            if (s === 'APPROVED') return {{ __('forms.active') }};
+                                            if (s === 'NEW') return {{ __('forms.draft') }};
+                                            if (s === 'DISMISSED') return {{ __('forms.dismissed') }};
+                                            if (s === 'VERIFIED') return {{ __('forms.verified') }};
+                                            if (s === 'NOT_VERIFIED') return {{ __('forms.not_verified') }};
                                             return s;
                                         }).join(', ') : ''"
                                            readonly
@@ -162,35 +150,35 @@
                                         <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="APPROVED" wire:model.live="status"
+                                                    <input type="checkbox" value="APPROVED" wire:model.defer="status"
                                                            class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('forms.active') }}</span>
                                                 </label>
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="NEW" wire:model.live="status"
+                                                    <input type="checkbox" value="NEW" wire:model.defer="status"
                                                            class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('forms.draft') }}</span>
                                                 </label>
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="DISMISSED" wire:model.live="status"
+                                                    <input type="checkbox" value="DISMISSED" wire:model.defer="status"
                                                            class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('forms.dismissed') }}</span>
                                                 </label>
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="VERIFIED" wire:model.live="status"
+                                                    <input type="checkbox" value="VERIFIED" wire:model.defer="status"
                                                            class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
                                                     <span>{{ __('forms.verified') }}</span>
                                                 </label>
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="NOT_VERIFIED" wire:model.live="status"
+                                                    <input type="checkbox" value="NOT_VERIFIED" wire:model.defer="status"
                                                            class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
                                                     <span>{{ __('forms.not_verified') }}</span>
                                                 </label>
@@ -202,15 +190,17 @@
                         </div>
                     </div>
                     <div class="mb-9 mt-6 flex flex-col sm:flex-row gap-2 w-full">
-                            <button type="button" class="flex items-center gap-2 button-primary">
-                                @icon('search', 'w-4 h-4')
-                                <span>{{ __('forms.search') }}</span>
-                            </button>
-                        <button type="button" class="button-primary-outline">
+                        <button type="submit" class="flex items-center gap-2 button-primary">
+                            @icon('search', 'w-4 h-4')
+                            <span>{{ __('forms.search') }}</span>
+                        </button>
+
+                        <button type="button" wire:click="resetFilters" class="button-primary-outline">
                             {{ __('forms.reset_all_filters') }}
                         </button>
                     </div>
                 </div>
+                </form>
             </div>
         </x-slot>
     </x-header-navigation>

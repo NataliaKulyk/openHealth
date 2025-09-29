@@ -22,13 +22,12 @@ abstract class EmployeeComponent extends Component
     #[Locked]
     public ?int $employeeRequestId = null;
     public array $divisions = [];
-
+    public bool $showSignatureModal = false;
     public ?array $dictionaryNames = [
         'PHONE_TYPE', 'COUNTRY', 'SETTLEMENT_TYPE', 'SPECIALITY_TYPE', 'DIVISION_TYPE',
         'SPECIALITY_LEVEL', 'GENDER', 'QUALIFICATION_TYPE', 'SCIENCE_DEGREE', 'DOCUMENT_TYPE',
         'SPEC_QUALIFICATION_TYPE', 'EMPLOYEE_TYPE', 'POSITION', 'EDUCATION_DEGREE', 'DIVISION'
     ];
-
     public ?array $dictionaries = [];
     public array $employeeTypePosition = [];
 
