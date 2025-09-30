@@ -203,15 +203,15 @@ class EHealthLoginController extends Controller
         // If user exist in DB but not logged in before
         $user = User::where('email', $ehealthEmail)->first();
 
-        if (!$user) {
-            /*
-            * Here concerns the case when HR create a new employee who is not yet in the system
-            * In this case the email is verified by eHealth and party also has an email
-            * but the user does not exist in our system
-            * Meanwhile the user considered as fully verified, and we create a local user account for him and send credentials by email
-            */
-            $party = Party::where('email', $ehealthEmail)->first();
+        /*
+         * Here concerns the case when HR create a new employee who is not yet in the system
+         * In this case the email is verified by eHealth and party also has an email
+         * but the user does not exist in our system
+        //  * Meanwhile the user considered as fully verified, and we create a local user account for him and send credentials by email
+         */
+        $party = Party::where('email', $ehealthEmail)->first();
 
+        if (!$user) {
             $password = Str::random(8);
 
             // When the user try login to eHealth directly without having a local user account
@@ -227,16 +227,10 @@ class EHealthLoginController extends Controller
             }
 
             Mail::to($user->email)->send(new UserCredentialsMail($ehealthEmail, $password));
-
-            // If we have party with such email, then the user is fully verified because the email is confirmed by eHealth (if we're here)
-            $this->isPartiallyVerified = empty($party);
         }
 
-        // Assume that user isPartiallyVerified because we need to connect User with Employees, also set uuid
-        if ($user && empty($user->uuid)) {
-            $this->isPartiallyVerified = true;
-            $user->update(['uuid' => $authUserUUID]);
-        }
+        // If we have party with such email, then the user is fully verified because the email is confirmed by eHealth (if we're here)
+        $this->isPartiallyVerified = empty($party);
 
         $this->isFirstLogin = true;
 

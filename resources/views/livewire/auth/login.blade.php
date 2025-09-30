@@ -49,7 +49,7 @@
             />
 
             {{-- Role select --}}
-            @if($showRoleSelect)
+            @if($showRoleSelect && !$isLocalAuth)
                 <div class="form-group group">
                     <select wire:model="role" class="input-select peer">
                         <option value="" selected>{{ __('forms.select') }}</option>

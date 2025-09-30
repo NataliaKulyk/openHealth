@@ -112,7 +112,7 @@ class Login extends Component
         $user = User::where('email', $this->email)->first();
 
         // If first login(user doesn't exist in users table, or UUID is empty)
-        if (!$user || empty($user->uuid)) {
+        if (!$this->isLocalAuth && (!$user || empty($user->uuid))) {
             $this->showRoleSelect = true;
 
             if (empty($this->role)) {
