@@ -49,35 +49,27 @@
         </div>
 
         {{-- Tax ID Section --}}
-        <div
-            class="form-row-3"
-            x-data="{
-                noTaxId: $wire.entangle('form.party.noTaxId'),
-                documents: $wire.entangle('form.documents')
-    }"
-    x-init="$watch('noTaxId', (value) => {
-        // This logic now only runs when the checkbox is checked to TRUE
-        if (value === true) {
-            // We also check if the taxId field is currently empty.
-            if ( !$wire.get('form.party.taxId') ) {
-                const identityDocument = documents.find(doc =>
-                    doc.type === 'PASSPORT' ||
-                    doc.type === 'NATIONAL_ID' ||
-                    doc.type === 'REFUGEE_CERTIFICATE'
-                );
+        <div class
+             ="form-row-3"
+             x-data="{
+        noTaxId: $wire.entangle('form.party.noTaxId'),
+        taxId: $wire.entangle('form.party.taxId'),
+     }"
+             x-init="
+        // Синхронізуємо поле, якщо галочка вже стоїть при завантаженні сторінки
+        if (noTaxId) { $wire.syncTaxIdFromDocument(); }
 
-                if (identityDocument && identityDocument.number) {
-                    // If a valid document is found, we set its number as the taxId.
-                    $wire.set('form.party.taxId', identityDocument.number);
-                }
-            }
-        }
-    })"
+        // Очищуємо поле, якщо знімаємо галочку
+        $watch('noTaxId', (value) => {
+            if (value === false) { taxId = ''; }
+        });
+     "
         >
             <div class="form-group group relative z-0">
+                {{-- Поле вводу тепер простіше --}}
                 <input
-                    wire:model="form.party.taxId"
-                required
+                    x-model="taxId"
+                    required
                     id="taxId"
                     type="text"
                     maxlength="10"
@@ -85,21 +77,22 @@
                     class="input peer text-gray-500 @error('form.party.taxId') input-error @enderror"
                     :disabled="noTaxId || {{ $isPersonalDataLocked ? 'true' : 'false' }}"
                 />
-
                 <label for="taxId" class="label z-10" x-text="noTaxId ? '{{ __('forms.document_no_tax_id') }}' : '{{ __('forms.tax_id') }}'"></label>
                 @error('form.party.taxId') <p class="text-error">{{ $message }}</p> @enderror
             </div>
+
             <div class="form-group group">
                 <div class="mt-3">
+                    {{-- Вся магія тепер тут, на кліку --}}
                     <input
-                        x-model="noTaxId"
+                        wire:model="form.party.noTaxId"
+                        @click.prevent="$wire.toggleNoTaxId()"
                         type="checkbox"
                         id="noTaxId"
                         class="default-checkbox text-blue-500 focus:ring-blue-300"
                         {{ $isPersonalDataLocked ? 'disabled' : '' }}
                     >
-                    <label for="noTaxId"
-                           class="ms-2 text-sm font-medium text-gray-500 dark:text-gray-300">{{ __('forms.no_tax_id') }}</label>
+                    <label for="noTaxId" class="ms-2 text-sm font-medium text-gray-500 dark:text-gray-300">{{ __('forms.no_tax_id') }}</label>
                 </div>
             </div>
         </div>

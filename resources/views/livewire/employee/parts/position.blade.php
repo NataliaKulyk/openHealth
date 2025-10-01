@@ -1,4 +1,13 @@
-<fieldset class="fieldset" x-data="{ employeeType: $wire.entangle('form.employeeType'), employeeTypePosition: @js($this->employeeTypePosition) }">
+<fieldset class="fieldset"
+          x-data="{
+              employeeType: $wire.entangle('form.employeeType'),
+              employeeTypePosition: @js($this->employeeTypePosition)
+          }"
+          x-init="$watch('employeeType', (value) => {
+              $wire.set('form.position', '', false);
+              document.getElementById('position').value = '';
+          })"
+>
     <legend class="legend">
         <h2>{{ __('forms.position') }}</h2>
     </legend>

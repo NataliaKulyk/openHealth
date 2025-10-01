@@ -101,6 +101,7 @@ return [
     'important' => 'Важливо',
     'reset_all_filters' => 'Скинути всі фільтри',
     'search' => 'Шукати',
+    'no_tax_id_document_required' => 'Будь ласка, заповніть номер одного з документів: Паспорт, ID-картка або Посвідчення біженця.',
 
     // Legal Entity
     'create_legal_entity' => 'Зареєструвати заклад',

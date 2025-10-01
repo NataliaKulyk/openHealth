@@ -8,6 +8,7 @@ use App\Livewire\Employee\Traits\ManagesEmployeeForm;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 
 class EmployeeCreate extends EmployeeComponent
 {

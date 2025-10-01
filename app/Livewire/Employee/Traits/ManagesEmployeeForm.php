@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\WithFileUploads;
 use RuntimeException;
 use Throwable;
@@ -120,6 +121,74 @@ trait ManagesEmployeeForm
     public function resetSignatureFields(): void
     {
         $this->form->reset('keyContainerUpload', 'password', 'knedp');
+    }
+
+    /**
+     * A computed property that determines if the "no tax ID" mode can be enabled.
+     *
+     * This checks if at least one valid identity document (Passport, National ID, etc.)
+     * with a number has been added to the form.
+     *
+     * @return bool
+     */
+    #[Computed]
+    public function canEnableNoTaxId(): bool
+    {
+        foreach ($this->form->documents as $document) {
+            if (!empty($document['number']) && in_array($document['type'], ['PASSPORT', 'NATIONAL_ID', 'REFUGEE_CERTIFICATE'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Handles the click event on the "no tax ID" checkbox.
+     *
+     * If allowed, it toggles the "no tax ID" state and syncs the document number.
+     * If not allowed, it dispatches events to show an error message, scroll to,
+     * and highlight the documents section.
+     */
+    public function toggleNoTaxId(): void
+    {
+        if ($this->canEnableNoTaxId) {
+            $this->form->party['noTaxId'] = !$this->form->party['noTaxId'];
+            $this->syncTaxIdFromDocument();
+        } else {
+
+            $this->dispatch('flashMessage', [
+                'message' => __('forms.no_tax_id_document_required'),
+                'type' => 'error',
+                'persistent' => true
+            ]);
+
+            $this->dispatch('scroll-to-element', selector: '#section-documents');
+            $this->dispatch('highlight-section', selector: '#section-documents');
+        }
+    }
+
+    /**
+     * Syncs the Tax ID field with the number from a suitable document.
+     *
+     * This method is called when the "no tax ID" mode is enabled. It finds the first
+     * valid identity document and sets its number as the value for the tax ID field.
+     */
+    public function syncTaxIdFromDocument(): void
+    {
+        if ($this->form->party['noTaxId'] === false) {
+            return;
+        }
+
+        foreach ($this->form->documents as $document) {
+            if (!empty($document['number']) && in_array(
+                    $document['type'],
+                    ['PASSPORT', 'NATIONAL_ID', 'REFUGEE_CERTIFICATE']
+                )) {
+                $this->form->party['taxId'] = $document['number'];
+                return;
+            }
+        }
     }
 
     /**

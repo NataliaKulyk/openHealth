@@ -2,12 +2,23 @@
     <fieldset class="fieldset" id="section-doctor-science-degree"
               x-data="{
                   scienceDegree: $wire.entangle('form.doctor.scienceDegree').live,
+                  employeeType: $wire.get('form.employeeType'),
+                  employeeTypeSpecialities: @js($this->employeeTypeSpecialities), // Додано для фільтрації
                   openModal: false,
                   modalScienceDegree: new ScienceDegree(),
                   isNew: false,
                   degreeDict: @js($this->dictionaries['SCIENCE_DEGREE']),
                   specDict: @js($this->dictionaries['SPECIALITY_TYPE']),
                   countryDict: @js($this->dictionaries['COUNTRY']),
+                  isModalValid() {
+                      return this.modalScienceDegree.degree
+                          && this.modalScienceDegree.country
+                          && this.modalScienceDegree.city
+                          && this.modalScienceDegree.issuedDate
+                          && this.modalScienceDegree.institutionName
+                          && this.modalScienceDegree.speciality
+                          && this.modalScienceDegree.diplomaNumber;
+                  }
               }"
     >
         <legend class="legend">
@@ -149,12 +160,13 @@
                                 </div>
                                 <div>
                                     <label for="scienceDegreeSpeciality" class="label-modal">{{ __('forms.speciality') }} <span class="text-red-600"> *</span></label>
-                                    <select x-model="modalScienceDegree.speciality" id="scienceDegreeSpeciality"
-                                            class="input-modal" required>
+                                    <select x-model="modalScienceDegree.speciality" id="scienceDegreeSpeciality" class="input-modal" required>
                                         <option value="">{{__('forms.select_speciality')}}</option>
-                                        @foreach($this->dictionaries['SPECIALITY_TYPE'] as $specValue => $specDescription)
-                                            <option value="{{ $specValue }}">{{ $specDescription }}</option>
-                                        @endforeach
+                                        <template x-if="employeeType && employeeTypeSpecialities[employeeType]">
+                                            <template x-for="(specName, specKey) in employeeTypeSpecialities[employeeType]" :key="specKey">
+                                                <option :value="specKey" x-text="specName"></option>
+                                            </template>
+                                        </template>
                                     </select>
                                 </div>
                                 <div>
@@ -165,17 +177,11 @@
                             </div>
                             <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
                             <div class="mt-6 flex justify-between space-x-2">
-                                <button type="button" @click="openModal = false" class="button-minor">
-                                    {{ __('forms.cancel') }}
-                                </button>
-
-                                <button @click.prevent="
-                                            scienceDegree = modalScienceDegree;
-                                            openModal = false;
-                                        "
+                                <button type="button" @click="openModal = false" class="button-minor">{{ __('forms.cancel') }}</button>
+                                <button @click.prevent="scienceDegree = modalScienceDegree; openModal = false;"
                                         class="button-primary"
-                                        :disabled="!(modalScienceDegree.degree && modalScienceDegree.institutionName && modalScienceDegree.issuedDate && modalScienceDegree.speciality && modalScienceDegree.country && modalScienceDegree.city)"
-                                >
+                                        :class="{ 'opacity-50 cursor-not-allowed': !isModalValid() }"
+                                        :disabled="!isModalValid()">
                                     {{ __('forms.save') }}
                                 </button>
                             </div>

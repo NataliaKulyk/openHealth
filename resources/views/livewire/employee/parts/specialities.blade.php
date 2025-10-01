@@ -3,6 +3,9 @@
               x-data="{
                   specialities: $wire.entangle('form.doctor.specialities'),
                   employeeType: $wire.get('form.employeeType'),
+                  employeeTypeSpecialities: @js($this->employeeTypeSpecialities),
+                  employeeTypeLevels: @js($this->employeeTypeLevels),
+                  employeeTypeSpecQualifications: @js($this->employeeTypeSpecQualifications),
                   openModal: false,
                   modalSpeciality: new Speciality(),
                   newSpeciality: false,
@@ -163,12 +166,13 @@
                                 <div class="form-row-modal">
                                     <div>
                                         <label for="specialitySpeciality" class="label-modal">{{ __('forms.speciality') }} <span class="text-red-600"> *</span></label>
-                                        <select x-model="modalSpeciality.speciality" id="specialitySpeciality"
-                                                class="input-modal" required>
+                                        <select x-model="modalSpeciality.speciality" id="specialitySpeciality" class="input-modal" required>
                                             <option value="">{{__('forms.select_speciality')}}</option>
-                                            @foreach($this->dictionaries['SPECIALITY_TYPE'] as $specValue => $specDescription)
-                                                <option value="{{ $specValue }}">{{ $specDescription }}</option>
-                                            @endforeach
+                                            <template x-if="employeeType && employeeTypeSpecialities[employeeType]">
+                                                <template x-for="(specName, specKey) in employeeTypeSpecialities[employeeType]" :key="specKey">
+                                                    <option :value="specKey" x-text="specName"></option>
+                                                </template>
+                                            </template>
                                         </select>
                                     </div>
 
@@ -195,20 +199,23 @@
                                         <select x-model="modalSpeciality.level" id="specialityLevel"
                                                 class="input-modal" required>
                                             <option value="">{{__('forms.select_level')}}</option>
-                                            @foreach($this->dictionaries['SPECIALITY_LEVEL'] as $levelValue => $levelDescription)
-                                                <option value="{{ $levelValue }}">{{ $levelDescription }}</option>
-                                            @endforeach
+                                            <template x-if="employeeType && employeeTypeLevels[employeeType]">
+                                                <template x-for="(levelName, levelKey) in employeeTypeLevels[employeeType]" :key="levelKey">
+                                                    <option :value="levelKey" x-text="levelName"></option>
+                                                </template>
+                                            </template>
                                         </select>
                                     </div>
 
                                     <div>
                                         <label for="specialityQualificationType" class="label-modal">{{ __('forms.qualificationType') }} <span class="text-red-600"> *</span></label>
-                                        <select x-model="modalSpeciality.qualificationType" id="specialityQualificationType"
-                                                class="input-modal" required>
+                                        <select x-model="modalSpeciality.qualificationType" id="specialityQualificationType" class="input-modal" required>
                                             <option value="">{{__('forms.select_qualification_type')}}</option>
-                                            @foreach($this->dictionaries['SPEC_QUALIFICATION_TYPE'] as $qualTypeValue => $qualTypeDescription)
-                                                <option value="{{ $qualTypeValue }}">{{ $qualTypeDescription }}</option>
-                                            @endforeach
+                                            <template x-if="employeeType && employeeTypeSpecQualifications[employeeType]">
+                                                <template x-for="(qualName, qualKey) in employeeTypeSpecQualifications[employeeType]" :key="qualKey">
+                                                    <option :value="qualKey" x-text="qualName"></option>
+                                                </template>
+                                            </template>
                                         </select>
                                     </div>
 
@@ -231,6 +238,7 @@
 
                                     <button @click.prevent="newSpeciality ? specialities.push(modalSpeciality) : specialities[item] = modalSpeciality; openModal = false"
                                             class="button-primary"
+                                            :class="{ 'opacity-50 cursor-not-allowed': !isModalValid() }"
                                             :disabled="!isModalValid()">
                                         {{ __('forms.save') }}
                                     </button>
@@ -247,7 +255,7 @@
 <script>
     class Speciality {
         speciality = '';
-        specialityOfficio = false; // Встановлено значення за замовчуванням
+        specialityOfficio = false;
         level = '';
         attestationName = '';
         attestationDate = '';

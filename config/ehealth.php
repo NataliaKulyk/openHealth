@@ -30,6 +30,27 @@ return [
         'max_login_attempts' => 5   // Amount of the wrong attempt before locking out
     ],
 
+    'legal_entity_employee_types' => [
+        'MSP' => [
+            'OWNER', 'HR', 'DOCTOR', 'ADMIN', 'RECEPTIONIST', 'LABORANT'
+        ],
+        'PRIMARY_CARE' => [
+            'OWNER', 'HR', 'DOCTOR', 'ASSISTANT', 'ADMIN', 'RECEPTIONIST', 'MED_ADMIN', 'LABORANT'
+        ],
+        'MSP_PHARMACY' => [
+            'OWNER', 'HR', 'DOCTOR', 'ADMIN', 'PHARMACIST', 'RECEPTIONIST'
+        ],
+        'PHARMACY' => [
+            'PHARMACY_OWNER', 'OWNER', 'PHARMACIST', 'HR'
+        ],
+        'OUTPATIENT' => [
+            'OWNER', 'HR', 'ASSISTANT', 'SPECIALIST', 'ADMIN', 'RECEPTIONIST', 'MED_ADMIN', 'LABORANT', 'MED_COORDINATOR'
+        ],
+        'EMERGENCY' => [
+            'OWNER', 'HR', 'SPECIALIST', 'ASSISTANT', 'ADMIN'
+        ],
+    ],
+
     'capitation_contract_max_period_days' => 366,
     'legal_entity_type' => [
         'PRIMARY_CARE' => [
@@ -70,6 +91,20 @@ return [
                 'P230', 'P231', 'P232', 'P233', 'P234', 'P235', 'P236', 'P237', 'P238', 'P239', 'P240', 'P247', 'P249', 'P257'
             ]
         ],
+        'PHARMACY_OWNER' => [
+            'position' => ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P18', 'P19', 'P22', 'P23', 'P24', 'P25', 'P26', 'P32',
+                           'P229', 'P230', 'P231', 'P232', 'P233', 'P234', 'P235', 'P236', 'P237', 'P238', 'P239',
+                           'P240', 'P247', 'P249', 'P257'],
+        ],
+        'PHARMACIST' => [
+            'position' => ['P16', 'P19', 'P20', 'P21', 'P217', 'P218', 'P219', 'P220', 'P221', 'P222', 'P223', 'P259',
+                           'P260', 'P261', 'P262', 'P263', 'P264', 'P265'],
+            'speciality_type' => ['PHARMACEUTICS_ORGANIZATION', 'PROVISOR', 'ANALYTICAL_AND_CONTROL_PHARMACY',
+                                  'CLINICAL_PROVISOR', 'PHARMACIST'],
+            'education_degree' => ['EXPERT', 'MASTER', 'BACHELOR', 'JUNIOR_EXPERT'],
+            'qualification_type' => ['REATTESTATION', 'SPECIALIZATION', 'STAZHUVANNYA', 'POSTGRADUATE'],
+            'speciality_level' => ['FIRST', 'SECOND', 'HIGHEST', 'NOT_APPLICABLE'],
+        ],
         'ADMIN' => [
             'position' => [
                 ' P5', 'P6', 'P14', 'P18', 'P19'
@@ -79,59 +114,164 @@ return [
             'position' => ['P14']
         ],
         'ASSISTANT' => [
-            'position' => [
-                'P17', 'P66', 'P169', 'P170', 'P171', 'P173', 'P174', 'P175', 'P176', 'P177', 'P178', 'P179', 'P180',
-                'P181', 'P182', 'P183', 'P184', 'P185', 'P186', 'P187', 'P188', 'P189', 'P190', 'P191', 'P192', 'P193',
-                'P194', 'P195', 'P196', 'P197', 'P198', 'P199', 'P200', 'P201', 'P202', 'P203', 'P204', 'P205', 'P206',
-                'P207', 'P208', 'P209', 'P210', 'P211', 'P212', 'P213', 'P214', 'P215', 'P216', 'P250', 'P251', 'P252',
-                'P253', 'P256',
-            ],
-            'speciality_type' => [
-                'ORTHOPEDIC_DENTISTRY', 'X_RAY_RADIOLOGY', 'SANOLOGY', 'STOMATOLOGY', 'GENERAL_MEDICINE',
-                'MEDICAL_CASE_EMERGENCY_MEDICINE', 'PUBLIC_HEALTH_AND_PREVENTIVE_MEDICINE'
-            ]
+            'position' => ['P17', 'P66', 'P169', 'P170', 'P171', 'P173', 'P174', 'P175', 'P176', 'P177', 'P178', 'P179',
+                           'P180', 'P181', 'P182', 'P183', 'P184', 'P185', 'P186', 'P187', 'P188', 'P189', 'P190',
+                           'P191', 'P192', 'P193', 'P194', 'P195', 'P196', 'P197', 'P198', 'P199', 'P200', 'P201',
+                           'P202', 'P203', 'P204', 'P205', 'P206', 'P207', 'P208', 'P209', 'P210', 'P211', 'P212',
+                           'P213', 'P214', 'P215', 'P216', 'P250', 'P251', 'P252', 'P253', 'P256', 'P284', 'P285', 'P286'],
+            'speciality_type' => ['ORTHOPEDIC_DENTISTRY', 'X_RAY_RADIOLOGY', 'SANOLOGY', 'STOMATOLOGY',
+                                  'GENERAL_MEDICINE', 'MEDICAL_CASE_EMERGENCY_MEDICINE',
+                                  'PUBLIC_HEALTH_AND_PREVENTIVE_MEDICINE', 'CLINICAL_LABORATORY', 'HYGIENE_LABORATORY',
+                                  'PATHOLOGY_LABORATORY', 'OBSTETRICS', 'NURSING', 'OPERATING_NURSING',
+                                  'MEDICAL_STATISTICS', 'PHYSICAL_THERAPEUTICS', 'ERGOTHERAPEUTICS', 'PSYCHOLOGY',
+                                  'SPECIAL_EDUCATION', 'PHILOLOGY', 'THERAPY_OF_SPEECH_AND_LANGUAGE', 'PSYCHOTHERAPY',
+                                  'CLINICAL_PSYCHOLOGY'],
+            'education_degree' => ['EXPERT', 'MASTER', 'BACHELOR', 'JUNIOR_EXPERT', 'JUNIOR_BACHELOR'],
+            'qualification_type' => ['CLINICAL_RESIDENCY', 'INTERNSHIP', 'REATTESTATION', 'SPECIALIZATION',
+                                     'STAZHUVANNYA', 'POSTGRADUATE', 'TOPIC_IMPROVEMENT'],
+            'speciality_level' => ['FIRST', 'SECOND', 'HIGHEST', 'BASIC', 'NOT_APPLICABLE'],
+            'speciality_qualification_type' => ['AWARDING', 'DEFENSE'],
         ],
         'DOCTOR' => [
             'position' => ['P7', 'P8', 'P9', 'P10', 'P11'],
-            'speciality_type' => ['FAMILY_DOCTOR', 'PEDIATRICIAN', 'THERAPIST']
+            'speciality_type' => ['FAMILY_DOCTOR', 'PEDIATRICIAN', 'THERAPIST'],
+            'education_degree' => ['EXPERT', 'MASTER', 'BACHELOR', 'JUNIOR_EXPERT'],
+            'qualification_type' => ['CLINICAL_RESIDENCY', 'INTERNSHIP', 'REATTESTATION', 'SPECIALIZATION',
+                                     'STAZHUVANNYA', 'POSTGRADUATE', 'TOPIC_IMPROVEMENT'],
+            'speciality_level' => ['FIRST', 'SECOND', 'HIGHEST', 'BASIC', 'NOT_APPLICABLE'],
+            'speciality_qualification_type' => ['AWARDING', 'DEFENSE'],
         ],
         'LABORANT' => [
-            'position' => [
-                'P17', 'P170', 'P173', 'P241', 'P242', 'P243', 'P244', 'P251', 'P256', 'P271', 'P272', 'P273', 'P274',
-                'P276', 'P277', 'P278', 'P279', 'P281'
-            ],
-            'speciality_type' => [
-                'VIROLOGY', 'MICROBIOLOGY', 'LABORATORY_GENETICS', 'LABORATORY_IMMUNOLOGY', 'CLINICAL_DIAGNOSTIC',
-                'PARASITOLOGY', 'BACTERIOLOGY', 'CLINICAL_BIOCHEMISTRY'
-            ]
+            'position' => ['P17', 'P170', 'P173', 'P241', 'P242', 'P243', 'P244', 'P251', 'P256', 'P271', 'P272',
+                           'P273', 'P274', 'P276', 'P277', 'P278', 'P279', 'P281'],
+            'speciality_type' => ['VIROLOGY', 'MICROBIOLOGY', 'LABORATORY_GENETICS', 'LABORATORY_IMMUNOLOGY',
+                                  'CLINICAL_DIAGNOSTIC', 'PARASITOLOGY', 'BACTERIOLOGY', 'CLINICAL_BIOCHEMISTRY',
+                                  'CLINICAL_LABORATORY', 'HYGIENE_LABORATORY', 'PATHOLOGY_LABORATORY',
+                                  'GENERAL_MEDICINE', 'PUBLIC_HEALTH_AND_PREVENTIVE_MEDICINE', 'CYTOMORPHOLOGY',
+                                  'CYTOMORPHOLOGY_CLINICAL_DIAGNOSTIC'],
+            'education_degree' => ['MASTER', 'EXPERT', 'BACHELOR', 'JUNIOR_EXPERT'],
+            'qualification_type' => ['REATTESTATION', 'SPECIALIZATION', 'CLINICAL_RESIDENCY', 'INTERNSHIP',
+                                     'STAZHUVANNYA', 'POSTGRADUATE', 'TOPIC_IMPROVEMENT'],
+            'speciality_level' => ['FIRST', 'SECOND', 'SPECIALIST', 'HIGHEST', 'NOT_APPLICABLE'],
+            'speciality_qualification_type' => ['AWARDING', 'DEFENSE'],
         ],
         'MED_COORDINATOR' => [
-            'position' => ['P280']
+            'position' => ['P280'],
+            'speciality_type' => ['PHYSICAL_THERAPEUTICS', 'ERGOTHERAPEUTICS', 'IMMUNOLOGY', 'INFECTIOUS_DISEASES',
+                                  'CARDIOLOGY', 'CLINICAL_BIOCHEMISTRY', 'CLINICAL_IMMUNOLOGY', 'CLINICAL_DIAGNOSTIC',
+                                  'COMBUSTIOLOGY', 'COMMUNAL_HYGIENE', 'LABORATORY_IMMUNOLOGY',
+                                  'LABORATORY_RESEARCH_OF_ENVIRONMENTAL_FACTORS',
+                                  'LABORATORY_RESEARCH_OF_ENVIRONMENT_PHYSICAL_FACTORS',
+                                  'LABORATORY_RESEARCH_OF_ENVIRONMENT_CHEMICAL_FACTORS',
+                                  'PHYSICAL_THERAPY', 'PHYSICAL_THERAPY_AND_SPORTS_MEDICINE', 'EMERGENCY_MEDICINE',
+                                  'MEDICAL_PSYCHOLOGY', 'MICROBIOLOGY', 'NARCOLOGY', 'TRADITIONAL_ALTERNATIVE_MEDICINE',
+                                  'NEUROLOGY', 'NEUROSURGERY', 'NEONATOLOGY', 'NEPHROLOGY', 'GYNECOLOGIC_ONCOLOGY',
+                                  'ONCOLOGY', 'ONCOTOLARYNGOLOGY', 'SURGICAL_ONCOLOGY', 'PUBLIC_HEALTH_ORGANIZATION',
+                                  'ORTHODONTOLOGY', 'ORTHOPEDIC_DENTISTRY', 'ORTHOPAEDICS', 'OTORHINOLARYNGOLOGY',
+                                  'OPHTHALMOLOGY', 'PARASITOLOGY', 'PATHOLOGIC_ANATOMY', 'PEDIATRICIAN',
+                                  'ADOLESCENT_MEDICINE', 'PROCTOLOGY', 'RADIATION_THERAPY', 'OCCUPATIONAL_PATHOLOGY',
+                                  'PSYCHIATRY', 'PSYCHOTHERAPY', 'PSYCHOPHYSIOLOGY', 'PULMONOLOGY', 'RADIATION_HYGIENE',
+                                  'RADIOLOGY', 'RADIOLOGIC_DIAGNOSIS', 'RHEUMATOLOGY', 'X_RAY_RADIOLOGY', 'REFLEXOLOGY',
+                                  'SANOLOGY', 'SEXOPATHOLOGY', 'SPORTS_MEDICINE', 'STOMATOLOGY', 'VASCULAR_SURGERY',
+                                  'FORENSIC_MEDICINE', 'FORENSIC_MEDICAL_HISTOLOGY', 'FORENSIC_MEDICAL_EXAMINATION',
+                                  'FORENSIC_IMMUNOLOGY', 'FORENSIC_CRIMINOLOGY', 'FORENSIC_MEDICAL_TOXICOLOGY',
+                                  'FORENSIC_CYTOLOGY', 'FORENSIC_PSYCHIATRIC_EXAMINATION', 'AUDIOLOGY',
+                                  'THERAPEUTIC_DENTISTRY', 'THERAPIST', 'TOXICOLOGY', 'THORACIC_SURGERY',
+                                  'TRANSPLANTOLOGY', 'TRANSFUSIOLOGY', 'ULTRASONIC_DIAGNOSIS', 'UROLOGY',
+                                  'PHYSIOTHERAPY', 'PHYSICAL_MEDICINE_AND_REHABILITATION', 'PHTHISIOLOGY',
+                                  'FUNCTIONAL_DIAGNOSTICS', 'SURGICAL_DENTISTRY', 'GENERAL_SURGERY',
+                                  'CARDIOVASCULAR_SURGERY', 'AEROSPACE_MEDICINE', 'OBSTETRICS_AND_GYNECOLOGY',
+                                  'ALLERGOLOGY', 'ANAESTHETICS', 'BACTERIOLOGY', 'VIROLOGY', 'GASTROENTEROLOGY',
+                                  'GENERAL_HEMATOLOGY', 'LABORATORY_GENETICS', 'MEDICAL_GENETICS', 'GERIATRICS',
+                                  'PEDIATRIC_HYGIENE', 'OCCUPATIONAL_MEDICINE', 'FOOD_HYGIENE', 'DISINFECTION_',
+                                  'DERMATO-VENEREOLOGY', 'PEDIATRIC_ALLERGY', 'PEDIATRIC_ANAESTHETICS',
+                                  'PEDIATRIC_GASTROENTEROLOGY', 'PEDIATRIC_HEMATOLOGY', 'PEDIATRIC_GYNECOLOGY',
+                                  'PEDIATRIC_DERMATO-VENEREOLOGY', 'PEDIATRIC_ENDOCRINOLOGY', 'PEDIATRIC_IMMUNOLOGY',
+                                  'PEDIATRIC_CARDIOLOGY', 'PEDIATRIC_NEUROLOGY', 'PEDIATRIC_NEPHROLOGY',
+                                  'PEDIATRIC_ONCOLOGY', 'PEDIATRIC_ORTHOPAEDICS', 'PEDIATRIC_OTOLARYNGOLOGY',
+                                  'PEDIATRIC_OPHTHALMOLOGY', 'PEDIATRIC_PATHOLOGY', 'PEDIATRIC_PSYCHIATRY',
+                                  'PEDIATRIC_PULMONOLOGY', 'PEDIATRIC_STOMATOLOGY', 'PEDIATRIC_UROLOGY',
+                                  'PEDIATRIC_PHTHISIOLOGY', 'PEDIATRIC_SURGERY', 'PEDIATRIC_INFECTIOUS_DISEASE',
+                                  'DIETETICS', 'ENDOCRINOLOGY', 'ENDOSCOPY', 'EPIDEMIOLOGY', 'COMMON_HYGIENE',
+                                  'PEDIATRIC_HEMATOLOGY_AND_ONCOLOGY', 'INVASIVE_ELECTROPHYSIOLOGY',
+                                  'INTERVENTIONAL_CARDIOLOGY', 'PEDIATRIC_NEUROLOGICAL_SURGERY', 'PERIODONTOLOGY',
+                                  'PLASTIC_SURGERY', 'ORAL_AND_MAXILLOFACIAL_SURGERY', 'CHILD_CARDIOLOGY',
+                                  'PEDIATRIC_RHEUMATOLOGY', 'SURGICAL_DERMATOLOGY'],
+            'education_degree' => ['EXPERT', 'MASTER', 'BACHELOR', 'JUNIOR_EXPERT'],
+            'qualification_type' => ['INFORMATION_COURSES', 'STAZHUVANNYA'],
+            'speciality_level' => ['FIRST', 'SECOND', 'HIGHEST', 'NOT_APPLICABLE'],
         ],
-        'NHS ADMIN' => [
-            'position' => [
-                'P27', 'P28', 'P29', 'P30', 'P31', 'P237', 'P238', 'P239',
-            ],
+        'NHS_ADMIN' => [
+            'position' => ['P27', 'P28', 'P29', 'P30', 'P31', 'P237', 'P238', 'P239'],
         ],
         'RECEPTIONIST' => [
             'position' => ['P15']
         ],
+        'SPECIALIST' => [
+            'position' => ['P5', 'P6', 'P8', 'P9', 'P10', 'P11', 'P12', 'P13', 'P33', 'P34', 'P35', 'P36', 'P37', 'P38',
+                           'P39', 'P40', 'P41', 'P42', 'P43', 'P44', 'P45', 'P46', 'P47', 'P48', 'P49', 'P50', 'P51',
+                           'P52', 'P53', 'P54', 'P55', 'P56', 'P57', 'P58', 'P59', 'P60', 'P61', 'P62', 'P63', 'P64',
+                           'P65', 'P67', 'P68', 'P69', 'P70', 'P71', 'P72', 'P73', 'P74', 'P75', 'P76', 'P77', 'P78',
+                           'P79', 'P80', 'P81', 'P82', 'P83', 'P84', 'P85', 'P86', 'P87', 'P88', 'P89', 'P90', 'P91',
+                           'P92', 'P93', 'P94', 'P95', 'P96', 'P97', 'P98', 'P99', 'P100', 'P101', 'P102', 'P103',
+                           'P104', 'P105', 'P106', 'P107', 'P108', 'P109', 'P110', 'P111', 'P112', 'P113', 'P114',
+                           'P115', 'P116', 'P117', 'P118', 'P119', 'P120', 'P121', 'P122', 'P123', 'P124', 'P125',
+                           'P126', 'P127', 'P128', 'P129', 'P130', 'P131', 'P132', 'P133', 'P134', 'P135', 'P136',
+                           'P137', 'P138', 'P139', 'P140', 'P141', 'P142', 'P143', 'P144', 'P145', 'P146', 'P147',
+                           'P148', 'P149', 'P150', 'P151', 'P152', 'P153', 'P154', 'P155', 'P156', 'P157', 'P158',
+                           'P159', 'P160', 'P161', 'P162', 'P163', 'P164', 'P165', 'P166', 'P167', 'P228', 'P248',
+                           'P245', 'P246', 'P258', 'P266', 'P267', 'P268', 'P269', 'P270', 'P282', 'P283'],
+            'speciality_type' => ['PHYSICAL_THERAPEUTICS', 'ERGOTHERAPEUTICS', 'IMMUNOLOGY', 'INFECTIOUS_DISEASES',
+                                  'CARDIOLOGY', 'CLINICAL_BIOCHEMISTRY', 'CLINICAL_IMMUNOLOGY', 'CLINICAL_DIAGNOSTIC',
+                                  'COMBUSTIOLOGY', 'COMMUNAL_HYGIENE', 'LABORATORY_IMMUNOLOGY',
+                                  'LABORATORY_RESEARCH_OF_ENVIRONMENTAL_FACTORS',
+                                  'LABORATORY_RESEARCH_OF_ENVIRONMENT_PHYSICAL_FACTORS',
+                                  'LABORATORY_RESEARCH_OF_ENVIRONMENT_CHEMICAL_FACTORS',
+                                  'PHYSICAL_THERAPY', 'PHYSICAL_THERAPY_AND_SPORTS_MEDICINE',
+                                  'EMERGENCY_MEDICINE', 'MEDICAL_PSYCHOLOGY', 'MICROBIOLOGY',
+                                  'NARCOLOGY', 'TRADITIONAL_ALTERNATIVE_MEDICINE', 'NEUROLOGY',
+                                  'NEUROSURGERY', 'NEONATOLOGY', 'NEPHROLOGY', 'GYNECOLOGIC_ONCOLOGY', 'ONCOLOGY',
+                                  'ONCOTOLARYNGOLOGY', 'SURGICAL_ONCOLOGY', 'PUBLIC_HEALTH_ORGANIZATION',
+                                  'ORTHODONTOLOGY', 'ORTHOPEDIC_DENTISTRY', 'ORTHOPAEDICS', 'OTORHINOLARYNGOLOGY',
+                                  'OPHTHALMOLOGY', 'PARASITOLOGY', 'PATHOLOGIC_ANATOMY', 'PEDIATRICIAN',
+                                  'ADOLESCENT_MEDICINE', 'PROCTOLOGY', 'RADIATION_THERAPY', 'OCCUPATIONAL_PATHOLOGY',
+                                  'PSYCHIATRY', 'PSYCHOTHERAPY', 'PSYCHOPHYSIOLOGY', 'PULMONOLOGY', 'RADIATION_HYGIENE',
+                                  'RADIOLOGY', 'RADIOLOGIC_DIAGNOSIS', 'RHEUMATOLOGY', 'X_RAY_RADIOLOGY', 'REFLEXOLOGY',
+                                  'SANOLOGY', 'SEXOPATHOLOGY', 'SPORTS_MEDICINE', 'STOMATOLOGY', 'VASCULAR_SURGERY',
+                                  'FORENSIC_MEDICINE', 'FORENSIC_MEDICAL_HISTOLOGY', 'FORENSIC_MEDICAL_EXAMINATION',
+                                  'FORENSIC_IMMUNOLOGY', 'FORENSIC_CRIMINOLOGY', 'FORENSIC_MEDICAL_TOXICOLOGY',
+                                  'FORENSIC_CYTOLOGY', 'FORENSIC_PSYCHIATRIC_EXAMINATION', 'AUDIOLOGY',
+                                  'THERAPEUTIC_DENTISTRY', 'THERAPIST', 'TOXICOLOGY', 'THORACIC_SURGERY',
+                                  'TRANSPLANTOLOGY', 'TRANSFUSIOLOGY', 'ULTRASONIC_DIAGNOSIS', 'UROLOGY',
+                                  'PHYSIOTHERAPY', 'PHYSICAL_MEDICINE_AND_REHABILITATION', 'PHTHISIOLOGY',
+                                  'FUNCTIONAL_DIAGNOSTICS', 'SURGICAL_DENTISTRY', 'GENERAL_SURGERY',
+                                  'CARDIOVASCULAR_SURGERY', 'AEROSPACE_MEDICINE', 'OBSTETRICS_AND_GYNECOLOGY',
+                                  'ALLERGOLOGY', 'ANAESTHETICS', 'BACTERIOLOGY', 'VIROLOGY', 'GASTROENTEROLOGY',
+                                  'GENERAL_HEMATOLOGY', 'LABORATORY_GENETICS', 'MEDICAL_GENETICS', 'GERIATRICS',
+                                  'PEDIATRIC_HYGIENE', 'OCCUPATIONAL_MEDICINE', 'FOOD_HYGIENE', 'DISINFECTION_',
+                                  'DERMATO-VENEREOLOGY', 'PEDIATRIC_ALLERGY', 'PEDIATRIC_ANAESTHETICS',
+                                  'PEDIATRIC_GASTROENTEROLOGY', 'PEDIATRIC_HEMATOLOGY', 'PEDIATRIC_GYNECOLOGY',
+                                  'PEDIATRIC_DERMATO-VENEREOLOGY', 'PEDIATRIC_ENDOCRINOLOGY', 'PEDIATRIC_IMMUNOLOGY',
+                                  'PEDIATRIC_CARDIOLOGY', 'PEDIATRIC_NEUROLOGY', 'PEDIATRIC_NEPHROLOGY',
+                                  'PEDIATRIC_ONCOLOGY', 'PEDIATRIC_ORTHOPAEDICS', 'PEDIATRIC_OTOLARYNGOLOGY',
+                                  'PEDIATRIC_OPHTHALMOLOGY', 'PEDIATRIC_PATHOLOGY', 'PEDIATRIC_PSYCHIATRY',
+                                  'PEDIATRIC_PULMONOLOGY', 'PEDIATRIC_STOMATOLOGY', 'PEDIATRIC_UROLOGY',
+                                  'PEDIATRIC_PHTHISIOLOGY', 'PEDIATRIC_SURGERY', 'PEDIATRIC_INFECTIOUS_DISEASE',
+                                  'DIETETICS', 'ENDOCRINOLOGY', 'ENDOSCOPY', 'EPIDEMIOLOGY', 'COMMON_HYGIENE',
+                                  'PEDIATRIC_HEMATOLOGY_AND_ONCOLOGY', 'INVASIVE_ELECTROPHYSIOLOGY',
+                                  'INTERVENTIONAL_CARDIOLOGY', 'PEDIATRIC_NEUROLOGICAL_SURGERY', 'PERIODONTOLOGY',
+                                  'PLASTIC_SURGERY', 'ORAL_AND_MAXILLOFACIAL_SURGERY', 'CHILD_CARDIOLOGY',
+                                  'PEDIATRIC_RHEUMATOLOGY', 'SURGICAL_DERMATOLOGY'],
+            'education_degree' => ['EXPERT', 'MASTER', 'BACHELOR', 'JUNIOR_EXPERT'],
+            'qualification_type' => ['CLINICAL_RESIDENCY', 'INTERNSHIP', 'REATTESTATION', 'SPECIALIZATION',
+                                     'STAZHUVANNYA', 'POSTGRADUATE', 'TOPIC_IMPROVEMENT'],
+            'speciality_level' => ['FIRST', 'SECOND', 'HIGHEST', 'BASIC', 'NOT_APPLICABLE'],
+            'speciality_qualification_type' => ['AWARDING', 'DEFENSE'],
+        ],
         'MED_ADMIN' => [
-            'position' => [
-                'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'P11', 'P12', 'P13', 'P33', 'P34', 'P35', 'P36', 'P37', 'P38', 'P39',
-                'P40', 'P41', 'P42', 'P43', 'P44', 'P45', 'P46', 'P47', 'P48', 'P49', 'P50', 'P51', 'P52', 'P53', 'P54',
-                'P55', 'P56', 'P57', 'P58', 'P59', 'P60', 'P61', 'P62', 'P63', 'P64', 'P65', 'P66', 'P67', 'P68', 'P69',
-                'P70', 'P71', 'P72', 'P73', 'P74', 'P75', 'P76', 'P77', 'P78', 'P79', 'P80', 'P81', 'P82', 'P83', 'P84',
-                'P85', 'P86', 'P87', 'P88', 'P89', 'P90', 'P91', 'P92', 'P93', 'P94', 'P95', 'P96', 'P97', 'P98', 'P99',
-                'P100', 'P101', 'P102', 'P103', 'P104', 'P105', 'P106', 'P107', 'P108', 'P109', 'P110', 'P111', 'P112',
-                'P113', 'P114', 'P115', 'P116', 'P117', 'P118', 'P119', 'P120', 'P121', 'P122', 'P123', 'P124', 'P125',
-                'P126', 'P127', 'P128', 'P129', 'P130', 'P131', 'P132', 'P133', 'P134', 'P135', 'P136', 'P137', 'P138',
-                'P139', 'P140', 'P141', 'P142', 'P143', 'P144', 'P145', 'P146', 'P147', 'P148', 'P149', 'P150', 'P151',
-                'P152', 'P153', 'P154', 'P155', 'P156', 'P157', 'P158', 'P159', 'P160', 'P161', 'P162', 'P163', 'P164',
-                'P165', 'P166', 'P167', 'P228', 'P248', 'P245', 'P258', 'P266', 'P267', 'P268', 'P269', 'P270', 'P1',
-                'P2', 'P3', 'P4', 'P5', 'P6', 'P23', 'P24', 'P25', 'P26', 'P32', 'P229', 'P230', 'P231', 'P249', 'P257'
-            ]
-        ]
+            'position' => ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P23', 'P24', 'P25', 'P26', 'P32', 'P229',
+                           'P230', 'P231', 'P249', 'P257'],
+        ],
     ],
 
     'doctors_type' => [

@@ -1,15 +1,23 @@
 <div class="overflow-x-auto relative">
     <fieldset class="fieldset" id="section-doctor-qualifications"
-              {{-- Binding documents to Alpine, it will be re-used in the modal.
-                Note that it's necessary for modal to work properly --}}
               x-data="{
                   qualifications: $wire.entangle('form.doctor.qualifications'),
+                  employeeType: $wire.get('form.employeeType'),
+                  employeeTypeSpecialities: @js($this->employeeTypeSpecialities),
+                  employeeTypeQualifications: @js($this->employeeTypeQualifications),
                   openModal: false,
                   modalQualification: new Qualification(),
                   newQualification: false,
                   item: 0,
                   qualTypeDict: $wire.dictionaries['QUALIFICATION_TYPE'],
                   qualSpecDict: $wire.dictionaries['SPECIALITY_TYPE'],
+                  isModalValid() {
+                      return this.modalQualification.type
+                          && this.modalQualification.institutionName
+                          && this.modalQualification.speciality
+                          && this.modalQualification.certificateNumber
+                          && this.modalQualification.issuedDate;
+                  }
               }"
     >
         <legend class="legend">
@@ -143,12 +151,13 @@
                                 <div class="form-row-modal">
                                     <div>
                                         <label for="qualificationType" class="label-modal">{{ __('forms.qualificationType') }} <span class="text-red-600"> *</span></label>
-                                        <select x-model="modalQualification.type" id="qualificationType"
-                                                class="input-modal" required>
+                                        <select x-model="modalQualification.type" id="qualificationType" class="input-modal" required>
                                             <option value="">{{__('forms.select_qualification_type')}}</option>
-                                            @foreach($this->dictionaries['QUALIFICATION_TYPE'] as $typeValue => $typeDescription)
-                                                <option value="{{ $typeValue }}">{{ $typeDescription }}</option>
-                                            @endforeach
+                                            <template x-if="employeeType && employeeTypeQualifications[employeeType]">
+                                                <template x-for="(qualName, qualKey) in employeeTypeQualifications[employeeType]" :key="qualKey">
+                                                    <option :value="qualKey" x-text="qualName"></option>
+                                                </template>
+                                            </template>
                                         </select>
                                     </div>
 
@@ -159,12 +168,13 @@
                                     </div>
                                     <div>
                                         <label for="qualificationSpeciality" class="label-modal">{{ __('forms.speciality') }} <span class="text-red-600"> *</span></label>
-                                        <select x-model="modalQualification.speciality" id="qualificationSpeciality"
-                                                class="input-modal" required>
+                                        <select x-model="modalQualification.speciality" id="qualificationSpeciality" class="input-modal" required>
                                             <option value="">{{__('forms.select_speciality')}}</option>
-                                            @foreach($this->dictionaries['SPECIALITY_TYPE'] as $specValue => $specDescription)
-                                                <option value="{{ $specValue }}">{{ $specDescription }}</option>
-                                            @endforeach
+                                            <template x-if="employeeType && employeeTypeSpecialities[employeeType]">
+                                                <template x-for="(specName, specKey) in employeeTypeSpecialities[employeeType]" :key="specKey">
+                                                    <option :value="specKey" x-text="specName"></option>
+                                                </template>
+                                            </template>
                                         </select>
                                     </div>
                                     <div>
@@ -181,25 +191,12 @@
                                     </div>
                                 </div>
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
-                                <div class="mt-6 flex justify-between space-x-2">
-                                    <button type="button"
-                                            @click="openModal = false"
-                                            class="button-minor"
-                                    >
-                                        {{ __('forms.cancel') }}
-                                    </button>
-
-                                    <button @click.prevent
-                                            @click="newQualification ? qualifications.push(modalQualification) : qualifications[item] = modalQualification; openModal = false"
-                                            class="button-primary"
-                                            :disabled="!(modalQualification.type && modalQualification.type.trim().length > 0 &&
-                                            modalQualification.institutionName && modalQualification.institutionName.trim().length > 0 &&
-                                            modalQualification.speciality && modalQualification.speciality.trim().length > 0 &&
-                                            modalQualification.issuedDate && modalQualification.issuedDate.trim().length > 0)"
-                                    >
-                                        {{ __('forms.save') }}
-                                    </button>
-                                </div>
+                                <button @click.prevent="newQualification ? qualifications.push(modalQualification) : qualifications[item] = modalQualification; openModal = false"
+                                        class="button-primary"
+                                        :class="{ 'opacity-50 cursor-not-allowed': !isModalValid() }"
+                                        :disabled="!isModalValid()">
+                                    {{ __('forms.save') }}
+                                </button>
                             </form>
                         </div>
                     </div>

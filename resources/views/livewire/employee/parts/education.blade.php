@@ -2,13 +2,25 @@
     <fieldset class="fieldset" id="section-doctor-educations"
               x-data="{
                   educations: $wire.entangle('form.doctor.educations'),
+                  employeeType: $wire.get('form.employeeType'),
+                  employeeTypeSpecialities: @js($this->employeeTypeSpecialities),
+                  employeeTypeDegrees: @js($this->employeeTypeDegrees),
                   openModal: false,
                   modalEducation: new Education(),
                   newEducation: false,
                   item: 0,
                   specDict: @js($this->dictionaries['SPECIALITY_TYPE']),
                   degreeDict: @js($this->dictionaries['EDUCATION_DEGREE']),
-                  countryDict: @js($this->dictionaries['COUNTRY'])
+                  countryDict: @js($this->dictionaries['COUNTRY']),
+                  isModalValid() {
+                      return this.modalEducation.country
+                          && this.modalEducation.city
+                          && this.modalEducation.institutionName
+                          && this.modalEducation.speciality
+                          && this.modalEducation.degree
+                          && this.modalEducation.diplomaNumber
+                          && this.modalEducation.issuedDate;
+                  }
               }"
     >
         <legend class="legend">
@@ -163,22 +175,24 @@
                                     </div>
                                     <div>
                                         <label for="educationSpeciality" class="label-modal">{{ __('forms.speciality') }} <span class="text-red-600"> *</span></label>
-                                        <select x-model="modalEducation.speciality" id="educationSpeciality"
-                                                class="input-modal" required>
+                                        <select x-model="modalEducation.speciality" id="educationSpeciality" class="input-modal" required>
                                             <option value="">{{__('forms.select_speciality')}}</option>
-                                            @foreach($this->dictionaries['SPECIALITY_TYPE'] as $specValue => $specDescription)
-                                                <option value="{{ $specValue }}">{{ $specDescription }}</option>
-                                            @endforeach
+                                            <template x-if="employeeType && employeeTypeSpecialities[employeeType]">
+                                                <template x-for="(specName, specKey) in employeeTypeSpecialities[employeeType]" :key="specKey">
+                                                    <option :value="specKey" x-text="specName"></option>
+                                                </template>
+                                            </template>
                                         </select>
                                     </div>
                                     <div>
                                         <label for="educationDegree" class="label-modal">{{ __('forms.degree') }} <span class="text-red-600"> *</span></label>
-                                        <select x-model="modalEducation.degree" id="educationDegree"
-                                                class="input-modal" required>
+                                        <select x-model="modalEducation.degree" id="educationDegree" class="input-modal" required>
                                             <option value="">{{__('forms.select_level')}}</option>
-                                            @foreach($this->dictionaries['EDUCATION_DEGREE'] as $degreeValue => $degreeDescription)
-                                                <option value="{{ $degreeValue }}">{{ $degreeDescription }}</option>
-                                            @endforeach
+                                            <template x-if="employeeType && employeeTypeDegrees[employeeType]">
+                                                <template x-for="(degreeName, degreeKey) in employeeTypeDegrees[employeeType]" :key="degreeKey">
+                                                    <option :value="degreeKey" x-text="degreeName"></option>
+                                                </template>
+                                            </template>
                                         </select>
                                     </div>
                                     <div class="relative">
@@ -196,24 +210,11 @@
                                 </div>
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
                                 <div class="mt-6 flex justify-between space-x-2">
-                                    <button type="button"
-                                            @click="openModal = false"
-                                            class="button-minor"
-                                    >
-                                        {{__('forms.cancel')}}
-                                    </button>
-
-                                    <button @click.prevent
-                                            @click="newEducation ? educations.push(modalEducation) : educations[item] = modalEducation; openModal = false"
+                                    <button type="button" @click="openModal = false" class="button-minor">{{ __('forms.cancel') }}</button>
+                                    <button @click.prevent="newEducation ? educations.push(modalEducation) : educations[item] = modalEducation; openModal = false"
                                             class="button-primary"
-                                            :disabled="!(modalEducation.country && modalEducation.country.trim().length > 0 &&
-                                                          modalEducation.city && modalEducation.city.trim().length > 0 &&
-                                                          modalEducation.institutionName && modalEducation.institutionName.trim().length > 0 &&
-                                                          modalEducation.speciality && modalEducation.speciality.trim().length > 0 &&
-                                                          modalEducation.degree && modalEducation.degree.trim().length > 0 &&
-                                                          modalEducation.diplomaNumber &&  modalEducation.diplomaNumber.trim().length > 0 &&
-                                                          modalEducation.issuedDate && modalEducation.issuedDate.trim().length > 0)"
-                                    >
+                                            :class="{ 'opacity-50 cursor-not-allowed': !isModalValid() }"
+                                            :disabled="!isModalValid()">
                                         {{__('forms.save')}}
                                     </button>
                                 </div>

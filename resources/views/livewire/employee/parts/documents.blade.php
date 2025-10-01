@@ -152,7 +152,7 @@
                                     <div>
                                         <label for="documentIssuedBy" class="label-modal">{{__('forms.issued_by')}}<span class="text-red-600"> *</span></label>
                                         <input x-model="modalDocument.issuedBy" type="text" name="documentIssuedBy"
-                                               id="documentIssuedBy" class="input-modal" required>
+                                               id="documentIssuedBy" class="input-modal">
                                     </div>
 
                                     <div class="relative">
@@ -172,11 +172,10 @@
                                         {{__('forms.cancel')}}
                                     </button>
 
-                                    <button @click.prevent
-                                            @click="newDocument !== false ? documents.push(modalDocument) : documents[item] = modalDocument; openModal = false"
+                                    <button @click.prevent="newDocument ? documents.push(modalDocument) : documents[item] = modalDocument; openModal = false"
                                             class="button-primary"
-                                            :disabled="!(modalDocument.type && modalDocument.number && modalDocument.issuedBy && modalDocument.issuedAt)"
-                                    >
+                                            :class="{ 'opacity-50 cursor-not-allowed': !(modalDocument.type && modalDocument.number && modalDocument.issuedAt) }"
+                                            :disabled="!(modalDocument.type && modalDocument.number && modalDocument.issuedAt)">
                                         {{__('forms.save')}}
                                     </button>
                                 </div>
