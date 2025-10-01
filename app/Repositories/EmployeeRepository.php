@@ -169,7 +169,7 @@ readonly class EmployeeRepository
         $user->loadMissing('party');
 
         return EmployeeRequest::query()
-            ->with('revision')
+            ->with(['revision', 'party'])
             ->where('legal_entity_id', $legalEntity->id)
             ->whereIn('status', RequestStatus::getStatusesForSync())
             ->whereNotNull('uuid')
