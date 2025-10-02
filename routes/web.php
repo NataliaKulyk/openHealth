@@ -89,9 +89,9 @@ Route::middleware('guest')->group(function () {
     Route::get('forgot-password', ForgotPassword::class)->name('forgot.password');
     Route::get('reset-password/{token}', ResetPassword::class)->name('password.reset');
 
-    Route::get('verify-email', VerifyEmail::class)->name('verification.notice');
+    Route::get('email/verify', VerifyEmail::class)->name('verification.notice');
 
-    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+    Route::get('email/verify/{id}/{hash}', VerifyEmailController::class)
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 });
