@@ -24,10 +24,8 @@
         </div>
     </x-header-navigation>
 
-    {{-- Оновлений контейнер для таблиці --}}
     <div class="flow-root mt-4 shift-content max-w-7xl mx-auto pl-3.5">
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-            {{-- Оновлена таблиця з min-w-[1100px] --}}
             <table class="w-full min-w-[1100px] text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -42,7 +40,6 @@
                 <tbody>
                 @forelse($licenses as $license)
                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
-                        {{-- Всі <td> тепер використовують нові стилі та вирівнювання --}}
                         <td class="px-6 py-4 break-words whitespace-normal align-top">{{ $license->type->label() }}</td>
                         <td class="px-6 py-4 break-words whitespace-normal align-top">{{ CarbonImmutable::parse($license->activeFromDate)->format('d.m.Y') }}</td>
                         <td class="px-6 py-4 break-words whitespace-normal align-top">{{ CarbonImmutable::parse($license->expiryDate)->format('d.m.Y') }}</td>
