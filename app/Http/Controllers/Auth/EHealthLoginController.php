@@ -168,16 +168,6 @@ class EHealthLoginController extends Controller
             setPermissionsTeamId($legalEntity->id);
             $user->unsetRelation('roles')->unsetRelation('permissions');
 
-            if (!$user->hasAccessToLegalEntityByUuid($legalEntity->uuid)) {
-                Log::error(
-                    __('auth.login.error.user_authentication', [], 'en') . __(
-                        " User $user->uuid does not have required access to LegalEntity $legalEntity->uuid after sync."
-                    )
-                );
-
-                return null;
-            }
-
             return $user;
         }
 
