@@ -96,10 +96,10 @@ class ProcedureComponent extends Component
         }
 
         $this->patientId = $patientId;
-        $this->employeeFullName = $authUser->getEncounterWriterEmployee()->fullName;
+        $this->employeeFullName = $authUser->getProcedureWriterEmployee()->fullName;
 
         $this->setPatientData();
-        $this->divisions = legalEntity()->divisions->toArray();
+        $this->divisions = legalEntity()?->divisions()->select(['uuid', 'name'])->get()->toArray();
         $this->getDictionary();
         $this->getEpisodes();
 

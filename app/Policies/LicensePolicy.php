@@ -37,7 +37,7 @@ class LicensePolicy
             return Response::denyWithStatus(404);
         }
 
-        if ($user->cannot('license:read')) {
+        if ($user->cannot('license:details')) {
             return Response::denyWithStatus(404);
         }
 

@@ -32,7 +32,7 @@ class LicenseIndex extends Component
     public function licenses(): LengthAwarePaginator
     {
         $allItems = License::where('legal_entity_id', legalEntity()->id)
-            ->select(['id', 'type', 'active_from_date', 'expiry_date', 'what_licensed', 'is_primary'])
+            ->select(['id', 'legal_entity_id', 'type', 'active_from_date', 'expiry_date', 'what_licensed', 'is_primary'])
             ->get();
 
         // Pagination

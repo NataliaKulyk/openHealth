@@ -33,7 +33,7 @@ class DivisionPolicy
     public function create(User $user): Response
     {
         if ($user->cannot('division:write')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         return Response::allow();
@@ -72,7 +72,7 @@ class DivisionPolicy
         }
 
         if ($user->cannot('division:write')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         // Inactive divisions cannot be updated
@@ -94,7 +94,7 @@ class DivisionPolicy
     public function activate(User $user, Division $division): Response
     {
         if ($user->cannot('division:activate')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         // Some divisions cannot be activated
@@ -120,7 +120,7 @@ class DivisionPolicy
     public function deactivate(User $user, Division $division): Response
     {
         if ($user->cannot('division:activate')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         // Divisions with at least one active service cannot be deactivated

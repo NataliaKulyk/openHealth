@@ -12,6 +12,7 @@ use App\Classes\eHealth\Api\License;
 use App\Classes\eHealth\Api\Job;
 use App\Classes\eHealth\Api\Division;
 use App\Classes\eHealth\Api\HealthcareService;
+use App\Classes\eHealth\Api\Patient;
 use App\Classes\eHealth\Api\Person;
 use App\Classes\eHealth\Api\PersonRequest;
 use App\Classes\eHealth\Api\RuleEngineRules;
@@ -36,6 +37,11 @@ final class EHealth
     public static function person(): Person
     {
         return app(Person::class);
+    }
+
+    public static function patient(): Patient
+    {
+        return app(Patient::class);
     }
 
     public static function declarationRequest(): DeclarationRequest

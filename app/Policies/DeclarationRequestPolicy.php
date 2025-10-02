@@ -36,7 +36,7 @@ class DeclarationRequestPolicy
     }
 
     /**
-     * Determine whether the user can continue to create declaration request in status DRAFT.
+     * Determine whether the user can continue to create declaration request.
      */
     public function update(User $user, DeclarationRequest $declarationRequest): Response
     {

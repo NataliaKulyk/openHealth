@@ -26,7 +26,7 @@ class PatientSummary extends BasePatientComponent
     public function getEpisodes(): void
     {
         try {
-            $response = EHealth::person()->getShortEpisodes($this->uuid);
+            $response = EHealth::patient()->getShortEpisodes($this->uuid);
 
             $this->episodes = $response->getData();
         } catch (ConnectionException $exception) {
@@ -50,7 +50,7 @@ class PatientSummary extends BasePatientComponent
     public function getDiagnoses(): void
     {
         try {
-            $response = EHealth::person()->getActiveDiagnoses($this->uuid);
+            $response = EHealth::patient()->getActiveDiagnoses($this->uuid);
 
             $this->diagnoses = $response->getData();
         } catch (ConnectionException $exception) {
@@ -74,7 +74,7 @@ class PatientSummary extends BasePatientComponent
     public function getObservations(): void
     {
         try {
-            $response = EHealth::person()->getObservations($this->uuid);
+            $response = EHealth::patient()->getObservations($this->uuid);
 
             $this->observations = $response->getData();
         } catch (ConnectionException $exception) {

@@ -89,6 +89,7 @@ return [
     'view_record' => 'Переглянути карту',
     'create_diagnostic_report' => 'Створити діагностичний звіт',
     'sign_declaration' => 'Укласти декларацію',
+    'create_procedure' => 'Створити процедуру',
 
     // Create patient
     'patient_information' => 'Інформація про пацієнта',

@@ -212,17 +212,16 @@ class PatientComponent extends Component
 
         $this->form->addresses = $this->address;
         $this->form->confidantPerson = $this->confidantPerson;
-        //        dd($this->form->toArray());
 
         try {
             $this->form->rulesForModelValidate(['patient', 'documents', 'documentsRelationship']);
             $this->form->validateBeforeSendApi();
         } catch (ValidationException $exception) {
             session()?->flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
 
             return;
         }
-        //        dd('ca');
 
         $formatted = $this->formatPersonRequest(removeEmptyKeys($this->form->toArray()));
 

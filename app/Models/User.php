@@ -290,7 +290,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function getWriterEmployeeByRolePriority(array $priorityRoles): ?Employee
     {
         $employees = $this->employees()
-            ->with('party')
+            ->select(['id', 'party_id', 'employee_type'])
+            ->with('party:id,first_name,last_name,second_name')
             ->whereIn('employee_type', $priorityRoles)
             ->get();
 

@@ -201,9 +201,11 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                     Route::get('/create', PatientCreate::class)->can('create', PersonRequest::class)->name('create');
                     Route::get('/edit/{id}', PatientEdit::class)->can('create', PersonRequest::class)->name('edit');
 
-                    Route::get('/{patientId}/patient-data', PatientData::class)->name('patient-data');
-                    Route::get('/{patientId}/summary', PatientSummary::class)->name('summary');
-                    Route::get('/{patientId}/episodes', PatientEpisodes::class)->name('episodes');
+                    Route::middleware('can:view,' . Person::class)->group(function () {
+                        Route::get('/{patientId}/patient-data', PatientData::class)->name('patient-data');
+                        Route::get('/{patientId}/summary', PatientSummary::class)->name('summary');
+                        Route::get('/{patientId}/episodes', PatientEpisodes::class)->name('episodes');
+                    });
                 });
 
                 Route::name('declaration.')->group(static function () {
@@ -221,9 +223,9 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                         ->whereNumber(['patientId', 'declarationRequest']);
                 });
 
-                Route::can('create', Encounter::class)->group(static function () {
-                    Route::get('/{patientId}/encounter/create', EncounterCreate::class)->name('encounter.create');
-                    Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('encounter.edit');
+                Route::middleware('can:create,' . Encounter::class)->name('encounter.')->group(function () {
+                    Route::get('/{patientId}/encounter/create', EncounterCreate::class)->name('create');
+                    Route::get('/{patientId}/encounter/{encounterId}', EncounterEdit::class)->name('edit');
                 });
 
                 Route::whereNumber('patientId')->group(static function () {

@@ -1,3 +1,6 @@
+@use('App\Models\DeclarationRequest')
+@use('App\Models\MedicalEvents\Sql\Encounter')
+
 <section>
     <x-section-navigation x-data="{ showFilter: true }" class="breadcrumb-form">
         <x-slot name="title">
@@ -5,19 +8,23 @@
         </x-slot>
 
         <x-slot name="navigation">
-            <div class="sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-8">
-                <a href="{{ route('encounter.create', [legalEntity(), 'patientId' => $id]) }}"
-                   class="flex items-center gap-2 button-sync"
-                >
-                    @icon('plus', 'w-4 h-4')
-                    {{ __('patients.start_interacting') }}
-                </a>
-                <a href="{{ route('declaration.create', [legalEntity(), 'patientId' => $id]) }}"
-                   class="flex items-center gap-2 button-minor"
-                >
-                    @icon('file-text', 'w-4 h-4')
-                    {{ __('patients.sign_declaration') }}
-                </a>
+            <div class="sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-8 gap-2">
+                @can('create', Encounter::class)
+                    <a href="{{ route('encounter.create', [legalEntity(), 'patientId' => $id]) }}"
+                       class="flex items-center gap-2 button-sync"
+                    >
+                        @icon('plus', 'w-4 h-4')
+                        {{ __('patients.start_interacting') }}
+                    </a>
+                @endcan
+                @can('create', DeclarationRequest::class)
+                    <a href="{{ route('declaration.create', [legalEntity(), 'patientId' => $id]) }}"
+                       class="flex items-center gap-2 button-minor"
+                    >
+                        @icon('file-text', 'w-4 h-4')
+                        {{ __('patients.sign_declaration') }}
+                    </a>
+                @endcan
             </div>
 
             <nav x-data="{ currentPath: window.location.pathname }">

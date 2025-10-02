@@ -12,7 +12,7 @@
                         type="button"
                         class="accordion-button rounded-t-xl border-b-0 group"
                         data-accordion-target="#accordion-open-body-1"
-                        aria-expanded="true"
+                        aria-expanded="false"
                         aria-controls="accordion-open-body-1"
                 >
                     <span>{{ __('patients.episodes') }}</span>

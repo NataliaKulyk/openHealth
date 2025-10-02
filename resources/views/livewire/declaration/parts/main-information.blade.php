@@ -22,7 +22,7 @@
         </div>
     </div>
 
-    @if(!empty($employeeInfo) && count($employeesInfo) <= 1)
+    @if(!empty($employeesInfo) && count($employeesInfo) <= 1)
         {{-- Dr.'s full name --}}
         <div class="form-row-2">
             <div class="form-group group">

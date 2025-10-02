@@ -27,7 +27,7 @@
         @include('livewire.encounter.parts.observations')
 
         <div class="flex gap-8">
-            <button wire:click.prevent="" type="submit" class="button-minor">
+            <button type="submit" class="button-minor">
                 {{ __('forms.delete') }}
             </button>
 
@@ -128,7 +128,17 @@
                 value: ''
             }
         };
-        resultsInterpreter = { text: '' };
+        resultsInterpreter = {
+            reference: {
+                identifier: {
+                    type: {
+                        coding: [{ system: 'eHealth/resources', code: 'employee' }],
+                        text: ''
+                    },
+                    value: ''
+                }
+            }
+        };
 
         // Create date
         #now = new Date();

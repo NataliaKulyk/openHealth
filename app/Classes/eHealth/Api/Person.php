@@ -21,11 +21,12 @@ class Person extends Request
      * @param  array  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
- */
+     */
     public function searchForPersonByParams(array $query): PromiseInterface|EHealthResponse
     {
         return $this->get(self::URL, $query);
     }
+
     /**
      * Re-send SMS to a person who approve creating or updating data about himself.
      *
@@ -74,51 +75,6 @@ class Person extends Request
     public function getConfidantPersonRelationships(string $id, array $query = []): PromiseInterface|EHealthResponse
     {
         return $this->get(self::URL . "/$id/confidant_person_relationships", $query);
-    }
-
-    /**
-     * Get brief information about episodes, in order not to disclose confidential and sensitive data.
-     *
-     * @param  string  $id
-     * @param  array  $query
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
-     */
-    public function getShortEpisodes(string $id, array $query = []): PromiseInterface|EHealthResponse
-    {
-        $this->setDefaultPageSize();
-
-        return $this->get(self::URL . "/$id/summary/episodes", $query);
-    }
-
-    /**
-     * Get the current diagnoses related only to active episodes.
-     *
-     * @param  string  $id
-     * @param  array  $query
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
-     */
-    public function getActiveDiagnoses(string $id, array $query = []): PromiseInterface|EHealthResponse
-    {
-        $this->setDefaultPageSize();
-
-        return $this->get(self::URL . "/$id/summary/diagnoses", $query);
-    }
-
-    /**
-     * Get the current diagnoses related only to active episodes.
-     *
-     * @param  string  $id
-     * @param  array  $query
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
-     */
-    public function getObservations(string $id, array $query = []): PromiseInterface|EHealthResponse
-    {
-        $this->setDefaultPageSize();
-
-        return $this->get(self::URL . "/$id/summary/observations", $query);
     }
 
     /**

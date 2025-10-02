@@ -69,7 +69,7 @@ class HealthcareServicePolicy
             $legalEntity = legalEntity();
         }
 
-        // If got null instaed HealthcareService model
+        // If got null instead HealthcareService model
         if (empty($healthcareService)) {
             return Response::denyWithStatus(404);
         }
@@ -92,17 +92,12 @@ class HealthcareServicePolicy
     }
 
     /**
-     * Determine whether the user can activate the division.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Division  $division
-     *
-     * @return bool
+     * Determine whether the user can activate the healthcare service.
      */
     public function activate(User $user, HealthcareService $healthcareService): Response
     {
         if ($user->cannot('healthcare_service:write')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         // Some healthcare services cannot be activated
@@ -118,17 +113,12 @@ class HealthcareServicePolicy
     }
 
     /**
-     * Determine whether the user can deactivate the division.
-     *
-     * @param  \App\Models\User  $user  The user attempting the action
-     * @param  \App\Models\Division  $division  The division to be deactivated
-     *
-     * @return bool  True if user can deactivate the division, false otherwise
+     * Determine whether the user can deactivate the healthcare service.
      */
     public function deactivate(User $user, HealthcareService $healthcareService): Response
     {
         if ($user->cannot('healthcare_service:write')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         // Some healthcare services cannot be deactivated

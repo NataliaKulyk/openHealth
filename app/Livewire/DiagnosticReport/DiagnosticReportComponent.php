@@ -137,9 +137,10 @@ class DiagnosticReportComponent extends Component
         }
 
         $this->patientId = $patientId;
-        $this->employeeFullName = $authUser->getEncounterWriterEmployee()->fullName;
+        $this->employeeFullName = $authUser->getDiagnosticReportWriterEmployee()->fullName;
 
-        $employees = Employee::withoutEagerLoads()
+        $employees = $authUser->employees()
+            ->where('employee_type', 'DOCTOR')
             ->select(['uuid', 'party_id'])
             ->with('party:id,last_name,first_name,second_name')
             ->where('legal_entity_id', legalEntity()->id)
@@ -152,7 +153,7 @@ class DiagnosticReportComponent extends Component
         })->toArray();
 
         $this->setPatientData();
-        $this->divisions = legalEntity()->divisions->toArray();
+        $this->divisions = legalEntity()?->divisions()->select(['uuid', 'name'])->get()->toArray();
 
         $this->getDictionary();
 

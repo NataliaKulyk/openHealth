@@ -7,15 +7,15 @@
         <x-slot name="title">{{ __('forms.services') }}</x-slot>
         <x-slot name="description">{{ $currentDivision['type'] }} '{{ $currentDivision['name'] }}'</x-slot>
         <x-slot name="navigation">
-            <div class="rounded-sm border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+            <div class="rounded-sm border-stroke shadow-default dark:border-strokedark dark:bg-boxdark">
                 <div x-data="{ isDivisionActive: @js($divisionStatus) }"
-                     class="flex justify-end border-stroke px-7 py-4 dark:border-strokedark"
+                     class="flex justify-end border-stroke gap-2 px-7 py-4 dark:border-strokedark"
                      x-cloak
                 >
                     <a href="{{ route('healthcare-service.create', [legalEntity(), $division]) }}"
                        x-show="isDivisionActive"
                        type="button"
-                       class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                       class="button-primary"
                     >
                         {{ __('forms.add_healthcare_service') }}
                     </a>

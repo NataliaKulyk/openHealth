@@ -27,7 +27,7 @@ class ContractPolicy
     public function create(User $user): Response
     {
         if ($user->cannot('contract_request:create')) {
-            return Response::denyWithStatus(403);
+            return Response::denyWithStatus(404);
         }
 
         return Response::allow();

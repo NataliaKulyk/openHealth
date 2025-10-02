@@ -13,6 +13,8 @@ use App\Livewire\Patient\Forms\PatientForm as Form;
 use App\Models\LegalEntity;
 use App\Models\Person\Person;
 use App\Models\Person\PersonRequest;
+use App\Rules\InDictionary;
+use App\Rules\PhoneNumber;
 use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -20,10 +22,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Validator;
 
 class PatientIndex extends Component
 {
@@ -185,29 +189,6 @@ class PatientIndex extends Component
     }
 
     /**
-     * Redirect to patient data route.
-     *
-     * @param  string  $patientId
-     * @return void
-     */
-    public function redirectToRecord(string $patientId): void
-    {
-        $this->handleRedirect($patientId, 'patient.patient-data');
-    }
-
-    /**
-     * Redirect to create encounter route.
-     *
-     * @param  string  $patientId
-     * @return void
-     */
-
-    public function redirectToEncounter(string $patientId): void
-    {
-        $this->handleRedirect($patientId, 'encounter.create');
-    }
-
-    /**
      * Delete person request.
      *
      * @param  int  $id
@@ -221,24 +202,13 @@ class PatientIndex extends Component
     }
 
     /**
-     * Redirect to the diagnostic report creation page.
-     *
-     * @param  int  $patientId
-     * @return void
-     */
-    public function createDiagnosticReport(int $patientId): void
-    {
-        $this->redirectRoute('diagnostic-report.create', [legalEntity(), 'patientId' => $patientId]);
-    }
-
-    /**
      * Stores patient data in the DB and redirects to route by name.
      *
      * @param  string  $patientId
      * @param  string  $routeName
      * @return void
      */
-    private function handleRedirect(string $patientId, string $routeName): void
+    public function redirectTo(string $patientId, string $routeName): void
     {
         if (uuid_is_valid($patientId)) {
             // IF UUID is valid, then find for it in DB
@@ -251,11 +221,16 @@ class PatientIndex extends Component
                 unset($patientData['id'], $patientData['status']);
 
                 $person = $this->storeNewPerson($patientData);
+
+                // If validation failed, don't redirect.
+                if (!$person) {
+                    return;
+                }
             }
 
-            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $person->id], navigate: true);
+            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $person->id]);
         } else {
-            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $patientId], navigate: true);
+            $this->redirectRoute($routeName, [legalEntity(), 'patientId' => $patientId]);
         }
     }
 
@@ -277,13 +252,39 @@ class PatientIndex extends Component
      */
     private function storeNewPerson(array $patientData): ?Person
     {
-        try {
-            $person = Person::firstOrCreate(['uuid' => $patientData['uuid']], $patientData);
+        // Validate incoming data
+        $validator = Validator::make($patientData, [
+            'uuid' => ['required', 'uuid'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'birth_date' => ['required', 'date'],
+            'birth_country' => ['required', 'string', 'max:255'],
+            'birth_settlement' => ['required', 'string', 'max:255'],
+            'gender' => ['required', new InDictionary('GENDER')],
+            'second_name' => ['nullable', 'string', 'max:255'],
+            'tax_id' => ['nullable', 'string', 'size:10', Rule::unique('persons', 'tax_id')],
+            'birth_certificate' => ['nullable', 'string', 'max:255'],
+        ]);
 
-            if (!empty($patientData['phones'])) {
-                foreach ($patientData['phones'] as $phoneData) {
-                    $person->phones()->firstOrCreate($phoneData);
-                }
+        $phoneValidator = Validator::make($patientData['phones'] ?? [], [
+            '*.type' => ['required', 'string', new InDictionary('PHONE_TYPE')],
+            '*.number' => ['required', 'string', new PhoneNumber()]
+        ]);
+
+        if ($validator->fails() || $phoneValidator->fails()) {
+            Session::flash('error', 'Некоректні дані пацієнта: ' . implode(', ', $validator->errors()->all()));
+
+            return null;
+        }
+
+        $validated = $validator->validated();
+        $validatedPhones = $phoneValidator->validated();
+
+        try {
+            $person = Person::firstOrCreate(['uuid' => $validated['uuid']], $validated);
+
+            if (!empty($validatedPhones)) {
+                $person->phones()->createMany($validatedPhones);
             }
 
             return $person;

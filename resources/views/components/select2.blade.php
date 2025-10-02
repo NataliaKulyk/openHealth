@@ -4,6 +4,7 @@
      x-modelable="selected"
      x-model="{{ $modelPath }}"
      @click.away="hideOptions"
+     x-cloak
 >
     <input class="{{ $attributes->get('class', 'input-modal') }}"
            {{ $attributes->except('class') }}
