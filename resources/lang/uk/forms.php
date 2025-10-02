@@ -206,6 +206,7 @@ return [
     'patient' => 'Пацієнт',
     'complete_the_interaction_and_sign' => 'Завершити та підписати',
     'save_and_send' => 'Зберегти та надіслати',
+    'cyrillic_with_spaces_and_dots' => ':Attribute має містити лише кириличні символи, пробіли та крапки.',
 
     // Documents
     'documents' => 'Документи',
