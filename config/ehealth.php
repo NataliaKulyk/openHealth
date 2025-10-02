@@ -749,6 +749,7 @@ return [
             'composition:sign',
             'composition:cancel',
             'composition:read',
+            'composition:write',
             'composition:search',
             'composition:resend_sms',
             'composition:mark_in_error',
