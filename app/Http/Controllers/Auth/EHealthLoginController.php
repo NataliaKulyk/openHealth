@@ -216,7 +216,16 @@ class EHealthLoginController extends Controller
                 $user->party()->save($party);
             }
 
-            Mail::to($user->email)->send(new UserCredentialsMail($ehealthEmail, $password));
+            try {
+                Mail::to($user->email)->send(new UserCredentialsMail($ehealthEmail, $password));
+            } catch (\Exception $e) {
+                Log::error('Failed to send credentials email to user.', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
         }
 
         // If we have party with such email, then the user is fully verified because the email is confirmed by eHealth (if we're here)
