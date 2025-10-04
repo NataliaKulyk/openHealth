@@ -82,6 +82,8 @@
             x-model.live="address.area"
             required
             id="addressArea"
+            @blur="selecting=false"
+            @change="address.settlement=null" {{-- This need to properly set a Kyiv area --}}
             aria-describedby="{{ $hasAreaError ? 'addressAreaErrorHelp' : '' }}"
             class="input-select text-gray-800 {{ $hasAreaError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
             :disabled="readonly"
@@ -385,8 +387,8 @@
                         return; // at first time do nothing
                     }
 
-                    // skip when selecting from dropdown or selecting Kyiv area
-                    if (this.selecting  || address.area === 'М.КИЇВ') {
+                    // skip when selecting from dropdown
+                    if (this.selecting) {
                         return;
                     }
 
@@ -413,7 +415,7 @@
             <input
                 x-model.debounce.400ms="address.street"
                 @keydown.escape="showTo = false"
-                @change="showTo = false; settlemets = []"
+                @change="showTo = false; streets = []"
                 @blur="selecting = false"
                 type="text"
                 placeholder=" "
@@ -430,8 +432,7 @@
                 x-transition
 
                 class="absolute left-0 right-0 top-full bg-white border border-gray-300 rounded-bl-md rounded-br-md shadow-lg dark:bg-gray-800 dark:border-gray-500"
-                {{-- :disabled="{{ $readonly ? 'true' : 'false' }}" --}}
-            >
+             >
                 <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownHoverButton">
                     <template x-for="street in streets" :key="street.id">
                         <li

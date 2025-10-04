@@ -111,6 +111,15 @@ class Login extends Component
 
         $user = User::where('email', $this->email)->first();
 
+        // If user not found in the system and local auth is used - show error
+        if (!$user && $this->isLocalAuth) {
+            $this->addError('email', __('auth.login.error.validation.credentials'));
+
+            RateLimiter::hit($key, config('ehealth.auth.decay_seconds'));
+
+            return back();
+        }
+
         // If first login(user doesn't exist in users table, or UUID is empty)
         if (!$this->isLocalAuth && (!$user || empty($user->uuid))) {
             $this->showRoleSelect = true;

@@ -119,7 +119,7 @@ class DivisionPolicy
      */
     public function deactivate(User $user, Division $division): Response
     {
-        if ($user->cannot('division:activate')) {
+        if ($user->cannot('division:deactivate')) {
             return Response::denyWithStatus(404);
         }
 
