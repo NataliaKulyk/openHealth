@@ -42,6 +42,7 @@ class EHealthLoginController extends Controller
      */
     public function __invoke(Request $request): ?RedirectResponse
     {
+
         // get the email entered by the user in the login form
         $sessionEmail = Session::pull('selected_email');
         $testUser = $sessionEmail && in_array($sessionEmail, config('ehealth.test.emails'), true);

@@ -205,6 +205,7 @@ trait ManagesEmployeeForm
 
         // Step 2: Update the EmployeeRequest model itself.
         $requestAttributes = Arr::only($preparedDataForDb, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
+        $requestAttributes['email'] = $party->email;
         $this->employeeRequest->fill($requestAttributes)->save();
 
         // Step 3: Update the revision to reflect the latest state.
@@ -244,6 +245,7 @@ trait ManagesEmployeeForm
         $employeeRequestData = Arr::only($preparedDataForDb, [
             'position', 'start_date', 'end_date', 'employee_type', 'division_id'
         ]);
+        $employeeRequestData['email'] = $party['email'];
 
         $newRequest = Repository::employee()->createEmployeeRequestDraft(
             $employeeRequestData,

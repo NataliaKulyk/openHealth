@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * Represents a request to create or modify an employee.
- * 
+ *
  * Inherits common properties from BaseEmployee.
  *
  * @mixin IdeHelperEmployeeRequest
@@ -45,7 +45,8 @@ class EmployeeRequest extends BaseEmployee
         'division_id',
         'inserted_at',
         'applied_at',
-        'employee_id'
+        'employee_id',
+        'email',
     ];
 
     /**

@@ -192,13 +192,13 @@ readonly class EmployeeRepository
      */
     public function updateDetails(
         Employee|EmployeeRequest $employee,
-        array        $party,
-        array        $documents,
-        array        $phones,
-        ?array       $educations = null,
-        ?array       $specialities = null,
-        ?array       $qualifications = null,
-        ?array       $scienceDegree = null,
+        array $party,
+        array $documents,
+        array $phones,
+        ?array $educations = null,
+        ?array $specialities = null,
+        ?array $qualifications = null,
+        ?array $scienceDegree = null,
     ): Employee|EmployeeRequest {
         $model = $employee;
 
