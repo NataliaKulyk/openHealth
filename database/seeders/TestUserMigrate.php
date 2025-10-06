@@ -295,6 +295,7 @@ class TestUserMigrate extends Seeder
                     'status' => 'APPROVED',
                     'employee_id' => $employeeId,
                     'legal_entity_id' => $legalEntityId,
+                    'email' => 'vitaliybezsh@gmail.com',
                     'division_id' => null,
                     'user_id' => $ownerUserId,
                     'party_id' => $partyId,
