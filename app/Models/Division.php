@@ -30,8 +30,8 @@ class Division extends Model
     public const string TYPE_AMBULANT_CLINIC = 'AMBULANT_CLINIC';
     public const float LOCATION_DEFAULT_LATITUDE = 0.0;
     public const float LOCATION_DEFAULT_LONGITUDE = 0.0;
-    public const string WORKING_TIME_DEFAULT_START = "00:00";
-    public const string WORKING_TIME_DEFAULT_END = "00:00";
+    public const string WORKING_TIME_DEFAULT_START = '00:00';
+    public const string WORKING_TIME_DEFAULT_END = '00:00';
 
     protected $fillable = [
         'uuid',

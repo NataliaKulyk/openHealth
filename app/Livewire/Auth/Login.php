@@ -6,6 +6,7 @@ namespace App\Livewire\Auth;
 
 use App\Models\User;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use App\Models\LegalEntity;
 use Illuminate\Support\Str;
@@ -120,8 +121,8 @@ class Login extends Component
             return back();
         }
 
-        // If first login(user doesn't exist in users table, or UUID is empty)
-        if (!$this->isLocalAuth && (!$user || empty($user->uuid))) {
+        // If first login(user doesn't exist in users table, or user doesn't have roles for the selected legal entity)
+        if (!$this->isLocalAuth && (!$user || !$this->userHasRolesForLegalEntity($user))) {
             $this->showRoleSelect = true;
 
             if (empty($this->role)) {
@@ -237,6 +238,21 @@ class Login extends Component
         $this->addError('email', __('auth.login.error.exceed_login_attempts'));
 
         return false;
+    }
+
+    private function userHasRolesForLegalEntity($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $legalEntityId = LegalEntity::where('uuid', $this->legalEntityUUID)->value('id');
+
+        return DB::table('model_has_roles')
+            ->where('model_type', get_class($user))
+            ->where('model_id', $user->id)
+            ->where('legal_entity_id', $legalEntityId)
+            ->exists();
     }
 
     /**
