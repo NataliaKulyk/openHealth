@@ -31,7 +31,6 @@ use Illuminate\Validation\Rule;
 class EHealthLoginController extends Controller
 {
     protected bool $isFirstLogin = false;
-    protected bool $isPartiallyVerified = false;
 
     /**
      * This method is called when the user is redirected back from eHealth after it's successful authentication
@@ -126,7 +125,8 @@ class EHealthLoginController extends Controller
 
         EHealthUserLogin::dispatch($user, $legalEntity, $authUserUUID, $this->isFirstLogin);
 
-        if ($this->isPartiallyVerified) {
+        // User without party isn't verified by our system yet. Redirect to the identity verification page
+        if (!$user->party) {
             Session::put('selected_legal_entity_uuid', $legalEntity->uuid);
             // Respect EHealth scopes
             $user->syncPermissions($ehealthScopes);
@@ -162,7 +162,7 @@ class EHealthLoginController extends Controller
      */
     protected function findOrCreateUser(LegalEntity $legalEntity, string $authUserUUID): ?User
     {
-        $user = User::where('uuid', $authUserUUID)->first();
+        $user = User::with('party')->where('uuid', $authUserUUID)->first();
 
         // If user already logged in before
         if ($user) {
@@ -194,14 +194,6 @@ class EHealthLoginController extends Controller
         // If user exist in DB but not logged in before
         $user = User::where('email', $ehealthEmail)->first();
 
-        /*
-         * Here concerns the case when HR create a new employee who is not yet in the system
-         * In this case the email is verified by eHealth and party also has an email
-         * but the user does not exist in our system
-         * Meanwhile the user considered as fully verified, and we create a local user account for him and send credentials by email
-         */
-        $party = Party::where('email', $ehealthEmail)->first();
-
         if (!$user) {
             $password = Str::random(8);
 
@@ -213,10 +205,6 @@ class EHealthLoginController extends Controller
                 'email_verified_at' => now()
             ]);
 
-            if ($party) {
-                $user->party()->save($party);
-            }
-
             try {
                 Mail::to($user->email)->send(new UserCredentialsMail($ehealthEmail, $password));
             } catch (\Exception $e) {
@@ -227,9 +215,6 @@ class EHealthLoginController extends Controller
                 ]);
             }
         }
-
-        // If we have party with such email, then the user is fully verified because the email is confirmed by eHealth (if we're here)
-        $this->isPartiallyVerified = empty($party);
 
         $this->isFirstLogin = true;
 
