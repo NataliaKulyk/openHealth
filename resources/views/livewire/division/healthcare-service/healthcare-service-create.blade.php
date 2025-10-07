@@ -3,10 +3,8 @@
         <x-slot name="title">{{ __('forms.medical_service') }}</x-slot>
     </x-header-navigation>
 
-    <fieldset class="fieldset">
-        <legend class="legend">
-            {{ __('forms.main_information') }}
-        </legend>
+    <fieldset class="fieldset shift-content">
+        <legend class="legend">{{ __('forms.main_information') }}</legend>
 
         <div class="form-row-2">
             <div class="form-group group">
@@ -123,7 +121,6 @@
                         name="licenseId"
                         id="licenseId"
                         class="input-select @error('form.licenseId') input-error @enderror"
-                        required
                 >
                     <option value="" selected>{{ __('forms.select') }}</option>
                     @foreach($licenses as $key => $license)
@@ -155,6 +152,8 @@
             </div>
         </div>
     </fieldset>
+
+    @include('livewire.division.healthcare-service.working-hours')
 
     <div class="flex justify-start gap-4 mt-10">
         <a href="{{ url()->previous() }}" type="button" class="button-minor">

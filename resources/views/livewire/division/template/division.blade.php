@@ -30,113 +30,108 @@
             @yield('description')
         </x-slot>
     </x-header-navigation>
+
     <div class="form shift-content">
-    <section class="section-form">
-        <div class="form-row" x-data="{ isDisabled: @json($readonly) }">
-            <form wire:submit.prevent="{{ $action }}">
+        <section class="section-form">
+            <div class="form-row" x-data="{ isDisabled: @json($readonly) }">
+                <form wire:submit.prevent="{{ $action }}">
 
-                @if (!in_array(strtoupper($httpMethod), ['GET', 'POST']))
-                    @method($httpMethod)
-                @endif
+                    @if (!in_array(strtoupper($httpMethod), ['GET', 'POST']))
+                        @method($httpMethod)
+                    @endif
 
-                <fieldset class="fieldset">
-                    <!-- Personal Data Fieldset -->
+                    <fieldset class="fieldset">
+                        <!-- Personal Data Fieldset -->
                         <legend class="legend">
-                        <h2>{{__('forms.main_information')}}</h2>
-                    </legend>
+                            <h2>{{__('forms.main_information')}}</h2>
+                        </legend>
 
-                    <div class="form">
+                        <div class="form">
 
                             <div class="form-row-3">
-                            <!-- Division Name -->
-                             <div class="form-group">
-                                 <input
-                                     required
-                                     id="name"
-                                     type="text"
-                                     placeholder=" "
-                                     class="peer input @error('divisionForm.division.name') input-error border-red-500 @enderror"
-                                     name="name_division"
-                                     wire:model.defer='divisionForm.division.name'
-                                     x-bind:disabled="isDisabled"
-                                 />
+                                <!-- Division Name -->
+                                <div class="form-group">
+                                    <input required
+                                           id="name"
+                                           type="text"
+                                           placeholder=" "
+                                           class="peer input @error('divisionForm.division.name') input-error border-red-500 @enderror"
+                                           name="name_division"
+                                           wire:model.defer='divisionForm.division.name'
+                                           x-bind:disabled="isDisabled"
+                                    />
 
-                                 <label
-                                    for="name_division"
-                                    class="label"
-                                >
-                                    {{ __('forms.full_name_division') }}
-                                </label>
+                                    <label
+                                        for="name_division"
+                                        class="label"
+                                    >
+                                        {{ __('forms.full_name_division') }}
+                                    </label>
 
-                                @error('divisionForm.division.name')
+                                    @error('divisionForm.division.name')
                                     <p class="text-error">{{$message}}</p>
-                                @enderror
-                            </div>
+                                    @enderror
+                                </div>
 
-                            <!-- Division Email -->
-                            <div class="form-group">
-                                <input
-                                    required
-                                    id="email"
-                                    type="text"
-                                    name="email"
-                                    placeholder=" "
-                                    class="peer input @error('divisionForm.division.email') input-error border-red-500 @enderror"
-                                    wire:model.defer='divisionForm.division.email'
-                                    x-bind:disabled="isDisabled"
-                                />
+                                <!-- Division Email -->
+                                <div class="form-group">
+                                    <input required
+                                           id="email"
+                                           type="text"
+                                           name="email"
+                                           placeholder=" "
+                                           class="peer input @error('divisionForm.division.email') input-error border-red-500 @enderror"
+                                           wire:model.defer='divisionForm.division.email'
+                                           x-bind:disabled="isDisabled"
+                                    />
 
-                                <label
-                                    for="email"
-                                    class="label"
-                                >
-                                    {{ __('forms.email') }}
-                                </label>
+                                    <label
+                                        for="email"
+                                        class="label"
+                                    >
+                                        {{ __('forms.email') }}
+                                    </label>
 
-                                @error('divisionForm.division.email')
+                                    @error('divisionForm.division.email')
                                     <p class="text-error">{{$message}}</p>
-                                @enderror
+                                    @enderror
+                                </div>
                             </div>
-                        </div>
 
 
                             <!-- Division Type & External ID -->
                             <div class="form-row-3">
                                 <div class="form-group">
-                                    <select
-                                        id='type'
-                                        class='peer input @error("divisionForm.division.type") select-error border-red-500 @enderror'
-                                        wire:model.defer='divisionForm.division.type'
-                                        x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show' ? 'true' : 'false' }}"
+                                    <select id="type"
+                                            class='peer input @error("divisionForm.division.type") select-error border-red-500 @enderror'
+                                            wire:model.defer='divisionForm.division.type'
+                                            x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show' ? 'true' : 'false' }}"
                                     >
-                                    <option value="_placeholder_" selected hidden>-- {{ __('forms.type') }} --</option>
+                                        <option value="_placeholder_" selected hidden>-- {{ __('forms.type') }}--
+                                        </option>
 
                                         @foreach ($dictionaries['DIVISION_TYPE'] as $k => $type)
                                             <option value="{{ $k }}">{{ $type }}</option>
                                         @endforeach
                                     </select>
 
-                                    <label
-                                        for="type"
-                                        class="label"
-                                    >
+                                    <label for="type" class="label">
                                         {{ __('forms.type') }} *
                                     </label>
 
                                     @error('divisionForm.division.type')
-                                        <p class="text-error">{{ $message }}</p>
+                                    <p class="text-error">{{ $message }}</p>
                                     @enderror
                                 </div>
 
                                 <div class="form-group">
-                                    <input
-                                        type="text"
-                                        placeholder=" "
-                                        id="external_id"
-                                        class="peer input @error('divisionForm.division.externalId') input-error border-red-500 @enderror"
-                                        name="external_id"
-                                        wire:model.defer='divisionForm.division.externalId'
-                                        x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show'? 'true' : 'false' }}"
+                                    <input type="text"
+                                           placeholder=" "
+                                           id="external_id"
+                                           class="peer input @error('divisionForm.division.externalId') input-error border-red-500 @enderror"
+                                           name="external_id"
+                                           wire:model.defer='divisionForm.division.externalId'
+                                           x-bind:disabled="{{ ($action === 'update' && $status !== 'DRAFT') || $action === 'show'? 'true' : 'false' }}"
                                     />
 
                                     <label
@@ -147,68 +142,72 @@
                                     </label>
 
                                     @error('divisionForm.division.externalId')
-                                        <p class="text-error">{{$message}}</p>
+                                    <p class="text-error">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
 
                             <!-- PHONES -->
-                            <div
-                                class="space-y-2"
-                                x-data="{ phones: $wire.entangle('divisionForm.division.phones') }"
-                                x-init="if (!Array.isArray(phones) || phones.length === 0) { phones = [{ type: '', number: '' }] }"
-                                x-id="['phone']"
+                            <div class="space-y-2"
+                                 x-data="{ phones: $wire.entangle('divisionForm.division.phones') }"
+                                 x-init="if (!Array.isArray(phones) || phones.length === 0) { phones = [{ type: '', number: '' }] }"
+                                 x-id="['phone']"
                             >
                                 <template x-for="(phone, index) in phones" :key="index">
-                                    <div
-                                        x-data="{errors: [] }"
-                                        x-init="errors =@js($errors->getMessages())"
-                                        class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center"
+                                    <div x-data="{errors: [] }"
+                                         x-init="errors = @js($errors->getMessages())"
+                                         class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center"
                                     >
                                         {{-- Phone Type Select --}}
                                         <div class="form-group">
-                                            <select
-                                                required
-                                                x-model="phones[index].type"
-                                                class="input-select"
-                                                :class="{ 'input-error': errors[`divisionForm.division.phones.${index}.type`] }"
-                                                :disabled="isDisabled"
-                                                :id="$id('phone', '_type_' + index)"
+                                            <select required
+                                                    x-model="phones[index].type"
+                                                    class="input-select"
+                                                    :class="{ 'input-error': errors[`divisionForm.division.phones.${index}.type`] }"
+                                                    :disabled="isDisabled"
+                                                    :id="$id('phone', '_type_' + index)"
                                             >
-                                                <option value="_placeholder_" selected hidden>-- {{ __('forms.type_mobile') }} --</option>
-                                                <template x-for="(phoneType, key) in $wire.dictionaries.PHONE_TYPE" :key="key">
-                                                    <option
-                                                        x-text="phoneType"
-                                                        :value="key"
-                                                        :disabled="phones.some((p) => p.type === key)"
-                                                        :selected="phone.type === key"
+                                                <option value="_placeholder_" selected hidden>
+                                                    -- {{ __('forms.type_mobile') }} --
+                                                </option>
+                                                <template x-for="(phoneType, key) in $wire.dictionaries.PHONE_TYPE"
+                                                          :key="key"
+                                                >
+                                                    <option x-text="phoneType"
+                                                            :value="key"
+                                                            :disabled="phones.some((p) => p.type === key)"
+                                                            :selected="phone.type === key"
                                                     ></option>
                                                 </template>
                                             </select>
 
                                             <template x-if="errors[`divisionForm.division.phones.${index}.type`]">
-                                                <p class="text-error" x-text="errors[`divisionForm.division.phones.${index}.type`]"></p>
+                                                <p class="text-error"
+                                                   x-text="errors[`divisionForm.division.phones.${index}.type`]"
+                                                ></p>
                                             </template>
 
-                                            <label :for="$id('phone', '_type_' + index)" class="label">{{ __('forms.phone_type') }}</label>
+                                            <label :for="$id('phone', '_type_' + index)" class="label">
+                                                {{ __('forms.phone_type') }}
+                                            </label>
                                         </div>
 
                                         {{-- Phone Number Input --}}
                                         <div class="form-group phone-wrapper">
-                                            <input
-                                                required
-                                                type="tel"
-                                                placeholder=" "
-                                                class="peer input pl-10 with-leading-icon text-gray-500 "
-                                                x-model="phones[index].number"
-                                                x-mask="+380999999999"
-                                                :id="$id('phone', '_number' + index)"
-                                                :class="{ 'input-error border-red-500': errors[`divisionForm.division.phones.${index}.number`] }"
-                                                :disabled="isDisabled"
+                                            <input required
+                                                   type="tel"
+                                                   placeholder=" "
+                                                   class="peer input pl-10 with-leading-icon text-gray-500 "
+                                                   x-model="phones[index].number"
+                                                   x-mask="+380999999999"
+                                                   :id="$id('phone', '_number' + index)"
+                                                   :class="{ 'input-error border-red-500': errors[`divisionForm.division.phones.${index}.number`] }"
+                                                   :disabled="isDisabled"
                                             />
 
                                             <template x-if="errors[`divisionForm.division.phones.${index}.number`]">
-                                                <p class="text-error" x-text="errors[`divisionForm.division.phones.${index}.number`]"></p>
+                                                <p class="text-error"
+                                                   x-text="errors[`divisionForm.division.phones.${index}.number`]"></p>
                                             </template>
 
                                             <label :for="$id('phone', '_number' + index)" class="wrapped-label">
@@ -217,21 +216,23 @@
                                         </div>
 
                                         <!-- Action Phone Buttons -->
-                                        <div
-                                            x-cloak
-                                            x-show="!isDisabled"
-                                            class="flex items-center space-x-4 justify-start"
+                                        <div x-cloak
+                                             x-show="!isDisabled"
+                                             class="flex items-center space-x-4 justify-start"
                                         >
                                             <!-- Add phone -->
                                             <template x-if="phones.length > 1">
-                                                <button type="button" @click.prevent="phones.splice(index, 1)" class="item-remove text-red-600 hover:text-red-800 justify-self-start">
+                                                <button type="button" @click.prevent="phones.splice(index, 1)"
+                                                        class="item-remove text-red-600 hover:text-red-800 justify-self-start">
                                                     <span>{{__('forms.remove_phone')}}</span>
                                                 </button>
                                             </template>
 
                                             <!-- Remove Phone -->
                                             <template x-if="index === phones.length - 1 && phones.length < 2">
-                                                <button type="button" @click.prevent="phones.push({ type: '', number: '' })" class="item-add">
+                                                <button type="button"
+                                                        @click.prevent="phones.push({ type: '', number: '' })"
+                                                        class="item-add">
                                                     <span>{{__('forms.add_phone')}}</span>
                                                 </button>
                                             </template>
@@ -244,17 +245,16 @@
 
                             <div class="form-row-3">
                                 <div class="form-group">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        id="longitude"
-                                        placeholder=" "
-                                        x-ref="longitude"
-                                        class="peer input"
-                                        x-bind:disabled="isDisabled"
-                                        name="longitude"
-                                        wire:model='divisionForm.division.location.longitude'
-                                        x-effect="$refs.longitude.value == 0 ? $refs.longitude.value = null : $refs.longitude.value"
+                                    <input type="number"
+                                           step="0.01"
+                                           id="longitude"
+                                           placeholder=" "
+                                           x-ref="longitude"
+                                           class="peer input"
+                                           x-bind:disabled="isDisabled"
+                                           name="longitude"
+                                           wire:model='divisionForm.division.location.longitude'
+                                           x-effect="$refs.longitude.value == 0 ? $refs.longitude.value = null : $refs.longitude.value"
                                     />
                                     <label
                                         for="longitude"
@@ -264,22 +264,21 @@
                                     </label>
 
                                     @error('divisionForm.division.location.longitude')
-                                        <p class="text-error">{{$message}}</p>
+                                    <p class="text-error">{{$message}}</p>
                                     @enderror
                                 </div>
 
                                 <div class="form-group">
-                                    <input
-                                        id="latitude"
-                                        type="number"
-                                        step="0.01"
-                                        name="latitude"
-                                        placeholder=" "
-                                        x-ref="latitude"
-                                        class="peer input"
-                                        x-bind:disabled="isDisabled"
-                                        wire:model='divisionForm.division.location.latitude'
-                                        x-effect="$refs.latitude.value == 0 ? $refs.latitude.value = null : $refs.latitude.value"
+                                    <input id="latitude"
+                                           type="number"
+                                           step="0.01"
+                                           name="latitude"
+                                           placeholder=" "
+                                           x-ref="latitude"
+                                           class="peer input"
+                                           x-bind:disabled="isDisabled"
+                                           wire:model='divisionForm.division.location.latitude'
+                                           x-effect="$refs.latitude.value == 0 ? $refs.latitude.value = null : $refs.latitude.value"
                                     />
 
                                     <label
@@ -290,23 +289,22 @@
                                     </label>
 
                                     @error('divisionForm.division.location.latitude')
-                                        <p class="text-error">{{$message}}</p>
+                                    <p class="text-error">{{$message}}</p>
                                     @enderror
                                 </div>
                             </div>
 
                             <!-- UUID -->
-                             @if ($action === 'show' && $uuid)
+                            @if ($action === 'show' && $uuid)
                                 <div class="form-row-3">
                                     <div class="form-group">
-                                        <input
-                                            type="text"
-                                            id="uuid"
-                                            placeholder=" "
-                                            class="peer input"
-                                            x-bind:disabled="true"
-                                            name="uuid"
-                                            value="{{ $uuid }}"
+                                        <input type="text"
+                                               id="uuid"
+                                               placeholder=" "
+                                               class="peer input"
+                                               x-bind:disabled="true"
+                                               name="uuid"
+                                               value="{{ $uuid }}"
                                         />
                                         <label
                                             for="longitude"
@@ -316,78 +314,79 @@
                                         </label>
                                     </div>
                                 </div>
-                             @endif
+                            @endif
                         </div>
-                </fieldset>
+                    </fieldset>
 
-                {{-- ADDRESS --}}
+                    {{-- ADDRESS --}}
+                    <fieldset class="fieldset">
 
-                <fieldset class="fieldset">
+                        <legend class="legend">
+                            <h2>{{ __('forms.address') }}</h2>
+                        </legend>
 
-                    <legend class="legend">
-                        <h2>{{ __('forms.address') }}</h2>
-                    </legend>
+                        <div class="form">
+                            <x-forms.addresses-search
+                                :address="$address"
+                                :districts="$districts"
+                                :settlements="$settlements"
+                                :streets="$streets"
+                                :readonly="$readonly"
+                                class="mt-8 form-row-3"
+                            />
 
-                    <div class="form">
-                    <x-forms.addresses-search
-                        :address="$address"
-                        :districts="$districts"
-                        :settlements="$settlements"
-                        :streets="$streets"
-                        :readonly="$readonly"
-                        class="mt-8 form-row-3"
-                    />
+                            <div class="form-group checkbox-group"
+                                 x-data="{ isMountainGroup: @js($this->divisionForm->division['mountainGroup'] ?? false) }"
+                            >
+                                <input id="mountain_group"
+                                       type="checkbox"
+                                       :checked="isMountainGroup"
+                                       class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                       disabled
+                                />
 
-                    <div
-                        class="form-group checkbox-group"
-                        x-data="{ isMountainGroup: @js($this->divisionForm->division['mountainGroup'] ?? false) }"
-                    >
-                        <input
-                            id="mountain_group"
-                            type="checkbox"
-                            :checked="isMountainGroup"
-                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                            disabled
-                        />
+                                <label for="mountain_group"
+                                       class="checkbox-label text-gray-500 dark:text-gray-300 ms-2"
+                                >
+                                    {{__('forms.mountainous_status')}}
+                                </label>
+                            </div>
+                        </div>
+                    </fieldset>
 
-                        <label
-                            for="mountain_group"
-                            class="checkbox-label text-gray-500 dark:text-gray-300 ms-2"
-                        >
-                            {{__('forms.mountainous_status')}}
-                        </label>
-                    </div>
-
-                </fieldset>
-
-                {{-- WORKING HOURS --}}
+                    {{-- WORKING HOURS --}}
                     <fieldset class="fieldset"
                               x-data="{
-                                 working: false,
-                                 workingHours: $wire.entangle('divisionForm.division.workingHours'),
-                                 isStoreMode: {{ $action === 'store' ? 'true' : 'false' }}
-                                 }">
+                                  working: false,
+                                  workingHours: $wire.entangle('divisionForm.division.workingHours'),
+                                  isStoreMode: {{ $action === 'store' ? 'true' : 'false' }}
+                              }"
+                    >
                         <legend class="legend">
                             <h2>{{ __('forms.work_schedule') }}</h2>
                         </legend>
+
                         <div class="form">
                             <div class="form-group mb-4">
-                                <button
-                                    @click.prevent="working = !working"
-                                    x-text="working ? '{{ __('forms.remove_work_schedule') }}' : '{{ __('forms.work_schedule') }}'"
-                                    class="item-add"
+                                <button @click.prevent="working = !working"
+                                        x-text="working ? '{{ __('forms.remove_work_schedule') }}' : '{{ __('forms.work_schedule') }}'"
+                                        class="item-add"
                                 >
                                     {{ __('add_work_schedule') }}
                                 </button>
                             </div>
+
                             @if($action === 'store')
-                                <div
-                                    x-cloak
-                                    x-show="working"
-                                    class="p-4 rounded-lg bg-blue-100 flex items-start mb-4"
+                                <div x-cloak
+                                     x-show="working"
+                                     class="p-4 rounded-lg bg-blue-100 flex items-start mb-4"
                                 >
-                                    <svg class="w-6 h-6 text-blue-500 mr-3 mt-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                    <svg class="w-6 h-6 text-blue-500 mr-3 mt-1" aria-hidden="true"
+                                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                         viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                                     </svg>
                                     <div>
                                         <p class="font-bold text-blue-800">{{ __('forms.important') }}</p>
@@ -395,14 +394,15 @@
                                     </div>
                                 </div>
                             @endif
+
                             @if ($weekdays)
-                                <div
-                                    x-cloak
-                                    x-show='working'
-                                    class="grid md:grid-cols-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
+                                <div x-cloak
+                                     x-show="working"
+                                     class="grid md:grid-cols-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
                                 >
                                     @foreach ($weekdays as $key => $day)
-                                        <div class="p-6 min-h-[220px] {{ $loop->iteration % 2 == 0 ? '' : 'border-r border-gray-200 dark:border-gray-700' }} {{ $loop->last ? '' : 'border-b border-gray-200 dark:border-gray-700' }} ">
+                                        <div
+                                            class="p-6 min-h-[220px] {{ $loop->iteration % 2 == 0 ? '' : 'border-r border-gray-200 dark:border-gray-700' }} {{ $loop->last ? '' : 'border-b border-gray-200 dark:border-gray-700' }} ">
                                             <div
                                                 :key="'{{ $key }}'"
                                                 x-data="{
@@ -450,13 +450,15 @@
                                                                x-on:click="switchWorking('{{ $key }}')"
                                                                x-bind:disabled="isDisabled"
                                                         >
-                                                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:bg-gray-700 dark:peer-focus:ring-blue-800 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"></div>
+                                                        <div
+                                                            class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:bg-gray-700 dark:peer-focus:ring-blue-800 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"></div>
                                                         <span
                                                             class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
                                                             x-text="show_work ? '{{ __('forms.works') }}' : '{{ __('forms.does_not_work') }}'"
                                                         ></span>
                                                     </label>
-                                                    <label class="inline-flex items-center cursor-pointer" x-bind:class="!show_work && 'opacity-40 pointer-events-none'">
+                                                    <label class="inline-flex items-center cursor-pointer"
+                                                           x-bind:class="!show_work && 'opacity-40 pointer-events-none'">
                                                         <input type="checkbox"
                                                                x-model="shift"
                                                                :checked="shift"
@@ -465,20 +467,27 @@
                                                                id="shift_switcher"
                                                                class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                                         />
-                                                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('forms.by_shift') }}</span>
+                                                        <span
+                                                            class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('forms.by_shift') }}</span>
                                                     </label>
                                                 </div>
                                                 <template x-if="show_work">
                                                     <div class="mt-3 space-y-4">
-                                                        <template x-if="isStoreMode || workingHours['{{ $key }}'].length">
-                                                            <template x-for="(shiftHours, shiftIndex) in workingHours['{{ $key }}']" :key="shiftIndex">
+                                                        <template
+                                                            x-if="isStoreMode || workingHours['{{ $key }}'].length">
+                                                            <template
+                                                                x-for="(shiftHours, shiftIndex) in workingHours['{{ $key }}']"
+                                                                :key="shiftIndex">
                                                                 {{-- Don't remove this template!! It needs for properly deleted last shift --}}
                                                                 <template x-if="workingHours['{{ $key }}'][shiftIndex]">
                                                                     <div class="space-y-4">
                                                                         <template x-if="shift">
-                                                                            <div class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                                                                                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                                                                                <span x-text="(shiftIndex + 1) + ' {{ __('forms.shift') }}'"></span>
+                                                                            <div
+                                                                                class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                                                <span
+                                                                                    class="w-2 h-2 rounded-full bg-blue-600"></span>
+                                                                                <span
+                                                                                    x-text="(shiftIndex + 1) + ' {{ __('forms.shift') }}'"></span>
                                                                             </div>
                                                                         </template>
                                                                         <div class="flex items-end gap-4">
@@ -487,12 +496,24 @@
                                                                                     :for="'opened_by-' + '{{ $key }}' + '-' + shiftIndex"
                                                                                     class="label !text-xs !text-gray-500 dark:!text-gray-400"
                                                                                 >
-                                                                                    <span x-text="shift ? '{{ __('Початок') }}' : '{{ __('forms.openedBy') }}'"></span>
+                                                                                    <span
+                                                                                        x-text="shift ? '{{ __('Початок') }}' : '{{ __('forms.openedBy') }}'"></span>
                                                                                 </label>
                                                                                 <div class="relative w-full">
-                                                                                    <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
-                                                                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                                                    <div
+                                                                                        class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                                                                        <svg
+                                                                                            class="w-5 h-5 text-gray-500 dark:text-gray-400"
+                                                                                            aria-hidden="true"
+                                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                                            width="24" height="24"
+                                                                                            fill="none"
+                                                                                            viewBox="0 0 24 24">
+                                                                                            <path stroke="currentColor"
+                                                                                                  stroke-linecap="round"
+                                                                                                  stroke-linejoin="round"
+                                                                                                  stroke-width="2"
+                                                                                                  d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                                                                                         </svg>
                                                                                     </div>
                                                                                     <input
@@ -504,8 +525,10 @@
                                                                                         x-bind:disabled="isDisabled"
                                                                                     />
                                                                                 </div>
-                                                                                <template x-if="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.0`]">
-                                                                                    <p class="text-error" x-text="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.0`]"></p>
+                                                                                <template
+                                                                                    x-if="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.0`]">
+                                                                                    <p class="text-error"
+                                                                                       x-text="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.0`]"></p>
                                                                                 </template>
                                                                             </div>
                                                                             <div class="form-group w-full">
@@ -513,12 +536,24 @@
                                                                                     :for="'closed_by-' + '{{ $key }}' + '-' + shiftIndex"
                                                                                     class="label !text-xs !text-gray-500 dark:!text-gray-400"
                                                                                 >
-                                                                                    <span x-text="shift ? '{{ __('Кінець') }}' : '{{ __('forms.closedBy') }}'"></span>
+                                                                                    <span
+                                                                                        x-text="shift ? '{{ __('Кінець') }}' : '{{ __('forms.closedBy') }}'"></span>
                                                                                 </label>
                                                                                 <div class="relative w-full">
-                                                                                    <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
-                                                                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                                                    <div
+                                                                                        class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                                                                        <svg
+                                                                                            class="w-5 h-5 text-gray-500 dark:text-gray-400"
+                                                                                            aria-hidden="true"
+                                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                                            width="24" height="24"
+                                                                                            fill="none"
+                                                                                            viewBox="0 0 24 24">
+                                                                                            <path stroke="currentColor"
+                                                                                                  stroke-linecap="round"
+                                                                                                  stroke-linejoin="round"
+                                                                                                  stroke-width="2"
+                                                                                                  d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                                                                                         </svg>
                                                                                     </div>
                                                                                     <input
@@ -530,8 +565,10 @@
                                                                                         x-bind:disabled="isDisabled"
                                                                                     />
                                                                                 </div>
-                                                                                <template x-if="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.1`]">
-                                                                                    <p class="text-error" x-text="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.1`]"></p>
+                                                                                <template
+                                                                                    x-if="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.1`]">
+                                                                                    <p class="text-error"
+                                                                                       x-text="errors[`divisionForm.division.working_hours.{{ $key }}.type.${shiftIndex}.1`]"></p>
                                                                                 </template>
                                                                             </div>
                                                                             <button
@@ -541,8 +578,15 @@
                                                                                 class="h-10 text-gray-800 dark:text-gray-500 hover:text-gray-600 cursor-pointer"
                                                                                 x-bind:disabled="isDisabled"
                                                                             >
-                                                                                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                                                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+                                                                                <svg class="w-5 h-5" aria-hidden="true"
+                                                                                     xmlns="http://www.w3.org/2000/svg"
+                                                                                     width="24" height="24" fill="none"
+                                                                                     viewBox="0 0 24 24">
+                                                                                    <path stroke="currentColor"
+                                                                                          stroke-linecap="round"
+                                                                                          stroke-linejoin="round"
+                                                                                          stroke-width="2"
+                                                                                          d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
                                                                                 </svg>
                                                                             </button>
                                                                         </div>
@@ -571,40 +615,42 @@
                     </fieldset>
 
                     <div class="flex gap-2 items-center additional-actions">
-                    <a role="button" class="alternative-button cursor-pointer !mb-0 inline-flex items-center leading-none" href="javascript:history.back()">
-                        {{ __('forms.back') }}
-                    </a>
+                        <a role="button"
+                           class="alternative-button cursor-pointer !mb-0 inline-flex items-center leading-none"
+                           href="javascript:history.back()">
+                            {{ __('forms.back') }}
+                        </a>
 
-                    @yield('additional-buttons')
-                </div>
+                        @yield('additional-buttons')
+                    </div>
 
-                <div
-                    wire:loading
-                    role='status'
-                    class='absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2'
-                >
-                    <svg
-                        aria-hidden='true'
-                        class='w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600'
-                        viewBox='0 0 100 101'
-                        fill='none'
-                        xmlns='http://www.w3.org/2000/svg'
+                    <div
+                        wire:loading
+                        role='status'
+                        class='absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2'
                     >
-                        <path
-                            d='M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z'
-                            fill='currentColor'
-                        />
-                        <path
-                            d='M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z'
-                            fill='currentFill'
-                        />
-                    </svg>
-                </div>
-            </form>
-        </div>
-    </section>
+                        <svg
+                            aria-hidden='true'
+                            class='w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600'
+                            viewBox='0 0 100 101'
+                            fill='none'
+                            xmlns='http://www.w3.org/2000/svg'
+                        >
+                            <path
+                                d='M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z'
+                                fill='currentColor'
+                            />
+                            <path
+                                d='M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z'
+                                fill='currentFill'
+                            />
+                        </svg>
+                    </div>
+                </form>
+            </div>
+        </section>
 
-    @include('livewire.division.modal.confirmation-modal')
+        @include('livewire.division.modal.confirmation-modal')
 
-</div>
+    </div>
 </div>

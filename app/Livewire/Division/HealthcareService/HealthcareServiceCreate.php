@@ -9,11 +9,13 @@ use App\Core\Arr;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\HealthcareService;
+use App\Repositories\Repository;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class HealthcareServiceCreate extends HealthcareServiceComponent
 {
@@ -34,12 +36,19 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
             return;
         }
 
-        dd($validated);
-
         try {
             $response = EHealth::healthcareService()->create(data: removeEmptyKeys(Arr::toSnakeCase($validated)));
 
-            dd($response->getData(), $response->getState(), $response->getError());
+            try {
+                Repository::healthcareService()->store($response->getData());
+
+                $this->redirectRoute('healthcare-service.index', [legalEntity(), $this->divisionId], navigate: true);
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to store healthcare service');
+                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+                return;
+            }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a healthcare service');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
@@ -47,7 +56,13 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when creating a healthcare service');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                $message = $this->formatEHealthErrorMessage($exception);
+                Session::flash('error', $message);
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }

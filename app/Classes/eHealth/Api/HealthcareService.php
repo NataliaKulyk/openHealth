@@ -239,7 +239,7 @@ class HealthcareService extends Request
      */
     public function validateHealthcareService(EHealthResponse $response): array
     {
-        if (! $response->successful()) {
+        if (!$response->successful()) {
             throw new Exception('validateHealthcareService: ' . $response->body());
         }
 

@@ -126,11 +126,9 @@ return [
     'edrpou' => 'ЄДРПОУ',
     'edrpou_rnokpp' => 'ЄДРПОУ / РНОКПП',
     'rnokpp' => 'РНОКПП',
-    'kpp' => 'КПП',
     'ipn' => 'ІПН',
     'choose_legal_entity' => 'Будь ласка, оберіть медичний заклад зі списку',
     'synchronise_with_eHealth' => 'Синхронізувати з ЕСОЗ',
-    'synchronise_data_with_EHealth' => 'Синхронізувати дані з ЕСОЗ',
     'website_hint' => 'Сайт має бути вказаний у форматі "google.com"',
     'legal_entity_updated' => 'Дані медичного закладу було оновлено',
 
@@ -163,7 +161,6 @@ return [
     'healthcareService' => 'Послуга здоров\'я',
     'add_healthcare_service' => 'Додати послугу',
     'available_time' => 'Час Доступності',
-    'selectSpeciality' => 'Оберіть спеціальність',
 
     // Employee & Party
     'employees' => 'Співробітники',

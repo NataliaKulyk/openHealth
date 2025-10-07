@@ -6,7 +6,7 @@
                  if (alertMessage) {
                      alertMessage.remove();
                  }
-             }, 3000)
+             }, 30000)
          "
     >
         @session('error')

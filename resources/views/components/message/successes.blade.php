@@ -9,8 +9,7 @@
     </div>
     <div class="w-full">
         <h5 class="mb-3 text-lg font-bold text-black dark:text-[#34D399]">
-            {{$status}}
+            {{ $status }}
         </h5>
-
     </div>
 </div>

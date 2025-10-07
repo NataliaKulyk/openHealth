@@ -42,15 +42,8 @@ class HealthcareServiceForm extends Form
 
     public string $comment;
 
-    public const HEALTHCARE_SERVICE_LEGAL_ENTITIES_ALLOWED_TYPE = 'MSP';
-    public const LEGAL_ENTITY_PRIMARY_CARE_PROVIDING_CONDITIONS = 'OUTPATIENT';
-
-    public const HEALTHCARE_SERVICE_FORM_CLEANUP = [
-        'speciality_type',
-        'comment',
-        'available_time',
-        'not_available'
-    ];
+    public array $availableTime;
+    public array $notAvailable;
 
     /**
      * Rules based on: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17089101853/Create+healthcare+service#Request-data-validation
@@ -79,7 +72,7 @@ class HealthcareServiceForm extends Form
                 'required_if:category.coding.0.code,' . Type::MSP->value
             ],
             'providingCondition' => [
-                'nullable',
+                'required',
                 'string',
                 new InDictionary('PROVIDING_CONDITION'),
                 Rule::in(config("ehealth.$providingConditionConfigKey", []))
@@ -89,8 +82,9 @@ class HealthcareServiceForm extends Form
             'type.coding.*.code' => [
                 'nullable',
                 'string',
+                'required_if:category.coding.0.code,' . Type::PHARMACY_DRUGS->value,
+                'prohibited_unless:category.coding.0.code,' . Type::PHARMACY_DRUGS->value,
                 new InDictionary(['HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES', 'LEGAL_ENTITY_TYPE_V2']),
-                'required_if:category.coding.0.code,' . Type::PHARMACY_DRUGS->value
             ],
             'licenseId' => [
                 'nullable',
@@ -99,9 +93,25 @@ class HealthcareServiceForm extends Form
                     ->where(function (QueryBuilder $query) {
                         $query->where('expiry_date', '>=', now())->orWhereNull('expiry_date');
                     }),
-                'required_if:category.coding.0.code,' . Type::PHARMACY->value . ',' . Type::PHARMACY_DRUGS->value
+                'required_if:category.coding.0.code,' . Type::PHARMACY->value . ',' . Type::PHARMACY_DRUGS->value,
+                'prohibited_if:category.coding.0.code,' . Type::MSP->value
             ],
-            'comment' => ['nullable', 'string']
+            'comment' => ['nullable', 'string'],
+            'availableTime' => ['array', 'nullable'],
+            'availableTime.*.daysOfWeek' => ['required', 'array', 'min:1', 'max:7'],
+            'availableTime.*.allDay' => ['required', 'boolean'],
+            'availableTime.*.availableStartTime' => [
+                'nullable',
+                'required_unless:availableTime.*.allDay,true',
+                'date_format:H:i:s'
+            ],
+            'availableTime.*.availableEndTime' => [
+                'nullable',
+                'required_unless:availableTime.*.allDay,true',
+                'date_format:H:i:s',
+                'after:availableTime.*.availableStartTime'
+            ],
+            'notAvailable' => ['array', 'nullable']
         ];
     }
 
@@ -120,26 +130,6 @@ class HealthcareServiceForm extends Form
     public function getHealthcareService(): array
     {
         return $this->healthcare_service;
-    }
-
-    public function healthcareServiceClean(string $category = ''): void
-    {
-        $formCleanup = self::HEALTHCARE_SERVICE_FORM_CLEANUP;
-
-        if (
-            $category === self::HEALTHCARE_SERVICE_LEGAL_ENTITIES_ALLOWED_TYPE &&
-            $this->healthcare_service['providing_condition'] === self::LEGAL_ENTITY_PRIMARY_CARE_PROVIDING_CONDITIONS
-        ) {
-            $this->healthcare_service = array_filter(
-                $this->healthcare_service,
-                function ($key) use ($formCleanup) {
-                    return !in_array($key, $formCleanup);
-                },
-                ARRAY_FILTER_USE_KEY
-            );
-        } else {
-            $this->healthcare_service = [];
-        }
     }
 
     public function getHealthcareServiceParam(string $param): mixed

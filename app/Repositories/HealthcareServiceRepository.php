@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Core\Arr;
+use App\Models\LegalEntity;
 use App\Repositories\MedicalEvents\Repository;
 use Exception;
 use App\Models\Division;
@@ -19,7 +21,7 @@ class HealthcareServiceRepository
     /**
      * Sets the division for this healthcare service
      *
-     * @param Division $division The division to set
+     * @param  Division  $division  The division to set
      *
      * @return static Returns this repository instance for method chaining
      */
@@ -36,12 +38,32 @@ class HealthcareServiceRepository
     }
 
     /**
+     * Store data after successful creating in EHealth.
+     *
+     * @param  array  $data
+     * @return HealthcareService
+     * @throws Throwable
+     */
+    public function store(array $data): HealthcareService
+    {
+        $data = $this->mapUuidsToIds($data);
+        $data = $this->replaceEHealthPropNames($data);
+
+        return DB::transaction(function () use ($data) {
+            $data = $this->storeCategoryAndType($data);
+
+            return HealthcareService::create($data);
+        });
+    }
+
+    /**
      * Saves a list of healthcare services.
      *
-     * @param array $responseList The list of healthcare services to be saved.
-     *
+     * @param  array  $responseList  The list of healthcare services to be saved.
      * @return void
-     */    public function saveHealthcareServiceList($responseList): void
+     * @throws Throwable
+     */
+    public function saveHealthcareServiceList($responseList): void
     {
         DB::transaction(function () use ($responseList) {
             foreach ($responseList as $responseItem) {
@@ -74,17 +96,7 @@ class HealthcareServiceRepository
                 app(HealthcareServiceApi::class)->normalizeResponseDataForUpsert($healthcareServicesList, $divisions)
             )->map(function (array $item) {
                 // Save category and type to separate table
-                $category = Repository::codeableConcept()->store($item['category']);
-                $item['category_id'] = $category->id;
-
-                if (!empty($item['type'])) {
-                    $type = Repository::codeableConcept()->store($item['type']);
-                    $item['type_id'] = $type->id;
-                }
-
-                unset($item['category'], $item['type']);
-
-                return $item;
+                return $this->storeCategoryAndType($item);
             })->all();
 
             // At first save all the Divisions to the DB
@@ -96,24 +108,23 @@ class HealthcareServiceRepository
      * TODO: maybe need to put it into validation (need testing)
      * Prepare Request Data
      *
-     * @param mixed $rawData
-     *
+     * @param  mixed  $rawData
      * @return array
      */
     public function prepareRequestCreateData(array $rawData): array
     {
         $params = [
-           'division_id' => $this->getDivision()->uuid,
-           'category' => [
-               'coding' => [
-                   [
-                       'system' => 'HEALTHCARE_SERVICE_CATEGORIES',
-                       'code' => $rawData['category']
-                   ]
-               ]
-           ],
-           'providing_condition' => $rawData['providing_condition'],
-           'speciality_type' => $rawData['speciality_type'],
+            'division_id' => $this->getDivision()->uuid,
+            'category' => [
+                'coding' => [
+                    [
+                        'system' => 'HEALTHCARE_SERVICE_CATEGORIES',
+                        'code' => $rawData['category']
+                    ]
+                ]
+            ],
+            'providing_condition' => $rawData['providing_condition'],
+            'speciality_type' => $rawData['speciality_type'],
         ];
 
         if (isset($rawData['comment']) && !empty($rawData['comment'])) {
@@ -142,8 +153,7 @@ class HealthcareServiceRepository
      * Prepares the raw data for a healthcare service update request.
      * For update, to modify only allowed 'comment', 'available_time' and 'not_available' fields.
      *
-     * @param array $rawData The raw data to be processed for the update request
-     *
+     * @param  array  $rawData  The raw data to be processed for the update request
      * @return array The processed data ready for updating a healthcare service
      */
     public function prepareRequestUpdateData(array $rawData): array
@@ -175,12 +185,10 @@ class HealthcareServiceRepository
     /**
      * Set status for specific action (for activate or deactivate)
      *
-     * @param \App\Models\HealthcareService $healthcareService
-     * @param string $status
-     *
-     * @throws \Exception
-     *
+     * @param  HealthcareService  $healthcareService
+     * @param  string  $status
      * @return void
+     * @throws Exception
      */
     public function setAction(HealthcareService $healthcareService, string $status): void
     {
@@ -188,7 +196,6 @@ class HealthcareServiceRepository
             $healthcareService->setAttribute('status', $status)->save();
 
             $healthcareService->refresh();
-
         } catch (Exception $err) {
             throw new Exception($err->getMessage());
         }
@@ -197,8 +204,7 @@ class HealthcareServiceRepository
     /**
      * Create instance of Healthcare Service class
      *
-     * @param array $responseData // The data array suitable to do fill on HealthcareService Model
-     *
+     * @param  array  $responseData  // The data array suitable to do fill on HealthcareService Model
      * @return HealthcareService|null
      */
     public function createOrUpdate(array $responseData): HealthcareService|null
@@ -213,8 +219,7 @@ class HealthcareServiceRepository
     /**
      * Create instance of HealthcareService model and save it's data to the DB (with all it's relations aka: Phone)
      *
-     * @param array $divisionData
-     * @param \App\Models\LegalEntity $legalEntity
+     * @param  array  $responseData
      * @return HealthcareService
      */
     public function saveHealthcareServiceResponseData(array $responseData): HealthcareService
@@ -228,5 +233,65 @@ class HealthcareServiceRepository
         $healthcareService->refresh();
 
         return $healthcareService;
+    }
+
+    /**
+     * Map uuids to ids for setting relationship.
+     *
+     * @param  array  $data
+     * @return array
+     */
+    private function mapUuidsToIds(array $data): array
+    {
+        $data['uuid'] = $data['id'];
+        unset($data['id']);
+
+        $data['legal_entity_id'] = LegalEntity::where('uuid', $data['legal_entity_id'])
+            ->pluck('id')
+            ->firstOrFail();
+        $data['division_id'] = Division::where('uuid', $data['division_id'])
+            ->pluck('id')
+            ->firstOrFail();
+
+        return $data;
+    }
+
+    /**
+     * Replaces eHealth property names with local database field names.
+     *
+     * @param  array  $properties
+     * @return array
+     */
+    protected function replaceEHealthPropNames(array $properties): array
+    {
+        return Arr::mapWithKeys(
+            $properties,
+            static fn ($value, $key) => match ($key) {
+                'id' => ['uuid' => $value],
+                'inserted_at' => ['ehealth_inserted_at' => $value],
+                'inserted_by' => ['ehealth_inserted_by' => $value],
+                'updated_at' => ['ehealth_updated_at' => $value],
+                'updated_by' => ['ehealth_updated_by' => $value],
+                default => [$key => $value]
+            }
+        );
+    }
+
+    protected function storeCategoryAndType(array $data): array
+    {
+        // Save category
+        $category = Repository::codeableConcept()->store($data['category']);
+        $data['category_id'] = $category->id;
+
+        // Save if type is present
+        if (!empty($data['type'])) {
+            $type = Repository::codeableConcept()->store($data['type']);
+            $data['type_id'] = $type->id;
+        }
+
+        // Remove nested data to avoid mass assignment issues
+        unset($data['category'], $data['type']);
+
+        return $data;
     }
 }

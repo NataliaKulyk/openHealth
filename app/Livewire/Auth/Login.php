@@ -240,7 +240,13 @@ class Login extends Component
         return false;
     }
 
-    private function userHasRolesForLegalEntity($user): bool
+    /**
+     * Check if the user has roles assigned for the selected Legal Entity
+     *
+     * @param  User|null  $user
+     * @return bool
+     */
+    private function userHasRolesForLegalEntity(?User $user): bool
     {
         if (!$user) {
             return false;
