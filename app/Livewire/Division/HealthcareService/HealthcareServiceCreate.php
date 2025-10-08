@@ -36,19 +36,9 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
             return;
         }
 
+        // Create in eHealth
         try {
-            $response = EHealth::healthcareService()->create(data: removeEmptyKeys(Arr::toSnakeCase($validated)));
-
-            try {
-                Repository::healthcareService()->store($response->getData());
-
-                $this->redirectRoute('healthcare-service.index', [legalEntity(), $this->divisionId], navigate: true);
-            } catch (Throwable $exception) {
-                $this->logDatabaseErrors($exception, 'Failed to store healthcare service');
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-
-                return;
-            }
+            $response = EHealth::healthcareService()->create(removeEmptyKeys(Arr::toSnakeCase($validated)));
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a healthcare service');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
@@ -58,11 +48,24 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
             $this->logEHealthException($exception, 'Error when creating a healthcare service');
 
             if ($exception instanceof EHealthValidationException) {
-                $message = $this->formatEHealthErrorMessage($exception);
-                Session::flash('error', $message);
+                Session::flash('error', $exception->getFormattedMessage());
             } else {
                 Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
             }
+
+            return;
+        }
+
+        // Store in local database
+        try {
+            $validated = $response->validate();
+            Repository::healthcareService()->store($response->map($validated));
+
+            Session::flash('success', 'Послугу успішно створено');
+            $this->redirectRoute('healthcare-service.index', [legalEntity(), $this->divisionId], navigate: true);
+        } catch (Throwable $exception) {
+            $this->logDatabaseErrors($exception, 'Failed to store healthcare service');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }

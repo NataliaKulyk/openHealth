@@ -46,9 +46,6 @@ class HealthcareServiceRepository
      */
     public function store(array $data): HealthcareService
     {
-        $data = $this->mapUuidsToIds($data);
-        $data = $this->replaceEHealthPropNames($data);
-
         return DB::transaction(function () use ($data) {
             $data = $this->storeCategoryAndType($data);
 
@@ -233,48 +230,6 @@ class HealthcareServiceRepository
         $healthcareService->refresh();
 
         return $healthcareService;
-    }
-
-    /**
-     * Map uuids to ids for setting relationship.
-     *
-     * @param  array  $data
-     * @return array
-     */
-    private function mapUuidsToIds(array $data): array
-    {
-        $data['uuid'] = $data['id'];
-        unset($data['id']);
-
-        $data['legal_entity_id'] = LegalEntity::where('uuid', $data['legal_entity_id'])
-            ->pluck('id')
-            ->firstOrFail();
-        $data['division_id'] = Division::where('uuid', $data['division_id'])
-            ->pluck('id')
-            ->firstOrFail();
-
-        return $data;
-    }
-
-    /**
-     * Replaces eHealth property names with local database field names.
-     *
-     * @param  array  $properties
-     * @return array
-     */
-    protected function replaceEHealthPropNames(array $properties): array
-    {
-        return Arr::mapWithKeys(
-            $properties,
-            static fn ($value, $key) => match ($key) {
-                'id' => ['uuid' => $value],
-                'inserted_at' => ['ehealth_inserted_at' => $value],
-                'inserted_by' => ['ehealth_inserted_by' => $value],
-                'updated_at' => ['ehealth_updated_at' => $value],
-                'updated_by' => ['ehealth_updated_by' => $value],
-                default => [$key => $value]
-            }
-        );
     }
 
     protected function storeCategoryAndType(array $data): array

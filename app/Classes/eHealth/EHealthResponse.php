@@ -36,7 +36,7 @@ class EHealthResponse extends Response
      */
     protected ?Closure $validator = null;
 
-    public function __construct($response, ?Closure $validator = null)
+    public function __construct($response, ?Closure $validator = null, protected ?Closure $mapper = null)
     {
         parent::__construct($response);
         $this->validator = $validator;
@@ -54,6 +54,18 @@ class EHealthResponse extends Response
         }
 
         return call_user_func($this->validator, $this);
+    }
+
+    /**
+     * Map (transform) the validated response data.
+     */
+    public function map(array $validated): array
+    {
+        if (is_null($this->mapper)) {
+            throw new RuntimeException('Mapper is not implemented for this response.');
+        }
+
+        return call_user_func($this->mapper, $validated);
     }
 
     /**

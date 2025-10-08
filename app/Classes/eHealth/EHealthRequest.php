@@ -12,7 +12,6 @@ use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\HigherOrderTapProxy;
 use Illuminate\Http\Client\Response;
-use GuzzleHttp\Promise\PromiseInterface;
 
 abstract class EHealthRequest extends PendingRequest
 {
@@ -26,6 +25,7 @@ abstract class EHealthRequest extends PendingRequest
     public const int TIMEOUT = 100;
 
     protected ?Closure $validator = null;
+    protected ?Closure $mapper = null;
 
     public function __construct(?Factory $factory = null, $middleware = [])
     {
@@ -97,6 +97,18 @@ abstract class EHealthRequest extends PendingRequest
     }
 
     /**
+     * Set a Callable mapper for the response, which accepts an EHealthResponse instance as an argument.
+     * See EHealthResponse::map().
+     *
+     * @param  callable  $mapper
+     * @return void
+     */
+    protected function setMapper(callable $mapper): void
+    {
+        $this->mapper = $mapper;
+    }
+
+    /**
      * Set the default page size for the request.
      * It's the maximum number of items that can be returned per page.
      */
@@ -112,7 +124,7 @@ abstract class EHealthRequest extends PendingRequest
      */
     protected function newResponse($response): HigherOrderTapProxy|EHealthResponse
     {
-        return tap(new EHealthResponse($response, $this->validator), function (EHealthResponse $laravelResponse) {
+        return tap(new EHealthResponse($response, $this->validator, $this->mapper), function (EHealthResponse $laravelResponse) {
 
             if ($this->truncateExceptionsAt === null) {
                 return;
