@@ -7,11 +7,11 @@
 </div>
 
 <section class="section-form">
-    <x-section-navigation class="breadcrumb-form">
+    <x-header-navigation class="breadcrumb-form">
         <x-slot name="title">
             {{ __('patients.diagnostic_reports') }} - {{ $patientFullName }}
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     <form class="form"
           x-data="{

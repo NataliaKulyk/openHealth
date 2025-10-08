@@ -152,9 +152,9 @@
 
         <div class="form-row-3">
             <div class="form-group">
-                <input wire:model="form.party.email" type="email" id="email" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400"/>
-                <label for="email" class="label">{{__('forms.email')}}</label>
-                @error('form.party.email') <p class="text-error">{{$message}}</p> @enderror
+                <input wire:model="form.party.email" type="email" id="email" name="email" class="peer input text-gray-500" placeholder=" " required/>
+                <label for="email" class="label">{{ __('forms.email') }}</label>
+                @error('form.party.email') <p class="text-error">{{ $message }}</p> @enderror
             </div>
         </div>
         <div class="form-row-2">
