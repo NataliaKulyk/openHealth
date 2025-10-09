@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\Status;
 use App\Casts\NotAvailableTimeCast;
 use App\Models\MedicalEvents\Sql\CodeableConcept;
+use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class HealthcareService extends Model
 {
+    use HasCamelCasing;
+
     protected $fillable = [
         'uuid',
         'speciality_type',

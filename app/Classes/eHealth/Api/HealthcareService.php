@@ -62,7 +62,9 @@ class HealthcareService extends Request
         $this->setDefaultPageSize();
 
         if ($divisionUuid) {
-            $this->setDivisionUuidToQuery($divisionUuid);
+            $this->withQueryParameters([
+                self::QUERY_DIVISION_UUID => $divisionUuid
+            ]);
         }
 
         $mergedQuery = array_merge(
@@ -74,13 +76,20 @@ class HealthcareService extends Request
     }
 
     /**
-     * Set the division identifier (uuid) for the request.
+     * Get list of Healthcare Services.
+     *
+     * @param  string  $url
+     * @param $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    protected function setDivisionUuidToQuery(string $uuid): void
+    public function getSeveral(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
     {
-        $this->withQueryParameters([
-            self::QUERY_DIVISION_UUID => $uuid,
-        ]);
+        $this->setValidator($this->validateSeveral(...));
+        $this->setMapper($this->mapSeveral(...));
+        $this->setDefaultPageSize();
+
+        return $this->get($url, $query);
     }
 
     /**
@@ -107,31 +116,37 @@ class HealthcareService extends Request
      */
     public function create(array $data = []): PromiseInterface|EHealthResponse
     {
-        $this->setValidator($this->validateCreate(...));
+        $this->setValidator($this->validateResponse(...));
         $this->setMapper($this->mapCreate(...));
 
         return $this->post(self::URL, $data);
     }
 
     /**
-     * @param  string  $uuid  unique eHealth identifier of the license
+     * Activate previously deactivated healthcare service for the division of legal entity.
      *
+     * @param  string  $uuid  unique eHealth identifier
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function activate(string $uuid): PromiseInterface|EHealthResponse
     {
+        $this->setValidator($this->validateResponse(...));
+
         return $this->patch(self::URL . '/' . $uuid . self::ACTIONS_ACTIVATE);
     }
 
     /**
-     * @param  string  $uuid  unique eHealth identifier of the license
+     * Deactivate healthcare service for the division of a legal entity.
      *
+     * @param  string  $uuid  unique eHealth identifier
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function deactivate(string $uuid): PromiseInterface|EHealthResponse
     {
+        $this->setValidator($this->validateResponse(...));
+
         return $this->patch(self::URL . '/' . $uuid . self::ACTIONS_DEACTIVATE);
     }
 
@@ -238,16 +253,91 @@ class HealthcareService extends Request
     }
 
     /**
-     * Validate create healthcare service input,
+     * Validate healthcare service response (create, activate, deactivate),
      * see: https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/healthcare-services/create-healthcare-service
      */
-    protected function validateCreate(EHealthResponse $response): array
+    protected function validateResponse(EHealthResponse $response): array
     {
         $data = $response->getData();
 
         $replaced = self::replaceEHealthPropNames($data);
 
-        $validator = Validator::make($replaced, [
+        $validator = Validator::make($replaced, $this->validationRules());
+
+        if ($validator->fails()) {
+            Log::channel('e_health_errors')->error('Validation failed: ' . implode(', ', $validator->errors()->all()));
+        }
+
+        return $validator->validate();
+    }
+
+    protected function validateSeveral(EHealthResponse $response): array
+    {
+        $replaced = [];
+        foreach ($response->getData() as $data) {
+            $replaced[] = self::replaceEHealthPropNames($data);
+        }
+
+        // Add *. to every rule
+        $rules = collect($this->validationRules())
+            ->mapWithKeys(static fn (string|array $rule, string $key) => ["*.$key" => $rule])
+            ->toArray();
+
+        $validator = Validator::make($replaced, $rules);
+
+        if ($validator->fails()) {
+            Log::channel('e_health_errors')->error('Validation failed: ' . implode(', ', $validator->errors()->all()));
+        }
+
+        return $validator->validate();
+    }
+
+    /**
+     * Map UUID values to ID.
+     *
+     * @param  array  $validated
+     * @return array
+     */
+    protected function mapCreate(array $validated): array
+    {
+        $validated['division_id'] = DivisionModel::where('uuid', $validated['division_id'])->value('id');
+        $validated['legal_entity_id'] = LegalEntityModel::where('uuid', $validated['legal_entity_id'])->value('id');
+
+        return $validated;
+    }
+
+    /**
+     * Map UUID values to ID for multiple records.
+     *
+     * @param  array  $validated
+     * @return array
+     */
+    protected function mapSeveral(array $validated): array
+    {
+        // Get unique uuids.
+        $divisionUuids = collect($validated)->pluck('division_id')->unique()->filter()->values();
+        $legalEntityUuids = collect($validated)->pluck('legal_entity_id')->unique()->filter()->values();
+
+        $divisionMap = DivisionModel::whereIn('uuid', $divisionUuids)
+            ->pluck('id', 'uuid')
+            ->toArray();
+
+        $legalEntityMap = LegalEntityModel::whereIn('uuid', $legalEntityUuids)
+            ->pluck('id', 'uuid')
+            ->toArray();
+
+        // Map uuid to id
+        return collect($validated)->map(static function (array $item) use ($divisionMap, $legalEntityMap) {
+            $item['division_id'] = $divisionMap[$item['division_id']];
+            $item['legal_entity_id'] = $legalEntityMap[$item['legal_entity_id']];
+
+            return $item;
+        })->toArray();
+    }
+
+    protected function validationRules(): array
+    {
+        return [
             'available_time' => 'array',
             'available_time.*.all_day' => 'required_with:available_time|boolean',
             'available_time.*.available_end_time' => 'required_if:available_time.*.all_day,false|nullable|string',
@@ -295,27 +385,7 @@ class HealthcareService extends Request
             ],
             'ehealth_updated_at' => 'required|date',
             'ehealth_updated_by' => 'required|uuid'
-        ]);
-
-        if ($validator->fails()) {
-            Log::channel('e_health_errors')->error('Validation failed: ' . implode(', ', $validator->errors()->all()));
-        }
-
-        return $validator->validate();
-    }
-
-    /**
-     * Map UUID values to ID.
-     *
-     * @param  array  $validated
-     * @return array
-     */
-    protected function mapCreate(array $validated): array
-    {
-        $validated['division_id'] = DivisionModel::where('uuid', $validated['division_id'])->value('id');
-        $validated['legal_entity_id'] = LegalEntityModel::where('uuid', $validated['legal_entity_id'])->value('id');
-
-        return $validated;
+        ];
     }
 
     /**

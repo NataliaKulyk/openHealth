@@ -1,28 +1,39 @@
 @use('App\Enums\Status')
 
+@php
+    $tableHeaders = [
+            __('healthcare-services.specialisation'),
+            __('forms.division_name'),
+            __('healthcare-services.providing_condition'),
+            __('healthcare-services.created_at'),
+            __('healthcare-services.status'),
+            __('forms.action')
+        ];
+@endphp
+
 <div>
     <x-messages/>
+    <x-forms.loading/>
 
     <x-header-navigation x-data="{ showFilter: false }">
         <x-slot name="title">{{ __('forms.services') }}</x-slot>
-        <x-slot name="description">{{ $currentDivision['type'] }} '{{ $currentDivision['name'] }}'</x-slot>
         <x-slot name="navigation">
             <div class="rounded-sm border-stroke shadow-default dark:border-strokedark dark:bg-boxdark">
-                <div x-data="{ isDivisionActive: @js($divisionStatus) }"
+                <div x-cloak
                      class="flex justify-end border-stroke gap-2 px-7 py-4 dark:border-strokedark"
-                     x-cloak
                 >
-                    <a href="{{ route('healthcare-service.create', [legalEntity(), $division]) }}"
-                       x-show="isDivisionActive"
-                       type="button"
-                       class="button-primary"
-                    >
-                        {{ __('forms.add_healthcare_service') }}
-                    </a>
+                    @isset($divisionId)
+                        <a href="{{ route('healthcare-service.create', [legalEntity(), $divisionId]) }}"
+                           type="button"
+                           class="button-primary"
+                        >
+                            {{ __('forms.add_healthcare_service') }}
+                        </a>
 
-                    <button wire:click="sync" class="button-sync">
-                        {{ __('forms.synchronise_with_eHealth') }}
-                    </button>
+                        <button wire:click="sync" class="button-sync">
+                            {{ __('forms.synchronise_with_eHealth') }}
+                        </button>
+                    @endisset
                 </div>
             </div>
         </x-slot>
@@ -35,37 +46,37 @@
                     <x-slot name="headers" :list="$tableHeaders"></x-slot>
                     <x-slot name="tbody">
                         @nonempty($healthcareServices->items())
-                        @foreach ($healthcareServices as $k => $service)
+                        @foreach ($healthcareServices as $service)
                             <tr>
                                 <td class="p-4 text-sm text-center font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
                                     <p class="font-semibold text-gray-900 dark:text-white">
-                                        {{ $service->uuid ?? '' }}
+                                        {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] }}
                                     </p>
                                 </td>
 
                                 <td class="p-4 text-sm font-normal text-center text-gray-500 whitespace-nowrap dark:text-gray-400">
                                     <p class="inline-flex items-center font-medium text-gray-600 dark:text-gray-500">
-{{--                                        {{ $dictionaries['show']['HEALTHCARE_SERVICE_CATEGORIES'][$service->healthcare_category] ?? '' }}--}}
+                                        {{ $service->division->name }}
                                     </p>
                                 </td>
 
                                 <td class="p-4 text-sm font-normal text-center text-gray-500 whitespace-nowrap dark:text-gray-400">
                                     <p class="inline-flex items-center font-medium text-gray-600 dark:text-gray-500">
-                                        {{ $dictionaries['show']['PROVIDING_CONDITION'][$service->providing_condition] ?? '' }}
+                                        {{ $dictionaries['PROVIDING_CONDITION'][$service->providingCondition] }}
                                     </p>
                                 </td>
 
                                 <td class="p-4 text-sm font-normal text-center text-gray-500 whitespace-nowrap dark:text-gray-400 ">
                                     <p class="text-gray-900 dark:text-white">
-                                        {{ $dictionaries['show']['SPECIALITY_TYPE'][$service->speciality_type] ?? '' }}
+                                        {{ $service->createdAt->format('d.m.Y') }}
                                     </p>
                                 </td>
 
                                 <td class="p-4 text-sm font-normal text-center text-gray-500 whitespace-nowrap dark:text-gray-400">
                                     @if ($service->status === Status::INACTIVE)
-                                        <span class="rejected text-meta-1">{{ Status::INACTIVE->label() }}</span>
+                                        <span class="badge-red text-meta-1">{{ Status::INACTIVE->label() }}</span>
                                     @else
-                                        <span class="approved text-meta-3">{{ Status::ACTIVE->label() }}</span>
+                                        <span class="badge-green text-meta-3">{{ Status::ACTIVE->label() }}</span>
                                     @endif
                                 </td>
 
@@ -129,25 +140,23 @@
                                                      class="absolute right-0 mt-2 w-40 rounded-md bg-white shadow-md z-50"
                                                 >
                                                     @if ($service->status === Status::ACTIVE)
-                                                        <a href="#"
-                                                           wire:click="edit({{ $service }}); toggle()"
-                                                           class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
+                                                        <button wire:click="edit({{ $service }}); toggle()"
+                                                                class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
                                                         >
                                                             {{ __('forms.edit') }}
-                                                        </a>
-                                                        <a href="#"
-                                                           wire:click="deactivate({{ $service }}); toggle()"
-                                                           class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
+                                                        </button>
+                                                        <button
+                                                            wire:click="deactivate('{{ $service->uuid }}'); toggle()"
+                                                            class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
                                                         >
                                                             {{ __('forms.deactivate') }}
-                                                        </a>
+                                                        </button>
                                                     @else
-                                                        <a href="#"
-                                                           wire:click="activate({{ $service }}); toggle()"
-                                                           class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
+                                                        <button wire:click="activate('{{ $service->uuid }}'); toggle()"
+                                                                class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm hover:bg-gray-50 disabled:text-gray-500"
                                                         >
                                                             {{ __('forms.activate') }}
-                                                        </a>
+                                                        </button>
                                                     @endif
                                                 </div>
                                             </div>
@@ -181,7 +190,4 @@
             </a>
         </x-secondary-button>
     </div>
-
-    @include('livewire.division._parts._healthcare_service_form')
-
 </div>
