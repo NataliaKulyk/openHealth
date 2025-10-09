@@ -61,7 +61,7 @@
                     </div>
 
 
-                    <div x-cloak x-show="showFilter" x-transition class="pt-4 mt-4">
+                    <div x-cloak x-show="showFilter" x-transition class="pt-0 mt-1">
                         <div class="form-row-4">
                             <div class="form-group phone-wrapper">
                                 <input wire:model.defer="filter.phone"
@@ -195,7 +195,7 @@
                             <span>{{ __('forms.search') }}</span>
                         </button>
 
-                        <button type="button" wire:click="resetFilters" class="button-primary-outline">
+                        <button type="button" wire:click="resetFilters" class="button-primary-outline-red">
                             {{ __('forms.reset_all_filters') }}
                         </button>
                     </div>

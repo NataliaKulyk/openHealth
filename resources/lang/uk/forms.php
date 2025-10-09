@@ -265,7 +265,7 @@ return [
     'attestation_date' => 'Дата атестації',
     'select_speciality' => 'Оберіть спеціальність',
     'select_level' => 'Оберіть ступінь',
-    'select_qualification_type' => 'Оберіть тип кваліфікіції',
+    'select_qualification_type' => 'Оберіть тип кваліфікації',
     'speciality' => 'Спеціальність',
     'city' => 'Місто',
 

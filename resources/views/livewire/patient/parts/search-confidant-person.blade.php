@@ -1,7 +1,7 @@
 @use('Carbon\CarbonImmutable')
 
 <div x-data="{ showFilter: true }">
-    <x-section-navigation class="!p-0">
+    <x-header-navigation class="!p-0">
         <x-slot name="navigation">
             <!-- Search input fields -->
             <div class="text-gray-900 dark:text-white text-xl leading-normal mb-6">
@@ -20,7 +20,7 @@
                 </div>
             @endif
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     <!-- Patient list -->
     <div class="my-6">

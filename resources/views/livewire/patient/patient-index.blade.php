@@ -35,14 +35,14 @@
 
                 @include('livewire.patient.parts.search-filter', ['context' => 'index'])
 
-                <div class="mb-9 mt-6 flex gap-7">
+                <div class="mb-9 mt-6 flex gap-2">
                     @can('viewAny', Person::class)
                         <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
                             @icon('search', 'w-4 h-4')
                             <span>{{ __('patients.search') }}</span>
                         </button>
                     @endcan
-                    <button type="button" wire:click="resetFilters" class="button-primary-outline">
+                    <button type="button" wire:click="resetFilters" class="button-primary-outline-red">
                         {{ __('forms.reset_all_filters') }}
                     </button>
                 </div>

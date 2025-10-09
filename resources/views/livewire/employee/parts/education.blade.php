@@ -209,7 +209,7 @@
                                     </div>
                                 </div>
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
-                                <div class="mt-6 flex justify-between space-x-2">
+                                <div class="mt-6 flex flex-row items-center gap-4 border-t border-gray-200 pt-6">
                                     <button type="button" @click="openModal = false" class="button-minor">{{ __('forms.cancel') }}</button>
                                     <button @click.prevent="newEducation ? educations.push(modalEducation) : educations[item] = modalEducation; openModal = false"
                                             class="button-primary"

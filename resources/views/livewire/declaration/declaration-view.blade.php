@@ -2,11 +2,11 @@
 
 <section class="section-form">
     <div class="flex items-center justify-between gap-4 flex-wrap">
-        <x-section-navigation class="breadcrumb-form flex-1 min-w-0">
+        <x-header-navigation class="breadcrumb-form flex-1 min-w-0">
             <x-slot name="title">
                 {{ __('declarations.label') }} - {{ $declaration->person->fullName }}
             </x-slot>
-        </x-section-navigation>
+        </x-header-navigation>
 
         <div class="shrink-0">
             <button @click="

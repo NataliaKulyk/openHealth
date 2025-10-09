@@ -2,7 +2,7 @@
 @use('App\Models\MedicalEvents\Sql\Encounter')
 
 <section>
-    <x-section-navigation x-data="{ showFilter: true }" class="breadcrumb-form">
+    <x-header-navigation x-data="{ showFilter: true }" class="breadcrumb-form">
         <x-slot name="title">
             {{ $patientFullName }}
         </x-slot>
@@ -72,7 +72,7 @@
                 </ul>
             </nav>
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     {{ $slot }}
     <x-messages/>

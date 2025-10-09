@@ -3,7 +3,7 @@
 <div>
     <x-messages/>
 
-    <x-section-navigation x-data="{ showFilter: false }">
+    <x-header-navigation x-data="{ showFilter: false }">
         <x-slot name="title">{{ __('forms.services') }}</x-slot>
         <x-slot name="description">{{ $currentDivision['type'] }} '{{ $currentDivision['name'] }}'</x-slot>
         <x-slot name="navigation">
@@ -26,7 +26,7 @@
                 </div>
             </div>
         </x-slot>
-    </x-section-navigation>
+    </x-header-navigation>
 
     <div class="overflow-x-auto">
         <div class="inline-block min-w-full align-middle">
