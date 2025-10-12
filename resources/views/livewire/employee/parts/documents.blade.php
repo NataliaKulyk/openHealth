@@ -150,7 +150,7 @@
                                     </div>
 
                                     <div>
-                                        <label for="documentIssuedBy" class="label-modal">{{__('forms.issued_by')}}<span class="text-red-600"> *</span></label>
+                                        <label for="documentIssuedBy" class="label-modal">{{__('forms.issued_by')}}<span class="text-red-600"></span></label>
                                         <input x-model="modalDocument.issuedBy" type="text" name="documentIssuedBy"
                                                id="documentIssuedBy" class="input-modal">
                                     </div>

@@ -176,7 +176,7 @@ class EditLegalEntity extends LegalEntity
                 $user = Auth::user();
 
                 try {
-                    $this->createEmployeeRequest($this->legalEntity, $data, $response['urgent']['employee_request_id'], $user?->id ? (string)$user->id : null);
+                    $this->createEmployeeRequest($this->legalEntity, $data, $response['urgent']['employee_request_id']);
                 } catch (Exception $err) {
                     throw new Exception('Error: createEmployeeRequest: ' . $err->getMessage(), $err->getCode());
                 }

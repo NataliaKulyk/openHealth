@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Livewire\Employee\Forms;
 
 use App\Core\Arr;
+use App\Livewire\Employee\EmployeeCreate;
 use App\Models\Employee\BaseEmployee;
 use App\Rules\Cyrillic;
 use App\Rules\DocumentNumber;
 use App\Rules\UniquePassportRule;
+use Livewire\Component;
 use Livewire\Form;
 use App\Rules\Name;
 use App\Rules\TaxId;
@@ -57,11 +59,19 @@ class EmployeeForm extends Form
         'educations' => [],
     ];
 
-    public function rulesForSave(): array
+    public function rulesForSave(Component $component): array
     {
+        $partyRules = $this->partyRules();
+
+        // If the form is being used inside the EmployeeCreate component...
+        if ($component instanceof EmployeeCreate) {
+            $partyRules['party.email'][] = new UniqueEmailInLegalEntity();
+        }
+
+        // Merge the potentially modified party rules with the others.
         return array_merge(
             $this->rootFieldsRules(),
-            $this->partyRules(),
+            $partyRules, // Use the modified $partyRules variable here
             $this->documentsRules(),
             $this->doctorRules()
         );
@@ -86,6 +96,7 @@ class EmployeeForm extends Form
             'divisionId' => [
                 Rule::requiredIf(function () {
                     $pharmacyTypes = config('ehealth.pharmacy_employee_types', []);
+
                     return in_array($this->employeeType, $pharmacyTypes, true);
                 }),
                 'nullable',
@@ -189,12 +200,12 @@ class EmployeeForm extends Form
             'doctor.specialities.*.certificateNumber' => ['required', 'string', 'max:255'],
 
             'doctor.scienceDegree' => ['nullable', 'array'],
-            'doctor.scienceDegree.country' => [Rule::requiredIf(fn() => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
-            'doctor.scienceDegree.city' => [Rule::requiredIf(fn() => !empty($this->doctor['scienceDegree'])), 'string', 'max:255', new Cyrillic()],
-            'doctor.scienceDegree.degree' => [Rule::requiredIf(fn() => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
-            'doctor.scienceDegree.institutionName' => [Rule::requiredIf(fn() => !empty($this->doctor['scienceDegree'])), 'string', 'max:255', new Cyrillic()],
-            'doctor.scienceDegree.diplomaNumber' => [Rule::requiredIf(fn() => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
-            'doctor.scienceDegree.speciality' => [Rule::requiredIf(fn() => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
+            'doctor.scienceDegree.country' => [Rule::requiredIf(fn () => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
+            'doctor.scienceDegree.city' => [Rule::requiredIf(fn () => !empty($this->doctor['scienceDegree'])), 'string', 'max:255', new Cyrillic()],
+            'doctor.scienceDegree.degree' => [Rule::requiredIf(fn () => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
+            'doctor.scienceDegree.institutionName' => [Rule::requiredIf(fn () => !empty($this->doctor['scienceDegree'])), 'string', 'max:255', new Cyrillic()],
+            'doctor.scienceDegree.diplomaNumber' => [Rule::requiredIf(fn () => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
+            'doctor.scienceDegree.speciality' => [Rule::requiredIf(fn () => !empty($this->doctor['scienceDegree'])), 'string', 'max:255'],
             'doctor.scienceDegree.issuedDate' => ['nullable', 'date'],
 
             'doctor.qualifications' => ['nullable', 'array'],

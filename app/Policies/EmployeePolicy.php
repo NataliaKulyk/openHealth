@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
+use App\Enums\Status;
 use App\Models\Employee\Employee;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -28,13 +31,17 @@ class EmployeePolicy
 
     public function update(User $user, Employee $employee): Response
     {
+        if ($employee->status === Status::DISMISSED) {
+            return Response::deny(__('employees.policy.emp.dismissed_no_edit'));
+        }
+
         if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
         return $user->can('employee:write')
             ? Response::allow()
-            : Response::deny(__('employees.policy.update_denied'));
+            : Response::deny(__('employees.policy.emp.update_denied'));
     }
 
     public function deactivate(User $user, Employee $employee): Response

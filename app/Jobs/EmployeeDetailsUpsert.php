@@ -7,14 +7,9 @@ namespace App\Jobs;
 use App\Core\EHealthJob;
 use App\Enums\JobStatus;
 use App\Models\Employee\Employee;
-use App\Models\User;
 use App\Repositories\Repository;
-use Illuminate\Bus\Batchable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use App\Classes\eHealth\EHealth;
@@ -46,17 +41,25 @@ class EmployeeDetailsUpsert extends EHealthJob
     }
 
     // Get data from EHealth API
+
+    /**
+     * @throws ConnectionException
+     */
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse|null
     {
         return EHealth::employee()->withToken($token)->getDetails($this->employee->uuid, groupByEntities: true);
     }
 
     // Store or update data in the database
+
+    /**
+     * @throws Throwable
+     */
     protected function processResponse(?EHealthResponse $response): void
     {
         $validatedData = $response->validate();
 
-        echo 'Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity ? $this->legalEntity->id : 'N/A') . PHP_EOL;
+        echo 'Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity->id ?? 'N/A') . PHP_EOL;
 
         $this->employee->save();
 

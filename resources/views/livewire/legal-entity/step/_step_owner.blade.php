@@ -265,7 +265,6 @@
                         x-model="phones[index].type"
                         class="input-select"
                         :class="{ 'input-error': errors[`legalEntityForm.owner.phones.${index}.type`] }"
-                        :disabled="isDisabled"
                         :id="$id('phone', '_type_' + index)"
                     >
                         <option value="_placeholder_" selected hidden>-- {{ __('forms.type_mobile') }} --</option>
@@ -297,7 +296,6 @@
                         x-mask="+380999999999"
                         :id="$id('phone', '_number' + index)"
                         :class="{ 'input-error border-red-500': errors[`legalEntityForm.owner.phones.${index}.number`] }"
-                        :disabled="isDisabled"
                     />
 
                     <template x-if="errors[`legalEntityForm.owner.phones.${index}.number`]">
@@ -312,7 +310,6 @@
                 <!-- Action Phone Buttons -->
                 <div
                     x-cloak
-                    x-show="!isDisabled"
                     class="flex items-center space-x-4 justify-start"
                 >
                     <!-- Add phone -->

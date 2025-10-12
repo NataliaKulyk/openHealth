@@ -37,6 +37,7 @@ class Party extends Model
         'working_experience',
         'declaration_count',
         'declaration_limit',
+        'verification_status',
     ];
 
     protected $casts = [

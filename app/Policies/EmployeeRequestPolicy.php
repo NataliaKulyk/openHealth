@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\Employee\EmployeeRequest;
+use App\Models\Relations\Party;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -26,8 +29,14 @@ class EmployeeRequestPolicy
             : Response::deny(__('employees.policy.req.view_denied'));
     }
 
-    public function create(User $user): Response
+    public function create(User $user, ?Party $party = null): Response
     {
+        if ($party) {
+            if ($party->employees->isEmpty()) {
+                return Response::deny(__('employees.policy.req.add_position_denied_for_draft'));
+            }
+        }
+
         return $user->can('employee_request:write')
             ? Response::allow()
             : Response::deny(__('employees.policy.req.create_denied'));

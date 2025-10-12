@@ -7,6 +7,7 @@ namespace App\Classes\eHealth\Api;
 use App\Classes\eHealth\EHealthRequest;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
+use App\Models\Division;
 use RuntimeException;
 
 class EmployeeRequest extends EHealthRequest
@@ -64,6 +65,69 @@ class EmployeeRequest extends EHealthRequest
             'science_degree' => $doctorData['science_degree'] ?? null,
         ];
     }
+
+    /**
+     * Builds the eHealth-compliant payload from the application's internal data structure.
+     *
+     * @param array $nestedData Data from the Revision model.
+     * @return array The structured payload ready for signing and sending to eHealth.
+     */
+    public function schemaCreate(array $nestedData): array
+    {
+        $localDivisionId = Arr::get($nestedData, 'employee_request_data.division_id');
+        $divisionUuid = $localDivisionId ? Division::find($localDivisionId)?->uuid : null;
+
+        $partyPayload = Arr::only($nestedData['party'] ?? [], [
+            'first_name', 'last_name', 'second_name', 'birth_date', 'gender',
+            'tax_id', 'email', 'about_myself'
+        ]);
+
+        $partyPayload['no_tax_id'] = (bool) Arr::get($nestedData, 'party.no_tax_id');
+        $partyPayload['working_experience'] = (int) Arr::get($nestedData, 'party.working_experience');
+        $partyPayload['documents'] = $nestedData['documents'] ?? [];
+        $partyPayload['phones'] = $nestedData['phones'] ?? [];
+
+        $payload = [
+            'position' => Arr::get($nestedData, 'employee_request_data.position'),
+            'start_date' => Arr::get($nestedData, 'employee_request_data.start_date'),
+            'end_date' => Arr::get($nestedData, 'employee_request_data.end_date'),
+            'employee_type' => Arr::get($nestedData, 'employee_request_data.employee_type'),
+            'division_id' => $divisionUuid,
+            'legal_entity_id' => legalEntity()->uuid,
+            'status' => 'NEW',
+            'party' => $partyPayload,
+        ];
+
+        $doctorTypes = config('ehealth.doctors_type', []);
+        $employeeType = Arr::get($nestedData, 'employee_request_data.employee_type');
+
+        if (in_array($employeeType, $doctorTypes, true)) {
+            $doctorData = Arr::get($nestedData, 'doctor');
+            if (!empty($doctorData)) {
+                $payloadKey = strtolower($employeeType);
+                $payload[$payloadKey] = $doctorData;
+            }
+        }
+
+        return ['employee_request' => $this->removeEmptyValuesRecursively($payload)];
+    }
+
+    /**
+     * Recursively removes empty values from an array.
+     */
+    private function removeEmptyValuesRecursively(array $array): array
+    {
+        foreach ($array as $key => &$value) {
+            if (is_array($value)) {
+                $value = $this->removeEmptyValuesRecursively($value);
+            }
+        }
+
+        return array_filter($array, static function ($value) {
+            return !is_null($value) && $value !== '' && $value !== [];
+        });
+    }
+
 
     public function schemaRequest(): array
     {

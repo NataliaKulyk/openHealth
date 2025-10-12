@@ -6,7 +6,6 @@ namespace App\Listeners;
 
 use App\Events\EhealthUserVerified;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class SyncUserRolesAfterVerification
 {

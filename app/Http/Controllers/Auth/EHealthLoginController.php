@@ -24,7 +24,6 @@ use App\Classes\eHealth\Api\EmployeeApi;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use App\Classes\eHealth\Request as EHealthRequest;
-use App\Models\Relations\Party;
 use Illuminate\Contracts\Validation\Validator as ResponseValidator;
 use Illuminate\Validation\Rule;
 
@@ -122,14 +121,14 @@ class EHealthLoginController extends Controller
             trim(data_get($validatedEHealthTokenData, 'details.scope'))
         );
 
+        $user->syncPermissions($ehealthScopes);
+
         EHealthUserLogin::dispatch($user, $legalEntity, $authUserUUID, $this->isFirstLogin);
 
-        // User without party isn't verified by our system yet. Redirect to the identity verification page
         $user->refresh();
 
         if (!$user->party) {
             Session::put('selected_legal_entity_uuid', $legalEntity->uuid);
-            // Respect EHealth scopes
             $user->syncPermissions($ehealthScopes);
 
             return Redirect::route('party.verify');

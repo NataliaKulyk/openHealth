@@ -10,7 +10,6 @@ use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Jobs\EmployeeSync;
-use App\Livewire\Employee\Forms\Api\EmployeeRequestApi;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
@@ -22,6 +21,7 @@ use Illuminate\Bus\Batch;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
@@ -89,95 +89,124 @@ class EmployeeIndex extends EmployeeComponent
     #[Computed]
     public function parties(): LengthAwarePaginator
     {
-        $legalEntityId = $this->legalEntity->id;
+        // === Step 1: Fetch ALL potential data (real parties and drafts) ===
+        $realParties = Party::query()
+            ->whereHas('employees', fn ($sub) => $sub->where('legal_entity_id', $this->legalEntity->id))
+            ->orWhereHas('employeeRequests', fn ($sub) => $sub->where('legal_entity_id', $this->legalEntity->id))
+            ->with(['phones', 'employees.division', 'employeeRequests.division'])
+            ->get();
 
-        $employeeConstraints = function ($query) {
-            $employeeStatuses = array_intersect($this->status, [Status::APPROVED->value, Status::DISMISSED->value]);
+        $unassignedRequests = EmployeeRequest::query()
+            ->where('legal_entity_id', $this->legalEntity->id)
+            ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
+            ->whereNull('party_id')
+            ->with(['revision', 'division'])
+            ->get();
 
-            if (empty($employeeStatuses)) {
-                return $query->whereRaw('1=0');
-            }
+        // === Step 2: Transform drafts into the same "Party" structure ===
+        $draftParties = $unassignedRequests->map(function (EmployeeRequest $request) {
+            $partyData = $request->revision->data['party'] ?? [];
+            $fakeParty = new Party();
+            $fakeParty->fill($partyData);
+            $fakeParty->id = 'draft_' . $request->id;
+            $fakeParty->setRelation('employeeRequests', collect([$request]));
+            $fakeParty->setRelation('employees', collect());
+            $fakeParty->setRelation('phones', collect());
 
-            $query->whereIn('status', $employeeStatuses);
-
-            $this->applyCommonFiltersToQuery($query);
-        };
-
-        $requestConstraints = function ($query) {
-            if (!in_array(Status::NEW->value, $this->status, true)) {
-                return $query->whereRaw('1=0');
-            }
-
-            $query->whereNull('applied_at')
-                ->whereIn('status', [Status::NEW->value, Status::SIGNED->value]);
-
-            $this->applyCommonFiltersToQuery($query);
-        };
-
-        $query = Party::query();
-
-        $query->where(function ($q) use ($legalEntityId) {
-            $q->whereHas('employees', fn ($sub) => $sub->where('legal_entity_id', $legalEntityId))
-                ->orWhereHas('employeeRequests', fn ($sub) => $sub->where('legal_entity_id', $legalEntityId));
+            return $fakeParty;
         });
 
-        if (!empty($this->search)) {
-            $query->where(fn ($q) => $q->where('last_name', 'ilike', "%{$this->search}%")
-                ->orWhere('first_name', 'ilike', "%{$this->search}%")
-                ->orWhere('second_name', 'ilike', "%{$this->search}%"));
-        }
-        if (!empty($this->filter['phone'])) {
-            $query->whereHas('phones', fn ($q) => $q->where('number', 'like', '%' . $this->filter['phone'] . '%'));
-        }
-        if (!empty($this->filter['email'])) {
-            $query->where('email', 'ilike', '%' . $this->filter['email'] . '%');
-        }
+        // === Step 3: Create a single, unified list of all "people" ===
+        $allItems = $realParties->merge($draftParties);
 
-        if (!empty($this->status)) {
-            $query->where(function ($q) use ($employeeConstraints, $requestConstraints) {
-                $q->whereHas('employees', $employeeConstraints)
-                    ->orWhereHas('employeeRequests', $requestConstraints);
-            });
-        } else {
-            $query->whereRaw('1=0');
-        }
+        // === Step 4: UNIFIED FILTERING LOGIC (map-then-filter) ===
 
-        $paginator = $query->select('id')->paginate(10);
+        $filteredItems = $allItems
+            // First, filter the "children" (positions) of each party
+            ->map(function (Party $party) {
+                // Filter the actual employee records
+                $filteredEmployees = $party->employees->filter(fn ($pos) => $this->positionMatchesFilters($pos));
+                // Filter the draft requests
+                $filteredRequests = $party->employeeRequests->filter(fn ($pos) => $this->positionMatchesFilters($pos));
 
-        $partiesOnPage = Party::whereIn('id', $paginator->pluck('id')->all())
-            ->with([
-                       'phones',
-                       'employees' => function ($query) use ($legalEntityId, $employeeConstraints) {
-                           $query->where('legal_entity_id', $legalEntityId)->with('division');
-                           $employeeConstraints($query);
-                       },
-                       'employeeRequests' => function ($query) use ($legalEntityId, $requestConstraints) {
-                           $query->where('legal_entity_id', $legalEntityId)->with('division');
-                           $requestConstraints($query);
-                       },
-                   ])
-            ->get()
-            ->filter(fn ($party) => $party->employees->isNotEmpty() || $party->employeeRequests->isNotEmpty())
-            ->sortBy(function ($party) {
-                $hasActiveEmployees = $party->employees->isNotEmpty();
-                $hasRequests = $party->employeeRequests->isNotEmpty();
-                if ($hasActiveEmployees) {
-                    return 1;
-                }
-                if ($hasRequests) {
-                    return 2;
+                // Replace the original relationships with the filtered ones
+                $party->setRelation('employees', $filteredEmployees);
+                $party->setRelation('employeeRequests', $filteredRequests);
+
+                return $party;
+            })
+            // Now, filter the "parents" (parties)
+            ->filter(function (Party $party) {
+                // 1. Remove parties that have no positions left after filtering
+                if ($party->employees->isEmpty() && $party->employeeRequests->isEmpty()) {
+                    return false;
                 }
 
-                return 3;
+                // 2. Apply party-level filters (search, email, phone)
+                if (!empty($this->search) && !str_contains(strtolower($party->fullName), strtolower($this->search))) {
+                    return false;
+                }
+                if (!empty($this->filter['email']) && stripos($party->email ?? '', $this->filter['email']) === false) {
+                    return false;
+                }
+                if (!empty($this->filter['phone'])) {
+                    $phoneMatches = $party->phones->contains(fn ($phone) => str_contains($phone->number, $this->filter['phone']));
+                    if (!$phoneMatches) {
+                        return false;
+                    }
+                }
+
+                // If all checks passed, keep this party
+                return true;
             });
+
+        // === Step 5: Manually paginate the FINAL filtered and sorted collection ===
+        $perPage = 10;
+        $currentPage = $this->getPage();
+
+        $sortedItems = $filteredItems->sortBy(fn ($party) => $party->employees->isNotEmpty() ? 1 : 2);
+
+        $currentPageItems = $sortedItems->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
         return new LengthAwarePaginator(
-            $partiesOnPage,
-            $paginator->total(),
-            $paginator->perPage(),
-            $paginator->currentPage(),
-            ['path' => $paginator->path()]
+            $currentPageItems,
+            $sortedItems->count(),
+            $perPage,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
         );
+    }
+
+    /**
+     * A new helper method to check if a single position (Employee or EmployeeRequest)
+     * matches the current position-level filters (status, division, etc.).
+     */
+    private function positionMatchesFilters($position): bool
+    {
+        // Filter by Status
+        $currentStatuses = $this->status;
+        if (!empty($currentStatuses)) {
+            $statusMatch = $position->status && in_array($position->status->value, $currentStatuses, true);
+            if (!$statusMatch && $position instanceof EmployeeRequest && in_array(Status::NEW->value, $currentStatuses, true) && $position->status?->value === Status::SIGNED->value) {
+                $statusMatch = true;
+            }
+            if (!$statusMatch) {
+                return false;
+            }
+        }
+
+        // Filter by Division, Role, Position
+        if (!empty($this->filter['division_id']) && $position->division_id !== $this->filter['division_id']) {
+            return false;
+        }
+        if (!empty($this->filter['role']) && $position->employee_type !== $this->filter['role']) {
+            return false;
+        }
+        if (!empty($this->filter['position']) && $position->position !== $this->filter['position']) {
+            return false;
+        }
+
+        return true; // This position matches all criteria
     }
 
     public function showModalDeactivate(int $id): void
@@ -405,5 +434,48 @@ class EmployeeIndex extends EmployeeComponent
         if (!empty($this->filter['position'])) {
             $query->where('position', $this->filter['position']);
         }
+    }
+
+    /**
+     * Fetches unassigned EmployeeRequests and applies filters to them manually.
+     *
+     * @return Collection
+     */
+    private function getUnassignedRequests(): Collection
+    {
+        // Only search for drafts if "New" status is selected
+        if (!in_array(Status::NEW->value, $this->status, true)) {
+            return collect();
+        }
+
+        $unassignedQuery = EmployeeRequest::query()
+            ->where('legal_entity_id', $this->legalEntity->id)
+            ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
+            ->whereNull('party_id')
+            ->with(['revision', 'division']);
+
+        // ... (the rest of the method remains the same)
+        $this->applyCommonFiltersToQuery($unassignedQuery);
+
+        // Manually apply filters that relate to party/revision data
+        return $unassignedQuery->get()->filter(function (EmployeeRequest $request) {
+            $revisionData = $request->revision->data ?? [];
+            $partyData = $revisionData['party'] ?? [];
+
+            if (!empty($this->search)) {
+                $fullName = strtolower(($partyData['last_name'] ?? '') . ' ' . ($partyData['first_name'] ?? '') . ' ' . ($partyData['second_name'] ?? ''));
+                if (!str_contains($fullName, strtolower($this->search))) {
+                    return false;
+                }
+            }
+
+            if (!empty($this->filter['email'])) {
+                if (stripos($partyData['email'] ?? '', $this->filter['email']) === false) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
     }
 }

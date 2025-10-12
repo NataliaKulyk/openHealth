@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace App\Livewire\Employee;
 
-use App\Livewire\Employee\Traits\ManagesEmployeeForm;
+use App\Core\Arr;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
+use App\Repositories\Repository;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 
-class EmployeePositionAdd extends EmployeeComponent
+class EmployeePositionAdd extends AbstractEmployeeFormManager
 {
-    use ManagesEmployeeForm;
-
     #[Locked]
     public ?int $partyId = null;
     protected ?Party $party = null;
@@ -35,6 +34,45 @@ class EmployeePositionAdd extends EmployeeComponent
         if ($this->partyId) {
             $this->party = Party::findOrFail($this->partyId);
         }
+    }
+
+    /**
+     * Implements the draft persistence logic for adding a new position.
+     * It updates the draft if it already exists for this session,
+     * or creates a new one if it's the first save.
+     */
+    protected function handleDraftPersistence(): EmployeeRequest
+    {
+        $preparedData = $this->form->getPreparedData();
+        $nestedDataForRevision = $this->mapRevisionData($preparedData);
+
+        // Prepare the base data for the request
+        $employeeRequestData = Arr::only($preparedData, [
+            'position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email'
+        ]);
+
+        // Add user and party IDs once, as they are constant for this component
+        $employeeRequestData['user_id'] = $this->party->user_id;
+        $employeeRequestData['party_id'] = $this->party->id;
+
+        // Check if a draft already exists for this form session
+        if ($this->employeeRequestId) {
+            $existingRequest = EmployeeRequest::find($this->employeeRequestId);
+
+            if ($existingRequest && is_null($existingRequest->uuid)) {
+                // Update the existing draft with the prepared data
+                $existingRequest->fill($employeeRequestData)->save();
+                $existingRequest->revision?->update(['data' => $nestedDataForRevision]);
+
+                return $existingRequest;
+            }
+        }
+
+        // If no draft exists, create a new one using the prepared data
+        $newRequest = Repository::employee()->createEmployeeRequestDraft($employeeRequestData, legalEntity());
+        $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
+
+        return $newRequest;
     }
 
     public function render(): View

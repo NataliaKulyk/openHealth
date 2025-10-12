@@ -492,19 +492,11 @@ class CreateLegalEntity extends LegalEntity
                     $this->createLicense($response['data']['license']);
                 }
 
-                try {
-                    $user = $this->createUser();
-                } catch (Exception $err) {
-                    throw new Exception('Error: create User: ' . $err->getMessage(), 2);
-                }
+                $user = $this->createUser();
 
                 $user->unsetRelation('roles');
 
-                try {
-                    $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id'], $user?->id ? (string)$user->id : null);
-                } catch (Exception $err) {
-                    throw new Exception('Error: createEmployeeRequest: ' . $err->getMessage(), $err->getCode());
-                }
+                $this->createEmployeeRequest($this->legalEntity, $requestData, $response['urgent']['employee_request_id']);
 
                 if (Cache::has($this->entityCacheKey)) {
                     Cache::forget($this->entityCacheKey);
@@ -527,7 +519,7 @@ class CreateLegalEntity extends LegalEntity
         } catch (Exception $err) {
             Log::error(__('Сталася помилка під час обробки запиту'), ['error' => $err->getMessage()]);
 
-            throw new Exception(__('Сталася помилка під час обробки запиту.' . ' Код помилки: ' . $err->getCode()));
+            throw new Exception(__('Сталася помилка під час обробки запиту.' .  ($err->getCode() !== 0 ? ' Код помилки: ' . $err->getCode() : '')));
         }
     }
 

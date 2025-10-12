@@ -56,17 +56,14 @@
         taxId: $wire.entangle('form.party.taxId'),
      }"
              x-init="
-        // Синхронізуємо поле, якщо галочка вже стоїть при завантаженні сторінки
         if (noTaxId) { $wire.syncTaxIdFromDocument(); }
 
-        // Очищуємо поле, якщо знімаємо галочку
         $watch('noTaxId', (value) => {
             if (value === false) { taxId = ''; }
         });
      "
         >
             <div class="form-group group relative z-0">
-                {{-- Поле вводу тепер простіше --}}
                 <input
                     x-model="taxId"
                     required
@@ -83,7 +80,6 @@
 
             <div class="form-group group">
                 <div class="mt-3">
-                    {{-- Вся магія тепер тут, на кліку --}}
                     <input
                         wire:model="form.party.noTaxId"
                         @click.prevent="$wire.toggleNoTaxId()"

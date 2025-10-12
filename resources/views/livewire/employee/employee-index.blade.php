@@ -238,13 +238,15 @@
                                 </div>
                             </div>
                             @can('create', \App\Models\Employee\EmployeeRequest::class)
-                                <div class="flex items-center space-x-3">
-                                    <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                                       class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                        <span
-                                            class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
-                                    </a>
-                                </div>
+                                @if($party->employees->isNotEmpty())
+                                    <div class="flex items-center space-x-3">
+                                        <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                           class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            <span
+                                class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
+                                        </a>
+                                    </div>
+                                @endif
                             @endcan
                         </div>
                         <div class="flow-root mt-4">

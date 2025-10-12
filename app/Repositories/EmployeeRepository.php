@@ -148,14 +148,13 @@ readonly class EmployeeRepository
     {
         $employeeRequest = new EmployeeRequest();
         $employeeRequest->fill($employeeRequestData);
-        $employeeRequest->status = 'NEW';
+        $employeeRequest->status = RequestStatus::NEW;
         $employeeRequest->legalEntity()->associate($legalEntity);
         $employeeRequest->save();
 
         return $employeeRequest;
     }
 
-    /**
     /**
      * Finds all pending employee requests for a given user and legal entity.
      * This encapsulates the database query, keeping the service layer clean.
