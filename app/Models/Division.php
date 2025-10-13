@@ -10,6 +10,7 @@ use App\Casts\Division\Location;
 use App\Models\Employee\Employee;
 use App\Models\Relations\Address;
 use App\Casts\Division\WorkingHours;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee\EmployeeRequest;
 use Eloquence\Behaviours\HasCamelCasing;
@@ -166,11 +167,11 @@ class Division extends Model
      * Scope a query to search for divisions by given search string.
      *
      * @param  Builder  $query
-     * @param  string|null $toSearch
-     *
+     * @param  string|null  $toSearch
      * @return Builder
      */
-    public function scopeSearch($query, ?string $toSearch): Builder
+    #[Scope]
+    public function search(Builder $query, ?string $toSearch): Builder
     {
         if (empty($toSearch)) {
             return $query;

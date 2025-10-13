@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth\Api;
 
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Exception;
 use App\Models\LegalEntity;
 use App\Traits\WorkTimeUtilities;
-use  Illuminate\Support\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Promise\PromiseInterface;
 use App\Classes\eHealth\EHealthResponse;
@@ -34,10 +36,10 @@ class Division extends Request
      *
      * If only the URL is provided (i.e., one argument) or nothing, the request will use the internal `$this->options`.
      *
-     * @param string $url The request URL.
-     * @param array|null $query Optional query parameters. If provided, it replaces any existing 'query' options.
-     *
+     * @param  string  $url  The request URL.
+     * @param  array|null  $query  Optional query parameters. If provided, it replaces any existing 'query' options.
      * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
     {
@@ -56,15 +58,14 @@ class Division extends Request
     /**
      * Update the Division
      *
-     * @param string $uuid
-     * @param mixed $data // Data for API request
-     *
+     * @param  string  $uuid
+     * @param  mixed  $data  // Data for API request
      * @return EHealthResponse|PromiseInterface
      */
     public function update(?string $uuid, $data = []): PromiseInterface|EHealthResponse
     {
         // If $uuid is missed it means that Division's record was edited is DRAFT (newly created and saved)
-        if (! $uuid) {
+        if (!$uuid) {
             return $this->create($data);
         }
 
@@ -76,8 +77,7 @@ class Division extends Request
     /**
      * Create the Division
      *
-     * @param mixed $data // Data for API request
-     *
+     * @param  mixed  $data  // Data for API request
      * @return EHealthResponse|PromiseInterface
      */
     public function create($data = []): PromiseInterface|EHealthResponse
@@ -88,9 +88,8 @@ class Division extends Request
     }
 
     /**
-     * @param string $uuid unique eHealth identifier of the license
-     * @param array $data
-     *
+     * @param  string  $uuid  unique eHealth identifier of the license
+     * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
      */
@@ -100,9 +99,8 @@ class Division extends Request
     }
 
     /**
-     * @param string $uuid unique eHealth identifier of the license
-     * @param array $data
-     *
+     * @param  string  $uuid  unique eHealth identifier of the license
+     * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
      */
@@ -114,7 +112,7 @@ class Division extends Request
     /**
       * Schema Create/Update Division
       *
-      * @return array
+       * @return array
       */
     public static function schemaRequest(): array
     {
@@ -210,8 +208,7 @@ class Division extends Request
      * 2. Setting the legal_entity_id from the current legal entity
      * 3. Converting JSON-serializable fields (location, working_hours) to JSON strings
      *
-     * @param array $divisionsList Array of division data from eHealth API
-     *
+     * @param  array  $divisionsList  Array of division data from eHealth API
      * @return array Normalized array ready for database upsert operation
      */
     public function normalizeResponseDataForUpsert(array $divisionsList, LegalEntity $legalEntity): array
@@ -243,9 +240,8 @@ class Division extends Request
      * into a flat structure suitable for a bulk `insert()` operation. It uses a
      * provided map to link the eHealth UUIDs to local database primary keys.
      *
-     * @param array $dvisionsData The raw division data list from the eHealth API.
-     * @param Collection $divisionIds A collection mapping UUIDs (keys) to local division IDs (values).
-     *
+     * @param  array  $dvisionsData  The raw division data list from the eHealth API.
+     * @param  Collection  $divisionIds  A collection mapping UUIDs (keys) to local division IDs (values).
      * @return array An associative array containing 'divisionIds', 'addresses', and 'phones' data ready for the repository.
      */
     public static function getRelationshipData(array $dvisionsData, Collection $divisionIds): array
@@ -260,7 +256,7 @@ class Division extends Request
         foreach ($dvisionsData as $division) {
             $divisionId = $divisionIds->get($division['uuid']);
 
-            // ADDRESSES PPREPARE
+            // ADDRESSES PREPARE
             foreach ($division['addresses'] ?? [] as $address) {
                 $addressesData[] = [
                     'type' => $address['type'],
@@ -276,7 +272,7 @@ class Division extends Request
                     'apartment' => $address['apartment'] ?? null,
                     'zip' => $address['zip'] ?? null,
                     'addressable_id' => $divisionId,
-                    'addressable_type'=> DivisionModel::class,
+                    'addressable_type' => DivisionModel::class,
                     'created_at' => $now,
                     'updated_at' => $now
                 ];
@@ -288,7 +284,7 @@ class Division extends Request
                     'type' => $phone['type'],
                     'number' => $phone['number'],
                     'phoneable_id' => $divisionId,
-                    'phoneable_type'=> DivisionModel::class,
+                    'phoneable_type' => DivisionModel::class,
                     'created_at' => $now,
                     'updated_at' => $now
                 ];
@@ -308,7 +304,7 @@ class Division extends Request
      */
     protected function validateMany(EHealthResponse $response): array
     {
-        if (! $response->successful()) {
+        if (!$response->successful()) {
             throw new Exception('validateMany: ' . $response->body());
         }
 
@@ -341,7 +337,7 @@ class Division extends Request
      */
     protected function validateOne(EHealthResponse $response): array
     {
-        if (! $response->successful()) {
+        if (!$response->successful()) {
             throw new Exception('validateOne: ' . $response->body());
         }
 

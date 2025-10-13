@@ -31,12 +31,12 @@
                                 @icon('plus', 'w-4 h-4')
                                 {{ __('forms.add_healthcare_service') }}
                             </a>
-
-                            <button wire:click="sync" class="button-sync flex items-center gap-2">
-                                @icon('refresh', 'w-4 h-4')
-                                {{ __('forms.synchronise_with_eHealth') }}
-                            </button>
                         @endisset
+
+                        <button wire:click="sync" class="button-sync flex items-center gap-2">
+                            @icon('refresh', 'w-4 h-4')
+                            {{ __('forms.synchronise_with_eHealth') }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -82,31 +82,31 @@
 
                             <td class="px-6 py-4 break-words whitespace-normal align-top">
                                 <p class="text-gray-900 dark:text-white">
-                                    {{ $service->createdAt->format('d.m.Y') }}
+                                    {{ $service->ehealthInsertedAt?->format('d.m.Y') }}
                                 </p>
                             </td>
 
                             <td class="px-6 py-4 break-words whitespace-normal align-top">
-                  <span class="{{
-                      match($service->status) {
-                          Status::DRAFT => 'badge-dark',
-                          Status::ACTIVE => 'badge-green',
-                          Status::INACTIVE => 'badge-red',
-                          default => ''
-                      }
-                  }}">
-                    {{ $service->status->label() }}
-                  </span>
+                                <span class="{{
+                                    match($service->status) {
+                                        Status::DRAFT => 'badge-dark',
+                                        Status::ACTIVE => 'badge-green',
+                                        Status::INACTIVE => 'badge-red',
+                                        default => ''
+                                    }
+                                }}">
+                                    {{ $service->status->label() }}
+                                </span>
                             </td>
 
                             <td class="px-6 py-4 text-center">
                                 @if ($divisionStatus)
                                     <div class="flex justify-center relative">
                                         <div x-data="{
-                              open: false,
-                              toggle() { this.open ? this.close() : (this.$refs.button.focus(), this.open = true) },
-                              close(focusAfter) { if (!this.open) return; this.open = false; focusAfter && focusAfter.focus() }
-                            }"
+                                                 open: false,
+                                                 toggle() { this.open ? this.close() : (this.$refs.button.focus(), this.open = true) },
+                                                 close(focusAfter) { if (!this.open) return; this.open = false; focusAfter && focusAfter.focus() }
+                                             }"
                                              @keydown.escape.prevent.stop="close($refs.button)"
                                              @focusin.window="!$refs.panel.contains($event.target) && close()"
                                              x-id="['dropdown-button']"

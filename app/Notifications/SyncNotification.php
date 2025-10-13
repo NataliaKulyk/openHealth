@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 class SyncNotification extends Notification
@@ -12,21 +13,21 @@ class SyncNotification extends Notification
 
     /** @var array Entity types mapping for sync operations with Ukrainian descriptions */
     protected const array SYNC_ENTITIES = [
-        'legal_entity' => 'Cинхронізація даних медичного закладу',
-        'employee' => 'Cинхронізація співробітників',
-        'division' => 'Cинхронізація підрозділів',
-        'healthcare_service' => 'Cинхронізація послуг',
-        'patient'  => 'Cинхронізація пацієнтів',
-        'license' => 'Cинхронізація ліцензій'
+        'legal_entity' => 'Синхронізація даних медичного закладу',
+        'employee' => 'Синхронізація співробітників',
+        'division' => 'Синхронізація підрозділів',
+        'healthcare_service' => 'Синхронізація послуг',
+        'patient' => 'Синхронізація пацієнтів',
+        'license' => 'Синхронізація ліцензій'
     ];
 
     /** @var array Sync action statuses mapping with Ukrainian descriptions */
     protected const array SYNC_ACTIONS = [
-        'started'   => 'розпочата',
+        'started' => 'розпочата',
         'completed' => 'завершена',
-        'failed'    => 'не вдалася',
-        'paused'    => 'призупинена',
-        'resumed'   => 'відновлена'
+        'failed' => 'не вдалася',
+        'paused' => 'призупинена',
+        'resumed' => 'відновлена'
     ];
 
     protected string $type;
@@ -60,10 +61,10 @@ class SyncNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'type'    => $this->type,
-            'action'  => $this->action,
+            'type' => $this->type,
+            'action' => $this->action,
             'message' => $this->formatMessage(),
-            'time'    => now()->toDateTimeString(),
+            'time' => now()->toDateTimeString(),
         ];
     }
 
@@ -78,7 +79,7 @@ class SyncNotification extends Notification
      */
     protected function formatMessage(): string
     {
-        $entity = data_get(self::SYNC_ENTITIES, $this->type, 'Cинхронізація даних');
+        $entity = data_get(self::SYNC_ENTITIES, $this->type, 'Синхронізація даних');
         $action = data_get(self::SYNC_ACTIONS, $this->action, '');
 
         return "{$entity} {$action}.";

@@ -43,7 +43,8 @@ class HealthcareService extends Model
     protected $casts = [
         'available_time' => 'json',
         'not_available' => NotAvailableTimeCast::class,
-        'status' => Status::class
+        'status' => Status::class,
+        'ehealth_inserted_at' => 'datetime'
     ];
 
     public function division(): BelongsTo

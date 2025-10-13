@@ -92,10 +92,6 @@ class LicenseIndex extends Component
             return;
         }
 
-        if ($response->isNotLast()) {
-            // TODO run
-        }
-
         Session::flash('success', __('licenses.sync_success'));
     }
 }

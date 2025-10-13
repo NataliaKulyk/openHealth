@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
-use App\Jobs\EmployeeSync;
-use App\Notifications\EmployeeSyncCompleted;
 use App\Notifications\SyncNotification;
 use Throwable;
 use Exception;
@@ -27,8 +25,8 @@ use Illuminate\Support\Facades\Crypt;
 
 class DivisionIndex extends DivisionComponent
 {
-    use WithPagination,
-        HasAction;
+    use WithPagination;
+    use HasAction;
 
     #[Computed]
     public function tableHeaders(): array
@@ -56,22 +54,19 @@ class DivisionIndex extends DivisionComponent
      *
      * @return void
      */
-    public function updatingDivisionFormSearch()
+    public function updatingDivisionFormSearch(): void
     {
         $this->resetPage();
     }
 
     /**
-     * Synchronize all the Divisisons with stored on the eHealths side
+     * Synchronize all the Divisions with stored on the eHealths side
      *
      * @return void
-     *
      * @throws Exception|ConnectionException
      */
     public function sync(): void
     {
-        $response = null;
-
         try {
             $response = EHealth::division()->getMany();
 
@@ -98,47 +93,43 @@ class DivisionIndex extends DivisionComponent
         }
 
         // If there are more pages, dispatch a job to handle the rest
-        if ($response?->isNotLast()) {
-
+        if ($response->isNotLast()) {
             $token = session()->get(config('ehealth.api.oauth.bearer_token'));
             $user = Auth::user();
 
             Bus::batch([
                 new DivisionSync(
-                        legalEntity: legalEntity(),
-                        page: 2,
-                        nextEntity: null
-                    )
+                    legalEntity: legalEntity(),
+                    page: 2,
+                    nextEntity: null
+                )
             ])
-            ->withOption('legal_entity_id', legalEntity()->id)
-            ->withOption('token', Crypt::encryptString($token))
-            ->withOption('user', $user)
-            ->then(function (Batch $batch) use ($user) {
-                $user->notify(new SyncNotification('division', 'complete'));
-            })->catch(callback: function (Batch $batch, Throwable $e) use ($user) {
-                Log::error('Division sync batch failed.', [
-                    'batch_id' => $batch->id,
-                    'exception' => $e
-                ]);
+                ->withOption('legal_entity_id', legalEntity()->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    $user->notify(new SyncNotification('division', 'complete'));
+                })->catch(callback: function (Batch $batch, Throwable $e) use ($user) {
+                    Log::error('Division sync batch failed.', [
+                        'batch_id' => $batch->id,
+                        'exception' => $e
+                    ]);
 
-                $user->notify(new SyncNotification('division', 'failed'));
-            })
-            ->onQueue('sync')
-            ->name('DivisionSync')
-            ->dispatch();
+                    $user->notify(new SyncNotification('division', 'failed'));
+                })
+                ->onQueue('sync')
+                ->name('DivisionSync')
+                ->dispatch();
         } else {
-            session()->flash('success', __(__('Інформацію успішно оновлено')));
+            session()->flash('success', __('Інформацію успішно оновлено'));
         }
     }
 
-    /**
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
-     */
     public function render(): View
     {
         $perPage = config('pagination.per_page');
 
-        $divisions= legalEntity()
+        $divisions = legalEntity()
             ?->divisions()
             ->orderBy('uuid')
             ->search($this->divisionForm->search)
