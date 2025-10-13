@@ -24,7 +24,7 @@ abstract class LicenseComponent extends Component
     {
         $this->licenseTypes = dictionary()->getDictionary('LICENSE_TYPE');
 
-        if (legalEntity()->type === 'OUTPATIENT' || legalEntity()->type === 'PHARMACY') {
+        if (legalEntity()->type->name === 'OUTPATIENT' || legalEntity()->type->name === 'PHARMACY') {
             $this->licenseTypes = ['PHARMACY_DRUGS' => $this->licenseTypes['PHARMACY_DRUGS']];
         }
     }

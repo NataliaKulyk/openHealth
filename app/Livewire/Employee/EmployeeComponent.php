@@ -55,7 +55,7 @@ abstract class EmployeeComponent extends Component
         $this->traitGetDictionary();
 
         if (legalEntity()) {
-            $allowedEmployeeTypes = config('ehealth.legal_entity_employee_types.' . legalEntity()->type, []);
+            $allowedEmployeeTypes = config('ehealth.legal_entity_employee_types.' . legalEntity()->type->name, []);
 
             $this->dictionaries['EMPLOYEE_TYPE'] = array_intersect_key(
                 $this->dictionaries['EMPLOYEE_TYPE'] ?? [],

@@ -16,7 +16,10 @@ use App\Models\Employee\EmployeeRequest;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Builder;
 use App\Casts\LegalEntityAccreditationCast;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class LegalEntity extends Model
@@ -56,7 +59,6 @@ class LegalEntity extends Model
         'receiver_funds_code',
         'residence_address',
         'status',
-        'type',
         'updated_at',
         'updated_by',
         'website',
@@ -120,6 +122,16 @@ class LegalEntity extends Model
         return $this->hasMany(Equipment::class);
     }
 
+    /**
+     * Relation to the reference LegalEntityTypes entry.
+     *
+     * @return BelongsTo
+     */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(LegalEntityType::class, 'legal_entity_type_id');
+    }
+
     // Get Legal Entity UUID
     public function getUuid(): string
     {
@@ -176,6 +188,24 @@ class LegalEntity extends Model
     }
 
     /**
+     * Scope a query to get all Legal Entities with selected fields
+     * Default fields are: id, uuid, edr, legal_entity_type_id
+     *
+     * @param  Builder  $query
+     *
+     * @return Builder
+     */
+    #[Scope]
+    protected function listByFields(Builder $query, array $fields = []): void
+    {
+        if (empty($fields)) {
+            $query->select(['id', 'uuid', 'edr', 'legal_entity_type_id'])->orderBy('id');
+        } else {
+            $query->select($fields)->orderBy('id');
+        }
+    }
+
+    /**
      * Updates the status of a legal entity's (whole or partial) sync process.
      *
      * @param  JobStatus  $status  The new status to set for the legal entity's sync entity
@@ -199,4 +229,18 @@ class LegalEntity extends Model
     {
         return $this->{$entityType . 'sync_status'};
     }
+
+    /**
+     * Invalidate cached mapping for legal_entity_id -> legal_entity_type_id
+     * immediately after the type changes, so permission scoping updates at once.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (LegalEntity $entity): void {
+            if ($entity->wasChanged('legal_entity_type_id')) {
+                cache()->forget('le_type:' . $entity->getKey());
+            }
+        });
+    }
+
 }

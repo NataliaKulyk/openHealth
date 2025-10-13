@@ -4,26 +4,29 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use Throwable;
 use App\Core\EHealthJob;
 use App\Enums\JobStatus;
-use App\Models\Employee\Employee;
-use App\Repositories\Repository;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Queue\Middleware\RateLimited;
-use Illuminate\Queue\SerializesModels;
-use App\Classes\eHealth\EHealth;
-use Illuminate\Support\Facades\Log;
-use Throwable;
-use GuzzleHttp\Promise\PromiseInterface;
-use App\Classes\eHealth\EHealthResponse;
 use App\Models\LegalEntity;
+use App\Models\Relations\Party;
+use App\Repositories\Repository;
+use App\Classes\eHealth\EHealth;
+use App\Models\Employee\Employee;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Queue\SerializesModels;
+use App\Classes\eHealth\EHealthResponse;
+use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Middleware\RateLimited;
+use Illuminate\Http\Client\ConnectionException;
 
 class EmployeeDetailsUpsert extends EHealthJob
 {
-    use Dispatchable;
-
-    use SerializesModels;
+    use Dispatchable,
+        SerializesModels;
 
     public const string BATCH_NAME = 'EmployeeDetailsSync';
 
@@ -59,9 +62,19 @@ class EmployeeDetailsUpsert extends EHealthJob
     {
         $validatedData = $response->validate();
 
-        echo 'Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity->id ?? 'N/A') . PHP_EOL;
+        Log::info('Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity->id ?? 'N/A'));
+
+        // This need for OWNER that has a more than one employee_types for the same party
+        if ($this->user?->hasRole('OWNER')) {
+            $party = Party::where('uuid', $validatedData['party']['uuid'])->with('users')->first();
+
+            $this->employee->userId = $party?->users?->first()?->id ?? null;
+        }
+
+        $this->employee->legalEntityUuid = $this->legalEntity?->uuid;
 
         $this->employee->save();
+
         Repository::employee()->updateDetails(
             $this->employee,
             $validatedData['party'],
@@ -90,12 +103,16 @@ class EmployeeDetailsUpsert extends EHealthJob
         $roleName = $this->employee->employee_type;
         $legalEntityId = $this->employee->legal_entity_id;
 
-        echo "Employee UUID: {$this->employee->uuid}, Role: {$roleName}, UserID: {$user->id}" . PHP_EOL;
-
         setPermissionsTeamId($legalEntityId);
 
         if (!$user->hasRole($roleName)) {
-            $user->assignRole($roleName);
+            foreach ($this->getGuardsForRole($roleName) as $guard) {
+                Log::info("Assigning role '{$roleName}' to user ID {$user->id} for guard '{$guard}'.");
+
+                Auth::shouldUse($guard);
+
+                $user->assignRole($roleName);
+            }
         }
     }
 
@@ -117,5 +134,27 @@ class EmployeeDetailsUpsert extends EHealthJob
         return $this->standalone || !$this->nextEntity
             ? new CompleteSync($this->legalEntity, isFirstLogin: $this->isFirstLogin)
             : $this->nextEntity;
+    }
+
+
+    /**
+     * Determine which authentication guards define the given role.
+     * Checks only the 'web' and 'ehealth' guards.
+     * Queries Spatie\Permission\Models\Role by name and guard_name.
+     * Returns an empty collection if the role is not defined for any of the checked guards.
+     *
+     * @param string $role The role name to check across guards.
+     *
+     * @return Collection<int, string> Collection of guard names that have this role defined.
+     */
+    protected function getGuardsForRole(string $role): Collection
+    {
+        $guards = collect(['web', 'ehealth']);
+
+        return $guards->filter(fn ($guard) =>
+                Role::where('name', $role)
+                    ->where('guard_name', $guard)
+                    ->exists()
+        );
     }
 }

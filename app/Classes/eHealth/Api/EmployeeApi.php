@@ -72,6 +72,8 @@ class EmployeeApi
         $user = User::find(Session::get(config('ehealth.api.auth_ehealth')));
         $legalEntity = LegalEntity::whereUuid($legalEntityUUID)->first();
 
+        setPermissionsTeamId($legalEntity->id);
+
         if (!$user) {
             $role = Session::get('first_login_role');
 
@@ -82,13 +84,9 @@ class EmployeeApi
                 ->pluck('name')
                 ->toArray();
 
-            if ($legalEntity->type === LegalEntity::TYPE_PRIMARY_CARE) {
-                $permissions = self::excludeContractPermissions($permissions);
-            }
-
             $scope = implode(' ', $permissions);
         } else {
-            $scope = $user->getScopes($legalEntity->clientId);
+            $scope = $user->getScopes();
         }
 
         $data = [

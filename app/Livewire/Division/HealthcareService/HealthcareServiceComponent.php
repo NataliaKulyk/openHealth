@@ -63,11 +63,11 @@ class HealthcareServiceComponent extends Component
         $this->getDictionary();
 
         $this->dictionaries['HEALTHCARE_SERVICE_CATEGORIES'] = $this->getDictionariesFields(
-            config('ehealth.healthcare_service_' . strtolower(legalEntity()->type) . '_categories', []),
+            config('ehealth.healthcare_service_' . strtolower(legalEntity()->type->name) . '_categories', []),
             'HEALTHCARE_SERVICE_CATEGORIES'
         );
         $this->dictionaries['PROVIDING_CONDITION'] = $this->getDictionariesFields(
-            config('ehealth.legal_entity_' . strtolower(legalEntity()->type) . '_providing_conditions', []),
+            config('ehealth.legal_entity_' . strtolower(legalEntity()->type->name) . '_providing_conditions', []),
             'PROVIDING_CONDITION'
         );
 

@@ -8,6 +8,7 @@ use Exception;
 use App\Models\License;
 use Illuminate\Support\Arr;
 use App\Models\Relations\Phone;
+use App\Models\LegalEntityType;
 use App\Livewire\Actions\Logout;
 use App\Models\Relations\Address;
 use Illuminate\Support\Facades\DB;
@@ -251,12 +252,14 @@ class CreateLegalEntity extends LegalEntity
             'email',
             'receiver_funds_code',
             'residence_address',
-            'type',
             'website'
         ]));
 
         // Fill the legal entity model with data from the form
         $this->legalEntity->fill($fillableData);
+
+        $type = LegalEntityType::firstWhere('name', $formData['type']);
+        $this->legalEntity->type()->associate($type);
 
         // Create the new Address (rely on $this->address)
         $address = new Address();

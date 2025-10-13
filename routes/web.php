@@ -210,7 +210,7 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                         ->whereNumber('license')->group(function () {
                             Route::get('/', static function (LegalEntity $legalEntity, License $license) {
                                 if (Gate::allows('update', [$license, $legalEntity]) &&
-                                    !$license->isPrimary && $legalEntity->type === LegalEntity::TYPE_PHARMACY) {
+                                    !$license->isPrimary && $legalEntity->type->name === LegalEntity::TYPE_PHARMACY) {
                                     return App::call(LicenseEdit::class, [$legalEntity, $license]);
                                 } elseif (Gate::allows('view', [$license, $legalEntity])) {
                                     return App::call(LicenseView::class, [$legalEntity, $license]);

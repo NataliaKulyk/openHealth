@@ -181,7 +181,7 @@ class AddressRule implements ValidationRule
      */
     protected function checkMapping(): bool
     {
-        $legalEntityType = legalEntity()->type;
+        $legalEntityType = legalEntity()->type->name;
         $divisionType = $this->division['type'];
 
         foreach ($this->division['addresses'] as $address) {

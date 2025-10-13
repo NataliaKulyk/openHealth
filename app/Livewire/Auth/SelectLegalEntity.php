@@ -9,6 +9,7 @@ use Livewire\Component;
 use App\Models\LegalEntity;
 use Livewire\Attributes\Layout;
 use Illuminate\Validation\Rule;
+use App\Repositories\Repository;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -21,37 +22,6 @@ class SelectLegalEntity extends Component
     public ?string $selectedLegalEntityId = null;
 
     protected ?User $user;
-
-    /**
-     * Get all legal entities founded in the system.
-     * Reformat it data to the array looks like:
-     * [
-     *  ['<id-1>', 'Legal Entity 1 Name']
-     *  ['<id-2>', 'Legal Entity 2 Name']
-     * ]
-     *
-     * @return array
-     */
-    protected function getLegalEntitesList(array $legalEntityIds): array
-    {
-        $edrList = LegalEntity::whereIn('id', $legalEntityIds)
-            ->select(['id', 'edr'])
-            ->get()
-            ->toArray();
-
-        return array_map(function ($data) {
-            $edr = $data['edr'];
-            $arr['id'] = $data['id'];
-
-            if (!empty($edr['name'])) {
-                $arr['name'] = $edr['name'];
-            } elseif (!empty($arr['public_name'])) {
-                $arr['name'] = $edr['public_name'];
-            }
-
-            return $arr;
-        }, $edrList);
-    }
 
     /*
      * This method executed on every request to the Livewire component
@@ -98,8 +68,8 @@ class SelectLegalEntity extends Component
 
             return Redirect::route('dashboard', [$legalEntity]);
         }
-        // Get array with the id and names of the all LegalEntittes available to the User
-        $this->accessibleLegalEntities = $this->getLegalEntitesList($this->accessibleLegalEntities);
+        // Get array with the id and names of the all LegalEntities available to the User
+        $this->accessibleLegalEntities = Repository::legalEntity()->getLegalEntitiesList($this->accessibleLegalEntities);
 
         return null;
     }

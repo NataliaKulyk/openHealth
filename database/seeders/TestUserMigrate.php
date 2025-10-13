@@ -24,6 +24,8 @@ class TestUserMigrate extends Seeder
 
         try {
             DB::transaction(function () {
+                $legalEntityType = DB::table('legal_entity_types')->where('name', 'PRIMARY_CARE')->first();
+
                 $legalEntityId = DB::table('legal_entities')->insertGetId([
                     'uuid' => config('ehealth.test.client_id'),
                     'client_id' => config('ehealth.test.client_id'),
@@ -139,7 +141,7 @@ class TestUserMigrate extends Seeder
                     'nhs_verified' => true,
                     'receiver_funds_code' => '777',
                     'status' => 'ACTIVE',
-                    'type' => 'PRIMARY_CARE',
+                    'legal_entity_type_id' => $legalEntityType->id,
                     'updated_by' => '4261eacf-8008-4e62-899f-de1e2f7065f0',
                     'website' => 'www.openhealths.com',
                     'inserted_at' => new Carbon('2024-06-06T12:41:30.000000Z'),

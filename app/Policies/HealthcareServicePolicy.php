@@ -51,7 +51,7 @@ class HealthcareServicePolicy
 
         // Check that legal entity type exists in HEALTHCARE_SERVICE_LEGAL_ENTITIES_ALLOWED_TYPES chart parameter.
         $types = dictionary()->getDictionary('LEGAL_ENTITY_TYPE_V2', false)->getKeys();
-        if (!in_array(legalEntity()->type, $types, true)) {
+        if (!in_array(legalEntity()->type->name, $types, true)) {
             return Response::denyWithStatus(404);
         }
 

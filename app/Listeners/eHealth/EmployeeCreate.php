@@ -106,6 +106,12 @@ class EmployeeCreate
                     $dataFromRevision['scienceDegree'] ?? null
                 );
 
+                // Assign Party to User if not already assigned. OWNER ONLY!
+                if ($user->hasRole('OWNER') && !$user?->party?->exists()) {
+                    $user->partyId = $newEmployee->partyId;
+                    $user->save();
+                }
+
                 $employeeRequest->update(
                     [
                         'employee_id' => $newEmployee->id,
@@ -115,6 +121,7 @@ class EmployeeCreate
                         'party_id' => $newEmployee->partyId,
                     ]
                 );
+
                 $employeeRequest->revision->update(['status' => RevisionStatus::APPLIED]);
 
                 if (!$user->hasRole($newEmployee->employeeType)) {

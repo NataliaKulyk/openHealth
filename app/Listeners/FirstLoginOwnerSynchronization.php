@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use App\Jobs\EmployeeSync;
+use Exception;
 use Throwable;
 use App\Enums\JobStatus;
+use App\Jobs\EmployeeSync;
 use App\Jobs\DivisionSync;
 use App\Events\EHealthUserLogin;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +34,8 @@ class FirstLoginOwnerSynchronization implements ShouldQueue
     {
         // This need to be user with roles and permissions loaded
         setPermissionsTeamId($event->legalEntity->id);
+
+        $event->user->load('roles', 'permissions', 'party');
 
         if (!$event->isFirstLogin || !$event->user->hasRole('OWNER')) {
             return;

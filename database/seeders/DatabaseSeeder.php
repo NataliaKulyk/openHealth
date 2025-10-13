@@ -6,8 +6,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,7 +23,12 @@ class DatabaseSeeder extends Seeder
              * populates permissions and roles tables, see spaties laravel-permissions docs
              * https://spatie.be/docs/laravel-permission/v6/introduction
              */
-            RolesPermissionsSeeder::class
+            LegalEntityTypeSeeder::class,
+            LegalEntityRoleSeeder::class,
+            PermissionsSeeder::class,
+            RolePermissionsSeeder::class,
+            TypePermissionsSeeder::class,
+            LegalEntityTypeAndRoleSeeder::class
         ]);
 
         if (app()->isLocal()) {

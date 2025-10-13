@@ -45,8 +45,8 @@ class HealthcareServiceForm extends Form
      */
     public function rules(): array
     {
-        $categoriesConfigKey = 'healthcare_service_' . strtolower(legalEntity()->type) . '_categories';
-        $providingConditionConfigKey = 'legal_entity_' . strtolower(legalEntity()->type) . '_providing_conditions';
+        $categoriesConfigKey = 'healthcare_service_' . strtolower(legalEntity()->type->name) . '_categories';
+        $providingConditionConfigKey = 'legal_entity_' . strtolower(legalEntity()->type->name) . '_providing_conditions';
 
         return array_merge([
             'divisionId' => ['required', 'uuid', Rule::exists('divisions', 'uuid')->where('status', Status::ACTIVE)],

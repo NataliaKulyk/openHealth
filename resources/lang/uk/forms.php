@@ -103,6 +103,7 @@ return [
     'legal_entity_name' => 'Медична організація',
     'legal_entity_owner' => 'Представник організації',
     'legal_entity_info' => 'Інформація про заклад',
+    'legal_entity_type' => 'Тип закладу',
     'owner' => 'Власник',
     'owner_position' => 'Посада керівника НМП',
     'owner_contact' => 'Контактні телефони керівника НМП',
