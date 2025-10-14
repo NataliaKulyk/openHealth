@@ -33,7 +33,6 @@
 
     <div class="shift-content flex flex-wrap items-end justify-between gap-4 pl-2.5">
         <div class="w-96 ml-3.5">
-            <x-forms.form-group>
                 <x-slot name="label">
                     <label for="serviceSearch"
                            class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1"
@@ -53,11 +52,9 @@
                                autocomplete="off"
                         />
 
-                        {{-- Підпис "Назва" тут буде коректним, якщо ви шукаєте за назвою послуги/спеціалізацією --}}
                         <label for="serviceSearch" class="label">{{ __('forms.name') }}</label>
                     </div>
                 </x-slot>
-            </x-forms.form-group>
         </div>
     </div>
 

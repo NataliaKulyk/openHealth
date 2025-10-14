@@ -24,5 +24,12 @@ return [
     'available_time_info' => "Всі дні з незаповненими даними автоматично отримують статус 'Не доступна'",
     'specialisation' => 'Спеціалізація',
     'created_at' => 'Дата створення',
-    'status' => 'Статус послуги'
+    'status' => 'Статус послуги',
+    'add_non_working_hours' => 'Додати неробочий час',
+    'start_non_working_time' => 'Початок неробочого часу',
+    'end_non_working_time' => 'Кінець неробочого часу',
+    'choose_time' => 'Оберіть час',
+    'comment_non_working_hours' => 'Коментар до неробочого часу',
+    'non_working_hours' => 'Неробочий час №',
+    'service_search' => 'Пошук',
 ];

@@ -226,13 +226,6 @@ return [
     'opening' => 'Відчиняється:',
     'closing' => 'Зачиняється:',
     'remove_work_schedule' => 'Прибрати графік роботи',
-    'add_non_working_hours' => 'Додати неробочий час',
-    'start_non_working_time' => 'Початок неробочого часу',
-    'end_non_working_time' => 'Кінець неробочого часу',
-    'choose_time' => 'Оберіть час',
-    'comment_non_working_hours' => 'Коментар до неробочого часу',
-    'non_working_hours' => 'Неробочий час №',
-    'service_search' => 'Пошук',
 
     // Doctor Specific
     'education' => 'Освіта',
