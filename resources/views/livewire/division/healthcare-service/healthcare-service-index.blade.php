@@ -1,17 +1,5 @@
 @use('App\Enums\Status')
 
-@php
-    // Table headers are now defined directly in the <thead> below for precise width control
-    $tableHeaders = [
-            __('healthcare-services.specialisation'),
-            __('forms.division_name'),
-            __('healthcare-services.providing_condition'),
-            __('healthcare-services.created_at'),
-            __('healthcare-services.status'),
-            __('forms.action')
-        ];
-@endphp
-
 <div>
     <x-messages/>
     <x-forms.loading/>
@@ -42,6 +30,33 @@
             </div>
         </x-slot>
     </x-header-navigation>
+
+    <div class="shift-content flex flex-wrap items-end justify-between gap-4 pl-2.5">
+        <div class="w-96 ml-3.5">
+                <x-slot name="label">
+                    <label for="serviceSearch"
+                           class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1"
+                    >
+                        @icon('search-outline', 'w-4 h-4 text-gray-500 dark:text-gray-400')
+                        <span>{{ __('forms.service_search') }}</span>
+                    </label>
+                </x-slot>
+
+                <x-slot name="input">
+                    <div class="form-group group w-full relative mt-3">
+                        <input wire:model.live.debounce.300ms="serviceForm.search"
+                               type="text"
+                               id="serviceSearch"
+                               placeholder=" "
+                               class="input peer pb-1"
+                               autocomplete="off"
+                        />
+
+                        <label for="serviceSearch" class="label">{{ __('forms.name') }}</label>
+                    </div>
+                </x-slot>
+        </div>
+    </div>
 
     <div class="flow-root mt-8 shift-content pl-3.5">
         <div class="max-w-screen-xl">
@@ -170,7 +185,7 @@
             </div>
 
             <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
-                <x-pagination :pagination="$healthcareServices" class="pagination"/>
+                {{ $healthcareServices->links() }}
             </div>
         </div>
     </div>
