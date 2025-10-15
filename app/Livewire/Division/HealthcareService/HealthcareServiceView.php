@@ -10,21 +10,20 @@ use App\Models\HealthcareService;
 use App\Models\LegalEntity;
 use Illuminate\View\View;
 
-class HealthcareServiceEdit extends HealthcareServiceComponent
+class HealthcareServiceView extends HealthcareServiceComponent
 {
     public function mount(LegalEntity $legalEntity, Division $division, HealthcareService $healthcareService): void
     {
+        $this->isDisabled = true;
         $this->baseMount($legalEntity, $division);
 
-        $this->healthcareServiceId = $healthcareService->id;
         $healthcareService->loadMissing(['category.coding', 'type.coding']);
-
-        $this->form->fill(Arr::except($healthcareService->toArray(), ['divisionId']));
+        $this->form->fill($healthcareService);
         $this->form->availableTime = Arr::toCamelCase($this->form->availableTime);
     }
 
     public function render(): View
     {
-        return view('livewire.division.healthcare-service.healthcare-service-edit');
+        return view('livewire.division.healthcare-service.healthcare-service-view');
     }
 }

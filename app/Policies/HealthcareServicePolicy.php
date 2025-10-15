@@ -6,7 +6,6 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Enums\Status;
-use App\Models\LegalEntity;
 use App\Models\HealthcareService;
 use Illuminate\Auth\Access\Response;
 
@@ -17,6 +16,23 @@ class HealthcareServicePolicy
      */
     public function viewAny(User $user): Response
     {
+        if ($user->cannot('healthcare_service:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
+     * User allowed to view exactly that healthcare service.
+     */
+    public function view(User $user, HealthcareService $healthcareService): Response
+    {
+        // Should belong to the same legal entity
+        if (legalEntity()->id !== $healthcareService->legalEntityId) {
+            return Response::denyWithStatus(404);
+        }
+
         if ($user->cannot('healthcare_service:read')) {
             return Response::denyWithStatus(404);
         }
@@ -52,6 +68,11 @@ class HealthcareServicePolicy
      */
     public function delete(User $user, HealthcareService $healthcareService): Response
     {
+        // Should belong to the same legal entity
+        if (legalEntity()->id !== $healthcareService->legalEntityId) {
+            return Response::denyWithStatus(404);
+        }
+
         // Only HealthcareServices with DRAFT status can be deleted
         if ($healthcareService->status !== Status::DRAFT) {
             return Response::deny();
@@ -63,19 +84,10 @@ class HealthcareServicePolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, HealthcareService $healthcareService, ?LegalEntity $legalEntity = null): Response
+    public function update(User $user, HealthcareService $healthcareService): Response
     {
-        if (is_null($legalEntity)) {
-            $legalEntity = legalEntity();
-        }
-
-        // If got null instead HealthcareService model
-        if (empty($healthcareService)) {
-            return Response::denyWithStatus(404);
-        }
-
         // Should belong to the same legal entity
-        if ($healthcareService->legal_entity_id !== (int)$legalEntity->id) {
+        if ($healthcareService->legalEntityId !== legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -101,11 +113,7 @@ class HealthcareServicePolicy
         }
 
         // Some healthcare services cannot be activated
-        if (
-            $healthcareService->status === Status::ACTIVE ||
-            $healthcareService->status === Status::DRAFT ||
-            $healthcareService->status === Status::UNSYNCED
-        ) {
+        if ($healthcareService->status === Status::ACTIVE || $healthcareService->status === Status::DRAFT) {
             return Response::deny();
         }
 
@@ -122,11 +130,7 @@ class HealthcareServicePolicy
         }
 
         // Some healthcare services cannot be deactivated
-        if (
-            $healthcareService->status === Status::INACTIVE ||
-            $healthcareService->status === Status::DRAFT ||
-            $healthcareService->status === Status::UNSYNCED
-        ) {
+        if ($healthcareService->status === Status::INACTIVE || $healthcareService->status === Status::DRAFT) {
             return Response::deny();
         }
 

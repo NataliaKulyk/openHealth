@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Repositories\MedicalEvents\Repository;
 use App\Models\HealthcareService;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Throwable;
 
 class HealthcareServiceRepository
@@ -24,6 +25,30 @@ class HealthcareServiceRepository
             $data = $this->storeCategoryAndType($data);
 
             return HealthcareService::create($data);
+        });
+    }
+
+    /**
+     * Update data for local created data with EHealth data.
+     *
+     * @param  array  $data
+     * @return HealthcareService
+     * @throws Throwable
+     */
+    public function update(array $data): HealthcareService
+    {
+        return DB::transaction(function () use ($data) {
+            if (empty($data['id'])) {
+                throw new InvalidArgumentException('HealthcareService ID is required for update.');
+            }
+
+            $service = HealthcareService::with(['category.coding', 'type.coding'])->findOrFail($data['id']);
+
+            $data = $this->updateCategoryAndType($service, $data);
+
+            $service->update($data);
+
+            return $service;
         });
     }
 
@@ -99,25 +124,10 @@ class HealthcareServiceRepository
     }
 
     /**
-     * Create instance of Healthcare Service class
-     *
-     * @param  array  $responseData  // The data array suitable to do fill on HealthcareService Model
-     * @return HealthcareService|null
-     */
-    public function createOrUpdate(array $responseData): HealthcareService|null
-    {
-        $healthcareService = HealthcareService::firstOrNew(['uuid' => $responseData['uuid']]);
-
-        $healthcareService->fill($responseData);
-
-        return $healthcareService;
-    }
-
-    /**
      * Store category and type in separate tables.
      *
      * @param  array  $data
-     * @return array  ID of created category and type.
+     * @return array ID of created category and type.
      */
     protected function storeCategoryAndType(array $data): array
     {
@@ -132,6 +142,49 @@ class HealthcareServiceRepository
         }
 
         // Remove nested data to avoid mass assignment issues
+        unset($data['category'], $data['type']);
+
+        return $data;
+    }
+
+    /**
+     * Update category and type from edit form.
+     *
+     * @param  HealthcareService  $service
+     * @param  array  $data
+     * @return array
+     */
+    protected function updateCategoryAndType(HealthcareService $service, array $data): array
+    {
+        // Update category (it's required)
+        if (!empty($data['category'])) {
+            Repository::codeableConcept()->update($service->category, $data['category']);
+        }
+
+        // Handle type
+        if (array_key_exists('type', $data)) {
+            if (!empty($data['type'])) {
+                // Update or create
+                if ($service->type) {
+                    Repository::codeableConcept()->update($service->type, $data['type']);
+                } else {
+                    $type = Repository::codeableConcept()->store($data['type']);
+                    $data['type_id'] = $type->id;
+                }
+            } else {
+                // If was presented before in draft, but then removed
+                if ($service->type) {
+                    // Dissociate and delete
+                    $service->type()->dissociate();
+                    $service->save();
+
+                    Repository::codeableConcept()->delete($service->type);
+                }
+
+                $data['type_id'] = null;
+            }
+        }
+
         unset($data['category'], $data['type']);
 
         return $data;

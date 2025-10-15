@@ -48,7 +48,7 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
 
             Repository::healthcareService()->store(Arr::toSnakeCase($validated));
 
-            Session::flash('success', 'Послугу успішно створено');
+            Session::flash('success', 'Чернетку послуги успішно створено.');
             $this->redirectRoute(
                 'division.healthcare-service.index',
                 [legalEntity(), $this->divisionId],

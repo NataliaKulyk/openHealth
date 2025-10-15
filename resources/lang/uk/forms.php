@@ -130,11 +130,9 @@ return [
     'division' => 'Підрозділ',
     'select_division' => 'Обрати підрозділ',
     'full_name_division' => 'Повна Назва',
-    'fullNameDivision' => 'Повна Назва',
     'longitude' => 'Довгота',
     'latitude' => 'Широта',
     'type' => 'Тип',
-    'externalId' => 'Зовнішній ідентифікатор',
     'external_id' => 'Зовнішній ідентифікатор',
     'schedule_note' => "ВАЖЛИВО: Всі дні з незаповненими даними автоматично отримують статус 'Не працює'",
     'shift' => 'зміна',
@@ -143,16 +141,11 @@ return [
 
     //Healthcare Service
     'services' => 'Послуги',
-    'medicalService' => 'Медична послуга',
     'comment' => 'Коментар',
-    'allDay' => 'Цілий день',
-    'openedBy' => 'Відчиняється о',
-    'closedBy' => 'Закривається о',
+    'opened_by' => 'Відчиняється о',
+    'closed_by' => 'Закривається о',
     'does_not_work' => 'Не працює',
     'works' => 'Працює',
-    'healthcareService' => 'Послуга здоров\'я',
-    'add_healthcare_service' => 'Додати послугу',
-    'available_time' => 'Час Доступності',
 
     // Employee & Party
     'employees' => 'Співробітники',
@@ -291,7 +284,6 @@ return [
     'archive_add' => 'Додати дані про архівацію',
     'employeeType' => 'Тип працівника',
     'qualification' => 'Кваліфікація',
-    'educationType' => 'Тип освіти',
     'institutionName' => 'Назва навчального закладу',
     'diplomaNumber' => 'Номер диплому',
     'specialityType' => 'Тип спеціальності',

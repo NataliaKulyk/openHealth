@@ -2,10 +2,27 @@
           x-data="{
               working: false,
               localAvailableTime: [],
-              isDisabled: false,
+              isDisabled: $wire.entangle('isDisabled'),
               weekdaysKeys: {{ json_encode(array_keys($weekdays)) }},
-              exceptions: $wire.form.exceptions || [],
+              notAvailable: $wire.form.notAvailable,
               init() {
+                  // Flatten notAvailable if it's in nested format (for edit mode)
+                  if (this.notAvailable.length > 0 && this.notAvailable[0].during) {
+                      this.notAvailable = this.notAvailable.map(item => {
+                          const startDateTime = new Date(item.during.start);
+                          const endDateTime = new Date(item.during.end);
+
+                          return {
+                              frontendId: Date.now() + Math.random(),
+                              startDate: startDateTime.toISOString().split('T')[0],
+                              startTime: startDateTime.toISOString().split('T')[1].slice(0, 5),
+                              endDate: endDateTime.toISOString().split('T')[0],
+                              endTime: endDateTime.toISOString().split('T')[1].slice(0, 5),
+                              description: item.description
+                          };
+                      });
+                  }
+
                   // Create default structure for all days
                   const defaultTimes = this.weekdaysKeys.map(key => ({
                       daysOfWeek: [key],
@@ -33,23 +50,51 @@
                           item.working &&
                           (item.availableStartTime || item.availableEndTime || item.allDay) &&
                           item.daysOfWeek && item.daysOfWeek.length > 0
-                      ).map(({ working, ...rest }) => rest);
+                      ).map(({ working, ...rest }) => {
+                          // Add seconds if missing
+                          if (rest.availableStartTime && rest.availableStartTime.length === 5) {
+                              rest.availableStartTime += ':00';
+                          }
+                          if (rest.availableEndTime && rest.availableEndTime.length === 5) {
+                              rest.availableEndTime += ':00';
+                          }
+
+                          return rest;
+                      });
 
                       $wire.form.availableTime = filtered;
                   }, { deep: true });
 
-                  this.$watch('exceptions', (value) => {
-                      $wire.form.exceptions = value;
+                  // Watch and sync transformed notAvailable to Livewire
+                  this.$watch('notAvailable', (value) => {
+                      const transformed = value.map(period => {
+                          const startTime = period.startTime && period.startTime.length > 0
+                              ? (period.startTime.length === 5 ? `${period.startTime}:00` : period.startTime)
+                              : '00:00:00';
+                          const endTime = period.endTime && period.endTime.length > 0
+                              ? (period.endTime.length === 5 ? `${period.endTime}:00` : period.endTime)
+                              : '23:59:59';
+
+                          return {
+                              description: period.description,
+                              during: {
+                                  start: `${period.startDate}T${startTime}Z`,
+                                  end: `${period.endDate}T${endTime}Z`
+                              }
+                          };
+                      });
+
+                      $wire.form.notAvailable = transformed;
                   }, { deep: true });
               },
-              addException() {
-                  this.exceptions.push({
-                      id: Date.now(),
-                      dateFrom: null,
-                      timeFrom: null,
-                      dateTo: null,
-                      timeTo: null,
-                      comment: null,
+              addNotAvailable() {
+                  this.notAvailable.push({
+                      frontendId: Date.now(),
+                      startDate: null,
+                      startTime: null,
+                      endDate: null,
+                      endTime: null,
+                      description: null
                   });
               }
           }"
@@ -161,7 +206,7 @@
                                            placeholder="00:00"
                                            x-ref="start"
                                            id="availableStartTime-{{ $loop->index }}"
-                                           @input="localAvailableTime[{{ $loop->index }}].availableStartTime = $refs.start.value ? $refs.start.value + ':00' : null"
+                                           x-model="localAvailableTime[{{ $loop->index }}].availableStartTime"
                                            x-bind:disabled="isDisabled"
                                     />
                                 </div>
@@ -170,7 +215,8 @@
                             {{-- End --}}
                             <div class="form-group w-full">
                                 <label for="availableEndTime-{{ $loop->index }}"
-                                       class="label !text-xs !text-gray-500 dark:!text-gray-400">
+                                       class="label !text-xs !text-gray-500 dark:!text-gray-400"
+                                >
                                     <span>{{ __('forms.closing') }}</span>
                                 </label>
                                 <div class="relative w-full">
@@ -196,7 +242,7 @@
                                            placeholder="00:00"
                                            x-ref="end"
                                            id="availableEndTime-{{ $loop->index }}"
-                                           @input="localAvailableTime[{{ $loop->index }}].availableEndTime = $refs.end.value ? $refs.end.value + ':00' : null"
+                                           x-model="localAvailableTime[{{ $loop->index }}].availableEndTime"
                                            x-bind:disabled="isDisabled"
                                     />
                                 </div>
@@ -207,143 +253,152 @@
             @endforeach
         </div>
 
-        <template x-if="working">
-            <div class="space-y-4 mt-4">
-                <template x-for="(ex, idx) in exceptions" :key="ex.id">
-                    <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4" :id="'exception-'+ex.id">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
-                                {{__('healthcare-services.non_working_hours')}}
-                                <span x-text="idx + 1"></span>
-                            </h4>
-                            <button type="button" class="text-red-500 hover:text-red-700 text-sm font-medium"
-                                    @click="exceptions.splice(idx, 1)">
-                                @icon('delete', 'w-5 h-5 text-red-600')
-                            </button>
-                        </div>
+        <div x-show="working" x-cloak class="space-y-4 mt-4">
+            <template x-for="(period, idx) in notAvailable" :key="period.frontendId">
+                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4" :id="period.frontendId">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ __('healthcare-services.non_working_hours') }}
+                            <span x-text="idx + 1"></span>
+                        </h4>
+                        <button type="button"
+                                class="cursor-pointer text-red-500 hover:text-red-700 text-sm font-medium"
+                                @click="notAvailable.splice(idx, 1)"
+                                x-bind:disabled="isDisabled"
+                        >
+                            @icon('delete', 'w-5 h-5 text-red-600')
+                        </button>
+                    </div>
 
-
-                        <div class="form-row-3 mt-5">
-                            <div class="form-group datepicker-wrapper relative w-full">
-                                <input
-                                    type="text"
-                                    name="start"
-                                    :id="'start-date-exception-'+ex.id"
-                                    class="peer input pl-10 appearance-none datepicker-input dark:text-white"
-                                    placeholder=" "
-                                    required
-                                    datepicker-autohide
-                                    datepicker-format="yyyy-mm-dd"
-                                    datepicker-button="false"
-                                    x-model="ex.dateFrom"
-                                />
-                                <label :for="'start-date-exception-'+ex.id" class="wrapped-label">{{__('healthcare-services.start_non_working_time')}}</label>
-                            </div>
-
-                            <div class="form-group w-full">
-                                <label :for="'timeFrom-'+ex.id"
-                                       class="label !text-xs !text-gray-500 dark:!text-gray-400">
-                                    <span>{{__('healthcare-services.choose_time')}}</span>
-                                </label>
-                                <div class="relative w-full">
-                                    <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
-                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400"
-                                             aria-hidden="true"
-                                             xmlns="http://www.w3.org/2000/svg"
-                                             width="24"
-                                             height="24"
-                                             fill="none"
-                                             viewBox="0 0 24 24"
-                                        >
-                                            <path stroke="currentColor"
-                                                  stroke-linecap="round"
-                                                  stroke-linejoin="round"
-                                                  stroke-width="2"
-                                                  d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <input type="text"
-                                           class="input timepicker-uk text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 dark:border-gray-700 focus:ring-0 px-0 ps-8"
-                                           placeholder="00:00"
-                                           :id="'timeFrom-'+ex.id"
-                                           x-model="ex.timeFrom"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div class="form-row-3">
-                            <div class="form-group datepicker-wrapper relative w-full">
-                                <input
-                                    type="text"
-                                    name="end"
-                                    :id="'end-date-exception-'+ex.id"
-                                    class="peer input pl-10 appearance-none datepicker-input dark:text-white"
-                                    placeholder=" "
-                                    required
-                                    datepicker-autohide
-                                    datepicker-format="yyyy-mm-dd"
-                                    datepicker-button="false"
-                                    x-model="ex.dateTo"
-                                />
-                                <label :for="'end-date-exception-'+ex.id" class="wrapped-label">{{__('healthcare-services.end_non_working_time')}}</label>
-                            </div>
-
-                            <div class="form-group w-full">
-                                <label :for="'timeTo-'+ex.id"
-                                       class="label !text-xs !text-gray-500 dark:!text-gray-400">
-                                    <span>{{__('healthcare-services.choose_time')}}</span>
-                                </label>
-                                <div class="relative w-full">
-                                    <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
-                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400"
-                                             aria-hidden="true"
-                                             xmlns="http://www.w3.org/2000/svg"
-                                             width="24"
-                                             height="24"
-                                             fill="none"
-                                             viewBox="0 0 24 24"
-                                        >
-                                            <path stroke="currentColor"
-                                                  stroke-linecap="round"
-                                                  stroke-linejoin="round"
-                                                  stroke-width="2"
-                                                  d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <input type="text"
-                                           class="input timepicker-uk text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 dark:border-gray-700 focus:ring-0 px-0 ps-8"
-                                           placeholder="00:00"
-                                           :id="'timeTo-'+ex.id"
-                                           x-model="ex.timeTo"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <input
-                                type="text"
-                                name="exception_comment"
-                                :id="'comment-'+ex.id"
-                                class="peer input dark:text-white"
-                                placeholder=" "
-                                x-model="ex.comment"
+                    <div class="form-row-3 mt-5">
+                        <div class="form-group datepicker-wrapper relative w-full">
+                            <input x-model="period.startDate"
+                                   type="text"
+                                   name="start"
+                                   :id="'startDate-'+idx"
+                                   class="peer input pl-10 appearance-none datepicker-input dark:text-white"
+                                   placeholder=" "
+                                   required
+                                   datepicker-autohide
+                                   datepicker-format="yyyy-mm-dd"
+                                   datepicker-button="false"
+                                   x-bind:disabled="isDisabled"
                             />
-                            <label :for="'comment-'+ex.id" class="label dark:text-gray-300">{{__('healthcare-services.comment_non_working_hours')}}</label>
+                            <label :for="'startDate-'+idx" class="wrapped-label">
+                                {{ __('healthcare-services.start_non_working_time') }}
+                            </label>
+                        </div>
+
+                        <div class="form-group w-full">
+                            <label :for="'startTime-'+idx"
+                                   class="label !text-xs !text-gray-500 dark:!text-gray-400"
+                            >
+                                <span>{{ __('healthcare-services.choose_time') }}</span>
+                            </label>
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400"
+                                         aria-hidden="true"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         width="24"
+                                         height="24"
+                                         fill="none"
+                                         viewBox="0 0 24 24"
+                                    >
+                                        <path stroke="currentColor"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                        />
+                                    </svg>
+                                </div>
+                                <input type="text"
+                                       class="input timepicker-uk text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 dark:border-gray-700 focus:ring-0 px-0 ps-8"
+                                       placeholder="00:00"
+                                       :id="'startTime-'+idx"
+                                       x-model="period.startTime"
+                                       x-bind:disabled="isDisabled"
+                                />
+                            </div>
                         </div>
                     </div>
-                </template>
 
-                <div class="form-group mb-4 mt-2">
-                    <button @click.prevent="addException()" class="item-add">
-                        {{__('healthcare-services.add_non_working_hours')}}
-                    </button>
+                    <div class="form-row-3">
+                        <div class="form-group datepicker-wrapper relative w-full">
+                            <input x-model="period.endDate"
+                                   type="text"
+                                   name="end"
+                                   :id="'endDate-'+idx"
+                                   class="peer input pl-10 appearance-none datepicker-input dark:text-white"
+                                   placeholder=" "
+                                   required
+                                   datepicker-autohide
+                                   datepicker-format="yyyy-mm-dd"
+                                   datepicker-button="false"
+                                   x-bind:disabled="isDisabled"
+                            />
+                            <label :for="'endDate-'+idx" class="wrapped-label">
+                                {{ __('healthcare-services.end_non_working_time') }}
+                            </label>
+                        </div>
+
+                        <div class="form-group w-full">
+                            <label :for="'endTime-'+idx"
+                                   class="label !text-xs !text-gray-500 dark:!text-gray-400"
+                            >
+                                <span>{{ __('healthcare-services.choose_time') }}</span>
+                            </label>
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400"
+                                         aria-hidden="true"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         width="24"
+                                         height="24"
+                                         fill="none"
+                                         viewBox="0 0 24 24"
+                                    >
+                                        <path stroke="currentColor"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                        />
+                                    </svg>
+                                </div>
+                                <input type="text"
+                                       class="input timepicker-uk text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 dark:border-gray-700 focus:ring-0 px-0 ps-8"
+                                       placeholder="00:00"
+                                       :id="'endTime-'+idx"
+                                       x-model="period.endTime"
+                                       x-bind:disabled="isDisabled"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <input x-model="period.description"
+                               type="text"
+                               name="description"
+                               :id="'description-'+idx"
+                               class="peer input dark:text-white"
+                               placeholder=" "
+                               x-bind:disabled="isDisabled"
+                        />
+                        <label :for="'description-'+idx" class="label">
+                            {{ __('healthcare-services.comment_non_working_hours') }}
+                        </label>
+                    </div>
                 </div>
+            </template>
+
+            <div class="form-group mb-4 mt-2">
+                <button @click.prevent="addNotAvailable" class="item-add" x-bind:disabled="isDisabled">
+                    {{ __('healthcare-services.add_non_working_hours') }}
+                </button>
             </div>
-        </template>
+        </div>
     </div>
 </fieldset>

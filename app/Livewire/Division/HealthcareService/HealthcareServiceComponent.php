@@ -19,6 +19,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Throwable;
 
@@ -34,6 +35,21 @@ class HealthcareServiceComponent extends Component
     public int $divisionId;
 
     public array $licenses;
+
+    /**
+     * Used to indicate is it edit page, if so update DB row instead of create new one.
+     *
+     * @var int|null
+     */
+    #[Locked]
+    public ?int $healthcareServiceId = null;
+
+    /**
+     * Is in view mode.
+     *
+     * @var bool
+     */
+    public bool $isDisabled = false;
 
     protected array $dictionaryNames = [
         'HEALTHCARE_SERVICE_CATEGORIES',
@@ -64,7 +80,15 @@ class HealthcareServiceComponent extends Component
 
     public function create(): void
     {
-        if (Auth::user()?->cannot('create', HealthcareService::class)) {
+        // Check permission for edit or create
+        if (isset($this->healthcareServiceId)) {
+            $healthcareService = HealthcareService::find($this->healthcareServiceId);
+            if (Auth::user()?->cannot('update', $healthcareService)) {
+                Session::flash('error', 'У вас немає дозволу на редагування цієї послуги');
+
+                return;
+            }
+        } elseif (Auth::user()?->cannot('create', HealthcareService::class)) {
             Session::flash('error', 'У вас немає дозволу на створення послуги');
 
             return;
@@ -84,7 +108,7 @@ class HealthcareServiceComponent extends Component
             $response = EHealth::healthcareService()->create(removeEmptyKeys(Arr::toSnakeCase($validated)));
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a healthcare service');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -102,10 +126,21 @@ class HealthcareServiceComponent extends Component
         // Store in local database
         try {
             $validated = $response->validate();
-            Repository::healthcareService()->store($response->map($validated));
 
-            Session::flash('success', 'Послугу успішно створено');
-            $this->redirectRoute('division.healthcare-service.index', [legalEntity(), $this->divisionId], navigate: true);
+            // Update if data from edit page(draft) or create.
+            if (isset($this->healthcareServiceId)) {
+                $validated['id'] = $this->healthcareServiceId;
+                Repository::healthcareService()->update($response->map($validated));
+            } else {
+                Repository::healthcareService()->store($response->map($validated));
+            }
+
+            Session::flash('success', 'Послугу успішно створено.');
+            $this->redirectRoute(
+                'division.healthcare-service.index',
+                [legalEntity(), $this->divisionId],
+                navigate: true
+            );
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store healthcare service');
             Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');

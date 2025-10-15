@@ -8,7 +8,6 @@ use App\Enums\License\Type;
 use App\Enums\Status;
 use App\Models\Division;
 use App\Models\HealthcareService;
-use App\Rules\DivisionRules\HealthcareRules\CategoryInPharmacyRule;
 use App\Rules\DivisionRules\HealthcareRules\CategoryRule;
 use App\Rules\DivisionRules\HealthcareRules\LicenseRule;
 use App\Rules\DivisionRules\HealthcareRules\NotAvailableTimeRule;
@@ -33,13 +32,13 @@ class HealthcareServiceForm extends Form
 
     public string $providingCondition = '';
 
-    public array $type = [
+    public ?array $type = [
         'coding' => [['system' => 'HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES']]
     ];
 
     public ?string $licenseId = null;
 
-    public string $comment;
+    public ?string $comment;
 
     public array $availableTime;
     public array $notAvailable;
@@ -110,7 +109,11 @@ class HealthcareServiceForm extends Form
                 'date_format:H:i:s',
                 'after:availableTime.*.availableStartTime'
             ],
-            'notAvailable' => ['array', 'nullable']
+            'notAvailable' => ['array', 'nullable'],
+            'notAvailable.*.during' => ['required', 'array'],
+            'notAvailable.*.during.start' => ['required', 'date'],
+            'notAvailable.*.during.end' => ['required', 'date', 'after:notAvailable.*.during.start'],
+            'notAvailable.*.description' => ['required', 'string']
         ];
     }
 
@@ -124,16 +127,6 @@ class HealthcareServiceForm extends Form
         return [
             'divisionId' => __('forms.division_name')
         ];
-    }
-
-    public function getHealthcareService(): array
-    {
-        return $this->healthcare_service;
-    }
-
-    public function getHealthcareServiceParam(string $param): mixed
-    {
-        return $this->healthcare_service[$param] ?? '';
     }
 
     /**
@@ -170,6 +163,7 @@ class HealthcareServiceForm extends Form
             $firstCheck = HealthcareService::whereDivisionId($divisionId)
                 ->whereSpecialityType($this->specialityType)
                 ->whereProvidingCondition($this->providingCondition)
+                ->whereNotNull('uuid')
                 ->exists();
 
             if ($firstCheck) {
@@ -226,8 +220,6 @@ class HealthcareServiceForm extends Form
         ];
 
         $storeValidationRules = [
-            // Check that there is no another record with the same healthcare service, division_id and category = ‘PHARMACY’
-            new CategoryInPharmacyRule($division),
             // Check that there is any valid license for the healthcare service's category
             new LicenseRule($division, $this->healthcare_service),
             // Check that there is no another record with the same healthcare service, division_id, category and type

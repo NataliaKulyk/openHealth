@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Status;
-use App\Casts\NotAvailableTimeCast;
 use App\Models\MedicalEvents\Sql\CodeableConcept;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +18,7 @@ class HealthcareService extends Model
     use HasCamelCasing;
 
     protected $fillable = [
+        'id',
         'uuid',
         'speciality_type',
         'providing_condition',
@@ -42,9 +42,10 @@ class HealthcareService extends Model
 
     protected $casts = [
         'available_time' => 'json',
-        'not_available' => NotAvailableTimeCast::class,
+        'not_available' => 'json',
         'status' => Status::class,
-        'ehealth_inserted_at' => 'datetime'
+        'ehealth_inserted_at' => 'datetime',
+        'created_at' => 'datetime'
     ];
 
     public function division(): BelongsTo

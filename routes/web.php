@@ -29,6 +29,7 @@ use App\Livewire\Division\DivisionView;
 use App\Livewire\Division\HealthcareService\HealthcareServiceCreate;
 use App\Livewire\Division\HealthcareService\HealthcareServiceEdit;
 use App\Livewire\Division\HealthcareService\HealthcareServiceIndex;
+use App\Livewire\Division\HealthcareService\HealthcareServiceView;
 use App\Livewire\Employee\EmployeeCreate;
 use App\Livewire\Employee\EmployeeEdit;
 use App\Livewire\Employee\EmployeeIndex;
@@ -139,12 +140,16 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/create', DivisionCreate::class)->name('division.create')->can('create', Division::class);
                 Route::get('/{division}', DivisionView::class)->name('division.view')->can('viewAny', Division::class);
                 Route::get('/{division}/edit', DivisionEdit::class)->name('division.edit')->can('update', 'division');
+
                 Route::get('/{division}/healthcare-service/create', HealthcareServiceCreate::class)
                     ->name('healthcare-service.create')
                     ->can('create', HealthcareService::class);
-                Route::get('/{division}/healthcare-service/{healthcareService}', HealthcareServiceEdit::class)
+                Route::get('/{division}/healthcare-service/{healthcareService}', HealthcareServiceView::class)
+                    ->name('healthcare-service.view')
+                    ->can('view', 'healthcareService');
+                Route::get('/{division}/healthcare-service/{healthcareService}/edit', HealthcareServiceEdit::class)
                     ->name('healthcare-service.edit')
-                    ->can('create', HealthcareService::class);
+                    ->can('update', 'healthcareService');
             });
 
             Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {

@@ -1,11 +1,16 @@
-@use('App\Livewire\Division\HealthcareService\HealthcareServiceCreate')
+@php
+    use App\Livewire\Division\HealthcareService\{HealthcareServiceCreate, HealthcareServiceView, HealthcareServiceEdit};
+    use App\Models\HealthcareService;
+
+    $healthcareServiceModel = HealthcareService::find($healthcareServiceId);
+@endphp
 
 <section class="section-form">
     <x-header-navigation class="breadcrumb-form" title="{{ __('forms.medical_service') }}">
         <x-slot name="title">{{ __('forms.medical_service') }}</x-slot>
     </x-header-navigation>
 
-    <fieldset class="fieldset shift-content">
+    <fieldset class="fieldset shift-content" x-data="{ isDisabled: $wire.entangle('isDisabled') }">
         <legend class="legend">{{ __('forms.main_information') }}</legend>
 
         <div class="form-row-2">
@@ -37,6 +42,7 @@
                         id="category"
                         class="input-select @error('form.category.coding.0.code') input-error @enderror"
                         required
+                        x-bind:disabled="isDisabled"
                 >
                     <option value="" selected>{{ __('forms.select') }}</option>
                     @foreach($this->dictionaries['HEALTHCARE_SERVICE_CATEGORIES'] as $key => $category)
@@ -60,6 +66,7 @@
                         id="specialityType"
                         class="input-select @error('form.specialityType') input-error @enderror"
                         required
+                        x-bind:disabled="isDisabled"
                 >
                     <option value="" selected>{{ __('forms.select') }}</option>
                     @foreach($this->dictionaries['SPECIALITY_TYPE'] as $key => $type)
@@ -80,6 +87,7 @@
                         name="providingCondition"
                         id="providingCondition"
                         class="input-select @error('form.providingCondition') input-error @enderror"
+                        x-bind:disabled="isDisabled"
                 >
                     <option value="" selected>{{ __('forms.select') }}</option>
                     @foreach($this->dictionaries['PROVIDING_CONDITION'] as $key => $providingCondition)
@@ -103,6 +111,7 @@
                         name="type"
                         id="type"
                         class="input-select @error('form.type.coding.0.code') input-error @enderror"
+                        x-bind:disabled="isDisabled"
                 >
                     <option value="" selected>{{ __('forms.select') }}</option>
                     @foreach($this->dictionaries['HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES'] as $key => $pharmacyDrugsType)
@@ -123,6 +132,7 @@
                         name="licenseId"
                         id="licenseId"
                         class="input-select @error('form.licenseId') input-error @enderror"
+                        x-bind:disabled="isDisabled"
                 >
                     <option value="" selected>{{ __('forms.select') }}</option>
                     @foreach($licenses as $key => $license)
@@ -149,6 +159,7 @@
                               name="comment"
                               class="textarea"
                               placeholder="{{ __('patients.write_comment_here') }}"
+                              x-bind:disabled="isDisabled"
                     ></textarea>
                 </div>
             </div>
@@ -159,16 +170,30 @@
 
     <div class="flex justify-start gap-4 mt-10">
         <a href="{{ url()->previous() }}" type="button" class="button-minor">
-            {{ __('forms.cancel') }}
+            {{ __('forms.back') }}
         </a>
+
         @if(get_class($this) === HealthcareServiceCreate::class)
-            <button wire:click.prevent="createLocally" type="submit" class="button-primary-outline">
-                {{ __('forms.create_locally') }}
-            </button>
+            @can('create', HealthcareService::class)
+                <button wire:click.prevent="createLocally" type="submit" class="button-primary-outline">
+                    {{ __('forms.save') }}
+                </button>
+            @endcan
+
+            @can('create', HealthcareService::class)
+                <button wire:click="create" type="submit" class="button-primary">
+                    {{ __('forms.save_and_send') }}
+                </button>
+            @endcan
         @endif
-        <button wire:click="create" type="submit" class="button-primary">
-            {{ __('forms.create') }}
-        </button>
+
+        @if(get_class($this) === HealthcareServiceEdit::class)
+            @can('update', $healthcareServiceModel)
+                <button wire:click="create" type="submit" class="button-primary">
+                    {{ __('forms.save_and_send') }}
+                </button>
+            @endcan
+        @endif
     </div>
 
     <x-forms.loading/>

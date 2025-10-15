@@ -14,6 +14,7 @@ return [
     |
     */
 
+    'add' => 'Додати послугу',
     'available_time' => 'Графік доступності',
     'providing_condition' => 'Умови надання послуги',
     'category' => 'Категорія послуги',
@@ -25,6 +26,8 @@ return [
     'specialisation' => 'Спеціалізація',
     'created_at' => 'Дата створення',
     'status' => 'Статус послуги',
+    'continue' => 'Продовжити створення послуги',
+    'delete' => 'Видалити чернетку послуги',
     'add_non_working_hours' => 'Додати неробочий час',
     'start_non_working_time' => 'Початок неробочого часу',
     'end_non_working_time' => 'Кінець неробочого часу',

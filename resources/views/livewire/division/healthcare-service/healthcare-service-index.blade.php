@@ -1,4 +1,5 @@
 @use('App\Enums\Status')
+@use('App\Models\HealthcareService')
 
 <div>
     <x-messages/>
@@ -13,13 +14,16 @@
                     <div class="flex items-end gap-4"></div>
 
                     <div class="ml-auto flex items-center gap-6 self-start -mt-22 translate-x-10">
-                        @isset($divisionId)
-                            <a href="{{ route('healthcare-service.create', [legalEntity(), $divisionId]) }}"
-                               class="button-primary flex items-center gap-2">
-                                @icon('plus', 'w-4 h-4')
-                                {{ __('forms.add_healthcare_service') }}
-                            </a>
-                        @endisset
+                        @if(isset($divisionId) && $divisionStatus === Status::ACTIVE)
+                            @can('create', HealthcareService::class)
+                                <a href="{{ route('healthcare-service.create', [legalEntity(), $divisionId]) }}"
+                                   class="button-primary flex items-center gap-2"
+                                >
+                                    @icon('plus', 'w-4 h-4')
+                                    {{ __('healthcare-services.add') }}
+                                </a>
+                            @endcan
+                        @endif
 
                         <button wire:click="sync" class="button-sync flex items-center gap-2">
                             @icon('refresh', 'w-4 h-4')
@@ -33,35 +37,34 @@
 
     <div class="shift-content flex flex-wrap items-end justify-between gap-4 pl-2.5">
         <div class="w-96 ml-3.5">
-                <x-slot name="label">
-                    <label for="serviceSearch"
-                           class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1"
-                    >
-                        @icon('search-outline', 'w-4 h-4 text-gray-500 dark:text-gray-400')
-                        <span>{{ __('forms.service_search') }}</span>
-                    </label>
-                </x-slot>
+            <label for="serviceSearch"
+                   class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1"
+            >
+                @icon('search-outline', 'w-4 h-4 text-gray-500 dark:text-gray-400')
+                <span>{{ __('forms.search') }}</span>
+            </label>
 
-                <x-slot name="input">
-                    <div class="form-group group w-full relative mt-3">
-                        <input wire:model.live.debounce.300ms="serviceForm.search"
-                               type="text"
-                               id="serviceSearch"
-                               placeholder=" "
-                               class="input peer pb-1"
-                               autocomplete="off"
-                        />
+            <div class="form-group group w-full relative mt-3">
+                <input wire:model.live.debounce.300ms="serviceForm.search"
+                       type="text"
+                       id="serviceSearch"
+                       placeholder=" "
+                       class="input peer pb-1"
+                       autocomplete="off"
+                />
 
-                        <label for="serviceSearch" class="label">{{ __('forms.name') }}</label>
-                    </div>
-                </x-slot>
+                <label for="serviceSearch" class="label">{{ __('forms.name') }}</label>
+            </div>
         </div>
     </div>
 
     <div class="flow-root mt-8 shift-content pl-3.5">
         <div class="max-w-screen-xl">
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <div wire:key="healthcare-services-table-page-{{ $healthcareServices->currentPage() }}"
+                 class="relative overflow-x-auto shadow-md sm:rounded-lg"
+            >
+                <table
+                    class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th class="px-6 py-3 w-[24%]">{{ __('healthcare-services.specialisation') }}</th>
@@ -69,14 +72,16 @@
                         <th class="px-6 py-3 w-[18%]">{{ __('healthcare-services.providing_condition') }}</th>
                         <th class="px-6 py-3 w-[14%] whitespace-nowrap">{{ __('healthcare-services.created_at') }}</th>
                         <th class="px-6 py-3 w-[14%]">{{ __('healthcare-services.status') }}</th>
-                        <th class="px-6 py-3 w-[6%]  whitespace-nowrap">{{ __('forms.action') }}</th>
+                        <th class="px-6 py-3 w-[6%] whitespace-nowrap">{{ __('forms.action') }}</th>
                     </tr>
                     </thead>
 
                     <tbody>
                     @nonempty($healthcareServices->items())
                     @foreach ($healthcareServices as $service)
-                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
+                        <tr wire:key="healthcare-service-{{ $service->id }}"
+                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
+                        >
                             <td class="px-6 py-4 break-words whitespace-normal align-top">
                                 <p class="font-semibold text-gray-900 dark:text-white">
                                     {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] }}
@@ -97,7 +102,7 @@
 
                             <td class="px-6 py-4 break-words whitespace-normal align-top">
                                 <p class="text-gray-900 dark:text-white">
-                                    {{ $service->ehealthInsertedAt?->format('d.m.Y') }}
+                                    {{ $service->ehealthInsertedAt?->format('d.m.Y') ?? $service->createdAt->format('d.m.Y') }}
                                 </p>
                             </td>
 
@@ -115,7 +120,7 @@
                             </td>
 
                             <td class="px-6 py-4 text-center">
-                                @if ($divisionStatus)
+                                @if($service->division->status === Status::ACTIVE)
                                     <div class="flex justify-center relative">
                                         <div x-data="{
                                                  open: false,
@@ -134,32 +139,50 @@
                                                     type="button"
                                                     class="hover:text-primary cursor-pointer"
                                             >
-                                                <svg class="svg-hover-action w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
-                                                     xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24">
-                                                    <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2"
-                                                          d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"/>
-                                                </svg>
+                                                @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-white')
                                             </button>
 
-                                            <div x-show="open" x-cloak x-ref="panel" x-transition.origin.top.left
+                                            <div x-show="open"
+                                                 x-cloak
+                                                 x-ref="panel"
+                                                 x-transition.origin.top.left
                                                  @click.outside="close($refs.button)"
                                                  :id="$id('dropdown-button')"
-                                                 class="absolute right-0 mt-2 w-40 rounded-md bg-white shadow-md z-50"
+                                                 class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white shadow-md z-50"
                                             >
                                                 @if ($service->status === Status::ACTIVE)
-                                                    <button wire:click="edit({{ $service }}); toggle()"
-                                                            class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50">
-                                                        @icon('edit', 'w-5 h-5 text-gray-600')
-                                                        {{ __('forms.edit') }}
-                                                    </button>
+                                                    <a href="{{ route('healthcare-service.view', [legalEntity(), $service->division, $service->id]) }}"
+                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                    >
+                                                        @icon('eye', 'w-5 h-5 text-gray-600')
+                                                        {{ __('forms.view') }}
+                                                    </a>
+
                                                     <button wire:click="deactivate('{{ $service->uuid }}'); toggle()"
-                                                            class="flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50">
+                                                            class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                                                    >
                                                         @icon('delete', 'w-5 h-5 text-red-600')
                                                         {{ __('forms.deactivate') }}
                                                     </button>
+                                                @elseif($service->status === Status::DRAFT)
+                                                    <a href="{{ route('healthcare-service.edit', [legalEntity(), $service->division->id, $service->id]) }}"
+                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                    >
+                                                        @icon('edit', 'w-5 h-5 text-gray-600')
+                                                        {{ __('healthcare-services.continue') }}
+                                                    </a>
+
+                                                    <button wire:click="delete({{ $service->id }}); toggle()"
+                                                            @click="openDropdown = false"
+                                                            class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
+                                                    >
+                                                        @icon('delete', 'w-5 h-5')
+                                                        {{ __('healthcare-services.delete') }}
+                                                    </button>
                                                 @else
                                                     <button wire:click="activate('{{ $service->uuid }}'); toggle()"
-                                                            class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 hover:bg-green-50">
+                                                            class="cursor-pointer flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 hover:bg-green-50"
+                                                    >
                                                         @icon('check-circle', 'w-5 h-5 text-green-600')
                                                         {{ __('forms.activate') }}
                                                     </button>
@@ -175,7 +198,8 @@
                     @elsenonempty
                     <tr>
                         <td class="text-black w-full p-4 border-gray-200 text-center dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                            colspan="6">
+                            colspan="6"
+                        >
                             <p>{{ __('forms.nothing_found') }}</p>
                         </td>
                     </tr>
@@ -191,10 +215,8 @@
     </div>
 
     <div class="footer flex flex-start border-stroke px-7 py-2 my-4">
-        <x-secondary-button>
-            <a href="{{ route('division.index', legalEntity()) }}">
-                {{ __('forms.back') }}
-            </a>
-        </x-secondary-button>
+        <a class="button-minor" href="{{ route('division.index', legalEntity()) }}">
+            {{ __('forms.back') }}
+        </a>
     </div>
 </div>

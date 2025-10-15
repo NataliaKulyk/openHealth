@@ -138,7 +138,7 @@
                                         for="external_id"
                                         class="label"
                                     >
-                                        {{ __('forms.externalId') }}
+                                        {{ __('forms.external_id') }}
                                     </label>
 
                                     @error('divisionForm.division.externalId')
@@ -497,7 +497,7 @@
                                                                                     class="label !text-xs !text-gray-500 dark:!text-gray-400"
                                                                                 >
                                                                                     <span
-                                                                                        x-text="shift ? '{{ __('Початок') }}' : '{{ __('forms.openedBy') }}'"></span>
+                                                                                        x-text="shift ? '{{ __('Початок') }}' : '{{ __('forms.opened_by') }}'"></span>
                                                                                 </label>
                                                                                 <div class="relative w-full">
                                                                                     <div
@@ -537,7 +537,7 @@
                                                                                     class="label !text-xs !text-gray-500 dark:!text-gray-400"
                                                                                 >
                                                                                     <span
-                                                                                        x-text="shift ? '{{ __('Кінець') }}' : '{{ __('forms.closedBy') }}'"></span>
+                                                                                        x-text="shift ? '{{ __('Кінець') }}' : '{{ __('forms.closed_by') }}'"></span>
                                                                                 </label>
                                                                                 <div class="relative w-full">
                                                                                     <div

@@ -90,9 +90,9 @@ class DeclarationRequestPolicy
     }
 
     /**
-     * Determine whether the user can destroy draft declaration request.
+     * Determine whether the user can delete draft declaration request.
      */
-    public function destroy(User $user, DeclarationRequest $declarationRequest): Response
+    public function delete(User $user, DeclarationRequest $declarationRequest): Response
     {
         if ($declarationRequest->legal_entity_id !== legalEntity()->id) {
             return Response::denyWithStatus(404);

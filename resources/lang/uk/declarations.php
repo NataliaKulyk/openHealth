@@ -19,6 +19,8 @@ return [
     'requests' => 'Заявки на декларації',
     'active' => 'Активні декларації',
     'cancelled' => 'Відмінені декларації',
+    'continue' => 'Продовжити створення декларації',
+    'delete' => 'Видалити заявку на декларацію',
     'number' => 'Номер декларації',
     'application_for_registration_of_declaration' => 'Заявка на реєстрацію декларації',
     'create_an_application' => 'Створити заявку',

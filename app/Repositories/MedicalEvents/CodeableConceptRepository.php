@@ -30,6 +30,40 @@ class CodeableConceptRepository extends BaseRepository
     }
 
     /**
+     * Update provided instance of codeable concept and its coding.
+     *
+     * @param  SqlCodeableConcept  $codeableConcept
+     * @param  array  $codeableConceptData
+     * @return SqlCodeableConcept
+     */
+    public function update(SqlCodeableConcept $codeableConcept, array $codeableConceptData): SqlCodeableConcept
+    {
+        // Update text
+        $codeableConcept->update([
+            'text' => $codeableConceptData['text'] ?? $codeableConcept->text
+        ]);
+
+        // Update existed or create
+        if (!empty($codeableConceptData['coding'])) {
+            $coding = $codeableConcept->coding->first();
+
+            if ($coding) {
+                $coding->update([
+                    'system' => $codeableConceptData['coding'][0]['system'],
+                    'code' => $codeableConceptData['coding'][0]['code']
+                ]);
+            } else {
+                $codeableConcept->coding()->create([
+                    'system' => $codeableConceptData['coding'][0]['system'],
+                    'code' => $codeableConceptData['coding'][0]['code']
+                ]);
+            }
+        }
+
+        return $codeableConcept;
+    }
+
+    /**
      * Create codeable concept in DB for identifier.
      *
      * @param  SqlIdentifier  $identifier
@@ -49,5 +83,18 @@ class CodeableConceptRepository extends BaseRepository
         ]);
 
         return $codeableConcept;
+    }
+
+    /**
+     * Delete codeable concept and its coding.
+     *
+     * @param  SqlCodeableConcept  $codeableConcept
+     * @return bool
+     */
+    public function delete(SqlCodeableConcept $codeableConcept): bool
+    {
+        $codeableConcept->coding()->delete();
+
+        return $codeableConcept->delete();
     }
 }

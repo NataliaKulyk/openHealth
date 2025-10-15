@@ -15,50 +15,50 @@
         <x-slot name="navigation">
             <div class="flex">
                 <div class="w-full">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1">
-                                @icon('search-outline', 'w-4 h-4.5 text-gray-800 dark:text-white')
-                                <p class="default-p">{{ __('declarations.search') }}</p>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1">
+                            @icon('search-outline', 'w-4 h-4.5 text-gray-800 dark:text-white')
+                            <p class="default-p">{{ __('declarations.search') }}</p>
+                        </div>
+
+                        @isset($countActive)
+                            <div class="flex items-center gap-4 pl-30">
+                                <p class="default-p">{{ __('declarations.count_active') }}:</p>
+                                <span class="badge-green">{{ $countActive }}</span>
                             </div>
+                        @endisset
+                    </div>
 
-                            @isset($countActive)
-                                <div class="flex items-center gap-4 pl-30">
-                                    <p class="default-p">{{ __('declarations.count_active') }}:</p>
-                                    <span class="badge-green">{{ $countActive }}</span>
-                                </div>
-                            @endisset
-                        </div>
+                    {{-- Search by name --}}
+                    <div class="form-row-3 form-group group top-3 mt-2">
+                        <input type="text"
+                               id="searchByName"
+                               placeholder=" "
+                               class="input peer"
+                               wire:model.live.debounce.300ms="searchByName"
+                               autocomplete="off"
+                        />
+                        <label for="searchByName" class="label">
+                            {{ __('patients.patient_full_name') }}
+                        </label>
 
-                        {{-- Search by name --}}
-                        <div class="form-row-3 form-group group top-3 mt-2">
-                            <input type="text"
-                                   id="searchByName"
-                                   placeholder=" "
-                                   class="input peer"
-                                   wire:model.live.debounce.300ms="searchByName"
-                                   autocomplete="off"
-                            />
-                            <label for="searchByName" class="label">
-                                {{ __('patients.patient_full_name') }}
-                            </label>
+                        <button class="flex items-center gap-2 button-minor" @click="showFilter = !showFilter">
+                            @icon('adjustments', 'w-4 h-4')
+                            <span>{{ __('forms.additional_search_parameters') }}</span>
+                        </button>
+                    </div>
 
-                            <button class="flex items-center gap-2 button-minor" @click="showFilter = !showFilter">
-                                @icon('adjustments', 'w-4 h-4')
-                                <span>{{ __('forms.additional_search_parameters') }}</span>
-                            </button>
-                        </div>
-
-                        {{-- Show additional filters --}}
-                        <div x-show="showFilter" x-cloak x-transition class="mt-12" x-data="{ openType: false }">
-                            {{-- Show different filters for owner --}}
-                            @if(Auth::user()->hasRole('OWNER'))
-                                @include('livewire.declaration.parts.owner-filters')
-                            @else
-                                @include('livewire.declaration.parts.basic-filters')
-                            @endif
-                        </div>
+                    {{-- Show additional filters --}}
+                    <div x-show="showFilter" x-cloak x-transition class="mt-12" x-data="{ openType: false }">
+                        {{-- Show different filters for owner --}}
+                        @if(Auth::user()->hasRole('OWNER'))
+                            @include('livewire.declaration.parts.owner-filters')
+                        @else
+                            @include('livewire.declaration.parts.basic-filters')
+                        @endif
                     </div>
                 </div>
+            </div>
         </x-slot>
     </x-header-navigation>
 
@@ -68,12 +68,12 @@
                 <table class="table-input w-full">
                     <thead class="thead-input">
                     <tr>
-                        <th scope="col" class="th-input">{{__('forms.full_name')}}</th>
-                        <th scope="col" class="th-input">{{__('forms.number')}}</th>
-                        <th scope="col" class="th-input">{{__('forms.birth_date_abbreviated')}}</th>
-                        <th scope="col" class="th-input">{{__('employees.doctor')}}</th>
-                        <th scope="col" class="th-input">{{__('forms.status.label')}}</th>
-                        <th scope="col" class="th-input">{{__('forms.action')}}</th>
+                        <th scope="col" class="th-input">{{ __('forms.full_name') }}</th>
+                        <th scope="col" class="th-input">{{ __('forms.number') }}</th>
+                        <th scope="col" class="th-input">{{ __('forms.birth_date_abbreviated') }}</th>
+                        <th scope="col" class="th-input">{{ __('employees.doctor') }}</th>
+                        <th scope="col" class="th-input">{{ __('forms.status.label') }}</th>
+                        <th scope="col" class="th-input">{{ __('forms.action') }}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -121,15 +121,15 @@
                                            class="cursor-pointer text-[#222222] text-nowrap flex gap-3 items-center py-2 pl-4 pr-10"
                                         >
                                             @icon('check-circle', 'w-5 h-5 text-red-500')
-                                            {{ __('Продовжити створення декларації') }}
+                                            {{ __('declarations.continue') }}
                                         </a>
 
-                                        <button wire:click="destroy('{{ $declaration['id'] }}')"
+                                        <button wire:click="delete('{{ $declaration['id'] }}')"
                                                 @click="openDropdown = false"
                                                 class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
                                         >
                                             @icon('delete', 'w-5 h-5')
-                                            {{ __('Видалити заявку на декларацію') }}
+                                            {{ __('declarations.delete') }}
                                         </button>
                                     @endif
 

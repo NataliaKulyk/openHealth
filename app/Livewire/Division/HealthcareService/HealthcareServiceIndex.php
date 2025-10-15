@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Division\HealthcareService;
 
 use App\Classes\eHealth\EHealth;
+use App\Enums\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Jobs\HealthcareServiceSync;
@@ -14,6 +15,7 @@ use App\Models\LegalEntity;
 use App\Notifications\SyncNotification;
 use App\Repositories\Repository;
 use App\Traits\FormTrait;
+use Exception;
 use Illuminate\Bus\Batch;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -37,7 +39,7 @@ class HealthcareServiceIndex extends Component
 
     public ?string $divisionUuid = null;
 
-    public bool $divisionStatus = true;
+    public ?Status $divisionStatus;
 
     public array $dictionaryNames = ['DIVISION_TYPE', 'SPECIALITY_TYPE', 'PROVIDING_CONDITION'];
 
@@ -45,6 +47,7 @@ class HealthcareServiceIndex extends Component
     {
         $this->divisionId = $division->id;
         $this->divisionUuid = $division->uuid;
+        $this->divisionStatus = $division->status;
 
         $this->getDictionary();
     }
@@ -115,6 +118,29 @@ class HealthcareServiceIndex extends Component
         }
     }
 
+    public function delete($id): void
+    {
+        $healthcareService = HealthcareService::select(['id', 'legal_entity_id', 'status'])
+            ->findOrFail($id);
+
+        if (Auth::user()?->cannot('delete', $healthcareService)) {
+            Session::flash('error', 'У вас немає дозволу на видалення заявки на створення послуги');
+
+            return;
+        }
+
+        try {
+            HealthcareService::destroy($id);
+
+            Session::flash('success', 'Чернетку послуги успішно видалено');
+        } catch (Exception $exception) {
+            $this->logDatabaseErrors($exception, 'Error while deleting healthcare service: ');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        }
+    }
+
     public function sync(): void
     {
         try {
@@ -147,6 +173,7 @@ class HealthcareServiceIndex extends Component
         if ($response->isNotLast()) {
             try {
                 $this->dispatchNextSyncJobs();
+                Session::flash('success', __('Синхронізацію успішно розпочато.'));
             } catch (Throwable $exception) {
                 Log::error('Failed to dispatch HealthcareServiceSync batch', [
                     'exception' => $exception
@@ -162,10 +189,22 @@ class HealthcareServiceIndex extends Component
     #[Computed]
     public function healthcareServices(): LengthAwarePaginator
     {
-        $query = HealthcareService::with('division:id,name')
-            ->select(['uuid', 'division_id', 'speciality_type', 'providing_condition', 'ehealth_inserted_at', 'status'])
+        $query = HealthcareService::with('division:id,name,status')
+            ->select(
+                [
+                    'id',
+                    'uuid',
+                    'division_id',
+                    'speciality_type',
+                    'providing_condition',
+                    'ehealth_inserted_at',
+                    'status',
+                    'created_at'
+                ]
+            )
             ->where('legal_entity_id', legalEntity()->id)
-            ->orderByDesc('ehealth_inserted_at');
+            ->orderByDesc('ehealth_inserted_at')
+            ->orderByDesc('created_at');
 
         // If divisionId is set, filter by division
         if ($this->divisionId) {

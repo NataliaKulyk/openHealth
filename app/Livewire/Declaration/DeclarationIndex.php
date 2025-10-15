@@ -34,42 +34,49 @@ class DeclarationIndex extends Component
 
     /**
      * Search by patient first and last names.
+     *
      * @var string
      */
     public string $searchByName = '';
 
     /**
      * Search by declaration and declaration request number
+     *
      * @var string
      */
     public string $searchByNumber = '';
 
     /**
      * Default types for multiselect filter
+     *
      * @var array|string[]
      */
     public array $typeFilter = ['request', 'declaration'];
 
     /**
      * Default status for multiselect filter
+     *
      * @var array|string[]
      */
     public array $statusFilter = ['active', 'CANCELLED'];
 
     /**
      * Filter for multiselect doctors
+     *
      * @var array|string[]
      */
     public array $doctorFilter = [];
 
     /**
      * Available doctors list
+     *
      * @var Collection
      */
     public Collection $doctors;
 
     /**
      * Count of active declarations.
+     *
      * @var int
      */
     public int $countActive;
@@ -261,12 +268,12 @@ class DeclarationIndex extends Component
      * @param  int  $id
      * @return void
      */
-    public function destroy(int $id): void
+    public function delete(int $id): void
     {
         $declarationRequest = DeclarationRequest::select(['id', 'legal_entity_id', 'employee_id', 'status'])
             ->findOrFail($id);
 
-        if (Auth::user()?->cannot('destroy', $declarationRequest)) {
+        if (Auth::user()?->cannot('delete', $declarationRequest)) {
             Session::flash('error', 'У вас немає дозволу на видалення заявки на подання декларації');
 
             return;
