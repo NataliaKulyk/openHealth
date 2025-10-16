@@ -56,7 +56,13 @@ class EmployeeCreate
             return;
         }
 
-        $existingUuids = $user->employees()->pluck('uuid')->all();
+        // This filters out only uuids associated with the cuurent user
+        $existingUuids = Employee::whereIn('uuid', array_column($employees, 'uuid'))
+            ->where('legal_entity_id', $event->legalEntity->id)
+            ->pluck('uuid')
+            ->all();
+
+        // Filter out employees that already exist in the local database
         $employees = array_filter($employees, fn (array $employee) => !in_array($employee['uuid'], $existingUuids));
 
         if (empty($employees)) {
