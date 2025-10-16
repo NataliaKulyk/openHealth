@@ -162,7 +162,7 @@
                                             </button>
 
                                             <div x-show="openDropdown" x-transition
-                                                 class="absolute right-0 z-10 w-48 bg-white rounded shadow dark:bg-gray-700" {{-- Видалив "divide-y divide-gray-100 dark:divide-gray-600" --}}
+                                                 class="absolute right-0 z-10 w-48 bg-white rounded shadow dark:bg-gray-700"
                                                  style="display: none;">
                                                 @if($patient['status'] === 'APPLICATION')
                                                     <div class="py-1" @click="openDropdown = false">
@@ -174,21 +174,17 @@
                                                         </button>
                                                     </div>
                                                 @else
-                                                    {{-- 1. Укласти декларацію --}}
                                                     @can('create', DeclarationRequest::class)
-                                                        {{-- Видалив обгортку <div class="py-1"> та клік. Dropdown-button має бути достатньо --}}
                                                         <a wire:click="redirectTo('{{ $patient['id'] }}', 'declaration.create')"
                                                            class="dropdown-button !flex gap-2"
-                                                           @click="openDropdown = false" {{-- Додав закриття дропдауну на посилання --}}
+                                                           @click="openDropdown = false"
                                                         >
                                                             @icon('file-text', 'w-4 h-4 text-gray-800 dark:text-white')
                                                             {{ __('patients.sign_declaration') }}
                                                         </a>
                                                     @endcan
 
-                                                    {{-- 2. Створити діагностичний звіт --}}
                                                     @can('create', DiagnosticReport::class)
-                                                        {{-- Видалив обгортку <div class="py-1"> та клік --}}
                                                         <a wire:click="redirectTo('{{ $patient['id'] }}', 'diagnostic-report.create')"
                                                            class="dropdown-button !flex gap-2"
                                                            @click="openDropdown = false"
@@ -198,9 +194,7 @@
                                                         </a>
                                                     @endcan
 
-                                                    {{-- 3. Створити процедуру --}}
                                                     @can('create', Procedure::class)
-                                                        {{-- Видалив обгортку <div class="py-1"> та клік --}}
                                                         <a wire:click="redirectTo('{{ $patient['id'] }}', 'procedure.create')"
                                                            class="dropdown-button !flex gap-2"
                                                            @click="openDropdown = false"
