@@ -48,11 +48,9 @@
                 {{ __('forms.tax_id') }}
             </label>
 
-            @error('form.patient.taxId')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.taxId') }}
             </p>
-            @enderror
         </div>
     </div>
 </fieldset>

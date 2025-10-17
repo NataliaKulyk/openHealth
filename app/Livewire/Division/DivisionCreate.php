@@ -21,11 +21,10 @@ use Livewire\Features\SupportRedirects\Redirector;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 
-
 class DivisionCreate extends DivisionComponent
 {
-    use WorkTimeUtilities,
-        AddressSearch;
+    use WorkTimeUtilities;
+    use AddressSearch;
 
     /**
      * Array containing dictionary names only used within the component.
@@ -54,8 +53,7 @@ class DivisionCreate extends DivisionComponent
      * divisionForm.division.location.latitude property is updated.
      * It ensures the value is always stored as a float.
      *
-     * @param mixed $value The value for latitude from input field
-     *
+     * @param  mixed  $value  The value for latitude from input field
      * @return void
      */
     public function updatedDivisionFormDivisionLocationLatitude($value)
@@ -72,22 +70,20 @@ class DivisionCreate extends DivisionComponent
      * divisionForm.division.location.longitude property is updated.
      * It ensures the value is always stored as a float.
      *
-     * @param mixed $value The value for latitude from input field
-     *
+     * @param  mixed  $value  The value for latitude from input field
      * @return void
      */
     public function updatedDivisionFormDivisionLocationLongitude($value)
     {
         $longitude = (float) (empty($value) ? 0 : $value);
 
-        $this->divisionForm->division['location']['longitude'] = (float) number_format($longitude, 6, '.', '') ;;
+        $this->divisionForm->division['location']['longitude'] = (float) number_format($longitude, 6, '.', '');
     }
 
     /**
      * Store data from the Division's form into the DB
      *
-     * @param bool $justSave Whether to show a success message after saving (true by default)
-     *
+     * @param  bool  $justSave  Whether to show a success message after saving (true by default)
      * @return Division|RedirectResponse|Redirector|null
      */
     public function store(bool $justSave = true): Division|RedirectResponse|Redirector|null
@@ -103,13 +99,13 @@ class DivisionCreate extends DivisionComponent
 
         if ($this->validateDivision()) {
             try {
-                $division =$this->saveToDB();
+                $division = $this->saveToDB();
 
                 return $justSave
                     ? Redirect::route('division.edit', [legalEntity(), $division])->with('success', __('forms.saved_successfully'))
                     : $division;
             } catch (Throwable $err) {
-                Log::channel('db_errors')->error('Cannot save Divisiion\'s data!', ['error' => $err->getMessage()]);
+                Log::channel('db_errors')->error('Cannot save Division\'s data!', ['error' => $err->getMessage()]);
 
                 session()->flash('error', __('errors.database.messages.save_error'));
             }
@@ -128,7 +124,7 @@ class DivisionCreate extends DivisionComponent
         // Preliminary store data the the DB
         $division = $this->store(false);
 
-        if (! $division || ! $division instanceof Division) {
+        if (!$division || !$division instanceof Division) {
             return;
         }
 
@@ -146,8 +142,7 @@ class DivisionCreate extends DivisionComponent
      * it redirects the user to the division index page with a success message.
      * Otherwise, it logs the error and displays an error message to the user.
      *
-     * @param Division $division The pre-saved division model instance to be created in eHealth
-     *
+     * @param  Division  $division  The pre-saved division model instance to be created in eHealth
      * @return void This method does not return a value but performs a redirect on success
      */
     protected function divisionCreate(Division $division): void
@@ -165,17 +160,15 @@ class DivisionCreate extends DivisionComponent
             // Repository::division()->syncDivisionData($this->divisionForm->division, legalEntity()); // TODO: realize it on the next PRs
             $division = Repository::division()->saveDivisionData($response, legalEntity()); // TODO: Remove it after the syncDivisionData() will works
 
-            if (! $division) {
+            if (!$division) {
                 throw new Exception('Cannot save division data after response!');
             }
 
             $this->redirect(route('division.index', [legalEntity()]), navigate: true);
 
-            session()->flash('success',  __('forms.success_response'));
+            session()->flash('success', __('forms.success_response'));
 
             return;
-
-            // return redirect()->route('division.index', [legalEntity()])->with('success', __('forms.success_response'));
         } catch (EHealthResponseException $err) {
             Log::channel('e_health_errors')->error(self::class . ':divisionCreate', ['error' => $err->getMessage()]);
         } catch (EHealthValidationException $err) {

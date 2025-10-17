@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Traits\EnumUtils;
+
 enum JobStatus: string
 {
+    use EnumUtils;
+
     case PENDING = 'PENDING';
     case SUSPENDED = 'SUSPENDED';
     case PARTIAL = 'PARTIAL';
@@ -25,10 +29,5 @@ enum JobStatus: string
             self::COMPLETED => 'Виконано',
             self::FAILED => 'Помилка'
         };
-    }
-
-    public static function values(): array
-    {
-        return array_column(self::cases(), 'value');
     }
 }

@@ -1,9 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums\Employee;
+
+use App\Traits\EnumUtils;
 
 enum RequestStatus: string
 {
+    use EnumUtils;
+
     case NEW = 'NEW';
     case APPROVED = 'APPROVED';
     case REJECTED = 'REJECTED';

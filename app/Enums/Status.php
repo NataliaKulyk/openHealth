@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Traits\EnumUtils;
+
 enum Status: string
 {
+    use EnumUtils;
+
     case NEW = 'NEW';
     case APPROVED = 'APPROVED';
     case REJECTED = 'REJECTED';
@@ -15,11 +19,6 @@ enum Status: string
     case INACTIVE = 'INACTIVE';
     case DRAFT = 'DRAFT';
     case UNSYNCED = 'UNSYNCED';
-
-    public static function values(): array
-    {
-        return array_column(self::cases(), 'value');
-    }
 
     public function label(): string
     {
@@ -39,7 +38,7 @@ enum Status: string
     public static function only(array $names): array
     {
         return collect(self::cases())
-            ->filter(fn ($case) => in_array($case->name, $names))
+            ->filter(fn ($case) => in_array($case->name, $names, true))
             ->map(fn ($case) => $case->value)
             ->values()
             ->all();

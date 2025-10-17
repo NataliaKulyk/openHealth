@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules;
 
 use Closure;
@@ -12,6 +14,7 @@ class PhoneDuplicates implements ValidationRule
     /**
      * This property will hold the array of phones if it's passed via the constructor.
      * It is nullable to support both old and new call methods.
+     *
      * @var array|null
      */
     protected ?array $phonesFromConstructor;
@@ -50,7 +53,8 @@ class PhoneDuplicates implements ValidationRule
 
         foreach ($typeCounts as $type => $count) {
             if ($count > 1) {
-                $fail(__('validation.phone.dublicates'));
+                $fail(__('validation.phone.duplicates'));
+
                 return;
             }
         }

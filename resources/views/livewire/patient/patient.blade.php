@@ -23,11 +23,11 @@
                     </a>
 
                     @can('create', PersonRequest::class)
-                        <button wire:click.prevent="createPerson" class="button-primary">
-                            {{ __('forms.send_for_approval') }}
+                        <button wire:click.prevent="createApplication" class="button-primary-outline">
+                            {{ __('forms.save') }}
                         </button>
-                        <button wire:click.prevent="createApplication" class="button-primary">
-                            {{ __('patients.save_to_application') }}
+                        <button wire:click.prevent="createPerson" class="button-primary">
+                            {{ __('forms.save_and_send') }}
                         </button>
                     @endcan
                 </div>

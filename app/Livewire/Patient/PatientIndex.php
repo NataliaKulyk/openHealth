@@ -36,12 +36,14 @@ class PatientIndex extends Component
 
     /**
      * List of founded person.
+     *
      * @var array
      */
     public array $patients = [];
 
     /**
      * Patient data from eHealth response.
+     *
      * @var array
      */
     public array $originalPatients = [];
@@ -197,6 +199,11 @@ class PatientIndex extends Component
     public function removeApplication(int $id): void
     {
         PersonRequest::destroy($id);
+
+        // Update list
+        $this->patients = collect($this->patients)
+            ->reject(static fn (array $patient) => $patient['id'] === $id)
+            ->all();
 
         Session::flash('success', 'Заявку успішно видалено.');
     }

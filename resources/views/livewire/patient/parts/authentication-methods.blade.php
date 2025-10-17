@@ -50,11 +50,9 @@
                 </template>
             </select>
 
-            @error('form.patient.authenticationMethods.*.type')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.authenticationMethods.*.type') }}
             </p>
-            @enderror
         </div>
     </div>
 
@@ -75,11 +73,9 @@
                     {{ __('forms.phone_number') }}
                 </label>
 
-                @error('form.patient.authenticationMethods.*.phoneNumber')
                 <p class="text-error">
-                    {{ $message }}
+                    {{ $errors->first('form.patient.authenticationMethods.*.phoneNumber') }}
                 </p>
-                @enderror
             </div>
         </div>
     </template>
@@ -100,11 +96,9 @@
                     {{ __('patients.alias') }}
                 </label>
 
-                @error('form.patient.authenticationMethods.*.alias')
                 <p class="text-error">
-                    {{ $message }}
+                    {{ $errors->first('form.patient.authenticationMethods.*.alias') }}
                 </p>
-                @enderror
             </div>
         </div>
     </template>

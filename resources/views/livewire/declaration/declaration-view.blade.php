@@ -63,7 +63,7 @@
         <div class="form-row-2">
             <div class="form-group group">
                 <label for="status" class="label">
-                    {{ __('declarations.status') }}
+                    {{ __('declarations.status.label') }}
                 </label>
                 <input value="{{ $declaration->status->label() }}"
                        type="text"

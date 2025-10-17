@@ -2,16 +2,7 @@
     use App\Models\MedicalEvents\Sql\{DiagnosticReport, Encounter, Procedure};
     use App\Models\DeclarationRequest;
     use App\Models\Person\{Person, PersonRequest};
-
-    $tableHeaders = [
-        __('forms.full_name'),
-        __('forms.phone'),
-        __('Д.Н.'),
-        __('forms.rnokpp') . '(' . __('forms.ipn') . ')',
-        __('forms.birth_certificate'),
-        __('forms.status.label'),
-        __('forms.action')
-    ];
+    use App\Enums\Person\VerificationStatus;
 @endphp
 
 <div>
@@ -63,22 +54,22 @@
                             <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
                                 @if(isset($patient['phones'][0]['number']))
                                     <span class="flex items-center gap-1.5">
-                                            @icon('tabler-phone', 'w-6 h-6 text-gray-800 dark:text-white')
-                                            <span>{{ $patient['phones'][0]['number'] }}</span>
-                                        </span>
+                                        @icon('tabler-phone', 'w-6 h-6 text-gray-800 dark:text-white')
+                                        <span>{{ $patient['phones'][0]['number'] }}</span>
+                                    </span>
                                 @endif
                                 @if($patient['birth_date'])
                                     <span class="flex items-center gap-1.5">
-                                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
-                                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
-                                                 viewBox="0 0 24 24">
-                                               <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
-                                                     d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H8z"/>
-                                               <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
-                                                     d="M16 2v4M8 2v4M3 10h18"/>
-                                            </svg>
-                                            <span>{{ $patient['birth_date'] }}</span>
-                                        </span>
+                                        <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
+                                             xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                             viewBox="0 0 24 24">
+                                           <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                                                 d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H8z"/>
+                                           <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                                                 d="M16 2v4M8 2v4M3 10h18"/>
+                                        </svg>
+                                        <span>{{ $patient['birth_date'] }}</span>
+                                    </span>
                                 @endif
                             </div>
                         </div>
@@ -117,11 +108,9 @@
                                     <th scope="col" class="th-input w-[20%]">{{ __('forms.phone') }}</th>
                                     <th scope="col" class="th-input w-[15%]">{{ __('forms.birth_date') }}</th>
                                     <th scope="col" class="th-input w-[20%]">{{ __('forms.rnokpp') }}</th>
-                                    <th scope="col"
-                                        class="th-input w-[20%]">{{ __('patients.birth_certificate') }}</th>
+                                    <th scope="col" class="th-input w-[20%]">{{ __('patients.birth_certificate') }}</th>
                                     <th scope="col" class="th-input w-[15%]">{{ __('forms.status.label') }}</th>
-                                    <th scope="col"
-                                        class="th-input w-[10%] text-center">{{ __('forms.actions') }}</th>
+                                    <th scope="col" class="th-input w-[10%] text-center">{{ __('forms.actions') }}</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -138,22 +127,42 @@
                                     <td class="td-input break-words whitespace-normal align-top">
                                         {{ $patient['birth_certificate'] ?? '-' }}
                                     </td>
+
                                     <td class="td-input whitespace-normal align-top">
-                                        @if($patient['status'] === 'APPLICATION')
-                                            <span class="badge-purple">ЗАЯВКА</span>
-                                        @elseif($patient['status'] === 'eHEALTH')
-                                            <span class="badge-green">ЕСОЗ</span>
-                                        @elseif($patient['status'] === 'IN_REVIEW')
-                                            <span class="badge-yellow">ОБРОБЛЯЄТЬСЯ</span>
-                                        @elseif($patient['status'] === 'VERIFIED')
-                                            <span class="badge-green">ВЕРИФІКОВАНИЙ</span>
-                                        @else
-                                            <span>{{ $patient['status'] }}</span>
-                                        @endif
+                                        @php
+                                            $statusEnum = VerificationStatus::tryFrom($patient['status']);
+
+                                            if ($statusEnum) {
+                                                $badgeClass = match ($statusEnum) {
+                                                    VerificationStatus::VERIFIED, VerificationStatus::VERIFICATION_NOT_NEEDED => 'badge-green',
+                                                    VerificationStatus::IN_REVIEW, VerificationStatus::VERIFICATION_NEEDED => 'badge-yellow',
+                                                    VerificationStatus::NOT_VERIFIED, VerificationStatus::CHANGES_NEEDED => 'badge-red',
+                                                };
+                                            } else {
+                                                $badgeClass = match ($patient['status']) {
+                                                    'APPLICATION' => 'badge-purple',
+                                                    'eHEALTH' => 'badge-green',
+                                                    default => 'badge-gray'
+                                                };
+                                            }
+
+                                            $label = $statusEnum?->label() ?? match ($patient['status']) {
+                                                'APPLICATION' => 'ЗАЯВКА',
+                                                'eHEALTH' => 'ЕСОЗ',
+                                                default => $patient['status']
+                                            };
+                                        @endphp
+
+                                        <span class="{{ $badgeClass }}">
+                                            {{ $label }}
+                                        </span>
                                     </td>
+
                                     <td class="td-input text-center">
-                                        <div class="relative" x-data="{ openDropdown: false }"
-                                             @click.outside="openDropdown = false">
+                                        <div class="relative"
+                                             x-data="{ openDropdown: false }"
+                                             @click.outside="openDropdown = false"
+                                        >
                                             <button @click="openDropdown = !openDropdown"
                                                     type="button"
                                                     class="cursor-pointer"
@@ -161,13 +170,16 @@
                                                 @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-gray-200')
                                             </button>
 
-                                            <div x-show="openDropdown" x-transition
+                                            <div x-show="openDropdown"
+                                                 x-transition
                                                  class="absolute right-0 z-10 w-48 bg-white rounded shadow dark:bg-gray-700"
-                                                 style="display: none;">
+                                                 style="display: none;"
+                                            >
                                                 @if($patient['status'] === 'APPLICATION')
                                                     <div class="py-1" @click="openDropdown = false">
                                                         <button wire:click="removeApplication({{ $patient['id'] }})"
                                                                 class="dropdown-button !flex gap-2"
+                                                                type="button"
                                                         >
                                                             @icon('delete', 'w-4 h-4')
                                                             {{ __('forms.delete') }}

@@ -1,9 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums\Employee;
+
+use App\Traits\EnumUtils;
 
 enum RevisionStatus: string
 {
+    use EnumUtils;
+
     case PENDING = 'PENDING';
     case APPLIED = 'APPLIED';
     case OUTDATED = 'OUTDATED';

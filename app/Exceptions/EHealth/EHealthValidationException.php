@@ -31,7 +31,12 @@ class EHealthValidationException extends EHealthException
      */
     public function getFormattedMessage(): string
     {
+        $type = $this->details['error']['type'] ?? null;
         $message = 'Помилка від ЕСОЗ: ' . $this->getMessage();
+
+        if ($type === 'request_malformed') {
+            return $message . ' ' . $this->details['error']['message'];
+        }
 
         if (isset($this->details['error']['invalid']) && is_array($this->details['error']['invalid'])) {
             $invalids = $this->details['error']['invalid'];

@@ -18,11 +18,9 @@
                 {{ __('forms.first_name') }}
             </label>
 
-            @error('form.patient.emergencyContact.firstName')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.emergencyContact.firstName') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -39,11 +37,9 @@
                 {{ __('forms.last_name') }}
             </label>
 
-            @error('form.patient.emergencyContact.lastName')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.emergencyContact.lastName') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -59,11 +55,9 @@
                 {{ __('forms.second_name') }}
             </label>
 
-            @error('form.patient.emergencyContact.secondName')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.emergencyContact.secondName') }}
             </p>
-            @enderror
         </div>
     </div>
 
@@ -86,11 +80,9 @@
                         @endforeach
                     </select>
 
-                    @error('form.patient.emergencyContact.phones.*.type')
                     <p class="text-error">
-                        {{ $message }}
+                        {{ $errors->first('form.patient.emergencyContact.phones.*.type') }}
                     </p>
-                    @enderror
                 </div>
 
                 <div class="form-group group">
@@ -109,11 +101,9 @@
                         </label>
                     </div>
 
-                    @error('form.patient.emergencyContact.phones.*.number')
                     <p class="text-error">
-                        {{ $message }}
+                        {{ $errors->first('form.patient.emergencyContact.phones.*.number') }}
                     </p>
-                    @enderror
                 </div>
                 <template x-if="index == emergencyContactPhones.length - 1 & index != 0">
                     {{-- Remove a phone if button is clicked --}}

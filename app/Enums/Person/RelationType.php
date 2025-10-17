@@ -1,24 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums\Person;
 
-use Illuminate\Support\Facades\Lang;
+use App\Traits\EnumUtils;
 
 enum RelationType: string
 {
+    use EnumUtils;
+
     case PRIMARY = 'PRIMARY';
     case SECONDARY = 'SECONDARY';
 
     public function label(): string
     {
         return match ($this) {
-            self::PRIMARY => Lang::get('patients.relation_type.primary'),
-            self::SECONDARY => Lang::get('patients.relation_type.secondary'),
+            self::PRIMARY => __('patients.relation_type.primary'),
+            self::SECONDARY => __('patients.relation_type.secondary')
         };
-    }
-
-    public static function getOptions(): array
-    {
-        return array_map(fn($case) => $case->label(), self::cases());
     }
 }

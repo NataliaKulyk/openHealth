@@ -16,11 +16,9 @@
                         @endforeach
                     </select>
 
-                    @error('form.patient.phones.*.type')
                     <p class="text-error">
-                        {{ $message }}
+                        {{ $errors->first('form.patient.phones.*.type') }}
                     </p>
-                    @enderror
                 </div>
 
                 <div class="form-group group">
@@ -38,11 +36,9 @@
                         </label>
                     </div>
 
-                    @error('form.patient.phones.*.number')
                     <p class="text-error">
-                        {{ $message }}
+                        {{ $errors->first('form.patient.phones.*.number') }}
                     </p>
-                    @enderror
                 </div>
                 <template x-if="index == phones.length - 1 & index != 0">
                     {{-- Remove a phone if button is clicked --}}
@@ -77,11 +73,9 @@
                 {{ __('forms.email') }}
             </label>
 
-            @error('form.patient.email')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.email') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -98,11 +92,9 @@
                 {{ __('patients.secret') }}
             </label>
 
-            @error('form.patient.secret')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.secret') }}
             </p>
-            @enderror
         </div>
     </div>
 </fieldset>

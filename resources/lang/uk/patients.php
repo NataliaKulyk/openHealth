@@ -105,13 +105,24 @@ return [
     'print_leaflet_for_patient' => "Роздрукувати пам’ятку для ознайомлення пацієнтом",
     'uploading_documents' => 'Завантаження документів',
 
-    // PERSON_VERIFICATION_STATUSES
-    'CHANGES_NEEDED' => 'Неуспішно верифіковано (потребує змін)',
-    'IN_REVIEW' => 'На опрацюванні',
-    'NOT_VERIFIED' => 'Не верифіковано',
-    'VERIFICATION_NEEDED' => 'Потребує верифікації',
-    'VERIFICATION_NOT_NEEDED' => 'Не потребує верифікації',
-    'VERIFIED' => 'Верифіковано',
+    'status' => [
+        // PERSON_VERIFICATION_STATUSES
+        'changes_needed' => 'Неуспішно верифіковано (потребує змін)',
+        'in_review' => 'На опрацюванні',
+        'not_verified' => 'Не верифіковано',
+        'verification_needed' => 'Потребує верифікації',
+        'verification_not_needed' => 'Не потребує верифікації',
+        'verified' => 'Верифіковано',
+
+        // Request statuses
+        'draft' => 'Чернетка',
+        'new' => 'Новий',
+        'approved' => 'Підтверджений',
+        'signed' => 'Підписаний',
+        'cancelled' => 'Скасований',
+        'expired' => 'Прострочений',
+        'rejected' => 'Відхилений'
+    ],
 
     // patient-data
     'patient_data' => 'Дані пацієнта',

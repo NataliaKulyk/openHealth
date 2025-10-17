@@ -27,7 +27,7 @@
             <template x-for="(authenticationMethod, index) in authenticationMethods">
                 <tr>
                     <td class="td-input"
-                        x-data='{ authLabels: @json(AuthenticationMethod::labels()) }'
+                        x-data="{ authLabels: @json(AuthenticationMethod::options()) }"
                         x-text="authLabels[authenticationMethod.type] ?? authenticationMethod.type"
                     >
                     </td>

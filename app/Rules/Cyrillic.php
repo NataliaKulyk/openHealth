@@ -16,12 +16,11 @@ class Cyrillic implements ValidationRule
      * @param  string  $attribute
      * @param  mixed  $value
      * @param  Closure(string): PotentiallyTranslatedString  $fail
-     *
      * @return void
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!preg_match('/^[\p{Cyrillic}\s.]+$/u', $value)) {
+        if (!preg_match('/^[\p{Cyrillic}\s.\']+$/u', $value)) {
             $fail(__('forms.cyrillic_with_spaces_and_dots'));
         }
     }

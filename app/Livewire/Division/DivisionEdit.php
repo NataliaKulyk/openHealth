@@ -55,15 +55,14 @@ class DivisionEdit extends DivisionComponent
      * divisionForm.division.location.latitude property is updated.
      * It ensures the value is always stored as a float.
      *
-     * @param mixed $value The value for latitude from input field
-     *
+     * @param  mixed  $value  The value for latitude from input field
      * @return void
      */
     public function updatedDivisionFormDivisionLocationLatitude($value)
     {
         $latitude = (float) (empty($value) ? 0 : $value);
 
-        $this->divisionForm->division['location']['latitude'] = (float) number_format($latitude, 6, '.', '') ;
+        $this->divisionForm->division['location']['latitude'] = (float) number_format($latitude, 6, '.', '');
     }
 
     /**
@@ -73,15 +72,15 @@ class DivisionEdit extends DivisionComponent
      * divisionForm.division.location.longitude property is updated.
      * It ensures the value is always stored as a float.
      *
-     * @param mixed $value The value for latitude from input field
-     *
+     * @param  mixed  $value  The value for latitude from input field
      * @return void
      */
     public function updatedDivisionFormDivisionLocationLongitude($value)
     {
         $longitude = (float) (empty($value) ? 0 : $value);
 
-        $this->divisionForm->division['location']['longitude'] = (float) number_format($longitude, 6, '.', '') ;;
+        $this->divisionForm->division['location']['longitude'] = (float) number_format($longitude, 6, '.', '') ;
+        ;
     }
 
     /**
@@ -91,8 +90,7 @@ class DivisionEdit extends DivisionComponent
      * - Assigns the address and phones to the form.
      * - Initializes working hours if not already set.
      *
-     * @param Division $division
-     *
+     * @param  Division  $division
      * @return void
      */
     public function setDivisionData(Division $division)
@@ -110,8 +108,7 @@ class DivisionEdit extends DivisionComponent
     /**
      * Store data from the Division's form into the DB
      *
-     * @param bool $justSave Whether to show a success message after saving (true by default)
-     *
+     * @param  bool  $justSave  Whether to show a success message after saving (true by default)
      * @return Division|null
      */
     public function store($justSave = true): ?Division
@@ -127,7 +124,7 @@ class DivisionEdit extends DivisionComponent
 
         if ($this->validateDivision()) {
             try {
-                $division =$this->saveToDB();
+                $division = $this->saveToDB();
 
                 session()->flash('success', $justSave ? __('forms.saved_successfully') : null);
 
@@ -152,7 +149,7 @@ class DivisionEdit extends DivisionComponent
         // Preliminary store data the the DB
         $division = $this->store(false);
 
-        if (! $division) {
+        if (!$division) {
             return;
         }
 
@@ -169,8 +166,7 @@ class DivisionEdit extends DivisionComponent
      * is successful, it redirects the user to the division index page with a
      * success message. Otherwise, it logs the error and displays an error message.
      *
-     * @param Division $division The division model instance that has been pre-saved with local changes
-     *
+     * @param  Division  $division  The division model instance that has been pre-saved with local changes
      * @return void.
      */
     public function divisionUpdate(Division $division): void
@@ -189,13 +185,13 @@ class DivisionEdit extends DivisionComponent
             // Repository::division()->syncDivisionData($this->divisionForm->division, legalEntity()); // TODO: realize it on the next PRs
             $division = Repository::division()->saveDivisionData($response, legalEntity()); // TODO: Remove it after the syncDivisionData() will works
 
-            if (! $division) {
+            if (!$division) {
                 throw new Exception('Cannot save division data after response!');
             }
 
             $this->redirect(route('division.index', [legalEntity()]), navigate: true);
 
-            session()->flash('success',  __('forms.success_response'));
+            session()->flash('success', __('forms.success_response'));
 
             return;
             // return redirect()->route('division.index', [legalEntity()])->with('success', __('forms.success_response'));
@@ -232,7 +228,7 @@ class DivisionEdit extends DivisionComponent
         $division['location'] ??= $this->divisionForm->division['location'];
 
         // TODO: Remove this line if multiaddress support is implemented
-        $division['addresses'] = Arr::where($division['addresses'], fn($value) => $value['type'] === 'RESIDENCE');
+        $division['addresses'] = Arr::where($division['addresses'], fn ($value) => $value['type'] === 'RESIDENCE');
 
         // If working_hours is not set, then use the original working_hours value cause the '[]' value has been removed by removeEmptyKeys method
         $division['working_hours'] = $this->prepareTimeToRequest($this->divisionForm->division['workingHours'], false);

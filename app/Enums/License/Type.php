@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Enums\License;
 
+use App\Traits\EnumUtils;
+
 enum Type: string
 {
+    use EnumUtils;
+
     case MSP = 'MSP';
     case PHARMACY = 'PHARMACY';
     case PHARMACY_DRUGS = 'PHARMACY_DRUGS';
@@ -13,9 +17,9 @@ enum Type: string
     public function label(): string
     {
         return match ($this) {
-            self::MSP => 'ліцензія на провадження господарської діяльності з медичної практики',
-            self::PHARMACY => 'ліцензія на провадження господарської діяльності з виробництва лікарських засобів, оптової та роздрібної торгівлі лікарськими засобами, імпорту лікарських засобів (крім активних фармацевтичних інгредієнтів)',
-            self::PHARMACY_DRUGS => 'ліцензія на право провадження господарської діяльності з розроблення, виробництва, виготовлення, зберігання, перевезення, придбання, реалізації (відпуску) наркотичних засобів, психотропних речовин і прекурсорів'
+            self::MSP => __('licenses.status.msp'),
+            self::PHARMACY => __('licenses.status.pharmacy'),
+            self::PHARMACY_DRUGS => __('licenses.status.pharmacy_drugs')
         };
     }
 }

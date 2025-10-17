@@ -13,6 +13,7 @@ use App\Rules\EightDigitsHyphenFiveDigits;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -24,48 +25,7 @@ class PatientForm extends Form
     protected const int NO_SELF_REGISTRATION_AGE = 14;
     protected const int PERSON_FULL_LEGAL_CAPACITY_AGE = 18;
 
-    #[Validate([
-        'patient.firstName' => ['required', 'min:3', new Cyrillic()],
-        'patient.lastName' => ['required', 'min:3', new Cyrillic()],
-        'patient.secondName' => ['nullable', 'min:3', new Cyrillic()],
-        'patient.birthDate' => ['required', 'date'],
-        'patient.birthCountry' => ['required', 'string'],
-        'patient.birthSettlement' => ['required', 'string'],
-        'patient.gender' => ['required', 'string', new InDictionary('GENDER')],
-        'patient.unzr' => ['nullable', new EightDigitsHyphenFiveDigits()],
-        'patient.noTaxId' => ['nullable', 'boolean'],
-        'patient.taxId' => ['required_if:patient.noTaxId,false', 'numeric', 'digits:10'],
-        'patient.secret' => ['required', 'string', 'min:6'],
-        'patient.email' => ['nullable', 'email', 'string'],
-
-        'patient.phones.*.type' => ['nullable', 'string', 'distinct'],
-        'patient.phones.*.number' => ['nullable', 'string', 'regex:/^\+38[0-9]{10}$/', 'distinct'],
-
-        'patient.emergencyContact.firstName' => ['required', 'min:3', new Cyrillic()],
-        'patient.emergencyContact.lastName' => ['required', 'min:3', new Cyrillic()],
-        'patient.emergencyContact.secondName' => ['nullable', 'min:3', new Cyrillic()],
-        'patient.emergencyContact.phones.*.type' => ['required', 'string', 'distinct'],
-        'patient.emergencyContact.phones.*.number' => ['required', 'string', 'regex:/^\+38[0-9]{10}$/', 'distinct'],
-
-        'patient.authenticationMethods.*.type' => ['required', 'string', new InDictionary('AUTHENTICATION_METHOD')],
-        'patient.authenticationMethods.*.phoneNumber' => [
-            'nullable',
-            'required_if:patient.authenticationMethods.*.type,OTP',
-            'regex:/^\+38[0-9]{10}$/'
-        ],
-        'patient.authenticationMethods.*.value' => [
-            'nullable',
-            'required_if:patient.authenticationMethods.*.type,THIRD_PERSON',
-            'string'
-        ],
-        'patient.authenticationMethods.*.alias' => [
-            'nullable',
-            'required_if:patient.authenticationMethods.*.type,THIRD_PERSON',
-            'string'
-        ]
-    ])]
     public array $patient = [
-        'gender' => '',
         'phones' => [
             ['type' => null, 'number' => null]
         ],
@@ -79,36 +39,12 @@ class PatientForm extends Form
         ]
     ];
 
-    #[Validate([
-        'patientsFilter.firstName' => ['required', 'min:3', new Cyrillic()],
-        'patientsFilter.lastName' => ['required', 'min:3', new Cyrillic()],
-        'patientsFilter.secondName' => ['nullable', 'min:3', new Cyrillic()],
-        'patientsFilter.birthDate' => ['required', 'date'],
-        'patientsFilter.taxId' => ['nullable', 'numeric', 'digits:10'],
-        'patientsFilter.phoneNumber' => ['nullable', 'string', 'min:13', 'max:13'],
-        'patientsFilter.birthCertificate' => ['nullable', 'string']
-    ])]
     public array $patientsFilter = [];
 
-    #[Validate([
-        'documents' => ['required', 'array'],
-        'documents.*.type' => ['required', 'string', new InDictionary('DOCUMENT_TYPE')],
-        'documents.*.number' => ['required', 'string', 'max:255'],
-        'documents.*.issuedBy' => ['required', 'string', 'max:255'],
-        'documents.*.issuedAt' => ['required', 'date', 'before:today', 'after:patient.birthDate'],
-        'documents.*.expirationDate' => ['nullable', 'date', 'after:today']
-    ])]
     public array $documents = [];
 
     public array $addresses = [];
 
-    #[Validate([
-        'documentsRelationship.*.type' => ['required', 'string', new InDictionary('DOCUMENT_RELATIONSHIP_TYPE')],
-        'documentsRelationship.*.number' => ['required', 'string', 'max:255'],
-        'documentsRelationship.*.issuedBy' => ['required', 'string', 'max:255'],
-        'documentsRelationship.*.issuedAt' => ['required', 'date', 'before:today', 'after:patient.birthDate'],
-        'documentsRelationship.*.activeTo' => ['nullable', 'date', 'after:tomorrow']
-    ])]
     public array $documentsRelationship = [];
 
     public array $confidantPerson = [];
@@ -128,6 +64,92 @@ class PatientForm extends Form
     public TemporaryUploadedFile $keyContainerUpload;
 
     public string $password;
+
+    public function rules(): array
+    {
+        return [
+            'patient.firstName' => ['required', 'min:3', new Cyrillic()],
+            'patient.lastName' => ['required', 'min:3', new Cyrillic()],
+            'patient.secondName' => ['nullable', 'min:3', new Cyrillic()],
+            'patient.birthDate' => ['required', 'date'],
+            'patient.birthCountry' => ['required', 'string'],
+            'patient.birthSettlement' => ['required', 'string'],
+            'patient.gender' => ['required', 'string', new InDictionary('GENDER')],
+            'patient.unzr' => [
+                'nullable',
+                new EightDigitsHyphenFiveDigits(),
+                Rule::requiredIf(function () {
+                    return collect($this->documents)
+                        ->contains(fn (array $document) => $document['type'] === 'NATIONAL_ID');
+                }),
+            ],
+            'patient.noTaxId' => ['nullable', 'boolean'],
+            'patient.taxId' => ['required_if:patient.noTaxId,false', 'numeric', 'digits:10'],
+            'patient.secret' => ['required', 'string', 'min:6'],
+            'patient.email' => ['nullable', 'email', 'string'],
+
+            'patient.phones.*.type' => ['nullable', 'string', 'distinct', 'required_with:patient.phones.*.number'],
+            'patient.phones.*.number' => [
+                'nullable',
+                'string',
+                'regex:/^\+38[0-9]{10}$/',
+                'distinct',
+                'required_with:patient.phones.*.type'
+            ],
+
+            'patient.emergencyContact.firstName' => ['required', 'min:3', new Cyrillic()],
+            'patient.emergencyContact.lastName' => ['required', 'min:3', new Cyrillic()],
+            'patient.emergencyContact.secondName' => ['nullable', 'min:3', new Cyrillic()],
+            'patient.emergencyContact.phones.*.type' => ['required', 'string', 'distinct'],
+            'patient.emergencyContact.phones.*.number' => ['required', 'string', 'regex:/^\+38[0-9]{10}$/', 'distinct'],
+
+            'patient.authenticationMethods.*.type' => ['required', 'string', new InDictionary('AUTHENTICATION_METHOD')],
+            'patient.authenticationMethods.*.phoneNumber' => [
+                'nullable',
+                'required_if:patient.authenticationMethods.*.type,OTP',
+                'regex:/^\+38[0-9]{10}$/'
+            ],
+            'patient.authenticationMethods.*.value' => [
+                'nullable',
+                'required_if:patient.authenticationMethods.*.type,THIRD_PERSON',
+                'string'
+            ],
+            'patient.authenticationMethods.*.alias' => [
+                'nullable',
+                'required_if:patient.authenticationMethods.*.type,THIRD_PERSON',
+                'string'
+            ],
+
+            'patientsFilter.firstName' => ['required', 'min:3', new Cyrillic()],
+            'patientsFilter.lastName' => ['required', 'min:3', new Cyrillic()],
+            'patientsFilter.secondName' => ['nullable', 'min:3', new Cyrillic()],
+            'patientsFilter.birthDate' => ['required', 'date'],
+            'patientsFilter.taxId' => ['nullable', 'numeric', 'digits:10'],
+            'patientsFilter.phoneNumber' => ['nullable', 'string', 'min:13', 'max:13'],
+            'patientsFilter.birthCertificate' => ['nullable', 'string'],
+
+            'documents' => ['required', 'array'],
+            'documents.*.type' => ['required', 'string', new InDictionary('DOCUMENT_TYPE')],
+            'documents.*.number' => ['required', 'string', 'max:255'],
+            'documents.*.issuedBy' => ['required', 'string', 'max:255'],
+            'documents.*.issuedAt' => ['required', 'date', 'before:today', 'after:patient.birthDate'],
+            'documents.*.expirationDate' => ['nullable', 'date', 'after:today'],
+
+            'documentsRelationship.*.type' => ['required', 'string', new InDictionary('DOCUMENT_RELATIONSHIP_TYPE')],
+            'documentsRelationship.*.number' => ['required', 'string', 'max:255'],
+            'documentsRelationship.*.issuedBy' => ['required', 'string', 'max:255'],
+            'documentsRelationship.*.issuedAt' => ['required', 'date', 'before:today', 'after:patient.birthDate'],
+            'documentsRelationship.*.activeTo' => ['nullable', 'date', 'after:tomorrow']
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'patient.unzr.required' => "Поле УНЗР є обов’язковим, якщо вибрано документ типу 'Біометричний паспорт громадянина України'.",
+            'documents.*.expirationDate' => "Поле 'дійсний до' в документі має містити дату не раніше сьогоднішньої."
+        ];
+    }
 
     /**
      * Validate data for chosen model.
@@ -149,7 +171,6 @@ class PatientForm extends Form
 
             if (in_array('patient', $fields, true)) {
                 $this->addNoTaxIdValidation($rules);
-                $this->addUnzrRuleIfRequired($rules);
                 $this->validateAddressees();
             }
 
@@ -245,7 +266,8 @@ class PatientForm extends Form
             $rules["documents.$key.number"][] = match ($document['type']) {
                 'PASSPORT', 'REFUGEE_CERTIFICATE', 'COMPLEMENTARY_PROTECTION_CERTIFICATE' => new TwoLettersSixDigits(),
                 'NATIONAL_ID' => 'digits:9',
-                'BIRTH_CERTIFICATE', 'TEMPORARY_PASSPORT', 'CHILD_BIRTH_CERTIFICATE', 'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE' => new AlphaNumericWithSymbols(),
+                'BIRTH_CERTIFICATE', 'TEMPORARY_PASSPORT', 'CHILD_BIRTH_CERTIFICATE', 'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE' => new AlphaNumericWithSymbols(
+                ),
                 'TEMPORARY_CERTIFICATE' => new TwoLettersFourToSixDigitsOrComplex(),
                 'BIRTH_CERTIFICATE_FOREIGN', 'PERMANENT_RESIDENCE_PERMIT' => 'string',
                 default => null
@@ -269,22 +291,6 @@ class PatientForm extends Form
     }
 
     /**
-     * Do UNZR required if a document type is NATIONAL_ID.
-     *
-     * @param  array  $rules
-     * @return void
-     */
-    private function addUnzrRuleIfRequired(array &$rules): void
-    {
-        foreach ($this->documents as $document) {
-            if (isset($document['type']) && $document['type'] === 'NATIONAL_ID') {
-                $rules['patient.unzr'][] = 'required';
-                break;
-            }
-        }
-    }
-
-    /**
      * Do tax_id required if no_tax_id = false and persons age > NO_SELF_AUTH_AGE.
      *
      * @param  array  $rules
@@ -292,7 +298,7 @@ class PatientForm extends Form
      */
     private function addNoTaxIdValidation(array &$rules): void
     {
-        if (!empty($this->patient['taxId']) && $this->patient['birthDate'] > self::NO_SELF_AUTH_AGE) {
+        if (!empty($this->patient['taxId']) && (!empty($this->patient['birthDate']) && $this->patient['birthDate'] > self::NO_SELF_AUTH_AGE)) {
             $rules['patient.taxId'][] = 'required';
         }
     }

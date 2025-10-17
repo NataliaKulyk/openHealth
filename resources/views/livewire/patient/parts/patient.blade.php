@@ -18,11 +18,9 @@
                 {{ __('forms.first_name') }}
             </label>
 
-            @error('form.patient.firstName')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.firstName') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -39,11 +37,9 @@
                 {{ __('forms.last_name') }}
             </label>
 
-            @error('form.patient.lastName')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.lastName') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -59,11 +55,9 @@
                 {{ __('forms.second_name') }}
             </label>
 
-            @error('form.patient.secondName')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.secondName') }}
             </p>
-            @enderror
         </div>
     </div>
 
@@ -85,11 +79,9 @@
                 </label>
             </div>
 
-            @error('form.patient.birthDate')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.birthDate') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -106,11 +98,9 @@
                 {{ __('forms.birth_country') }}
             </label>
 
-            @error('form.patient.birthCountry')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.birthCountry') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -127,11 +117,9 @@
                 {{ __('forms.birth_settlement') }}
             </label>
 
-            @error('form.patient.birthSettlement')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.birthSettlement') }}
             </p>
-            @enderror
         </div>
     </div>
 
@@ -141,7 +129,8 @@
                     name="patientGender"
                     id="patientGender"
                     class="input-select peer
-                    @error('form.patient.gender') input-error @enderror" required
+                    @error('form.patient.gender') input-error @enderror"
+                    required
             >
                 <option value="" disabled selected hidden>
                     {{ __('forms.select') }} *</option>
@@ -149,15 +138,13 @@
                     <option value="{{ $key }}">{{ $gender }}</option>
                 @endforeach
             </select>
-            <label for="patientGender"
-                   class="label">
+            <label for="patientGender" class="label">
                 {{ __('forms.gender') }}
             </label>
-            @error('form.patient.gender')
+
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.gender') }}
             </p>
-            @enderror
         </div>
 
         <div class="form-group group">
@@ -174,11 +161,9 @@
                 {{ __('patients.unzr') }}
             </label>
 
-            @error('form.patient.unzr')
             <p class="text-error">
-                {{ $message }}
+                {{ $errors->first('form.patient.unzr') }}
             </p>
-            @enderror
         </div>
     </div>
 </fieldset>
