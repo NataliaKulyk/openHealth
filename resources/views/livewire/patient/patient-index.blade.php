@@ -84,7 +84,7 @@
                             @else
                                 @can('view', Person::class)
                                     <button wire:click="redirectTo('{{ $patient['id'] }}', 'patient.patient-data')"
-                                            class="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                            class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                     >
                                         @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
                                         <span class="text-sm">{{ __('patients.view_record') }}</span>

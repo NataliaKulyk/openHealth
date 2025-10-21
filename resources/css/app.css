@@ -299,36 +299,12 @@ input:-webkit-autofill ~ .label {
     @apply block mb-2 text-sm font-medium text-gray-900 dark:text-white;
 }
 
-.large-label {
-    @apply block mb-12 text-xl font-bold text-gray-900 dark:text-white;
-}
-
 .default-checkbox {
     @apply w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600;
 }
 
 .default-input {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
-}
-
-.new {
-    @apply bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300;
-}
-
-.signed {
-    @apply bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300;
-}
-
-.dismissed {
-    @apply bg-black text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-black dark:text-gray-300;
-}
-
-.dropdown-menu {
-    @apply z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600;
-}
-
-.dropdown-item {
-    @apply block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white;
 }
 
 .accordion-content {
@@ -376,10 +352,6 @@ input:-webkit-autofill ~ .label {
     @apply py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700;
 }
 
-.disabled-button {
-    @apply cursor-not-allowed text-gray-700 bg-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:ring-gray-700;
-}
-
 .dropdown-button {
     @apply cursor-pointer inline-flex items-center p-0.5 text-sm font-medium text-left text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100;
 }
@@ -397,10 +369,6 @@ input:-webkit-autofill ~ .label {
 }
 
 /* Tables */
-.table-section {
-    @apply bg-gray-100 dark:bg-gray-900 p-3 sm:p-5;
-}
-
 .table-container {
     @apply bg-white dark:bg-gray-800 relative overflow-x-auto shadow-md sm:rounded-lg;
 }
@@ -415,15 +383,6 @@ input:-webkit-autofill ~ .label {
 
 .table-cell-primary {
     @apply px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white;
-}
-
-/* Table navigations */
-.table-nav {
-    @apply flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4;
-}
-
-.table-nav-number {
-    @apply font-semibold text-gray-900 dark:text-white;
 }
 
 /* Modals */
@@ -629,7 +588,6 @@ input:-webkit-autofill {
 @media (min-width: 2048px) {
     .shift-content {
         @apply mx-auto ml-[6%];
-
     }
 }
 

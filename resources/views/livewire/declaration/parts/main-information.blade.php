@@ -50,8 +50,15 @@
                         class="input-select peer"
                         type="text"
                         required
+                        @disabled(empty($employeesInfo))
                 >
-                    <option selected value="">{{ __('forms.select') }}</option>
+                    <option selected value="">
+                        @empty($employeesInfo)
+                            {{ __('Лікар має бути зареєстрованим у працюючому місці надання послуг') }}
+                        @else
+                            {{ __('forms.select') }}
+                        @endif
+                    </option>
                     @foreach($employeesInfo as $key => $employeeInfo)
                         <option value="{{ $employeeInfo['employeeId'] }}">
                             {{ $employeeInfo['fullName'] }}

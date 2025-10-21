@@ -9,16 +9,14 @@
             </div>
             @include('livewire.patient.parts.search-filter', ['context' => 'confidantPerson'])
 
-            @if(empty($selectedConfidantPatientId))
+            @empty($selectedConfidantPatientId))
                 <div class="py-4">
-                    <button wire:click.prevent="searchForPerson"
-                            class="flex items-center gap-2 button-primary"
-                    >
+                    <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
                         @icon('search', 'w-4 h-4')
                         <span>{{ __('patients.search_for_confidant') }}</span>
                     </button>
                 </div>
-            @endif
+            @endempty
         </x-slot>
     </x-header-navigation>
 
