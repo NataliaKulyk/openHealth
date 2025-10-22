@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Livewire\Procedure;
 
-use App\Classes\eHealth\Api\PatientApi;
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\MedicalEvents\Sql\Procedure;
 use App\Core\Arr;
 use App\Repositories\MedicalEvents\Repository;
 use App\Traits\HandlesReasonReferences;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -28,33 +31,35 @@ class ProcedureCreate extends ProcedureComponent
     public function save(array $data): void
     {
         if (Auth::user()?->cannot('create', Procedure::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення процедури.',
-                'type' => 'error'
-            ]);
+            Session::flash('error', 'У вас немає дозволу на створення процедури.');
 
             return;
         }
 
-        $formattedData = Repository::procedure()->formatEHealthRequest($data);
+        $this->form->procedures = $data;
 
-        if (!$this->validateFormatted($formattedData)) {
+        try {
+            $validated = $this->form->validate();
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
             return;
         }
+
+        $formattedData = Repository::procedure()->formatEHealthRequest($validated['procedures']);
 
         try {
             $this->storeValidatedData($formattedData);
-        } catch (Throwable $e) {
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-
-            Log::channel('db_errors')->error('Error saving procedure', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
+        } catch (Throwable $exception) {
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            $this->logDatabaseErrors($exception, 'Error saving procedure');
 
             return;
         }
+
+        Session::flash('success', 'Чернетку на створення процедури успішно збережено.');
+        $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
     }
 
     /**
@@ -66,63 +71,62 @@ class ProcedureCreate extends ProcedureComponent
     public function sign(array $data): void
     {
         if (Auth::user()?->cannot('create', Procedure::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення процедури.',
-                'type' => 'error'
-            ]);
+            Session::flash('error', 'У вас немає дозволу на створення процедури.');
 
             return;
         }
 
-        $formattedData = Repository::procedure()->formatEHealthRequest($data);
+        $this->form->procedures = $data;
 
-        if (!$this->validateFormatted($formattedData)) {
+        try {
+            $validated = $this->form->validate();
+            $validatedCipher = $this->form->validate($this->form->rulesForSigning());
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
             return;
         }
+
+        $formattedData = Repository::procedure()->formatEHealthRequest($validated['procedures']);
 
         try {
             $this->storeValidatedData($formattedData);
-
-            $base64EncryptedData = $this->sendEncryptedData(Arr::toSnakeCase($formattedData), Auth::user()->party->taxId);
-            PatientApi::submitProcedurePackage($this->patientUuid, ['signed_data' => $base64EncryptedData]);
-        } catch (Throwable $e) {
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-
-            Log::channel('db_errors')->error('Error saving procedure', [
-                'context' => __CLASS__ . '::' . __FUNCTION__,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
+        } catch (Throwable $exception) {
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            $this->logDatabaseErrors($exception, 'Error saving procedure');
 
             return;
         }
 
-        to_route('patient.index', [legalEntity()])->with('flashMessage', [
-            'message' => 'Процедура успішно створена',
-            'type' => 'success'
-        ]);
-    }
+        $signedContent = signatureService()->signData(
+            Arr::toSnakeCase($formattedData),
+            $validatedCipher['password'],
+            $validatedCipher['knedp'],
+            $validatedCipher['keyContainerUpload'],
+            Auth::user()->party->taxId
+        );
 
-    /**
-     * Validate formatted data.
-     *
-     * @param  array  $formattedData
-     * @return bool
-     */
-    protected function validateFormatted(array $formattedData): bool
-    {
         try {
-            $this->form->validateForm($formattedData);
+            EHealth::procedure()->create($this->patientUuid, ['signed_data' => $signedContent]);
 
-            return true;
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
+            Session::flash('success', 'Заявку на створення процедури успішно відправлено.');
+            $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when creating a procedure');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
 
-            return false;
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when creating a procedure');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
         }
     }
 

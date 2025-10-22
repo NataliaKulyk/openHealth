@@ -98,23 +98,6 @@ class PatientApi
     }
 
     /**
-     * Submit procedure data package.
-     *
-     * @param  string  $patientId
-     * @param  array  $params
-     * @return array
-     * @throws ApiException
-     */
-    public static function submitProcedurePackage(string $patientId, array $params): array
-    {
-        return new Request(
-            HttpRequest::METHOD_POST,
-            self::ENDPOINT_PATIENT . "/$patientId/procedures",
-            $params
-        )->sendRequest();
-    }
-
-    /**
      * Get procedures data for patient by provided params.
      *
      * @param  string  $patientId

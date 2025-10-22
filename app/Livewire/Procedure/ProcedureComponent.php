@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Livewire\Procedure;
 
-use App\Classes\Cipher\Exceptions\ApiException as CipherApiException;
 use App\Classes\Cipher\Traits\Cipher;
-use App\Classes\eHealth\Api\PatientApi;
+use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\Exceptions\ApiException as eHealthApiException;
+use App\Core\Arr;
+use App\Enums\Status;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Procedure\Forms\ProcedureForm as Form;
-use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
 use App\Models\LegalEntity;
 use App\Models\Person\Person;
 use App\Traits\FormTrait;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -30,6 +34,7 @@ class ProcedureComponent extends Component
 
     /**
      * ID of the patient for whom the procedure is created.
+     *
      * @var int
      */
     #[Locked]
@@ -37,42 +42,42 @@ class ProcedureComponent extends Component
 
     /**
      * Patient UUID for API requests.
+     *
      * @var string
      */
     public string $patientUuid;
 
     /**
      * Patient full name.
+     *
      * @var string
      */
     public string $patientFullName;
 
     /**
      * List of authorized user's divisions.
+     *
      * @var array
      */
     public array $divisions;
 
     /**
      * List of existing patient episodes.
+     *
      * @var array
      */
     public array $episodes = [];
 
     /**
      * Full name of employee.
+     *
      * @var string
      */
     public string $employeeFullName;
 
     /**
-     * KEP key.
-     * @var object|null
-     */
-    public ?object $file = null;
-
-    /**
      * List of founded procedure reasons.
+     *
      * @var array
      */
     public array $procedureReasons = [];
@@ -114,14 +119,14 @@ class ProcedureComponent extends Component
         $this->employeeFullName = $authUser->getProcedureWriterEmployee()->fullName;
 
         $this->setPatientData();
-        $this->divisions = legalEntity()?->divisions()->select(['uuid', 'name'])->get()->toArray();
-        $this->getEpisodes();
 
-        try {
-            $this->setCertificateAuthority();
-        } catch (CipherApiException) {
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-        }
+        // Get all active divisions of current legal entity
+        $this->divisions = $legalEntity->divisions()
+            ->where('status', Status::ACTIVE->name)
+            ->where('is_active', '=', true)
+            ->select(['uuid', 'name'])
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -139,36 +144,35 @@ class ProcedureComponent extends Component
             return;
         }
 
-        $buildGetConditions = EncounterRequestApi::buildGetConditionsInEpisodeContext($this->patientUuid, $episodeId);
-        $buildGetObservations = EncounterRequestApi::buildGetObservationsInEpisodeContext(
-            $this->patientUuid,
-            $episodeId
-        );
-
         try {
-            $conditions = PatientApi::getConditionsInEpisodeContext(
+            $conditions = EHealth::condition()->getInEpisodeContext(
                 $this->patientUuid,
                 $episodeId,
-                $buildGetConditions
+                ['patient_id' => $this->patientUuid, 'episode_id' => $episodeId]
             );
-            $observations = PatientApi::getObservationsInEpisodeContext(
+            $observations = EHealth::observation()->getInEpisodeContext(
                 $this->patientUuid,
                 $episodeId,
-                $buildGetObservations
+                ['patient_id' => $this->patientUuid, 'episode_id' => $episodeId]
             );
 
-            $this->procedureReasons = array_merge($conditions, $observations);
-        } catch (eHealthApiException) {
-            Log::channel('e_health_errors')
-                ->error('Error while searching for procedure reasons in Procedure Component');
+            $this->procedureReasons = array_merge($conditions->getData(), $observations->getData());
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when getting a reasons');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
 
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting a reasons');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
         }
-    }
-
-    public function updatedFile(): void
-    {
-        $this->keyContainerUpload = $this->file;
     }
 
     /**
@@ -191,24 +195,31 @@ class ProcedureComponent extends Component
      *
      * @return void
      */
-    protected function getEpisodes(): void
+    public function getEpisodes(): void
     {
         try {
-            $params = EncounterRequestApi::buildGetEpisodeBySearchParams(managingOrganizationId: legalEntity()->uuid);
-            $this->episodes = PatientApi::getEpisodeBySearchParams($this->patientUuid, $params)['data'];
-        } catch (eHealthApiException) {
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-        }
-    }
+            $response = EHealth::episode()->getManyBySearchParams(
+                $this->patientUuid,
+                ['managing_organization_id' => legalEntity()->uuid]
+            );
+            $this->episodes = collect($response->getData())
+                ->map(static fn (array $item) => Arr::only($item, ['id', 'name', 'status', 'inserted_at']))
+                ->toArray();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when getting episodes');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
 
-    /**
-     * Get Certificate Authority from API.
-     *
-     * @return array
-     * @throws CipherApiException
-     */
-    protected function setCertificateAuthority(): array
-    {
-        return $this->getCertificateAuthority = $this->getCertificateAuthority();
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting episodes');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
     }
 }

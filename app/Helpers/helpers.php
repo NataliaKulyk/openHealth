@@ -8,58 +8,6 @@ use App\Services\SignatureService;
 use Carbon\CarbonImmutable;
 use App\Models\LegalEntity;
 
-if (!function_exists("all_day")) {
-    function all_day(): array
-    {
-        return [
-            ["key" => "mon", "value" => __("Понеділок")],
-            ["key" => "tue", "value" => __("Вівторок")],
-            ["key" => "wed", "value" => __("Середа")],
-            ["key" => "thu", "value" => __("Четвер")],
-            ["key" => "fri", "value" => __("П’ятниця")],
-            ["key" => "sat", "value" => __("Субота")],
-            ["key" => "sun", "value" => __("Неділя")],
-        ];
-    }
-}
-
-if (!function_exists("get_day_key")) {
-    function get_day_key($k): mixed
-    {
-        $data = all_day();
-        if (isset($data[$k]) && $k >= 0) {
-            return $data[$k]["key"];
-        }
-
-        return "";
-    }
-}
-
-if (!function_exists("get_day_value")) {
-    function get_day_value($k)
-    {
-        $data = all_day();
-        if (isset($data[$k]) && $k >= 0) {
-            return $data[$k]["value"];
-        }
-
-        return "";
-    }
-}
-
-if (!function_exists("get_day_name")) {
-    function get_day_name($k)
-    {
-        foreach (all_day() as $day) {
-            if ($k === $day['key']) {
-                return $day['value'];
-            }
-        }
-
-        return "";
-    }
-}
-
 if (!function_exists("removeEmptyKeys")) {
     function removeEmptyKeys(array $array): array
     {
@@ -75,77 +23,6 @@ if (!function_exists("removeEmptyKeys")) {
         }
 
         return $array;
-    }
-}
-
-if (!function_exists("available_time")) {
-    function available_time($available_times): array
-    {
-        $available_time = [];
-        foreach ($available_times as $key => $value) {
-            $available_time[] = [
-                "days_of_week" => checkAndConvertArrayToString(
-                    $value["days_of_week"]
-                ),
-                "all_day" => $value["all_day"],
-                "available_start_time" => empty($value["all_day"])
-                    ? addSecondsToTime($value["available_start_time"])
-                    : '',
-                "available_end_time" => empty($value["all_day"])
-                    ? addSecondsToTime($value["available_end_time"])
-                    : '',
-            ];
-        }
-
-        return removeEmptyKeys($available_time);
-    }
-}
-
-if (!function_exists("checkAndConvertArrayToString")) {
-    function checkAndConvertArrayToString($value): array
-    {
-        if (!is_array($value)) {
-            return [$value];
-        }
-
-        return $value;
-    }
-}
-
-if (!function_exists("addSecondsToTime")) {
-    function addSecondsToTime($timeString, $seconds = 0)
-    {
-        $dateTime = DateTime::createFromFormat("H:i", $timeString);
-        if ($dateTime === false) {
-            // Если формат 'H:i' не подходит, попробуем 'H:i:s'
-            $dateTime = DateTime::createFromFormat("H:i:s", $timeString);
-        }
-        if ($dateTime !== false) {
-            $dateTime->modify("+{$seconds} seconds");
-
-            return $dateTime->format("H:i:s");
-        }
-
-        return $timeString; // Возврат исходного времени, если формат неверен
-    }
-}
-
-if (!function_exists("not_available")) {
-    function not_available($not_availables, $seconds = 0)
-    {
-        $not_available = [];
-
-        foreach ($not_availables as $key => $value) {
-            $not_available[] = [
-                "during" => [
-                    "start" => convertToISO8601($value["during"]["start"]),
-                    "end" => convertToISO8601($value["during"]["end"]),
-                ],
-                "description" => $value["description"],
-            ];
-        }
-
-        return removeEmptyKeys($not_available);
     }
 }
 

@@ -94,6 +94,10 @@
                 <label for="performedPeriodStartDate" class="wrapped-label">
                     {{ __('patients.procedure_start_date_and_time') }}
                 </label>
+
+                @error('form.procedures.performedPeriodStartDate')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -113,6 +117,10 @@
                        required
                 >
             </div>
+
+            @error('form.procedures.performedPeriodStartTime')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -133,6 +141,10 @@
                 <label for="performedPeriodEndDate" class="wrapped-label">
                     {{ __('patients.procedure_end_date_and_time') }}
                 </label>
+
+                @error('form.procedures.performedPeriodEndDate')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -152,6 +164,10 @@
                        required
                 >
             </div>
+
+            @error('form.procedures.performedPeriodEndTime')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 

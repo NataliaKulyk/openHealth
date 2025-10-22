@@ -8,7 +8,8 @@
                   openModal: false,
                   modalReasonReference: new ReasonReference(),
                   newReasonReference: false,
-                  item: 0
+                  item: 0,
+                  episodesLoaded: false
               }"
     >
         <legend class="legend">
@@ -123,6 +124,11 @@
                         openModal = true; {{-- Open the Modal --}}
                         newReasonReference = true; {{-- We are adding a new reasonReference --}}
                         modalReasonReference = new ReasonReference(); {{-- Replace the data of the previous reasonReference with a new one--}}
+
+                        if (!episodesLoaded) {
+                            $wire.getEpisodes();
+                            episodesLoaded = true;
+                        }
                     "
                     class="item-add my-5"
             >
@@ -177,13 +183,11 @@
 
                                     {{-- Search button --}}
                                     <div>
-                                        <button @click.prevent="$wire.searchConditionsAndObservations(selectedEpisodeId)"
+                                        <button @click.prevent="$wire.searchReasons(selectedEpisodeId)"
                                                 class="flex items-center gap-2 button-primary"
                                                 :disabled="!selectedEpisodeId"
                                         >
-                                            <svg width="16" height="16">
-                                                <use xlink:href="#svg-search"></use>
-                                            </svg>
+                                            @icon('search', 'w-4 h-4')
                                             <span>{{ __('patients.search') }}</span>
                                         </button>
                                     </div>

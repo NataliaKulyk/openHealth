@@ -141,7 +141,6 @@ trait FormTrait
      * Retrieves all attributes from a model object (includes relations).
      *
      * @param  object  $model  The model object to extract attributes from
-     *
      * @return array An array containing all attributes of the model
      */
     protected function getAllAttributes(object $model): array
@@ -169,12 +168,10 @@ trait FormTrait
 
     /**
      * Flattens a multi-dimensional array.
-     * All non-firstlevel keys are concatenated with a dot.
+     * All non-first level keys are concatenated with a dot.
      *
      * @param  array  $array  The multi-dimensional array to flatten
-     *
      * @param  string  $keyPrefix  The prefix to add to the keys
-     *
      * @return array The flattened array
      */
     protected function flattenArray(array $array, string $keyPrefix = ''): array
@@ -266,7 +263,9 @@ trait FormTrait
             'class' => $caller['class'] ?? 'unknown_class',
             'method' => $caller['function'] ?? 'unknown_method',
             'line' => $caller['line'] ?? 0,
-            'error_message' => $exception->getMessage()
+            'error_message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line_in_file' => $exception->getLine()
         ]);
     }
 

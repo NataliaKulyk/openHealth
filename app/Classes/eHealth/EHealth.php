@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
+use App\Classes\eHealth\Api\Condition;
 use App\Classes\eHealth\Api\Declaration;
 use App\Classes\eHealth\Api\DeclarationRequest;
 use App\Classes\eHealth\Api\Employee;
 use App\Classes\eHealth\Api\EmployeeRequest;
+use App\Classes\eHealth\Api\Episode;
 use App\Classes\eHealth\Api\License;
 use App\Classes\eHealth\Api\Job;
 use App\Classes\eHealth\Api\Division;
 use App\Classes\eHealth\Api\HealthcareService;
+use App\Classes\eHealth\Api\Observation;
 use App\Classes\eHealth\Api\Patient;
 use App\Classes\eHealth\Api\Person;
 use App\Classes\eHealth\Api\PersonRequest;
+use App\Classes\eHealth\Api\Procedure;
 use App\Classes\eHealth\Api\RuleEngineRules;
 
 final class EHealth
@@ -77,5 +81,25 @@ final class EHealth
     public static function employeeRequest(): EmployeeRequest
     {
         return app(EmployeeRequest::class);
+    }
+
+    public static function procedure(): Procedure
+    {
+        return app(Procedure::class);
+    }
+
+    public static function episode(): Episode
+    {
+        return app(Episode::class);
+    }
+
+    public static function condition(): Condition
+    {
+        return app(Condition::class);
+    }
+
+    public static function observation(): Observation
+    {
+        return app(Observation::class);
     }
 }

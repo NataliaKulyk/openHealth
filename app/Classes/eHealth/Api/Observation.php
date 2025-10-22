@@ -11,20 +11,24 @@ use App\Exceptions\EHealth\EHealthValidationException;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 
-class Job extends Request
+class Observation extends Request
 {
-    protected const string URL = '/api/jobs';
+    protected const string URL = '/api/patients';
 
     /**
-     * Used to get the processing status of the async job.
+     * Return an observation context record by IDs.
      *
-     * @param  string  $uuid
-     * @param  $query
+     * @param  string  $patientUuid
+     * @param  string  $episodeUuid
+     * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function getDetails(string $uuid, $query = null): PromiseInterface|EHealthResponse
-    {
-        return $this->get(self::URL . "/$uuid", $query);
+    public function getInEpisodeContext(
+        string $patientUuid,
+        string $episodeUuid,
+        array $data = []
+    ): PromiseInterface|EHealthResponse {
+        return $this->get(self::URL . "/$patientUuid/episodes/$episodeUuid/observations", $data);
     }
 }

@@ -11,20 +11,22 @@ use App\Exceptions\EHealth\EHealthValidationException;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 
-class Job extends Request
+class Episode extends Request
 {
-    protected const string URL = '/api/jobs';
+    protected const string URL = '/api/patients';
 
     /**
-     * Used to get the processing status of the async job.
+     * Return an episode records by id.
      *
-     * @param  string  $uuid
-     * @param  $query
+     * @param  string  $patientUuid
+     * @param  string|array  $query  https://medicaleventsmisapi.docs.apiary.io/#reference/medical-events/procedures/get-procedures-by-search-params
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function getDetails(string $uuid, $query = null): PromiseInterface|EHealthResponse
-    {
-        return $this->get(self::URL . "/$uuid", $query);
+    public function getManyBySearchParams(
+        string $patientUuid,
+        string|array $query = []
+    ): PromiseInterface|EHealthResponse {
+        return $this->get(self::URL . "/$patientUuid/episodes", $query);
     }
 }

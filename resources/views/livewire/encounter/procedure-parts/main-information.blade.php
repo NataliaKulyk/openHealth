@@ -40,6 +40,10 @@
                             <option value="electronic">{{ __('patients.electronic') }}</option>
                             <option value="paper">{{ __('patients.paper') }}</option>
                         </select>
+
+                        @error('form.procedures.referralType')
+                        <p class="text-error">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Electronic referral --}}
@@ -77,6 +81,10 @@
                                 <label for="requisition" class="label">
                                     {{ __('forms.number') }}
                                 </label>
+
+                                @error('form.procedures.paperReferral.requisition')
+                                <p class="text-error">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <div class="form-group group">
@@ -91,6 +99,10 @@
                                 <label for="requesterEmployeeName" class="label">
                                     {{ __('patients.author') }}
                                 </label>
+
+                                @error('form.procedures.paperReferral.requesterEmployeeName')
+                                <p class="text-error">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
 
@@ -103,11 +115,16 @@
                                        class="input peer"
                                        placeholder=" "
                                        autocomplete="off"
+                                       maxlength="10"
                                        required
                                 >
                                 <label for="requesterLegalEntityEdrpou" class="label">
                                     {{ __('patients.edrpou_of_the_issuing_institution') }}
                                 </label>
+
+                                @error('form.procedures.paperReferral.requesterLegalEntityEdrpou')
+                                <p class="text-error">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <div class="form-group group">
@@ -123,6 +140,10 @@
                                 <label for="requesterLegalEntityName" class="label">
                                     {{ __('patients.name_of_the_institution_that_issued_it') }}
                                 </label>
+
+                                @error('form.procedures.paperReferral.requesterLegalEntityName')
+                                <p class="text-error">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
 
@@ -141,6 +162,10 @@
                                     <label for="serviceRequestDate" class="wrapped-label">
                                         {{ __('patients.date') }}
                                     </label>
+
+                                    @error('form.procedures.paperReferral.serviceRequestDate')
+                                    <p class="text-error">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -156,6 +181,10 @@
                                 <label for="paperNote" class="label">
                                     {{ __('patients.notes') }}
                                 </label>
+
+                                @error('form.procedures.paperReferral.note')
+                                <p class="text-error">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -179,6 +208,10 @@
                         <option value="{{ $key }}">{{ $category }}</option>
                     @endforeach
                 </select>
+
+                @error('form.procedures.category.coding.*.code')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -193,6 +226,10 @@
                 <label for="serviceCode" class="label">
                     {{ __('forms.select')}} {{ mb_strtolower(__('forms.services')) }} *
                 </label>
+
+                @error('form.procedures.code.identifier.value')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -214,6 +251,10 @@
                         <option value="{{ $division['uuid'] }}">{{ $division['name'] }}</option>
                     @endforeach
                 </select>
+
+                @error('form.procedures.division.identifier.value')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -225,13 +266,17 @@
                         class="input-select peer"
                         type="text"
                 >
-                    <option selected>
+                    <option selected value="">
                         {{ __('forms.select') }} {{ mb_strtolower(__('patients.outcome_result')) }}
                     </option>
                     @foreach($this->dictionaries['eHealth/procedure_outcomes'] as $key => $outcome)
                         <option value="{{ $key }}">{{ $outcome }}</option>
                     @endforeach
                 </select>
+
+                @error('form.procedures.outcome.coding.*.code')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
     </div>

@@ -611,6 +611,7 @@ return [
             'resultsInterpreter.text' => 'лікар, що інтерпретував результати',
         ],
         'procedures' => [
+            'referralType' => 'тип направлення',
             'category.coding.*.code' => 'категорія',
             'code.identifier.value' => 'послуги',
             'paperReferral.requisition' => 'номер',
@@ -619,7 +620,12 @@ return [
             'paperReferral.requesterLegalEntityName' => 'Найменування закладу, що виписав',
             'paperReferral.serviceRequestDate' => 'дата',
             'division.identifier.value' => 'місце надання послуг',
-            'outcome.coding.*.code' => 'результат проведення'
+            'outcome.coding.*.code' => 'результат проведення',
+            'performedPeriodStartTime' => 'дата початку процедури',
+            'performedPeriodStartDate' => 'час початку процедури',
+            'performedPeriodEndDate' => 'дата завершення процедури',
+            'performedPeriodEndTime' => 'час завершення процедури',
+            'note' => 'комент'
         ],
 
         // Declaration

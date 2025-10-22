@@ -190,9 +190,7 @@
                                                 class="flex items-center gap-2 button-primary"
                                                 :disabled="!modalFinding.selectedEpisodeId"
                                         >
-                                            <svg width="16" height="16">
-                                                <use xlink:href="#svg-search"></use>
-                                            </svg>
+                                            @icon('search', 'w-4 h-4')
                                             <span>{{ __('patients.search') }}</span>
                                         </button>
                                     </div>
