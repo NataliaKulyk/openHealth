@@ -41,7 +41,7 @@ class PartyVerificationSyncStatusOnLogin
                     ->name('Party Verification Status Sync')
                     ->withOption('legal_entity_id', $legalEntity->id)
                     ->withOption('token', $event->token)
-                    ->withOption('user', 'user')
+                    ->withOption('user', $user)
                     ->then(function(Batch $batch) use ($user) {
                         $user->notify(new SyncNotification('party_verification', 'completed'));
                         Log::info('Batch [Party Verification Status Sync] completed.', ['id' => $batch->id]);
