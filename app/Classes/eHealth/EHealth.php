@@ -7,6 +7,7 @@ namespace App\Classes\eHealth;
 use App\Classes\eHealth\Api\Condition;
 use App\Classes\eHealth\Api\Declaration;
 use App\Classes\eHealth\Api\DeclarationRequest;
+use App\Classes\eHealth\Api\DiagnosticReport;
 use App\Classes\eHealth\Api\Employee;
 use App\Classes\eHealth\Api\EmployeeRequest;
 use App\Classes\eHealth\Api\Episode;
@@ -101,5 +102,10 @@ final class EHealth
     public static function observation(): Observation
     {
         return app(Observation::class);
+    }
+
+    public static function diagnosticReport(): DiagnosticReport
+    {
+        return app(DiagnosticReport::class);
     }
 }

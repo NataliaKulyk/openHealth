@@ -86,6 +86,10 @@
                         <option value="{{ $division['uuid'] }}">{{ $division['name'] }}</option>
                     @endforeach
                 </select>
+
+                @error('form.diagnosticReport.division.identifier.value')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
     @endif
@@ -107,6 +111,10 @@
                     </option>
                 @endforeach
             </select>
+
+            @error('form.diagnosticReport.resultsInterpreter.reference.identifier.value')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -146,6 +154,10 @@
                 <label for="issuedDate" class="wrapped-label">
                     {{ __('patients.date_and_time_of_entry') }}
                 </label>
+
+                @error('form.diagnosticReport.issuedDate')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -165,6 +177,10 @@
                        required
                 >
             </div>
+
+            @error('form.diagnosticReport.issuedTime')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -185,6 +201,10 @@
                 <label for="effectivePeriodStartDate" class="wrapped-label">
                     {{ __('patients.reception_start_date_and_time') }}
                 </label>
+
+                @error('form.diagnosticReport.effectivePeriodStartDate')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -204,6 +224,10 @@
                        required
                 >
             </div>
+
+            @error('form.diagnosticReport.effectivePeriodStartTime')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -224,6 +248,10 @@
                 <label for="effectivePeriodEndDate" class="wrapped-label">
                     {{ __('patients.reception_end_date_and_time') }}
                 </label>
+
+                @error('form.diagnosticReport.effectivePeriodEndDate')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -243,6 +271,10 @@
                        required
                 >
             </div>
+
+            @error('form.diagnosticReport.effectivePeriodEndTime')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 </fieldset>

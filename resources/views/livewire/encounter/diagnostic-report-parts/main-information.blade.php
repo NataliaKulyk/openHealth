@@ -20,6 +20,10 @@
                         <option value="{{ $key }}">{{ $category }}</option>
                     @endforeach
                 </select>
+
+                @error('form.diagnosticReport.category.*.coding.*.code')
+                    <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -35,6 +39,10 @@
                 <label for="serviceCode" class="label">
                     {{ __('forms.select')}} {{ mb_strtolower(__('forms.services')) }} *
                 </label>
+
+                @error('form.diagnosticReport.code.identifier.value')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -109,6 +117,10 @@
                                     <label for="requisition" class="label">
                                         {{ __('forms.number') }}
                                     </label>
+
+                                    @error('form.diagnosticReport.paperReferral.requisition')
+                                    <p class="text-error">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
                                 <div class="form-group group">
@@ -123,6 +135,10 @@
                                     <label for="requesterEmployeeName" class="label">
                                         {{ __('patients.author') }}
                                     </label>
+
+                                    @error('form.diagnosticReport.paperReferral.requesterEmployeeName')
+                                    <p class="text-error">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -135,11 +151,16 @@
                                            class="input peer"
                                            placeholder=" "
                                            autocomplete="off"
+                                           maxlength="10"
                                            required
                                     >
                                     <label for="requesterLegalEntityEdrpou" class="label">
                                         {{ __('patients.edrpou_of_the_issuing_institution') }}
                                     </label>
+
+                                    @error('form.diagnosticReport.paperReferral.requesterLegalEntityEdrpou')
+                                    <p class="text-error">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
                                 <div class="form-group group">
@@ -155,6 +176,10 @@
                                     <label for="requesterLegalEntityName" class="label">
                                         {{ __('patients.name_of_the_institution_that_issued_it') }}
                                     </label>
+
+                                    @error('form.diagnosticReport.paperReferral.requesterLegalEntityName')
+                                    <p class="text-error">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -173,6 +198,10 @@
                                         <label for="serviceRequestDate" class="wrapped-label">
                                             {{ __('patients.date') }}
                                         </label>
+
+                                        @error('form.diagnosticReport.paperReferral.serviceRequestDate')
+                                        <p class="text-error">{{ $message }}</p>
+                                        @enderror
                                     </div>
                                 </div>
 
@@ -188,6 +217,10 @@
                                     <label for="note" class="label">
                                         {{ __('patients.notes') }}
                                     </label>
+
+                                    @error('form.diagnosticReport.paperReferral.note')
+                                    <p class="text-error">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -228,6 +261,10 @@
                     {{ __('patients.conclusion_code') }}
                 </label>
 
+                @error('form.diagnosticReport.conclusionCode.coding.*.code')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
+
                 <div x-show="showResults && results.length > 0"
                      class="absolute left-0 top-full z-10 max-h-80 w-full overflow-auto overscroll-contain rounded-lg border dark:bg-gray-800 border-gray-200 bg-white p-1.5 shadow-lg"
                 >
@@ -260,16 +297,18 @@
                 <label for="conclusion" class="label-modal">
                     {{ __('patients.conclusion') }}
                 </label>
-                <div>
-                    <textarea rows="4"
-                              x-model="modalDiagnosticReport.conclusion"
-                              id="conclusion"
-                              name="conclusion"
-                              class="textarea"
-                              placeholder="{{ __('patients.write_comment_here') }}"
-                              maxlength="1000"
-                    ></textarea>
-                </div>
+                <textarea rows="4"
+                          x-model="modalDiagnosticReport.conclusion"
+                          id="conclusion"
+                          name="conclusion"
+                          class="textarea"
+                          placeholder="{{ __('patients.write_comment_here') }}"
+                          maxlength="1000"
+                ></textarea>
+
+                @error('form.diagnosticReport.conclusion')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
     </div>

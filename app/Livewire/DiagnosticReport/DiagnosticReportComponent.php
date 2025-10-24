@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\DiagnosticReport;
 
-use App\Classes\Cipher\Exceptions\ApiException as CipherApiException;
 use App\Classes\Cipher\Traits\Cipher;
 use App\Classes\eHealth\Exceptions\ApiException as eHealthApiException;
 use App\Livewire\DiagnosticReport\Forms\DiagnosticReportForm as Form;
@@ -30,6 +29,7 @@ class DiagnosticReportComponent extends Component
 
     /**
      * ID of the patient for which create an encounter.
+     *
      * @var int
      */
     #[Locked]
@@ -37,60 +37,63 @@ class DiagnosticReportComponent extends Component
 
     /**
      * Patient UUID for API requests.
+     *
      * @var string
      */
     public string $patientUuid;
 
     /**
      * Patient full name.
+     *
      * @var string
      */
     public string $patientFullName;
 
     /**
      * List of employees of current legal entity.
+     *
      * @var array
      */
     public array $employees;
 
     /**
      * List of authorized user's divisions.
+     *
      * @var array
      */
     public array $divisions;
 
     /**
      * Full name of employee.
+     *
      * @var string
      */
     public string $employeeFullName;
 
     /**
      * List of observation codes for categories.
+     *
      * @var array
      */
     public array $observationCodeMap;
 
     /**
      * List of observation values and type of data for specific categories.
+     *
      * @var array
      */
     public array $observationValueMap;
 
     /**
      * List of values for codeable concept.
+     *
      * @var array
      */
     public array $codeableConceptValues;
 
     /**
-     * KEP key.
-     * @var object|null
-     */
-    public ?object $file = null;
-
-    /**
      * Found the ICD-10 code and description.
+     *
      * @var array
      */
     public array $results;
@@ -129,8 +132,14 @@ class DiagnosticReportComponent extends Component
         'POSITION'
     ];
 
-    public function boot(): void
+    public function mount(LegalEntity $legalEntity, int $patientId): void
     {
+        $authUser = Auth::user();
+
+        if (!$authUser) {
+            throw new RuntimeException('Authenticated user not found');
+        }
+
         $this->getDictionary();
 
         try {
@@ -140,21 +149,11 @@ class DiagnosticReportComponent extends Component
             Log::channel('e_health_errors')
                 ->error('Error while loading observation dictionary in DiagnosticReportComponent');
         }
-    }
-
-    public function mount(LegalEntity $legalEntity, int $patientId): void
-    {
-        $authUser = Auth::user();
-
-        if (!$authUser) {
-            throw new RuntimeException('Authenticated user not found');
-        }
 
         $this->patientId = $patientId;
         $this->employeeFullName = $authUser->getDiagnosticReportWriterEmployee()->fullName;
 
         $employees = $authUser->employees()
-            ->whereEmployeeType('DOCTOR')
             ->select(['uuid', 'party_id', 'position'])
             ->with('party:id,last_name,first_name,second_name')
             ->whereLegalEntityId(legalEntity()->id)
@@ -168,13 +167,7 @@ class DiagnosticReportComponent extends Component
         })->toArray();
 
         $this->setPatientData();
-        $this->divisions = legalEntity()?->divisions()->select(['uuid', 'name'])->get()->toArray();
-
-        try {
-            $this->setCertificateAuthority();
-        } catch (CipherApiException) {
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-        }
+        $this->divisions = $legalEntity->divisions()->select(['uuid', 'name'])->get()->toArray();
     }
 
     /**
@@ -194,11 +187,6 @@ class DiagnosticReportComponent extends Component
             ->toArray();
     }
 
-    public function updatedFile(): void
-    {
-        $this->keyContainerUpload = $this->file;
-    }
-
     /**
      * Set patient data.
      *
@@ -212,17 +200,6 @@ class DiagnosticReportComponent extends Component
 
         $this->patientUuid = $patient->uuid;
         $this->patientFullName = $patient->fullName;
-    }
-
-    /**
-     * Get Certificate Authority from API.
-     *
-     * @return array
-     * @throws CipherApiException
-     */
-    protected function setCertificateAuthority(): array
-    {
-        return $this->getCertificateAuthority = $this->getCertificateAuthority();
     }
 
     /**

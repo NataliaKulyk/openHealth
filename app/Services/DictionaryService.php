@@ -170,7 +170,7 @@ class DictionaryService
 
         return collect($serviceDictionary)->flatMap(function (array $item) {
             return $this->flattenServiceItem($item);
-        })->all();
+        })->unique('id', true)->all();
     }
 
     /**

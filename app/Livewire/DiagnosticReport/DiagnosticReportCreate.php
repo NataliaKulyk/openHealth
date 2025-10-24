@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Livewire\DiagnosticReport;
 
-use App\Classes\eHealth\Api\PatientApi;
-use App\Classes\eHealth\Exceptions\ApiException;
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Core\Arr;
 use App\Repositories\MedicalEvents\Repository;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -21,145 +23,130 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
     /**
      * Validate and save data.
      *
-     * @param  array  $data
+     * @param  array  $diagnosticReportData
      * @return void
      */
-    public function save(array $data): void
+    public function save(array $diagnosticReportData): void
     {
         if (Auth::user()?->cannot('create', DiagnosticReport::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення діагностичного звіту.',
-                'type' => 'error'
-            ]);
+            Session::flash('error', 'У вас немає дозволу на створення діагностичного звіту.');
 
             return;
         }
 
-        $formattedData = $this->prepareFormattedData($data);
+        $this->form->diagnosticReport = $diagnosticReportData;
 
-        if (!$this->validateFormatted($formattedData)) {
+        try {
+            $validated = $this->form->validate();
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
             return;
         }
+
+        $formattedData = $this->prepareFormattedData($validated);
 
         try {
             $this->storeValidatedData($formattedData);
-        } catch (Exception|Throwable) {
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-            Log::channel('db_errors')->error('Error while saving diagnostic report');
+        } catch (Exception|Throwable $exception) {
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            $this->logDatabaseErrors($exception, 'Error while saving diagnostic report');
 
             return;
         }
+
+        Session::flash('success', 'Чернетку на створення діагностичного звіту успішно збережено.');
+        $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
     }
 
     /**
      * Submit encrypted data.
      *
-     * @param  array  $data
+     * @param  array  $diagnosticReportData
      * @return void
-     * @throws ApiException
      */
-    public function sign(array $data): void
+    public function sign(array $diagnosticReportData): void
     {
         if (Auth::user()?->cannot('create', DiagnosticReport::class)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'У вас немає дозволу на створення діагностичного звіту.',
-                'type' => 'error'
-            ]);
+            Session::flash('error', 'У вас немає дозволу на створення діагностичного звіту.');
 
             return;
         }
 
-        $formattedData = $this->prepareFormattedData($data);
+        $this->form->diagnosticReport = $diagnosticReportData;
 
-        if (!$this->validateFormatted($formattedData)) {
+        try {
+            $validated = $this->form->validate();
+            $validatedCipher = $this->form->validate($this->form->rulesForSigning());
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
             return;
         }
+
+        $formattedData = $this->prepareFormattedData($validated);
 
         try {
             $this->storeValidatedData($formattedData);
-        } catch (Exception|Throwable) {
-            session()?->flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-            Log::channel('db_errors')->error('Error while signing diagnostic report');
+        } catch (Exception|Throwable $exception) {
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            $this->logDatabaseErrors($exception, 'Error while saving diagnostic report');
 
             return;
         }
 
-        $base64EncryptedData = $this->sendEncryptedData(
+        $signedContent = signatureService()->signData(
             Arr::toSnakeCase($formattedData),
+            $validatedCipher['password'],
+            $validatedCipher['knedp'],
+            $validatedCipher['keyContainerUpload'],
             Auth::user()->party->taxId
         );
-        PatientApi::submitDiagnosticReportPackage($this->patientUuid, ['signed_data' => $base64EncryptedData]);
 
-        to_route('patient.index', [legalEntity()])->with('flashMessage', [
-            'message' => 'Діагностичний звіт успішно створений',
-            'type' => 'success'
-        ]);
+        try {
+            EHealth::diagnosticReport()->create($this->patientUuid, ['signed_data' => $signedContent]);
+
+            Session::flash('success', 'Заявку на створення діагностичного звіту успішно відправлено.');
+            $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when creating a diagnostic report');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when creating a diagnostic report');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
     }
 
     /**
      * Prepare formatted data.
      *
-     * @param  array  $data
+     * @param  array  $validatedData
      * @return array
      */
-    protected function prepareFormattedData(array $data): array
+    protected function prepareFormattedData(array $validatedData): array
     {
-        $this->form->diagnosticReports = $this->pruneReferralData($data);
+        $diagnosticReport = Repository::diagnosticReport()->formatEHealthRequest($validatedData['diagnosticReport']);
 
-        $diagnosticReport = Repository::diagnosticReport()->formatEHealthRequest($this->form->diagnosticReports);
-        $observations = Repository::observation()->formatEHealthRequest(
-            $this->form->observations,
-            $diagnosticReport['diagnosticReport']['id']
-        );
+        $observations = [];
+        if (isset($validatedData['observations'])) {
+            $observations = Repository::observation()->formatEHealthRequest(
+                $validatedData['observations'],
+                $diagnosticReport['diagnosticReport']['id']
+            );
+        }
 
         return array_merge($diagnosticReport, $observations);
-    }
-
-    /**
-     * Unset unnecessary data based on referral type.
-     *
-     * @param  array  $data
-     * @return array
-     */
-    protected function pruneReferralData(array $data): array
-    {
-        if ($data['referralType'] === 'electronic' || $data['referralType'] === '') {
-            unset($data['paperReferral']);
-        }
-
-        if ($data['referralType'] === 'paper' || $data['referralType'] === '') {
-            unset($data['basedOn']);
-        }
-
-        return $data;
-    }
-
-    /**
-     * Validate formatted data.
-     *
-     * @param  array  $formattedData
-     * @return bool
-     */
-    protected function validateFormatted(array $formattedData): bool
-    {
-        try {
-            $this->form->validateForm('diagnosticReport', $formattedData);
-
-            if (isset($formattedData['observations'])) {
-                foreach ($formattedData['observations'] as $observation) {
-                    $this->form->validateForm('observations', ['observations' => $observation]);
-                }
-            }
-
-            return true;
-        } catch (ValidationException $e) {
-            $this->dispatch('flashMessage', [
-                'message' => $e->validator->errors()->first(),
-                'type' => 'error'
-            ]);
-
-            return false;
-        }
     }
 
     /**

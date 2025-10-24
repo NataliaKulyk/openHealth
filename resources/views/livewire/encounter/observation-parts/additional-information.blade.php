@@ -64,11 +64,7 @@
                 {{ __('patients.date_and_time_of_receiving_the_indicators') }}
             </label>
             <div class="relative flex items-center">
-                <svg width="20" height="20"
-                     class="svg-input absolute left-2.5 pointer-events-none"
-                >
-                    <use xlink:href="#svg-calendar-week"></use>
-                </svg>
+                @icon('calendar-week', 'w-5 h-5 svg-input absolute left-2.5 pointer-events-none')
                 <input x-model="modalObservation.effectiveDate"
                        datepicker-max-date="{{ now()->format('Y-m-d') }}"
                        type="text"
@@ -110,11 +106,7 @@
                 {{ __('patients.date_and_time_of_entry') }}
             </label>
             <div class="relative flex items-center">
-                <svg width="20" height="20"
-                     class="svg-input absolute left-2.5 pointer-events-none"
-                >
-                    <use xlink:href="#svg-calendar-week"></use>
-                </svg>
+                @icon('calendar-week', 'w-5 h-5 svg-input absolute left-2.5 pointer-events-none')
                 <input x-model="modalObservation.issuedDate"
                        datepicker-max-date="{{ now()->format('Y-m-d') }}"
                        type="text"
@@ -166,15 +158,13 @@
                 {{ __('forms.comment') }}
             </label>
 
-            <div>
-                <textarea rows="4"
-                          x-model="modalObservation.comment"
-                          id="observationComment"
-                          name="observationComment"
-                          class="textarea"
-                          placeholder="{{ __('patients.write_comment_here') }}"
-                ></textarea>
-            </div>
+            <textarea rows="4"
+                      x-model="modalObservation.comment"
+                      id="observationComment"
+                      name="observationComment"
+                      class="textarea"
+                      placeholder="{{ __('patients.write_comment_here') }}"
+            ></textarea>
         </div>
     </div>
 </fieldset>

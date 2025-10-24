@@ -543,7 +543,7 @@ return [
             'date' => 'дата вакцинації',
             'time' => 'час вакцинації',
         ],
-        'observations' => [
+        'observations.*' => [
             'primarySource' => 'джерело інформації',
             'performer' => 'виконавець',
             'reportOrigin' => 'інше джерело',
@@ -553,6 +553,7 @@ return [
             'valueString' => 'значення',
             'valueBoolean' => 'значення',
             'valueDateTime' => 'значення',
+            'comment' => 'коментар'
         ],
         'errors' => [
             'email' => 'Неправильний формат електронної адреси',
@@ -604,11 +605,19 @@ return [
             'paperReferral.requesterLegalEntityEdrpou' => 'ЄДРПОУ закладу, що виписав',
             'paperReferral.requesterLegalEntityName' => 'Найменування закладу, що виписав',
             'paperReferral.serviceRequestDate' => 'дата',
+            'conclusionCode.coding.*.code' => 'код заключення(за МКХ-10АМ)',
+            'paperReferral.conclusion' => 'заключення',
             'paperReferral.note' => 'нотатки',
-            'effectivePeriod.start' => 'дата та час початку прийому',
-            'effectivePeriod.end' => 'дата та час завершення прийому',
-            'issued' => 'дата та час внесення',
+            'division.identifier.value' => 'місце надання послуг',
+            'resultsInterpreter.reference.identifier.value' => 'лікар, що інтерпретував результати',
+            'effectivePeriodStartDate' => 'дата початку прийому',
+            'effectivePeriodStartTime' => 'час початку прийому',
+            'effectivePeriodEndDate' => 'дата завершення прийому',
+            'effectivePeriodEndTime' => 'час завершення прийому',
+            'issuedDate' => 'дата внесення',
+            'issuedTime' => 'час внесення',
             'resultsInterpreter.text' => 'лікар, що інтерпретував результати',
+            'conclusion' => 'заключення'
         ],
         'procedures' => [
             'referralType' => 'тип направлення',

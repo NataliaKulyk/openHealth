@@ -36,11 +36,22 @@ class DiagnosticReportRepository extends BaseRepository
      */
     public function formatEHealthRequest(array $diagnosticReport): array
     {
-        // delete frontend properties
-        unset($diagnosticReport['isReferralAvailable'], $diagnosticReport['referralType']);
-
         $diagnosticReport['id'] = Str::uuid()->toString();
         $diagnosticReport['status'] = 'final';
+
+        if ($diagnosticReport['referralType'] === '') {
+            unset($diagnosticReport['paperReferral'], $diagnosticReport['basedOn']);
+        }
+
+        if ($diagnosticReport['referralType'] === 'electronic') {
+            unset($diagnosticReport['paperReferral']);
+        }
+
+        if ($diagnosticReport['referralType'] === 'paper') {
+            unset($diagnosticReport['basedOn']);
+        }
+
+        unset($diagnosticReport['referralType']);
 
         if ($diagnosticReport['primarySource']) {
             unset($diagnosticReport['reportOrigin']);
@@ -75,7 +86,7 @@ class DiagnosticReportRepository extends BaseRepository
             unset($diagnosticReport['division']);
         }
 
-        if (empty($diagnosticReport['resultsInterpreter']['text'])) {
+        if (empty($diagnosticReport['resultsInterpreter']['reference']['identifier']['value'])) {
             unset($diagnosticReport['resultsInterpreter']);
         }
 

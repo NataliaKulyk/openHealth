@@ -443,8 +443,17 @@
 
                         <select class="input-modal"
                                 x-init="
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/extent_or_magnitude_of_impairment';
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    modalObservation.components[0].code.coding[0].system = 'eHealth/ICF/qualifiers';
+                                    modalObservation.components[0].code.coding[0].code = 'extent_or_magnitude_of_impairment';
+                                    modalObservation.components[0].code.text = '';
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].system) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/extent_or_magnitude_of_impairment';
+                                    }
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].code) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    }
                                 "
                                 x-model="modalObservation.components[0].valueCodeableConcept.coding[0].code"
                                 id="extentCode"
@@ -507,8 +516,17 @@
 
                         <select class="input-modal"
                                 x-init="
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/extent_or_magnitude_of_impairment';
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    modalObservation.components[0].code.coding[0].system = 'eHealth/ICF/qualifiers';
+                                    modalObservation.components[0].code.coding[0].code = 'extent_or_magnitude_of_impairment';
+                                    modalObservation.components[0].code.text = '';
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].system) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/extent_or_magnitude_of_impairment';
+                                    }
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].code) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    }
                                 "
                                 x-model="modalObservation.components[0].valueCodeableConcept.coding[0].code"
                                 id="extentCode"
@@ -556,26 +574,31 @@
 
                 <div class="form-row-modal">
                     <div x-init="
-                        modalObservation.components[1] = {
-                            valueCodeableConcept: {
-                                coding: [{
-                                    system: 'eHealth/ICF/qualifiers/nature_of_change_in_body_structure',
-                                    code: ''
-                                }],
-                                text: ''
-                            },
-                            interpretation: {
-                                coding: [{
-                                    system: 'eHealth/observation_interpretations',
-                                    code: ''
-                                }],
-                                text: ''
-                            }
-                        };
-                    "
-                    >
+                        if (!modalObservation.components[1]) {
+                            modalObservation.components[1] = {
+                                code: {
+                                    coding: [{ system: 'eHealth/ICF/qualifiers', code: 'nature_of_change_in_body_structure' }],
+                                    text: ''
+                                },
+                                valueCodeableConcept: {
+                                    coding: [{
+                                        system: 'eHealth/ICF/qualifiers/nature_of_change_in_body_structure',
+                                        code: ''
+                                    }],
+                                    text: ''
+                                },
+                                interpretation: {
+                                    coding: [{
+                                        system: 'eHealth/observation_interpretations',
+                                        code: ''
+                                    }],
+                                    text: ''
+                                }
+                            };
+                        }
+                    ">
                         <label for="natureCode" class="label-modal">
-                            {{ __('Природа змін у структурах організму') }}
+                            {{ __('patients.nature_of_change_in_body_structure') }}
                         </label>
 
                         <select class="input-modal"
@@ -624,24 +647,29 @@
 
                 <div class="form-row-modal">
                     <div x-init="
-                        modalObservation.components[2] = {
-                            valueCodeableConcept: {
-                                coding: [{
-                                    system: 'eHealth/ICF/qualifiers/anatomical_localization',
-                                    code: ''
-                                }],
-                                text: ''
-                            },
-                            interpretation: {
-                                coding: [{
-                                    system: 'eHealth/observation_interpretations',
-                                    code: ''
-                                }],
-                                text: ''
-                            }
-                        };
-                    "
-                    >
+                        if (!modalObservation.components[2]) {
+                            modalObservation.components[2] = {
+                                code: {
+                                    coding: [{ system: 'eHealth/ICF/qualifiers', code: 'anatomical_localization' }],
+                                    text: ''
+                                },
+                                valueCodeableConcept: {
+                                    coding: [{
+                                        system: 'eHealth/ICF/qualifiers/anatomical_localization',
+                                        code: ''
+                                    }],
+                                    text: ''
+                                },
+                                interpretation: {
+                                    coding: [{
+                                        system: 'eHealth/observation_interpretations',
+                                        code: ''
+                                    }],
+                                    text: ''
+                                }
+                            };
+                        }
+                    ">
                         <label for="anatomicalCode" class="label-modal">
                             {{ __('patients.anatomical_localization') }}
                         </label>
@@ -707,8 +735,17 @@
 
                         <select class="input-modal"
                                 x-init="
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/performance';
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    modalObservation.components[0].code.coding[0].system = 'eHealth/ICF/qualifiers';
+                                    modalObservation.components[0].code.coding[0].code = 'performance';
+                                    modalObservation.components[0].code.text = '';
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].system) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/performance';
+                                    }
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].code) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    }
                                 "
                                 x-model="modalObservation.components[0].valueCodeableConcept.coding[0].code"
                                 id="performanceCode"
@@ -756,24 +793,29 @@
 
                 <div class="form-row-modal">
                     <div x-init="
-                        modalObservation.components[1] = {
-                            valueCodeableConcept: {
-                                coding: [{
-                                    system: 'eHealth/ICF/qualifiers/capacity',
-                                    code: ''
-                                }],
-                                text: ''
-                            },
-                            interpretation: {
-                                coding: [{
-                                    system: 'eHealth/observation_interpretations',
-                                    code: ''
-                                }],
-                                text: ''
-                            }
-                        };
-                    "
-                    >
+                        if (!modalObservation.components[1]) {
+                            modalObservation.components[1] = {
+                                code: {
+                                    coding: [{ system: 'eHealth/ICF/qualifiers', code: 'capacity' }],
+                                    text: ''
+                                },
+                                valueCodeableConcept: {
+                                    coding: [{
+                                        system: 'eHealth/ICF/qualifiers/capacity',
+                                        code: ''
+                                    }],
+                                    text: ''
+                                },
+                                interpretation: {
+                                    coding: [{
+                                        system: 'eHealth/observation_interpretations',
+                                        code: ''
+                                    }],
+                                    text: ''
+                                }
+                            };
+                        }
+                    ">
                         <label for="capacityCode" class="label-modal">
                             {{ __('patients.capacity') }}
                         </label>
@@ -839,8 +881,17 @@
 
                         <select class="input-modal"
                                 x-init="
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/barrier_or_facilitator';
-                                    modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    modalObservation.components[0].code.coding[0].system = 'eHealth/ICF/qualifiers';
+                                    modalObservation.components[0].code.coding[0].code = 'barrier_or_facilitator';
+                                    modalObservation.components[0].code.text = '';
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].system) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].system = 'eHealth/ICF/qualifiers/barrier_or_facilitator';
+                                    }
+
+                                    if (!modalObservation.components[0].valueCodeableConcept.coding[0].code) {
+                                        modalObservation.components[0].valueCodeableConcept.coding[0].code = '';
+                                    }
                                 "
                                 x-model="modalObservation.components[0].valueCodeableConcept.coding[0].code"
                                 id="barrierCode"

@@ -112,11 +112,7 @@ class ObservationRepository extends BaseRepository
                 unset($observation['method']);
             }
 
-            if ($observation['components'][0]['valueCodeableConcept']['coding'][0]['code'] === '') {
-                unset($observation['components']);
-            }
-
-            if (isset($observation['components'][0]['interpretation']['coding'][0]['code']) && $observation['components'][0]['interpretation']['coding'][0]['code'] === '') {
+            if ($observation['code']['coding'][0]['system'] !== 'eHealth/ICF/classifiers') {
                 unset($observation['components']);
             }
 
@@ -197,7 +193,7 @@ class ObservationRepository extends BaseRepository
                         'uuid' => $datum['uuid'] ?? $datum['id'],
                         'encounter_id' => $encounterId,
                         'status' => $datum['status'],
-                        'diagnostic_report_id' => $diagnosticReportId,
+                        'diagnostic_report_id' => $diagnosticReport->id ?? null,
                         'code_id' => $code->id,
                         'effective_date_time' => $datum['effectiveDateTime'] ?? null,
                         'issued' => $datum['issued'],

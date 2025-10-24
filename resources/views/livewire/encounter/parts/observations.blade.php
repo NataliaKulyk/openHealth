@@ -307,7 +307,6 @@
                     coding: [{ system: '', code: '' }],
                     text: ''
                 },
-
                 interpretation: {
                     coding: [{ system: '', code: '' }],
                     text: ''

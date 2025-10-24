@@ -1,11 +1,3 @@
-@php
-    $svgSprite = file_get_contents(resource_path('images/sprite.svg'));
-@endphp
-
-<div aria-hidden="true" class="hidden">
-    {!! $svgSprite !!}
-</div>
-
 <section class="section-form">
     <x-header-navigation class="breadcrumb-form">
         <x-slot name="title">
@@ -15,10 +7,11 @@
 
     <form class="form"
           x-data="{
-              diagnosticReports: $wire.entangle('form.diagnosticReports'),
+              diagnosticReports: $wire.entangle('form.diagnosticReport'),
               modalDiagnosticReport: new DiagnosticReport(),
               diagnosticReportCategoriesDictionary: $wire.dictionaries['eHealth/diagnostic_report_categories'],
-              servicesDictionary: $wire.dictionaries['custom/services']
+              servicesDictionary: $wire.dictionaries['custom/services'],
+              showSignatureModal: false
           }"
     >
 
@@ -27,31 +20,27 @@
         @include('livewire.encounter.parts.observations')
 
         <div class="flex gap-8">
-            <button type="submit" class="button-minor">
-                {{ __('forms.delete') }}
-            </button>
+            <a href="{{ url()->previous() }}" type="submit" class="button-minor">
+                {{ __('forms.back') }}
+            </a>
 
-            <button @click.prevent="$wire.save(modalDiagnosticReport)" type="submit" class="button-primary">
+            <button @click.prevent="$wire.save(modalDiagnosticReport)" type="submit" class="button-primary-outline">
                 {{ __('forms.save') }}
             </button>
 
-            <button wire:click.prevent="openModal('signedContent')"
+            <button @click="showSignatureModal = true"
                     type="button"
-                    class="button-sync flex items-center gap-2"
+                    class="button-primary flex items-center gap-2"
             >
-                <svg width="16" height="17">
-                    <use xlink:href="#svg-key"></use>
-                </svg>
+                @icon('key', 'w-5 h-5')
                 {{ __('forms.complete_the_interaction_and_sign') }}
-                <svg width="16" height="17">
-                    <use xlink:href="#svg-arrow-right"></use>
-                </svg>
+                @icon('arrow-right', 'w-5 h-5')
             </button>
         </div>
 
-        @if($showModal === 'signedContent')
-            @include('livewire.diagnostic-report.modals.sign-content')
-        @endif
+        <template x-if="showSignatureModal">
+            @include('livewire.diagnostic-report.modals.signature')
+        </template>
     </form>
 
     <x-messages/>
@@ -101,8 +90,7 @@
             reference: {
                 identifier: {
                     type: {
-                        coding: [{ system: 'eHealth/resources', code: 'employee' }],
-                        text: ''
+                        coding: [{ system: 'eHealth/resources', code: 'employee' }]
                     }
                 }
             }
