@@ -34,7 +34,7 @@ class PartyVerificationSyncStatusOnLogin
 
             $response = EHealth::party()->getMany($token);
 
-            $this->processPartyVerificationResponse($response);
+            $this->processPartyVerificationResponse($response, $legalEntity);
 
             if ($response->isNotLast()) {
                 Bus::batch([new PartyVerificationSync($legalEntity, null, false, 2)])

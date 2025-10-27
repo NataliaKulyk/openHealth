@@ -1,14 +1,12 @@
-<div>
+<div x-data="{ showUpdateModal: false }">
     {{-- Breadcrumb Navigation --}}
-    <x-header-navigation x-data="{ showFilter: false }">
-
+    <x-header-navigation>
         <x-slot name="title">
             @lang('general.verification')
         </x-slot>
-
     </x-header-navigation>
-    {{-- Page Title --}}
 
+    {{-- Page Title --}}
     <div class="-mt-14 form shift-content">
         <p class="mt-1 text-lg text-gray-600 dark:text-gray-300">
             {{ $party->fullName }}
@@ -94,91 +92,87 @@
                 </a>
             @endif
 
-            <button type="button" wire:click="openUpdateModal('dracs_death')" class="button-primary-outline">@lang('forms.update_death_data')</button>
+            <button type="button" @click="showUpdateModal = true" class="button-primary-outline">
+                @lang('forms.update_death_data')
+            </button>
         </div>
     </x-section>
 
     {{-- Update Status Modal --}}
-    @if ($showUpdateModal)
-        {{--
-            We use Alpine's x-data to create a local state 'show' and bind it
-            to Livewire's '$showUpdateModal' property using @entangle.
-        --}}
-        <div
+    <div
+            x-show="showUpdateModal"
+            @keydown.escape.window="showUpdateModal = false"
+            {{-- Modify the listener to log --}}
+            @status-updated-close-modal.window="() => { console.log('Alpine received status-updated-close-modal event!'); showUpdateModal = false; }"
             class="fixed inset-0 z-50 flex items-center justify-center"
-            x-data="{ show: @entangle('showUpdateModal') }"
-            x-show="show"
-            @keydown.escape.window="show = false"
             style="display: none;"
-        >
-            <div x-show="show" x-transition.opacity class="fixed inset-0 bg-black/75"></div>
+    >
 
-            {{-- Modal Panel --}}
-            <div
-                x-show="show"
+        {{-- ... (Modal background) ... --}}
+        <div x-show="showUpdateModal" x-transition.opacity class="fixed inset-0 bg-black/75"></div>
+
+        <div
+                x-show="showUpdateModal"
                 x-transition:enter="ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                 x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                @click.away="show = false"
+                @click.away="showUpdateModal = false"
                 class="relative w-full max-w-2xl m-4 bg-white rounded-lg shadow dark:bg-gray-800"
-            >
-                <form wire:submit.prevent="updateStatus">
+        >
+            {{-- Form and its contents remain the same --}}
+            <form wire:submit.prevent="updateStatus">
+                <div class="flex items-center justify-between p-4 border-b border-gray-200 rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        @lang('forms.update_verification_status_dracs')
+                    </h3>
 
-                    <div class="flex items-center justify-between p-4 border-b border-gray-200 rounded-t dark:border-gray-600">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                            @lang('forms.update_verification_status_dracs')
-                        </h3>
-                        <button type="button" @click="show = false" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                        </button>
+                    <button type="button" @click="showUpdateModal = false" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <div class="form-group group">
+                        <select wire:model.defer="status" id="status" class="input peer">
+                            <option value="">{{ __('forms.select_statuse') }}</option>
+                            <option value="VERIFIED">{{ __('forms.verified') }}</option>
+                            <option value="NOT_VERIFIED">{{ __('forms.not_verified') }}</option>
+                        </select>
+                        <label for="status" class="label">{{ __('forms.status.label') }}</label>
+                        @error('status') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    {{-- Modal body (form) --}}
-                    <div class="p-6 space-y-6">
-                        <div class="form-group group">
-                            <select wire:model.defer="status" id="status" class="input peer">
-                                <option value="">{{ __('forms.select_statuse') }}</option>
-                                <option value="VERIFIED">{{ __('forms.verified') }}</option>
-                                <option value="NOT_VERIFIED">{{ __('forms.not_verified') }}</option>
-                            </select>
-                            <label for="status" class="label">{{ __('forms.status.label') }}</label>
-                            @error('status') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                    <div class="form-group group">
+                        <select wire:model.defer="reason" id="reason" class="input peer">
+                            <option value="">{{ __('forms.choose_reason') }}</option>
+                            <option value="MANUAL_CONFIRMED">{{ __('forms.manually_confirmed') }}</option>
+                            <option value="MANUAL_NOT_CONFIRMED">{{ __('forms.no_manually_confirmed') }}</option>
+                        </select>
+                        <label for="reason" class="label">{{ __('forms.reason_verification') }}</label>
+                        @error('reason') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
+                    </div>
 
-                        <div class="form-group group">
-                            <select wire:model.defer="reason" id="reason" class="input peer">
-                                <option value="">{{ __('forms.choose_reason') }}</option>
-                                <option value="MANUAL_CONFIRMED">{{ __('forms.manually_confirmed') }}</option>
-                                <option value="MANUAL_NOT_CONFIRMED">{{ __('forms.no_manually_confirmed') }}</option>
-                            </select>
-                            <label for="reason" class="label">{{ __('forms.reason_verification') }}</label>
-                            @error('reason') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label for="aboutMyself"
-                                   class="peer appearance-none bg-white">{{ __('forms.comment') }}</label>
-                            <textarea
+                    <div class="form-group">
+                        <label for="aboutMyself"
+                               class="peer appearance-none bg-white">{{ __('forms.comment') }}</label>
+                        <textarea
                                 id="aboutMyself"
                                 wire:model.defer="comment"
                                 class="textarea !text-gray-500 dark:!text-gray-400 mt-1"
                                 placeholder=" ">
                         </textarea>
-                            @error('comment') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                        @error('comment') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
+                </div>
 
-                    {{-- Modal buttons --}}
-                    <div class="flex items-center justify-start gap-4 p-6 border-t border-gray-200">
-                        <button type="button" @click="$wire.closeModal()" class="button-minor">{{ __('forms.cancel') }}</button>
-                        <button type="submit" class="button-primary">{{ __('forms.update_data') }}</button>
-                    </div>
-                </form>
-            </div>
+                <div class="flex items-center justify-start gap-4 p-6 border-t border-gray-200">
+                    <button type="button" @click="showUpdateModal = false" class="button-minor">{{ __('forms.cancel') }}</button>
+                    <button type="submit" class="button-primary">{{ __('forms.update_data') }}</button>
+                </div>
+            </form>
         </div>
-    @endif
-
+    </div>
 </div>

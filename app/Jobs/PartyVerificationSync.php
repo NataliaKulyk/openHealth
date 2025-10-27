@@ -32,7 +32,7 @@ class PartyVerificationSync extends EHealthJob
 
     protected function processResponse(?EHealthResponse $response): void
     {
-        $this->processPartyVerificationResponse($response);
+        $this->processPartyVerificationResponse($response, $this->legalEntity);
     }
 
     protected function getAdditionalMiddleware(): array

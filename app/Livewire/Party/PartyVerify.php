@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Party;
 
 use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
@@ -18,7 +19,6 @@ class PartyVerify extends Component
     public array $verificationDetails = [];
 
     public bool $showUpdateModal = false;
-
     public string $status = '';
     public string $reason = '';
     public string $comment = '';
@@ -42,32 +42,17 @@ class PartyVerify extends Component
     }
 
     /**
-     * Opens the update modal.
-     */
-    public function openUpdateModal(): void
-    {
-        $this->reset(['status', 'reason', 'comment']);
-        $this->showUpdateModal = true;
-    }
-
-    /**
-     * Closes the update modal.
-     */
-    public function closeModal(): void
-    {
-        $this->showUpdateModal = false;
-    }
-
-    /**
      * Handles the form submission to update the verification status.
      */
     public function updateStatus(): void
     {
-        $this->validate([
-                            'status' => 'required|string',
-                            'reason' => 'required|string',
-                            'comment' => 'nullable|string',
-                        ]);
+        $this->validate(
+            [
+                'status'  => 'required|string',
+                'reason'  => 'required|string',
+                'comment' => 'nullable|string',
+            ]
+        );
 
         $payload = [
             'dracs_death' => [
@@ -79,34 +64,37 @@ class PartyVerify extends Component
 
         try {
             EHealth::party()->update($this->party->uuid, $payload);
-
             session()->flash('success', 'Статус успішно оновлено.');
-
-            $this->closeModal();
             $this->loadVerificationDetails();
 
+            Log::info('Dispatching status-updated-close-modal event after success.');
+            $this->dispatch('status-updated-close-modal');
+
         } catch (EHealthValidationException $e) {
-            // Цей блок спеціально для помилок валідації 422
             Log::error('[PARTY UPDATE DEBUG] eHealth API returned a validation error.', [
-                'party_uuid' => $this->party->uuid,
-                'payload_sent' => $payload,
-                'validation_errors' => $e->getErrors(), // Метод для отримання деталей помилки
+                'party_uuid' => $this->party->uuid, 'payload_sent' => $payload, 'validation_errors' => $e->getErrors(),
             ]);
-            session()->flash('error', 'Помилка валідації від ЕСОЗ. Перевірте логи для деталей.');
-            $this->closeModal();
+            session()->flash('error', 'Помилка валідації від ЕСОЗ: ' . $e->getTranslatedMessage());
+
+        } catch (EHealthResponseException $e) {
+            Log::error('[PARTY UPDATE DEBUG] eHealth API returned an error response.', [
+                'party_uuid' => $this->party->uuid, 'status_code' => $e->getCode(), 'error_message' => $e->getMessage(),
+            ]);
+            $this->dispatch('flashMessage', ['message' => 'Помилка від ЕСОЗ: ' . $e->getMessage(), 'type' => 'error', 'persistent' => true]);
+            Log::info('Dispatching status-updated-close-modal event after EHealthResponseException.');
+            $this->dispatch('status-updated-close-modal');
         } catch (\Exception $e) {
-            // Цей блок для всіх інших помилок (немає зв'язку, помилка 500 і т.д.)
             Log::error('[PARTY UPDATE DEBUG] Request failed with a generic error.', [
-                'party_uuid' => $this->party->uuid,
-                'error_message' => $e->getMessage(),
+                'party_uuid' => $this->party->uuid, 'error_message' => $e->getMessage(),
             ]);
-            session()->flash('error', 'Помилка під час оновлення статусу: ' . $e->getMessage());
-            $this->closeModal();
+            session()->flash('error', 'Виникла неочікувана помилка: ' . $e->getMessage());
+            Log::info('Dispatching status-updated-close-modal event after generic Exception.');
+            $this->dispatch('status-updated-close-modal');
         }
     }
 
     public function render()
     {
-        return view('livewire.party.party-verify'); // <-- 2. ЗМІНИ ШЛЯХ ДО VIEW
+        return view('livewire.party.party-verify');
     }
 }

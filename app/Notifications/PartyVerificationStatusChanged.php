@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -14,16 +15,16 @@ class PartyVerificationStatusChanged extends Notification
 
     public Party $party;
     public string $newStatus;
+    public LegalEntity $legalEntity;
 
     /**
      * Create a new notification instance.
-     * @param Party $party The party whose status has changed.
-     * @param string $newStatus The new verification status.
      */
-    public function __construct(Party $party, string $newStatus)
+    public function __construct(Party $party, string $newStatus, LegalEntity $legalEntity)
     {
         $this->party = $party;
         $this->newStatus = $newStatus;
+        $this->legalEntity = $legalEntity;
     }
 
     /**
@@ -38,19 +39,17 @@ class PartyVerificationStatusChanged extends Notification
 
     /**
      * Get the array representation of the notification.
-     * @param mixed $notifiable
-     * @return array
      */
     public function toArray(mixed $notifiable): array
     {
-        $legalEntity = $this->party->employees->first()->legalEntity ?? null;
+        $legalEntity = $this->legalEntity;
 
         return [
-            'message' => 'Статус вашої верифікації було змінено на: ' . $this->newStatus,
-            'link' => $legalEntity ? route('party.verification.show', [
-                'legalEntity' => $legalEntity->id,
-                'party' => $this->party->id
-            ]) : null,
+            'party_id' => $this->party->id,
+            'party_name' => $this->party->fullName,
+            'new_status' => $this->newStatus,
+            'legal_entity_name' => $legalEntity?->edr['name'] ?? 'N/A',
+            'legal_entity_id' => $legalEntity?->id,
         ];
     }
 }
