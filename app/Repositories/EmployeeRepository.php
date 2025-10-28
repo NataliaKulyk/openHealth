@@ -95,6 +95,7 @@ readonly class EmployeeRepository
      */
     protected function updatePartyByUuid(Employee|EmployeeRequest $model, array $party): void
     {
+        unset($party['email']);
         $partyUuid = Arr::get($party, 'uuid');
         $partyByUuid = Party::where('uuid', $partyUuid)->first();
 
