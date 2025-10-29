@@ -25,9 +25,8 @@ class Employee extends EHealthRequest
      * Gets a single page of employees from E-Health.
      * It now attaches a validator to process the response.
      *
-     * @param array $filters An associative array of query parameters to filter the results.
-     * @param int   $page    The page number to fetch.
-     *
+     * @param  array  $filters  An associative array of query parameters to filter the results.
+     * @param  int  $page  The page number to fetch.
      * @return PromiseInterface|EHealthResponse The EHealthResponse object containing the validated and transformed data.
      * @throws ConnectionException
      */
@@ -59,7 +58,7 @@ class Employee extends EHealthRequest
     /**
      * Validates the response for a list of employees.
      *
-     * @param EHealthResponse $response The response from the eHealth API.
+     * @param  EHealthResponse  $response  The response from the eHealth API.
      * @return array The validated and transformed data.
      */
     protected function validateMany(EHealthResponse $response): array
@@ -84,6 +83,7 @@ class Employee extends EHealthRequest
             '*.party.first_name' => 'required|string',
             '*.party.last_name' => 'required|string',
             '*.party.second_name' => 'nullable|string',
+            'party.email' => 'nullable|email',
             '*.doctor' => 'sometimes|array',
             '*.doctor.specialities' => 'required_with:*.doctor|array',
             '*.doctor.specialities.*.speciality' => 'required_with:*.doctor|string',
@@ -106,8 +106,7 @@ class Employee extends EHealthRequest
     /**
      * Validates the response for a single employee.
      *
-     * @param EHealthResponse $response The response from the eHealth API.
-     *
+     * @param  EHealthResponse  $response  The response from the eHealth API.
      * @return array The validated and transformed data.
      */
     protected function validateDetails(EHealthResponse $response): array
@@ -205,6 +204,7 @@ class Employee extends EHealthRequest
         }
 
         $party = Arr::pull($validated, 'party', []);
+        $userEmail = Arr::pull($party, 'email');
         $documents = Arr::pull($party, 'documents', []);
         $phones = Arr::pull($party, 'phones', []);
 
@@ -213,6 +213,7 @@ class Employee extends EHealthRequest
         return [
             'employee' => $validated,
             'party' => $party,
+            'userEmail' => $userEmail,
             'documents' => $documents,
             'phones' => $phones,
             'educations' => $doctorData['educations'] ?? [],
@@ -225,7 +226,7 @@ class Employee extends EHealthRequest
     /**
      * Replaces eHealth property names with the ones used in the application (e.g., id -> uuid).
      *
-     * @param array $properties Raw properties from a single API item.
+     * @param  array  $properties  Raw properties from a single API item.
      * @return array Properties with application-friendly names.
      */
     protected static function replaceEHealthPropNames(array $properties): array

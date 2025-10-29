@@ -8,26 +8,31 @@ use App\Classes\eHealth\EHealthResponse;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Notifications\PartyVerificationStatusChanged;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection; // Added for type hinting
+use Illuminate\Support\Collection;
 
 trait ProcessesPartyVerificationResponses
 {
     /**
-     * Processes party verification statuses using an optimized upsert approach
-     * while retaining conditional notifications.
+     * Processes party verification statuses based on eHealth data using individual updates within a transaction.
+     * This method avoids using 'upsert' due to observed issues where it attempted INSERT instead of UPDATE,
+     * leading to NOT NULL constraint violations. Using individual updates ensures reliability and data integrity.
      *
      * This method performs the following steps:
-     * 1. Fetches the current state (status and user relation) of relevant parties from the local DB.
-     * 2. Prepares data for a bulk update based on status changes identified from the eHealth response.
-     * 3. Executes a single 'upsert' query to update all changed statuses efficiently.
+     * 1. Fetches the current state (status and 'users' relation) of relevant parties from the local DB.
+     * 2. Prepares data containing only the UUID and new status for parties whose status has changed.
+     * 3. Executes individual UPDATE queries within a database transaction for each changed party. This approach
+     * is safe against race conditions (where a party might be deleted between read and write) as
+     * UPDATE will simply affect 0 rows for a non-existent UUID without error.
      * 4. Iterates through the *original* local party data (fetched in step 1) to compare
-     * old statuses with the new statuses from eHealth, sending notifications only
-     * when a party's status specifically changes *from* 'VERIFIED'.
+     * old statuses with the new statuses from eHealth, sending notifications to all associated users
+     * only when a party's status specifically changes *from* 'VERIFIED'.
      *
      * @param  EHealthResponse  $response  The API response object containing verification statuses from eHealth.
      * @param  LegalEntity  $legalEntity  The legal entity context, used for notifications.
      * @return void
+     * @throws \Throwable If the database transaction fails.
      */
     private function processPartyVerificationResponse(EHealthResponse $response, LegalEntity $legalEntity): void
     {
@@ -43,14 +48,14 @@ trait ProcessesPartyVerificationResponses
 
         /**
          * Step 1: Fetch the current state of relevant parties from the local database.
-         * We load the 'user' relation eagerly to avoid N+1 queries later when sending notifications.
+         * We load the 'users' relation eagerly to avoid N+1 queries later when sending notifications.
          * The result is keyed by UUID for quick lookups.
          *
          * @var Collection<string, Party> $localParties
          */
         $partyUuids = array_keys($eHealthStatuses);
         $localParties = Party::whereIn('uuid', $partyUuids)
-            ->with('user') // Eager load user for notifications
+            ->with('users') // Eager load 'users' (plural) relation
             ->get()
             ->keyBy('uuid'); // Key by UUID for efficient access
 
@@ -62,54 +67,62 @@ trait ProcessesPartyVerificationResponses
         Log::info("Found " . $localParties->count() . " local parties to check against eHealth statuses.");
 
         /**
-         * Step 2: Prepare data for the bulk 'upsert' operation.
-         * We only include parties whose status has actually changed to optimize the update.
-         * We also explicitly set 'updated_at' as upsert doesn't handle timestamps automatically.
+         * Step 2: Prepare data for the bulk update operation.
+         * We only include parties whose status has actually changed.
          */
-        $upsertData = [];
+        $updateData = []; // Renamed from $upsertData for clarity
         foreach ($eHealthStatuses as $uuid => $newStatus) {
             $party = $localParties->get($uuid);
             // Include only if the party exists locally and the status is different
             if ($party && $party->verification_status !== $newStatus) {
-                $upsertData[] = [
+                $updateData[] = [
                     'uuid' => $uuid,
                     'verification_status' => $newStatus,
-                    'updated_at' => now(), // Manually set updated_at for upsert
+                    // 'updated_at' removed as the 'parties' table does not have timestamps
                 ];
             }
         }
 
         /**
-         * Execute the single 'upsert' query to update all changed records in the database.
+         * Step 3: Execute the update queries within a database transaction.
+         * This uses individual UPDATE statements for safety against race conditions and
+         * avoids the problematic behavior observed with 'upsert' in this context.
          */
-        if (!empty($upsertData)) {
-            Log::info("Performing upsert for " . count($upsertData) . " parties.");
-            Party::upsert(
-                $upsertData,
-                ['uuid'], // The unique identifier column(s) to match records
-                ['verification_status', 'updated_at'] // The columns to update if a match is found
-            );
-            $successfullyUpdatedCount = count($upsertData);
+        $successfullyUpdatedCount = 0;
+        if (!empty($updateData)) {
+            Log::info("Performing updates for " . count($updateData) . " parties using foreach in transaction.");
+
+            DB::transaction(function () use ($updateData, &$successfullyUpdatedCount) {
+                foreach ($updateData as $data) {
+                    // Update each party individually based on its UUID.
+                    // If the party was deleted between Step 1 and now, this UPDATE
+                    // will simply affect 0 rows and continue without error.
+                    $affectedRows = Party::where('uuid', $data['uuid'])->update(
+                        [
+                            'verification_status' => $data['verification_status'],
+                        ]
+                    );
+                    $successfullyUpdatedCount += $affectedRows;
+                }
+            });
+
         } else {
-            Log::info("No status changes detected. Skipping upsert.");
-            $successfullyUpdatedCount = 0;
+            Log::info("No status changes detected. Skipping update.");
         }
 
         /**
-         * Step 3: Determine and send notifications based on specific status changes.
+         * Step 4: Determine and send notifications based on specific status changes.
          * We iterate through the original $localParties collection (which still holds the OLD statuses)
          * and compare them with the $newStatus obtained from eHealth.
          */
         foreach ($localParties as $uuid => $party) {
-            // Get the new status from the eHealth data for comparison
             $newStatus = $eHealthStatuses[$uuid] ?? null;
-            // Get the old status directly from the $party object fetched before the upsert
-            $oldStatus = $party->verification_status;
+            $oldStatus = $party->verification_status; // The status BEFORE the update
 
             // Send notification ONLY if the status changed FROM 'VERIFIED' TO something else
             if ($newStatus && $oldStatus === 'VERIFIED' && $newStatus !== 'VERIFIED') {
-                /** @var \App\Models\User|null $userToNotify Eager loaded user relationship */
-                if ($userToNotify = $party->user) {
+                $usersToNotify = $party->users; // Get the collection of associated users
+                foreach ($usersToNotify as $userToNotify) {
                     Log::info("Notifying user about status change.", ['user_id' => $userToNotify->id, 'party_uuid' => $uuid, 'old_status' => $oldStatus, 'new_status' => $newStatus]);
                     // Pass the $party object (with old data but correct relations), the new status, and legal entity
                     $userToNotify->notify(new PartyVerificationStatusChanged($party, $newStatus, $legalEntity));
@@ -118,6 +131,6 @@ trait ProcessesPartyVerificationResponses
         }
 
         $context = method_exists($this, 'job') ? '[Job]' : '[Listener]';
-        Log::info("{$context} Upsert finished. {$successfullyUpdatedCount} party verification records were potentially updated.");
+        Log::info("{$context} Update process finished. {$successfullyUpdatedCount} party verification records were updated.");
     }
 }
