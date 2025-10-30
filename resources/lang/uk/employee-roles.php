@@ -16,6 +16,12 @@ return [
 
     'label' => 'Ролі',
     'new' => 'Нова роль',
+    'search_by_employee' => 'Пошук за ПІБ працівника',
+    'speciality_type' => 'Вид послуги',
+    'providing_condition' => 'Умови надання послуг',
+    'status' => 'Статус ролі',
     'employeeId' => 'Працівник, що виконує роль',
-    'healthcareServiceId' => 'Вид медичної послуги'
+    'healthcareServiceId' => 'Вид медичної послуги',
+    'deactivate' => 'Деактивація ролі',
+    'deactivate_warning' => "Увага! Деактивація ролі в електронній системі охорони здоров'я є незворотною дією.",
 ];

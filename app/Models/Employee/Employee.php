@@ -99,4 +99,17 @@ class Employee extends BaseEmployee
     {
         return $query->where('sync_status', $status);
     }
+
+    #[Scope]
+    protected function activeSpecialists(Builder $query): Builder
+    {
+        return $query->whereLegalEntityId(legalEntity()->id)
+            ->whereStatus(Status::APPROVED)
+            ->where('is_active', '=', true)
+            ->whereHas('specialities', function (Builder $query) {
+                $query->select('id')->whereSpecialityOfficio(true);
+            })
+            ->select(['id', 'uuid', 'party_id', 'position'])
+            ->with('party:id,first_name,last_name,second_name');
+    }
 }

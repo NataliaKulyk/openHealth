@@ -6,16 +6,15 @@ namespace App\Livewire\EmployeeRole;
 
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
-use App\Enums\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\EmployeeRole\Forms\EmployeeRoleForm as Form;
 use App\Models\Employee\Employee;
 use App\Models\EmployeeRole;
+use App\Models\HealthcareService;
 use App\Models\LegalEntity;
 use App\Repositories\Repository;
 use App\Traits\FormTrait;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -50,13 +49,7 @@ class EmployeeRoleCreate extends Component
     {
         $this->getDictionary();
 
-        $this->employees = $legalEntity->employees()
-            ->whereStatus(Status::APPROVED)
-            ->where('is_active', '=', true)
-            ->whereHas('specialities', fn (Builder $query) => $query->whereSpecialityOfficio(true))
-            ->select(['id', 'uuid', 'party_id', 'position'])
-            ->with('party:id,first_name,last_name,second_name')
-            ->get()
+        $this->employees = Employee::activeSpecialists()->get()
             ->map(static fn (Employee $employee) => [
                 'uuid' => $employee->uuid,
                 'fullName' => $employee->fullName,
@@ -64,12 +57,7 @@ class EmployeeRoleCreate extends Component
             ])
             ->toArray();
 
-        $this->healthcareServices = $legalEntity->healthcareServices()
-            ->where('status', Status::ACTIVE)
-            ->where('is_active', '=', true)
-            ->select(['uuid', 'speciality_type'])
-            ->get()
-            ->toArray();
+        $this->healthcareServices = HealthcareService::active()->get()->toArray();
     }
 
     public function create(): void
@@ -114,7 +102,7 @@ class EmployeeRoleCreate extends Component
             Repository::employeeRole()->store($response->map($validated));
 
             Session::flash('success', 'Роль успішно додано.');
-            //            $this->redirectRoute('employee-role.index', [legalEntity()], navigate: true);
+            $this->redirectRoute('employee-role.index', [legalEntity()], navigate: true);
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store employee role');
             Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');

@@ -37,6 +37,20 @@ class EmployeeRole extends Request
     }
 
     /**
+     * Deactivate a previously added employee role.
+     *
+     * @param  string  $uuid
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     */
+    public function deactivate(string $uuid): PromiseInterface|EHealthResponse
+    {
+        $this->setValidator($this->validateResponse(...));
+
+        return $this->patch(self::URL . '/' . $uuid . '/actions/deactivate');
+    }
+
+    /**
      * Validate employee role response
      * see: https://esoz.docs.apiary.io/#reference/general/employee-requests/add-employee-role
      */

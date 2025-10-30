@@ -7,6 +7,8 @@ namespace App\Models;
 use App\Enums\Status;
 use App\Models\MedicalEvents\Sql\CodeableConcept;
 use Eloquence\Behaviours\HasCamelCasing;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -62,5 +64,16 @@ class HealthcareService extends Model
     public function type(): BelongsTo
     {
         return $this->belongsTo(CodeableConcept::class, 'type_id');
+    }
+
+    #[Scope]
+    protected function active(Builder $query): Builder
+    {
+        return $query->whereLegalEntityId(legalEntity()->id)
+            ->where('is_active', '=', true)
+            ->whereStatus(Status::ACTIVE)
+            ->with('division:id,name')
+            ->select(['division_id', 'uuid', 'speciality_type'])
+            ->orderBy('speciality_type');
     }
 }
