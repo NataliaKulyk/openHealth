@@ -66,6 +66,33 @@ class HealthcareService extends Model
         return $this->belongsTo(CodeableConcept::class, 'type_id');
     }
 
+    /**
+     * List of healthcare services for the current legal entity.
+     *
+     * @param  Builder  $query
+     * @param  int  $legalEntityId
+     * @return Builder
+     */
+    #[Scope]
+    protected function filterByLegalEntity(Builder $query, int $legalEntityId): Builder
+    {
+        return $query->where('legal_entity_id', $legalEntityId)
+            ->select([
+                'id',
+                'uuid',
+                'legal_entity_id',
+                'division_id',
+                'speciality_type',
+                'providing_condition',
+                'ehealth_inserted_at',
+                'status',
+                'created_at'
+            ])
+            ->with('division:id,name,status')
+            ->orderByDesc('ehealth_inserted_at')
+            ->orderByDesc('created_at');
+    }
+
     #[Scope]
     protected function active(Builder $query): Builder
     {

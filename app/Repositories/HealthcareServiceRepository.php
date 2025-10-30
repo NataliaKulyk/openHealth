@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Repositories\MedicalEvents\Repository;
 use App\Models\HealthcareService;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Throwable;
@@ -61,6 +62,19 @@ class HealthcareServiceRepository
     }
 
     /**
+     * Update healthcare service data after activation/deactivation.
+     *
+     * @param  string  $uuid
+     * @param  array  $data
+     * @return void
+     */
+    public function updateStatus(string $uuid, array $data): void
+    {
+        $forUpdate = Arr::only($data, ['status', 'ehealth_updated_at', 'ehealth_updated_by']);
+        HealthcareService::whereUuid($uuid)->update($forUpdate);
+    }
+
+    /**
      * Sync data.
      *
      * @param  array  $items
@@ -84,18 +98,6 @@ class HealthcareServiceRepository
 
             HealthcareService::upsert($prepared, 'uuid', new HealthcareService()->getFillable());
         });
-    }
-
-    /**
-     * Update status of healthcare service.
-     *
-     * @param  string  $uuid
-     * @param  string  $status
-     * @return void
-     */
-    public function updateStatus(string $uuid, string $status): void
-    {
-        HealthcareService::whereUuid($uuid)->update(['status' => $status]);
     }
 
     /**
