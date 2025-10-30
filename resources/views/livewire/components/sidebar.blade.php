@@ -14,7 +14,7 @@
 
             @if(Auth::user()->can('create', LegalEntity::class) || legalEntity())
                 <li x-data="{ open: false }" class="space-y-2">
-                    <button @click="open = !open" type="button"
+                    <button @click="open = !open"  type="button"
                             class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                             aria-controls="dropdown-legal-entity"
                             :aria-expanded="open"
@@ -33,7 +33,7 @@
                         </svg>
                     </button>
 
-                    <ul id="dropdown-legal-entity" class="py-2 space-y-2"
+                    <ul id="dropdown-legal-entity" x-cloak class="py-2 space-y-2"
                         x-show="open"
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="transform opacity-0 scale-95"
