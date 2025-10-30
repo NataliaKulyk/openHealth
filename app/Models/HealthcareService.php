@@ -90,5 +90,15 @@ class HealthcareService extends Model
             ->with('division:id,name,status')
             ->orderByDesc('ehealth_inserted_at')
             ->orderByDesc('created_at');
+
+    #[Scope]
+    protected function active(Builder $query): Builder
+    {
+        return $query->whereLegalEntityId(legalEntity()->id)
+            ->where('is_active', '=', true)
+            ->whereStatus(Status::ACTIVE)
+            ->with('division:id,name')
+            ->select(['division_id', 'uuid', 'speciality_type'])
+            ->orderBy('speciality_type');
     }
 }

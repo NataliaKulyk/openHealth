@@ -186,7 +186,8 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/party/{party}/edit', PartyEdit::class)->name('party.edit');
 
             Route::get('/employee-role', EmployeeRoleIndex::class)
-                ->name('employee-role.index');
+                ->name('employee-role.index')
+                ->can('viewAny', EmployeeRole::class);
             Route::get('/employee-role/create', EmployeeRoleCreate::class)
                 ->name('employee-role.create')
                 ->can('create', EmployeeRole::class);

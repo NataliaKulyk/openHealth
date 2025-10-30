@@ -27,7 +27,8 @@
                         <option selected value="">{{ __('forms.select') }}</option>
                         @foreach($healthcareServices as $healthcareService)
                             <option value="{{ $healthcareService['uuid'] }}">
-                                {{ $dictionaries['SPECIALITY_TYPE'][$healthcareService['specialityType']] }}
+                                {{ $dictionaries['SPECIALITY_TYPE'][$healthcareService['specialityType']] }} -
+                                {{ $healthcareService['division']['name'] }}
                             </option>
                         @endforeach
                     </select>
