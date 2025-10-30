@@ -7,6 +7,8 @@ namespace App\Models;
 use App\Enums\Status;
 use App\Models\MedicalEvents\Sql\CodeableConcept;
 use Eloquence\Behaviours\HasCamelCasing;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -62,5 +64,31 @@ class HealthcareService extends Model
     public function type(): BelongsTo
     {
         return $this->belongsTo(CodeableConcept::class, 'type_id');
+    }
+
+    /**
+     * List of healthcare services for the current legal entity.
+     *
+     * @param  Builder  $query
+     * @return Builder
+     */
+    #[Scope]
+    protected function forLegalEntity(Builder $query): Builder
+    {
+        return $query->where('legal_entity_id', legalEntity()->id)
+            ->select([
+                'id',
+                'uuid',
+                'legal_entity_id',
+                'division_id',
+                'speciality_type',
+                'providing_condition',
+                'ehealth_inserted_at',
+                'status',
+                'created_at'
+            ])
+            ->with('division:id,name,status')
+            ->orderByDesc('ehealth_inserted_at')
+            ->orderByDesc('created_at');
     }
 }

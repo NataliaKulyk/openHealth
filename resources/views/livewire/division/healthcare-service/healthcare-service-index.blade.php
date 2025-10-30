@@ -183,49 +183,63 @@
                                                      class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white shadow-md z-50"
                                                 >
                                                     @if ($service->status === Status::ACTIVE)
-                                                        <a href="{{ route('healthcare-service.view', [legalEntity(), $service->division, $service->id]) }}"
-                                                           class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                        >
-                                                            @icon('eye', 'w-5 h-5 text-gray-600')
-                                                            {{ __('forms.view') }}
-                                                        </a>
+                                                        @can('view', $service)
+                                                            <a href="{{ route('healthcare-service.view', [legalEntity(), $service->division, $service->id]) }}"
+                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                            >
+                                                                @icon('eye', 'w-5 h-5 text-gray-600')
+                                                                {{ __('forms.view') }}
+                                                            </a>
+                                                        @endcan
 
-                                                        <a href="{{ route('healthcare-service.update', [legalEntity(), $service->division, $service->id]) }}"
-                                                           class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                        >
-                                                            @icon('edit', 'w-5 h-5 text-gray-600')
-                                                            {{ __('forms.update') }}
-                                                        </a>
+                                                        @can('update', $service)
+                                                            <a href="{{ route('healthcare-service.update', [legalEntity(), $service->division, $service->id]) }}"
+                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                            >
+                                                                @icon('edit', 'w-5 h-5 text-gray-600')
+                                                                {{ __('forms.update') }}
+                                                            </a>
+                                                        @endcan
 
-                                                        <button
-                                                            wire:click="deactivate('{{ $service->uuid }}'); toggle()"
-                                                            class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
-                                                        >
-                                                            @icon('delete', 'w-5 h-5 text-red-600')
-                                                            {{ __('forms.deactivate') }}
-                                                        </button>
+                                                        @can('deactivate', $service)
+                                                            <button type="button"
+                                                                    wire:click="deactivate('{{ $service->getKey() }}'); toggle()"
+                                                                    class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                                                            >
+                                                                @icon('delete', 'w-5 h-5 text-red-600')
+                                                                {{ __('forms.deactivate') }}
+                                                            </button>
+                                                        @endcan
                                                     @elseif($service->status === Status::DRAFT)
-                                                        <a href="{{ route('healthcare-service.edit', [legalEntity(), $service->division->id, $service->id]) }}"
-                                                           class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                        >
-                                                            @icon('edit', 'w-5 h-5 text-gray-600')
-                                                            {{ __('healthcare-services.continue') }}
-                                                        </a>
+                                                        @can('edit', $service)
+                                                            <a href="{{ route('healthcare-service.edit', [legalEntity(), $service->division->id, $service->id]) }}"
+                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                            >
+                                                                @icon('edit', 'w-5 h-5 text-gray-600')
+                                                                {{ __('healthcare-services.continue') }}
+                                                            </a>
+                                                        @endcan
 
-                                                        <button wire:click="delete({{ $service->id }}); toggle()"
-                                                                @click="openDropdown = false"
-                                                                class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
-                                                        >
-                                                            @icon('delete', 'w-5 h-5')
-                                                            {{ __('healthcare-services.delete') }}
-                                                        </button>
+                                                        @can('delete', $service)
+                                                            <button wire:click="delete({{ $service->getKey() }}); toggle()"
+                                                                    @click="openDropdown = false"
+                                                                    type="button"
+                                                                    class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
+                                                            >
+                                                                @icon('delete', 'w-5 h-5')
+                                                                {{ __('healthcare-services.delete') }}
+                                                            </button>
+                                                        @endcan
                                                     @else
-                                                        <button wire:click="activate('{{ $service->uuid }}'); toggle()"
-                                                                class="cursor-pointer flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 hover:bg-green-50"
-                                                        >
-                                                            @icon('check-circle', 'w-5 h-5 text-green-600')
-                                                            {{ __('forms.activate') }}
-                                                        </button>
+                                                        @can('activate', $service)
+                                                            <button type="button"
+                                                                    wire:click="activate('{{ $service->getKey() }}'); toggle()"
+                                                                    class="cursor-pointer flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 hover:bg-green-50"
+                                                            >
+                                                                @icon('check-circle', 'w-5 h-5 text-green-600')
+                                                                {{ __('forms.activate') }}
+                                                            </button>
+                                                        @endcan
                                                     @endif
                                                 </div>
                                             </div>

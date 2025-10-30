@@ -84,17 +84,23 @@ class HealthcareServiceIndex extends Component
         $this->divisionId = null;
     }
 
-    public function activate(string $uuid): void
+    public function activate(HealthcareService $healthcareService): void
     {
+        if (Auth::user()?->cannot('activate', $healthcareService)) {
+            Session::flash('error', 'У вас немає дозволу на активування послуги');
+
+            return;
+        }
+
         try {
-            $response = EHealth::healthcareService()->activate($uuid);
+            $response = EHealth::healthcareService()->activate($healthcareService->uuid);
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, "Error connecting when activate $uuid a healthcare service");
+            $this->logConnectionError($exception, "Error connecting when activate $healthcareService->uuid a healthcare service");
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
-            $this->logEHealthException($exception, "Error when activate $uuid a healthcare service");
+            $this->logEHealthException($exception, "Error when activate $healthcareService->uuid a healthcare service");
 
             if ($exception instanceof EHealthValidationException) {
                 Session::flash('error', $exception->getFormattedMessage());
@@ -106,28 +112,34 @@ class HealthcareServiceIndex extends Component
         }
 
         try {
-            Repository::healthcareService()->updateStatus($uuid, $response->validate()['status']);
+            Repository::healthcareService()->updateStatus($healthcareService->uuid, $response->validate());
 
             Session::flash('success', 'Послугу успішно активовано');
         } catch (Throwable $exception) {
-            $this->logDatabaseErrors($exception, "Failed to activate $uuid healthcare service");
+            $this->logDatabaseErrors($exception, "Failed to activate $healthcareService->uuid healthcare service");
             Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
     }
 
-    public function deactivate(string $uuid): void
+    public function deactivate(HealthcareService $healthcareService): void
     {
+        if (Auth::user()?->cannot('deactivate', $healthcareService)) {
+            Session::flash('error', 'У вас немає дозволу на деактивування послуги');
+
+            return;
+        }
+
         try {
-            $response = EHealth::healthcareService()->deactivate($uuid);
+            $response = EHealth::healthcareService()->deactivate($healthcareService->uuid);
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, "Error connecting when deactivating $uuid a healthcare service");
+            $this->logConnectionError($exception, "Error connecting when deactivating $healthcareService->uuid a healthcare service");
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
-            $this->logEHealthException($exception, "Error when deactivating $uuid a healthcare service");
+            $this->logEHealthException($exception, "Error when deactivating $healthcareService->uuid a healthcare service");
 
             if ($exception instanceof EHealthValidationException) {
                 Session::flash('error', $exception->getFormattedMessage());
@@ -139,22 +151,19 @@ class HealthcareServiceIndex extends Component
         }
 
         try {
-            Repository::healthcareService()->updateStatus($uuid, $response->validate()['status']);
+            Repository::healthcareService()->updateStatus($healthcareService->uuid, $response->validate());
 
             Session::flash('success', 'Послугу успішно деактивовано');
         } catch (Throwable $exception) {
-            $this->logDatabaseErrors($exception, "Failed to deactivate $uuid healthcare service");
+            $this->logDatabaseErrors($exception, "Failed to deactivate $healthcareService->uuid healthcare service");
             Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
             return;
         }
     }
 
-    public function delete($id): void
+    public function delete(HealthcareService $healthcareService): void
     {
-        $healthcareService = HealthcareService::select(['id', 'legal_entity_id', 'status'])
-            ->findOrFail($id);
-
         if (Auth::user()?->cannot('delete', $healthcareService)) {
             Session::flash('error', 'У вас немає дозволу на видалення заявки на створення послуги');
 
@@ -162,7 +171,7 @@ class HealthcareServiceIndex extends Component
         }
 
         try {
-            HealthcareService::destroy($id);
+            HealthcareService::destroy($healthcareService->id);
 
             Session::flash('success', 'Чернетку послуги успішно видалено');
         } catch (Exception $exception) {
@@ -221,22 +230,7 @@ class HealthcareServiceIndex extends Component
     #[Computed]
     public function healthcareServices(): LengthAwarePaginator
     {
-        $query = HealthcareService::with('division:id,name,status')
-            ->select(
-                [
-                    'id',
-                    'uuid',
-                    'division_id',
-                    'speciality_type',
-                    'providing_condition',
-                    'ehealth_inserted_at',
-                    'status',
-                    'created_at'
-                ]
-            )
-            ->where('legal_entity_id', legalEntity()->id)
-            ->orderByDesc('ehealth_inserted_at')
-            ->orderByDesc('created_at');
+        $query = HealthcareService::forLegalEntity();
 
         // Filters
         if ($this->isFiltersApplied) {
