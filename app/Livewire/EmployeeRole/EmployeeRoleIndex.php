@@ -11,7 +11,6 @@ use App\Models\EmployeeRole;
 use App\Models\LegalEntity;
 use App\Repositories\Repository;
 use App\Traits\FormTrait;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -121,38 +120,10 @@ class EmployeeRoleIndex extends Component
     #[Computed]
     public function employeeRoles(): LengthAwarePaginator
     {
-        return EmployeeRole::with([
-            'employee:id,party_id',
-            'employee.party:id,first_name,last_name,second_name',
-            'healthcareService:id,legal_entity_id,division_id,speciality_type,providing_condition',
-            'healthcareService.legalEntity:id',
-            'healthcareService.division:id,name'
-        ])
-            ->select(['id', 'uuid', 'employee_id', 'healthcare_service_id', 'status', 'is_active'])
-            ->whereHas('healthcareService', function (Builder $query) {
-                $query->select('id')->where('legal_entity_id', legalEntity()->id);
-            })
-            ->when($this->employeeSearch, function (Builder $query) {
-                $query->whereHas('employee', function (Builder $employeeQuery) {
-                    $employeeQuery->select('id', 'party_id')
-                        ->whereHas('party', function (Builder $partyQuery) {
-                            $partyQuery->select('id')
-                                ->where('first_name', 'ILIKE', "%$this->employeeSearch%")
-                                ->orWhere('last_name', 'ILIKE', "%$this->employeeSearch%")
-                                ->orWhere('second_name', 'ILIKE', "%$this->employeeSearch%");
-                        });
-                });
-            })
-            ->when($this->specialityTypeFilter, function (Builder $query) {
-                $query->whereHas('healthcareService', function (Builder $subQuery) {
-                    $subQuery->select('speciality_type')
-                        ->where('speciality_type', $this->specialityTypeFilter);
-                });
-            })
-            ->when($this->statusFilter, function (Builder $query) {
-                $query->whereIn('status', $this->statusFilter);
-            })
-            ->orderByDesc('created_at')
+        return EmployeeRole::forLegalEntity()
+            ->filterByEmployeeSearch($this->employeeSearch)
+            ->filterBySpecialityType($this->specialityTypeFilter)
+            ->filterByStatus($this->statusFilter)
             ->paginate(config('pagination.per_page'));
     }
 
