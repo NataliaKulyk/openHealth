@@ -6,6 +6,7 @@ namespace App\Livewire\Employee;
 
 use AllowDynamicProperties;
 use App\Classes\eHealth\EHealth;
+use App\Core\Arr;
 use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
@@ -106,8 +107,15 @@ class EmployeeIndex extends EmployeeComponent
         // === Step 2: Transform drafts into the same "Party" structure ===
         $draftParties = $unassignedRequests->map(function (EmployeeRequest $request) {
             $partyData = $request->revision->data['party'] ?? [];
+
+            $cleanPartyData = Arr::except($partyData, ['email']);
             $fakeParty = new Party();
-            $fakeParty->fill($partyData);
+            $fakeParty->fill($cleanPartyData);
+
+            if (isset($partyData['email'])) {
+                $fakeParty->email = $partyData['email'];
+            }
+
             $fakeParty->id = 'draft_' . $request->id;
             $fakeParty->setRelation('employeeRequests', collect([$request]));
             $fakeParty->setRelation('employees', collect());

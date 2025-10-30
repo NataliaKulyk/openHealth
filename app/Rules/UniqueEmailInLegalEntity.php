@@ -2,7 +2,7 @@
 
 namespace App\Rules;
 
-use App\Models\Relations\Party;
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -32,13 +32,13 @@ class UniqueEmailInLegalEntity implements ValidationRule
             return;
         }
 
-        $query = Party::where('email', $value)
+        $query = User::where('email', $value)
             ->whereHas('employees', function ($query) {
                 $query->where('legal_entity_id', legalEntity()->id);
             });
 
         if ($this->ignorePartyId) {
-            $query->where('id', '!=', $this->ignorePartyId);
+            $query->where('party_id', '!=', $this->ignorePartyId);
         }
 
         if ($query->exists()) {

@@ -133,7 +133,6 @@ class Employee extends EHealthRequest
             'party.second_name' => 'nullable|string',
             'party.about_myself' => 'sometimes|nullable|string',
             'party.birth_date' => 'required|date_format:Y-m-d',
-            'party.email' => 'nullable|email',
             'party.declaration_count' => 'required|integer',
             'party.declaration_limit' => 'required|integer',
 
@@ -204,7 +203,6 @@ class Employee extends EHealthRequest
         }
 
         $party = Arr::pull($validated, 'party', []);
-        $userEmail = Arr::pull($party, 'email');
         $documents = Arr::pull($party, 'documents', []);
         $phones = Arr::pull($party, 'phones', []);
 
@@ -213,7 +211,6 @@ class Employee extends EHealthRequest
         return [
             'employee' => $validated,
             'party' => $party,
-            'userEmail' => $userEmail,
             'documents' => $documents,
             'phones' => $phones,
             'educations' => $doctorData['educations'] ?? [],
