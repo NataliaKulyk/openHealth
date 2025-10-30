@@ -19,185 +19,185 @@
         <x-slot name="navigation">
             <div class="flex flex-col -my-4">
                 <form wire:submit.prevent="applyFilters">
-                <div class="flex flex-wrap items-end justify-between gap-4">
-                    <div class="flex flex-col lg:flex-row items-stretch lg:items-end gap-2 lg:gap-4 w-full">
-                        <div class="w-full lg:w-96">
-                            <x-forms.form-group>
-                                <x-slot name="label">
-                                    <label for="employee_search"
-                                           class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1">
-                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                                  stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                                        </svg>
-                                        <span>{{ __('forms.employee_search') }}</span>
-                                    </label>
-                                </x-slot>
-                                <x-slot name="input">
-                                    <div class="form-group group w-full">
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div class="flex flex-col lg:flex-row items-stretch lg:items-end gap-2 lg:gap-4 w-full">
+                            <div class="w-full lg:w-96">
+                                <x-forms.form-group>
+                                    <x-slot name="label">
+                                        <label for="employee_search"
+                                               class="text-sm font-medium text-gray-900 dark:text-white block mb-2 flex items-center gap-1">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                                      stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                                            </svg>
+                                            <span>{{ __('forms.employee_search') }}</span>
+                                        </label>
+                                    </x-slot>
+                                    <x-slot name="input">
+                                        <div class="form-group group w-full">
+                                            <input type="text"
+                                                   id="employee_search"
+                                                   placeholder=" "
+                                                   class="input peer"
+                                                   wire:model.defer="search"
+                                                   autocomplete="off" />
+                                            <label for="employee_search" class="label">ПІБ</label>
+                                        </div>
+                                    </x-slot>
+                                </x-forms.form-group>
+                            </div>
+                            <button class="button-minor flex items-center justify-center gap-2 w-full lg:w-auto self-stretch lg:self-auto lg:-translate-y-[9px]"
+                                    @click="showFilter = !showFilter">
+                                <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M4.00003 3.1999C4.00003 2.98773 3.91574 2.78425 3.76571 2.63422C3.61568 2.48419 3.41220 2.39990 3.20003 2.39990C2.98785 2.39990 2.78437 2.48419 2.63434 2.63422C2.48431 2.78425 2.40003 2.98773 2.40003 3.1999V9.0143C2.15682 9.15474 1.95485 9.35672 1.81444 9.59994C1.67402 9.84316 1.60010 10.11910 1.60010 10.39990C1.60010 10.68070 1.67402 10.95660 1.81444 11.1999C1.95485 11.44310 2.15682 11.64510 2.40003 11.7855V12.7999C2.40003 13.01210 2.48431 13.21560 2.63434 13.3656C2.78437 13.51560 2.98785 13.59990 3.20003 13.5999C3.41220 13.59990 3.61568 13.51560 3.76571 13.3656C3.91574 13.21560 4.00003 13.01210 4.00003 12.7999V11.7855C4.24324 11.64510 4.44520 11.44310 4.58562 11.1999C4.72603 10.95660 4.79996 10.68070 4.79996 10.39990C4.79996 10.11910 4.72603 9.84316 4.58562 9.59994C4.44520 9.35672 4.24324 9.15474 4.00003 9.0143V3.1999ZM8.80003 3.1999C8.80003 2.98773 8.71574 2.78425 8.56571 2.63422C8.41568 2.48419 8.21220 2.39990 8.00003 2.39990C7.78785 2.39990 7.58437 2.48419 7.43434 2.63422C7.28431 2.78425 7.20003 2.98773 7.20003 3.1999V4.2143C6.95682 4.35474 6.75485 4.55672 6.61444 4.79994C6.47402 5.04316 6.40010 5.31906 6.40010 5.59990C6.40010 5.88075 6.47402 6.15665 6.61444 6.39987C6.75485 6.64309 6.95682 6.84507 7.20003 6.9855V12.7999C7.20003 13.01210 7.28431 13.21560 7.43434 13.3656C7.58437 13.51560 7.78785 13.59990 8.00003 13.5999C8.21220 13.59990 8.41568 13.51560 8.56571 13.3656C8.71574 13.21560 8.80003 13.01210 8.80003 12.7999V6.9855C9.04324 6.84507 9.24520 6.64309 9.38562 6.39987C9.52603 6.15665 9.59996 5.88075 9.59996 5.59990C9.59996 5.31906 9.52603 5.04316 9.38562 4.79994C9.24520 4.55672 9.04324 4.35474 8.80003 4.2143V3.1999ZM12.8 2.3999C13.0122 2.3999 13.2157 2.48419 13.3657 2.63422C13.5157 2.78425 13.6 2.98773 13.6 3.1999V9.0143C13.8432 9.15474 14.0452 9.35672 14.1856 9.59994C14.3260 9.84316 14.4 10.11910 14.4 10.39990C14.4 10.68070 14.3260 10.95660 14.1856 11.1999C14.0452 11.44310 13.8432 11.64510 13.6 11.7855V12.7999C13.6 13.01210 13.5157 13.21560 13.3657 13.3656C13.2157 13.51560 13.0122 13.59990 12.8 13.5999C12.5879 13.59990 12.3844 13.51560 12.2343 13.3656C12.0843 13.21560 12 13.01210 12 12.7999V11.7855C11.7568 11.64510 11.5549 11.44310 11.4144 11.1999C11.2740 10.95660 11.2001 10.68070 11.2001 10.39990C11.2001 10.11910 11.2740 9.84316 11.4144 9.59994C11.5549 9.35672 11.7568 9.15474 12 9.0143V3.1999C12 2.98773 12.0843 2.78425 12.2343 2.63422C12.3844 2.48419 12.5879 2.39990 12.8 2.3999V2.3999Z"
+                                        fill="currentColor"/>
+                                </svg>
+                                <span>{{ __('forms.additional_search_parameters') }}</span>
+                            </button>
+                        </div>
+
+                        <div x-cloak x-show="showFilter" x-transition class="pt-0 mt-1">
+                            <div class="form-row-4">
+                                <div class="form-group phone-wrapper">
+                                    <input wire:model.defer="filter.phone"
+                                           wire:keydown.enter="applyFilters"
+                                           type="tel" placeholder=" "
+                                           class="peer input pl-10 with-leading-icon text-gray-500"
+                                           x-mask="+380999999999" id="filter_phone" />
+                                    <label for="filter_phone" class="label pl-10">{{ __('forms.phone') }}</label>
+                                </div>
+                                <div class="form-group group">
+                                    <input wire:model.defer="filter.email" wire:keydown.enter="applyFilters" name="filter_email" id="filter_email" class="input peer" placeholder=" " autocomplete="off" />
+                                    <label for="filter_email" class="label">Email</label>
+                                </div>
+                            </div>
+                            <div class="form-row-4">
+                                <div class="form-group group">
+                                    <select wire:model.defer="filter.role" wire:keydown.enter="applyFilters"
+                                            id="filter_role"
+                                            class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                    >
+                                        <option value="">Всі ролі</option>
+                                        @foreach($dictionaries['EMPLOYEE_TYPE'] ?? [] as $key => $value)
+                                            <option value="{{ $key }}">{{ $value }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label for="filter_role" class="label">Роль працівника</label>
+                                </div>
+                                <div class="form-group group">
+                                    <select wire:model.defer="filter.position" wire:keydown.enter="applyFilters"
+                                            id="filter_position"
+                                            class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                    >
+                                        <option value="">Всі посади</option>
+                                        @foreach($dictionaries['POSITION'] ?? [] as $key => $value)
+                                            <option value="{{ $key }}">{{ $value }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label for="filter_position" class="label">{{ __('forms.position') }}</label>
+                                </div>
+                            </div>
+                            <div class="form-row-4">
+                                <div class="form-group group">
+                                    <select wire:model.defer="filter.division_id" wire:keydown.enter="applyFilters"
+                                            name="filter_division"
+                                            id="filter_division"
+                                            class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                    >
+                                        <option value="">Всі підрозділи</option>
+                                        @foreach($divisions ?? [] as $division)
+                                            <option value="{{ $division['id'] }}">{{ $division['name'] }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label for="filter_division" class="label">Медичний заклад</label>
+                                </div>
+                                <div class="form-group group" x-data="{ open: false, selectedStatuses: @entangle('status') }">
+                                    <label for="statusFilter" class="label">Статус</label>
+                                    <div class="relative">
+
                                         <input type="text"
-                                               id="employee_search"
-                                               placeholder=" "
-                                               class="input peer"
-                                               wire:model.defer="search"
-                                               autocomplete="off" />
-                                        <label for="employee_search" class="label">ПІБ</label>
-                                    </div>
-                                </x-slot>
-                            </x-forms.form-group>
-                        </div>
-                        <button class="button-minor flex items-center justify-center gap-2 w-full lg:w-auto self-stretch lg:self-auto lg:-translate-y-[9px]"
-                                @click="showFilter = !showFilter">
-                            <svg width="16" height="16" id="svg-adjustments" viewBox="0 0 16 16" fill="none"
-                                 xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M4.00003 3.1999C4.00003 2.98773 3.91574 2.78425 3.76571 2.63422C3.61568 2.48419 3.41220 2.39990 3.20003 2.39990C2.98785 2.39990 2.78437 2.48419 2.63434 2.63422C2.48431 2.78425 2.40003 2.98773 2.40003 3.1999V9.0143C2.15682 9.15474 1.95485 9.35672 1.81444 9.59994C1.67402 9.84316 1.60010 10.11910 1.60010 10.39990C1.60010 10.68070 1.67402 10.95660 1.81444 11.1999C1.95485 11.44310 2.15682 11.64510 2.40003 11.7855V12.7999C2.40003 13.01210 2.48431 13.21560 2.63434 13.3656C2.78437 13.51560 2.98785 13.59990 3.20003 13.5999C3.41220 13.59990 3.61568 13.51560 3.76571 13.3656C3.91574 13.21560 4.00003 13.01210 4.00003 12.7999V11.7855C4.24324 11.64510 4.44520 11.44310 4.58562 11.1999C4.72603 10.95660 4.79996 10.68070 4.79996 10.39990C4.79996 10.11910 4.72603 9.84316 4.58562 9.59994C4.44520 9.35672 4.24324 9.15474 4.00003 9.0143V3.1999ZM8.80003 3.1999C8.80003 2.98773 8.71574 2.78425 8.56571 2.63422C8.41568 2.48419 8.21220 2.39990 8.00003 2.39990C7.78785 2.39990 7.58437 2.48419 7.43434 2.63422C7.28431 2.78425 7.20003 2.98773 7.20003 3.1999V4.2143C6.95682 4.35474 6.75485 4.55672 6.61444 4.79994C6.47402 5.04316 6.40010 5.31906 6.40010 5.59990C6.40010 5.88075 6.47402 6.15665 6.61444 6.39987C6.75485 6.64309 6.95682 6.84507 7.20003 6.9855V12.7999C7.20003 13.01210 7.28431 13.21560 7.43434 13.3656C7.58437 13.51560 7.78785 13.59990 8.00003 13.5999C8.21220 13.59990 8.41568 13.51560 8.56571 13.3656C8.71574 13.21560 8.80003 13.01210 8.80003 12.7999V6.9855C9.04324 6.84507 9.24520 6.64309 9.38562 6.39987C9.52603 6.15665 9.59996 5.88075 9.59996 5.59990C9.59996 5.31906 9.52603 5.04316 9.38562 4.79994C9.24520 4.55672 9.04324 4.35474 8.80003 4.2143V3.1999ZM12.8 2.3999C13.0122 2.3999 13.2157 2.48419 13.3657 2.63422C13.5157 2.78425 13.6 2.98773 13.6 3.1999V9.0143C13.8432 9.15474 14.0452 9.35672 14.1856 9.59994C14.3260 9.84316 14.4 10.11910 14.4 10.39990C14.4 10.68070 14.3260 10.95660 14.1856 11.1999C14.0452 11.44310 13.8432 11.64510 13.6 11.7855V12.7999C13.6 13.01210 13.5157 13.21560 13.3657 13.3656C13.2157 13.51560 13.0122 13.59990 12.8 13.5999C12.5879 13.59990 12.3844 13.51560 12.2343 13.3656C12.0843 13.21560 12 13.01210 12 12.7999V11.7855C11.7568 11.64510 11.5549 11.44310 11.4144 11.1999C11.2740 10.95660 11.2001 10.68070 11.2001 10.39990C11.2001 10.11910 11.2740 9.84316 11.4144 9.59994C11.5549 9.35672 11.7568 9.15474 12 9.0143V3.1999C12 2.98773 12.0843 2.78425 12.2343 2.63422C12.3844 2.48419 12.5879 2.39990 12.8 2.3999V2.3999Z"
-                                    fill="currentColor"/>
-                            </svg>
-                            <span>{{ __('forms.additional_search_parameters') }}</span>
-                        </button>
-                    </div>
-
-                    <div x-cloak x-show="showFilter" x-transition class="pt-0 mt-1">
-                        <div class="form-row-4">
-                            <div class="form-group phone-wrapper">
-                                <input wire:model.defer="filter.phone"
-                                       wire:keydown.enter="applyFilters"
-                                       type="tel" placeholder=" "
-                                       class="peer input pl-10 with-leading-icon text-gray-500"
-                                       x-mask="+380999999999" id="filter_phone" />
-                                <label for="filter_phone" class="label pl-10">{{ __('forms.phone') }}</label>
-                            </div>
-                            <div class="form-group group">
-                                <input wire:model.defer="filter.email" wire:keydown.enter="applyFilters" name="filter_email" id="filter_email" class="input peer" placeholder=" " autocomplete="off" />
-                                <label for="filter_email" class="label">Email</label>
-                            </div>
-                        </div>
-                        <div class="form-row-4">
-                            <div class="form-group group">
-                                <select wire:model.defer="filter.role" wire:keydown.enter="applyFilters"
-                                        id="filter_role"
-                                        class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                                >
-                                    <option value="">Всі ролі</option>
-                                    @foreach($dictionaries['EMPLOYEE_TYPE'] ?? [] as $key => $value)
-                                        <option value="{{ $key }}">{{ $value }}</option>
-                                    @endforeach
-                                </select>
-                                <label for="filter_role" class="label">Роль працівника</label>
-                            </div>
-                            <div class="form-group group">
-                                <select wire:model.defer="filter.position" wire:keydown.enter="applyFilters"
-                                        id="filter_position"
-                                        class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                                >
-                                    <option value="">Всі посади</option>
-                                    @foreach($dictionaries['POSITION'] ?? [] as $key => $value)
-                                        <option value="{{ $key }}">{{ $value }}</option>
-                                    @endforeach
-                                </select>
-                                <label for="filter_position" class="label">{{ __('forms.position') }}</label>
-                            </div>
-                        </div>
-                        <div class="form-row-4">
-                            <div class="form-group group">
-                                <select wire:model.defer="filter.division_id" wire:keydown.enter="applyFilters"
-                                        name="filter_division"
-                                        id="filter_division"
-                                        class="input peer text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                                >
-                                    <option value="">Всі підрозділи</option>
-                                    @foreach($divisions ?? [] as $division)
-                                        <option value="{{ $division['id'] }}">{{ $division['name'] }}</option>
-                                    @endforeach
-                                </select>
-                                <label for="filter_division" class="label">Медичний заклад</label>
-                            </div>
-                            <div class="form-group group" x-data="{ open: false, selectedStatuses: @entangle('status') }">
-                                <label for="statusFilter" class="label">Статус</label>
-                                <div class="relative">
-
-                                    <input type="text"
-                                           id="statusFilter"
-                                           class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
-                                           placeholder="Оберіть статуси"
-                                           x-on:click="open = !open"
-                                           :value="selectedStatuses.length ? selectedStatuses.map(s => {
-                                                if (s === 'APPROVED') return '{{ __('forms.active') }}';
-                                                if (s === 'NEW') return '{{ __('forms.draft') }}';
-                                                if (s === 'DISMISSED') return '{{ __('forms.dismissed') }}';
-                                                if (s === 'VERIFIED') return '{{ __('forms.verified') }}';
-                                                if (s === 'NOT_VERIFIED') return '{{ __('forms.not_verified') }}';
-                                                return s;
-                                            }).join(', ') : ''"
-                                           readonly
-                                    />
-                                    <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                    <div x-show="open"
-                                         x-on:click.away="open = false"
-                                         x-transition:enter="transition ease-out duration-100"
-                                         x-transition:enter-start="transform opacity-0 scale-95"
-                                         x-transition:enter-end="transform opacity-100 scale-100"
-                                         x-transition:leave="transition ease-in duration-75"
-                                         x-transition:leave-start="transform opacity-100 scale-100"
-                                         x-transition:leave-end="transform opacity-0 scale-95"
-                                         class="absolute z-10 mt-2 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg">
-                                        <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                            <li>
-                                                <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="APPROVED" wire:model.defer="status"
-                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
-                                                    <span>{{ __('forms.active') }}</span>
-                                                </label>
-                                            </li>
-                                            <li>
-                                                <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="NEW" wire:model.defer="status"
-                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
-                                                    <span>{{ __('forms.draft') }}</span>
-                                                </label>
-                                            </li>
-                                            <li>
-                                                <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="DISMISSED" wire:model.defer="status"
-                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
-                                                    <span>{{ __('forms.dismissed') }}</span>
-                                                </label>
-                                            </li>
-                                            <li>
-                                                <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="VERIFIED" wire:model.defer="status"
-                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
-                                                    <span>{{ __('forms.verified') }}</span>
-                                                </label>
-                                            </li>
-                                            <li>
-                                                <label class="flex items-center space-x-2 cursor-pointer">
-                                                    <input type="checkbox" value="NOT_VERIFIED" wire:model.defer="status"
-                                                           class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
-                                                    <span>{{ __('forms.not_verified') }}</span>
-                                                </label>
-                                            </li>
-                                        </ul>
+                                               id="statusFilter"
+                                               class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
+                                               placeholder="Оберіть статуси"
+                                               x-on:click="open = !open"
+                                               :value="selectedStatuses.length ? selectedStatuses.map(s => {
+                                                   if (s === 'APPROVED') return '{{ __('forms.active') }}';
+                                                   if (s === 'NEW') return '{{ __('forms.draft') }}';
+                                                   if (s === 'DISMISSED') return '{{ __('forms.dismissed') }}';
+                                                   if (s === 'VERIFIED') return '{{ __('forms.verified') }}';
+                                                   if (s === 'NOT_VERIFIED') return '{{ __('forms.not_verified') }}';
+                                                   return s;
+                                               }).join(', ') : ''"
+                                               readonly
+                                        />
+                                        <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                        <div x-show="open"
+                                             x-on:click.away="open = false"
+                                             x-transition:enter="transition ease-out duration-100"
+                                             x-transition:enter-start="transform opacity-0 scale-95"
+                                             x-transition:enter-end="transform opacity-100 scale-100"
+                                             x-transition:leave="transition ease-in duration-75"
+                                             x-transition:leave-start="transform opacity-100 scale-100"
+                                             x-transition:leave-end="transform opacity-0 scale-95"
+                                             class="absolute z-10 mt-2 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg">
+                                            <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                                                <li>
+                                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                                        <input type="checkbox" value="APPROVED" wire:model.defer="status"
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
+                                                        <span>{{ __('forms.active') }}</span>
+                                                    </label>
+                                                </li>
+                                                <li>
+                                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                                        <input type="checkbox" value="NEW" wire:model.defer="status"
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
+                                                        <span>{{ __('forms.draft') }}</span>
+                                                    </label>
+                                                </li>
+                                                <li>
+                                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                                        <input type="checkbox" value="DISMISSED" wire:model.defer="status"
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
+                                                        <span>{{ __('forms.dismissed') }}</span>
+                                                    </label>
+                                                </li>
+                                                <li>
+                                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                                        <input type="checkbox" value="VERIFIED" wire:model.defer="status"
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
+                                                        <span>{{ __('forms.verified') }}</span>
+                                                    </label>
+                                                </li>
+                                                <li>
+                                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                                        <input type="checkbox" value="NOT_VERIFIED" wire:model.defer="status"
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
+                                                        <span>{{ __('forms.not_verified') }}</span>
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="mb-9 mt-6 flex flex-col sm:flex-row gap-2 w-full">
-                        <button type="submit" class="flex items-center gap-2 button-primary">
-                            @icon('search', 'w-4 h-4')
-                            <span>{{ __('forms.search') }}</span>
-                        </button>
+                        <div class="mb-9 mt-6 flex flex-col sm:flex-row gap-2 w-full">
+                            <button type="submit" class="flex items-center gap-2 button-primary">
+                                @icon('search', 'w-4 h-4')
+                                <span>{{ __('forms.search') }}</span>
+                            </button>
 
-                        <button type="button" wire:click="resetFilters" class="button-primary-outline-red">
-                            {{ __('forms.reset_all_filters') }}
-                        </button>
+                            <button type="button" wire:click="resetFilters" class="button-primary-outline-red">
+                                {{ __('forms.reset_all_filters') }}
+                            </button>
+                        </div>
                     </div>
-                </div>
                 </form>
             </div>
         </x-slot>
@@ -209,58 +209,103 @@
                 @forelse($parties as $party)
                     <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]" wire:key="party-{{ $party->id }}">
                         <legend class="legend">{{ $party->fullName }}</legend>
-                        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                            <div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-2 text-sm text-gray-500 mt-2">
-                                    {{-- Phone --}}
-                                    @if ($mobilePhone = $party->phones->firstWhere('type', 'MOBILE'))
-                                        <span class="flex items-center gap-1.5 min-w-0">
-                                            <svg class="w-5 h-5 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.427 14.768 17.2 13.542a1.733 1.733 0 0 0-2.45 0l-.613.613a1.732 1.732 0 0 1-2.45 0l-1.838-1.84a1.735 1.735 0 0 1 0-2.452l.612-.613a1.735 1.735 0 0 0 0-2.452L9.237 5.572a1.6 1.6 0 0 0-2.45 0c-3.223 3.2-1.702 6.896 1.519 10.117 3.22 3.221 6.914 4.745 10.12 1.535a1.601 1.601 0 0 0 0-2.456Z"/></svg>
-                                            <a href="tel:{{ $mobilePhone->number }}" class="truncate hover:underline" title="{{ $mobilePhone->number }}">{{ $mobilePhone->number }}</a>
-                                        </span>
-                                    @else
-                                        <span></span> {{-- Empty span to keep grid alignment --}}
-                                    @endif
 
-                                    {{-- Email --}}
-                                    @php
-                                        $user = $party->users->first();
-                                    @endphp
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
 
-                                    @if ($user && $user->email)
-                                        <span class="flex items-center gap-1.5">
-                                                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                                   <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m3.5 5.5 7.893 6.036a1 1 0 0 0 1.214 0L20.5 5.5M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
-                                                </svg>
-                                                <a href="mailto:{{ $user->email }}" class="hover:underline">{{ $user->email }}</a>
-                                            </span>
-                                    @endif
+                            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 mt-2"
+                                 x-data="{ showEmails_{{ $party->id }}: false }">
 
-                                    {{-- Verification Status --}}
-                                    @if ($party->verification_status)
-                                        <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="flex items-center gap-1.5 group">
-                                            <span class="font-semibold text-gray-700 dark:text-gray-300 group-hover:underline">@lang('general.verification'):</span>
-                                            @if ($party->verification_status === 'VERIFIED')
-                                                <span class="badge-green">@lang('general.verified')</span>
-                                            @else
-                                                <span class="badge-red">@lang('general.' . strtolower($party->verification_status))</span>
-                                            @endif
-                                        </a>
-                                    @endif
-                                </div>
+                                {{-- Phone --}}
+                                @if ($mobilePhone = $party->phones->firstWhere('type', 'MOBILE'))
+                                    <span class="flex items-center gap-1.5 min-w-0">
+                                        <svg class="w-5 h-5 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.427 14.768 17.2 13.542a1.733 1.733 0 0 0-2.45 0l-.613.613a1.732 1.732 0 0 1-2.45 0l-1.838-1.84a1.735 1.735 0 0 1 0-2.452l.612-.613a1.735 1.735 0 0 0 0-2.452L9.237 5.572a1.6 1.6 0 0 0-2.45 0c-3.223 3.2-1.702 6.896 1.519 10.117 3.22 3.221 6.914 4.745 10.12 1.535a1.601 1.601 0 0 0 0-2.456Z"/></svg>
+                                        <a href="tel:{{ $mobilePhone->number }}" class="truncate hover:underline" title="{{ $mobilePhone->number }}">{{ $mobilePhone->number }}</a>
+                                    </span>
+                                @endif
+
+                                {{-- Email --}}
+                                @php
+                                    $user = $party->users->first();
+
+                                    $emails = [];
+                                    if ($user && $user->email) {
+                                        $emails[] = $user->email;
+                                        if ($party->id % 2 === 0) {
+                                            $emails[] = 'secondary.email.' . $party->id . '@example.com';
+                                            $emails[] = 'third.email.' . $party->id . '@test.com';
+                                        }
+                                    }
+
+                                    $emailsCollection = collect($emails);
+                                    $visibleEmail = $emailsCollection->first();
+                                    $hiddenEmails = $emailsCollection->slice(1);
+                                    $hiddenCount = $hiddenEmails->count();
+                                @endphp
+
+                                @if ($visibleEmail)
+                                    <span class="flex items-center gap-1.5 min-w-0 relative">
+                                        <svg class="w-6 h-6 text-gray-800 dark:text-white shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m3.5 5.5 7.893 6.036a1 1 0 0 0 1.214 0L20.5 5.5M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
+                                        </svg>
+                                        <a href="mailto:{{ $visibleEmail }}" class="hover:underline truncate" title="{{ $visibleEmail }}">{{ $visibleEmail }}</a>
+
+                                        @if ($hiddenCount > 0)
+                                            <button type="button"
+                                                    @click.stop="showEmails_{{ $party->id }} = !showEmails_{{ $party->id }}"
+                                                    class="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer p-0.5 rounded-full"
+                                                    title="Показати {{ $hiddenCount }} додаткових email"
+                                            >
+                                                +{{ $hiddenCount }}
+                                            </button>
+                                        @endif
+
+                                        @if ($hiddenCount > 0)
+                                            <div x-show="showEmails_{{ $party->id }}"
+                                                 x-on:click.away="showEmails_{{ $party->id }} = false"
+                                                 x-collapse.duration.300ms
+                                                 class="flex flex-col gap-y-0.5 absolute bg-white dark:bg-gray-800 z-10 p-2 rounded-md shadow-lg top-full left-0 mt-1 min-w-max border border-gray-200 dark:border-gray-700"
+                                                 x-cloak
+                                            >
+                                                @foreach ($hiddenEmails as $email)
+                                                    <a href="mailto:{{ $email }}" class="hover:underline text-gray-500 dark:text-gray-400 text-sm">{{ $email }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </span>
+                                @endif
+
+                                {{-- Verification Status --}}
+                                @if ($party->verification_status)
+                                    <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="flex items-center gap-1.5 group">
+                                        <span class="font-semibold text-gray-700 dark:text-gray-300 group-hover:underline">@lang('general.verification'):</span>
+                                        @if ($party->verification_status === 'VERIFIED')
+                                            <span class="badge-green">@lang('general.verified')</span>
+                                        @else
+                                            <span class="badge-red">@lang('general.' . strtolower($party->verification_status))</span>
+                                        @endif
+                                    </a>
+                                @endif
                             </div>
-                            @can('create', \App\Models\Employee\EmployeeRequest::class)
-                                @if($party->employees->isNotEmpty())
-                                    <div class="flex items-center space-x-3">
+
+                            <div class="flex items-center gap-4">
+                                @can('create', \App\Models\Employee\EmployeeRequest::class)
+                                    <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                       class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                        @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                        <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
+                                    </a>
+
+                                    @if($party->employees->isNotEmpty())
                                         <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                            class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                            <span
-                                class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
+                                            <span
+                                                class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
                                         </a>
-                                    </div>
-                                @endif
-                            @endcan
+                                    @endif
+                                @endcan
+                            </div>
                         </div>
+
                         <div class="flow-root mt-4">
                             <div class="max-w-screen-xl">
                                 <table class="table-input w-full table-fixed min-w-[600px] text-sm">
@@ -289,24 +334,19 @@
 
                                             <td class="td-input break-words whitespace-nowrap align-top">
                                                 @php
-                                                    // First, check if the record is an Employee model. This is the highest priority.
                                                     $isEmployee = $positionToShow instanceof \App\Models\Employee\Employee;
                                                 @endphp
 
                                                 @if($isEmployee)
-                                                    {{-- For a standard Employee record, show its actual status --}}
                                                     @if($positionToShow->status?->value === 'APPROVED')
                                                         <span class="badge-green">{{__('forms.status.active')}}</span>
                                                     @else
                                                         <span class="badge-red">{{__('forms.status.dismissed')}}</span>
                                                     @endif
                                                 @else
-                                                    {{-- If it's not an Employee, it must be an EmployeeRequest. Now check if it's a draft. --}}
                                                     @if(is_null($positionToShow->applied_at))
-                                                        {{-- applied_at is null, so it's a draft/new request. --}}
                                                         <span class="badge-red">{{__('forms.status.draft')}}</span>
                                                     @else
-                                                        {{-- applied_at has a value, meaning the request has been submitted and is active/processed. --}}
                                                         <span class="badge-green">{{__('forms.status.active')}}</span>
                                                     @endif
                                                 @endif
@@ -338,6 +378,6 @@
         </div>
     </x-section>
 
-    @include('livewire.employee.parts.modals.deactivate-modal')
-    @include('livewire.employee.parts.modals.delete-draft-modal')
+@include('livewire.employee.parts.modals.deactivate-modal')
+@include('livewire.employee.parts.modals.delete-draft-modal')
 </div>
