@@ -6,11 +6,14 @@ namespace App\Models;
 
 use App\Enums\Status;
 use App\Models\Employee\Employee;
+use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmployeeRole extends Model
 {
+    use HasCamelCasing;
+
     protected $fillable = [
         'uuid',
         'employee_id',
