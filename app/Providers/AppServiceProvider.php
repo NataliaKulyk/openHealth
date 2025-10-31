@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Jobs\EmployeeRoleSync;
+use App\Jobs\HealthcareServiceSync;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
 use Illuminate\Bus\BatchRepository;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -29,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
         /*
          * Extend BatchRepository to use EHealthDatabaseBatchRepository to allow store LegalEntity's ID into job_batches table
          * NOTE: don't remove '$_' this param. It will need to properly override the existing binding
-         * $_ is a original DatabaseBatchRepository which code below trying to override (it don't use, so the name is just $_)
+         * $_ is an original DatabaseBatchRepository which code below trying to override (it don't use, so the name is just $_)
          */
         $this->app->extend(BatchRepository::class, function ($_, $app) {
             return new EHealthDatabaseBatchRepository(
@@ -62,15 +64,26 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(config('ehealth.rate_limit.division_request'))->by($job->user->id);
         });
 
+        RateLimiter::for(
+            'ehealth-healthcare-service-get',
+            static fn (HealthcareServiceSync $job) => Limit::perMinute(config('ehealth.rate_limit.healthcare_service'))
+                ->by($job->user->id)
+        );
+
+        RateLimiter::for(
+            'ehealth-employee-role-get',
+            static fn (EmployeeRoleSync $job) => Limit::perMinute(config('ehealth.rate_limit.employee_role'))
+                ->by($job->user->id)
+        );
+
         RateLimiter::for('ehealth-party-verification-get', function (object $job) {
             $limit = config('ehealth.rate_limit.party_request', 20);
+
             return Limit::perMinute($limit)->by($job->user->id);
         });
 
         RateLimiter::for('ehealth-employee-request-get', function (object $job) {
             return Limit::perMinute(20)->by($job->user->id);
         });
-
-        // RateLimiter::for('ehealth-division-get', fn (object $job) => Limit::perMinute(50)->by($job->user->id));
     }
 }

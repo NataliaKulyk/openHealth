@@ -80,9 +80,12 @@ return [
             //            ],
         ],
     ],
+    // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583761951/Rate+Limits
     'rate_limit' => [
         'employee_request' => 30,
         'division_request' => 50,
+        'healthcare_service' => 50,
+        'employee_role' => 50,
         'party_request' => 30
     ],
     'employee_type' => [

@@ -22,6 +22,26 @@ class EmployeeRole extends Request
     protected const string URL = '/api/employee_roles';
 
     /**
+     * Get list of employee roles.
+     *
+     * @param  string  $url
+     * @param  $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     */
+    public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
+    {
+        $this->setValidator($this->validateMany(...));
+        $this->setMapper($this->mapMany(...));
+
+        $query = array_merge([
+            self::QUERY_PARAM_PAGE_SIZE => config('ehealth.api.page_size')
+        ], $query ?? []);
+
+        return $this->get($url, $query);
+    }
+
+    /**
      * Add employee role.
      *
      * @param  array  $data
@@ -70,6 +90,33 @@ class EmployeeRole extends Request
     }
 
     /**
+     * Validate list of employee roles.
+     *
+     * @param  EHealthResponse  $response
+     * @return array
+     */
+    protected function validateMany(EHealthResponse $response): array
+    {
+        $replaced = [];
+        foreach ($response->getData() as $data) {
+            $replaced[] = self::replaceEHealthPropNames($data);
+        }
+
+        // Add *. to every rule
+        $rules = collect($this->validationRules())
+            ->mapWithKeys(static fn (string|array $rule, string $key) => ["*.$key" => $rule])
+            ->toArray();
+
+        $validator = Validator::make($replaced, $rules);
+
+        if ($validator->fails()) {
+            Log::channel('e_health_errors')->error('Validation failed: ' . implode(', ', $validator->errors()->all()));
+        }
+
+        return $validator->validate();
+    }
+
+    /**
      * Map UUID values to ID.
      *
      * @param  array  $validated
@@ -82,6 +129,32 @@ class EmployeeRole extends Request
             ->value('id');
 
         return $validated;
+    }
+
+    /**
+     * Map UUID values to ID for multiple records.
+     *
+     * @param  array  $validated
+     * @return array
+     */
+    protected function mapMany(array $validated): array
+    {
+        // Get unique uuids
+        $employeeUuids = collect($validated)->pluck('employee_id')->unique()->filter()->values();
+        $healthcareServiceUuids = collect($validated)->pluck('healthcare_service_id')->unique()->filter()->values();
+
+        $employeeMap = EmployeeModel::whereIn('uuid', $employeeUuids)->pluck('id', 'uuid')->toArray();
+        $healthcareServiceMap = HealthcareServiceModel::whereIn('uuid', $healthcareServiceUuids)
+            ->pluck('id', 'uuid')
+            ->toArray();
+
+        // Map uuid to id
+        return collect($validated)->map(static function (array $item) use ($employeeMap, $healthcareServiceMap) {
+            $item['employee_id'] = $employeeMap[$item['employee_id']];
+            $item['healthcare_service_id'] = $healthcareServiceMap[$item['healthcare_service_id']];
+
+            return $item;
+        })->toArray();
     }
 
     /**
