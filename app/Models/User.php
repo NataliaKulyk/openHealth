@@ -102,12 +102,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Party::class);
     }
 
-    // TODO: Check why need it for??????
-    public function licenses(): HasMany
-    {
-        return $this->hasMany(License::class, 'legal_entity_id', 'legal_entity_id');
-    }
-
     public function employeeRequests(): HasMany
     {
         return $this->hasMany(EmployeeRequest::class);

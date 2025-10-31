@@ -66,7 +66,7 @@ class HealthcareServiceIndex extends Component
         }
 
         $this->divisionUuid = $division->uuid;
-        $this->divisions = $legalEntity->divisions->select(['id', 'name', 'status'])->toArray();
+        $this->divisions = $legalEntity->divisions()->select(['id', 'name', 'status'])->get()->toArray();
 
         $this->getDictionary();
     }
@@ -204,7 +204,7 @@ class HealthcareServiceIndex extends Component
             $validated = $response->validate();
             Repository::healthcareService()->sync($response->map($validated));
         } catch (Throwable $exception) {
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', 'Виникла помилка. Оновіть список місць надання послуг та спробуйте ще раз');
             $this->logDatabaseErrors($exception, 'Error while synchronizing healthcare services with eHealth: ');
 
             return;
@@ -213,14 +213,13 @@ class HealthcareServiceIndex extends Component
         // If there are more pages, dispatch a job to handle the rest
         if ($response->isNotLast()) {
             try {
+                Auth::user()->notify(new SyncNotification('healthcare_service', 'started'));
                 $this->dispatchNextSyncJobs();
                 Session::flash('success', __('Синхронізацію успішно розпочато.'));
             } catch (Throwable $exception) {
-                Log::error('Failed to dispatch HealthcareServiceSync batch', [
-                    'exception' => $exception
-                ]);
+                Log::error('Failed to dispatch HealthcareServiceSync batch', ['exception' => $exception]);
 
-                Auth::user()?->notify(new SyncNotification('healthcare_service', 'failed'));
+                Auth::user()->notify(new SyncNotification('healthcare_service', 'failed'));
             }
         } else {
             Session::flash('success', __('Інформацію успішно оновлено'));
@@ -262,7 +261,7 @@ class HealthcareServiceIndex extends Component
             ->withOption('division_id', $this->divisionUuid)
             ->withOption('token', Crypt::encryptString($token))
             ->withOption('user', $user)
-            ->then(fn () => $user->notify(new SyncNotification('healthcare_service', 'complete')))
+            ->then(fn () => $user->notify(new SyncNotification('healthcare_service', 'completed')))
             ->catch(function (Batch $batch, Throwable $exception) use ($user) {
                 Log::error('Healthcare Service sync batch failed.', [
                     'batch_id' => $batch->id,

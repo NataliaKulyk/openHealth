@@ -175,6 +175,7 @@
                                                 </button>
 
                                                 <div x-show="open"
+                                                     wire:key="dropdown-{{ $service->id }}-{{ $service->status->value }}"
                                                      x-cloak
                                                      x-ref="panel"
                                                      x-transition.origin.top.left

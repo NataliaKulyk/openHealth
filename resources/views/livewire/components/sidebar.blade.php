@@ -1,5 +1,5 @@
 @php
-    use App\Models\{Contract, Declaration, DeclarationRequest, HealthcareService, LegalEntity, Division, License};
+    use App\Models\{Contract, Declaration, DeclarationRequest, HealthcareService, LegalEntity, Division, License, EmployeeRole};
     use App\Models\Employee\{Employee, EmployeeRequest};
     use App\Models\Person\{Person, PersonRequest};
 @endphp
@@ -14,8 +14,9 @@
 
             @if(Auth::user()->can('create', LegalEntity::class) || legalEntity())
                 <li x-data="{ open: false }" class="space-y-2">
-                    <button @click="open = !open"  type="button"
-                            class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                    <button @click="open = !open"
+                            type="button"
+                            class="cursor-pointer flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                             aria-controls="dropdown-legal-entity"
                             :aria-expanded="open"
                     >
@@ -33,7 +34,9 @@
                         </svg>
                     </button>
 
-                    <ul id="dropdown-legal-entity" x-cloak class="py-2 space-y-2"
+                    <ul id="dropdown-legal-entity"
+                        x-cloak
+                        class="py-2 space-y-2"
                         x-show="open"
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="transform opacity-0 scale-95"
@@ -118,16 +121,16 @@
                     </li>
                 @endif
 
-                    @if(Auth::user()->can('viewAny', \App\Classes\eHealth\Api\EmployeeRole::class) || Auth::user()->can('viewAny', EmployeeRequest::class))
-                        <li>
-                            <a href="{{ route('employee-role.index', [legalEntity()]) }}"
-                               class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-                            >
-                                @icon('users-roles', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
-                                <span class="ml-3">{{ __('employee-role.role') }}</span>
-                            </a>
-                        </li>
-                    @endif
+                @can('viewAny', EmployeeRole::class)
+                    <li>
+                        <a href="{{ route('employee-role.index', [legalEntity()]) }}"
+                           class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            @icon('users-roles', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
+                            <span class="ml-3">{{ __('employee-roles.label') }}</span>
+                        </a>
+                    </li>
+                @endif
 
                 @can('viewAny', Contract::class)
                     <li>

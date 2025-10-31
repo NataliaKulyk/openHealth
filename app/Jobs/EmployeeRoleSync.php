@@ -7,7 +7,6 @@ namespace App\Jobs;
 use App\Core\EHealthJob;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
-use App\Models\LegalEntity;
 use App\Repositories\Repository;
 use App\Classes\eHealth\EHealth;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -16,13 +15,11 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\Middleware\RateLimited;
 use Throwable;
 
-class HealthcareServiceSync extends EHealthJob
+class EmployeeRoleSync extends EHealthJob
 {
-    public const string BATCH_NAME = 'HealthcareServiceSync';
+    public const string BATCH_NAME = 'EmployeeRoleSync';
 
-    public const string SCOPE_REQUIRED = 'healthcare_service:read';
-
-    public const string ENTITY = LegalEntity::ENTITY_HEALTHCARE_SERVICE;
+    public const string SCOPE_REQUIRED = 'employee_role:read';
 
     /**
      * Get data from EHealth API.
@@ -33,7 +30,7 @@ class HealthcareServiceSync extends EHealthJob
      */
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse
     {
-        return EHealth::healthcareService()
+        return EHealth::employeeRole()
             ->withToken($token)
             ->getMany(query: ['page' => $this->page]);
     }
@@ -47,13 +44,13 @@ class HealthcareServiceSync extends EHealthJob
      */
     protected function processResponse(?EHealthResponse $response): void
     {
-        $healthcareServicesData = $response?->validate();
+        $employeeRolesData = $response?->validate();
 
-        if (empty($healthcareServicesData)) {
+        if (empty($employeeRolesData)) {
             return;
         }
 
-        Repository::healthcareService()->sync($response?->map($healthcareServicesData));
+        Repository::employeeRole()->sync($response?->map($employeeRolesData));
     }
 
     /**
@@ -64,7 +61,7 @@ class HealthcareServiceSync extends EHealthJob
     protected function getAdditionalMiddleware(): array
     {
         return [
-            new RateLimited('ehealth-healthcare-service-get')
+            new RateLimited('ehealth-employee-role-get')
         ];
     }
 
