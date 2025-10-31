@@ -32,7 +32,11 @@ class EmployeeRole extends Model
 
     protected $hidden = ['id'];
 
-    protected $casts = ['status' => Status::class];
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'status' => Status::class
+    ];
 
     public function employee(): BelongsTo
     {
@@ -60,7 +64,7 @@ class EmployeeRole extends Model
             'healthcareService.legalEntity:id',
             'healthcareService.division:id,name'
         ])
-            ->select(['id', 'uuid', 'employee_id', 'healthcare_service_id', 'status', 'is_active'])
+            ->select(['id', 'uuid', 'employee_id', 'healthcare_service_id', 'start_date', 'end_date', 'status', 'is_active'])
             ->whereHas(
                 'healthcareService',
                 fn (Builder $query) => $query->select('id')->where('legal_entity_id', legalEntity()->id)
@@ -79,12 +83,16 @@ class EmployeeRole extends Model
     protected function filterByEmployeeSearch(Builder $query, string $search): Builder
     {
         if ($search) {
-            $query->whereHas('employee', fn (Builder $employeeQuery) => $employeeQuery->select('id')
-                ->whereHas('party', fn (Builder $partyQuery) => $partyQuery->select('id')
-                    ->where('first_name', 'ILIKE', "%$search%")
-                    ->orWhere('last_name', 'ILIKE', "%$search%")
-                    ->orWhere('second_name', 'ILIKE', "%$search%")
-                )
+            $query->whereHas(
+                'employee',
+                fn (Builder $employeeQuery) => $employeeQuery->select('id')
+                    ->whereHas(
+                        'party',
+                        fn (Builder $partyQuery) => $partyQuery->select('id')
+                            ->where('first_name', 'ILIKE', "%$search%")
+                            ->orWhere('last_name', 'ILIKE', "%$search%")
+                            ->orWhere('second_name', 'ILIKE', "%$search%")
+                    )
             );
         }
 

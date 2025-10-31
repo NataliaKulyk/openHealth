@@ -149,7 +149,9 @@
                             <th class="px-6 py-3 w-[15%]">{{ __('employee-roles.speciality_type') }}</th>
                             <th class="px-6 py-3 w-[20%]">{{ __('forms.divisions') }}</th>
                             <th class="px-6 py-3 w-[15%]">{{ __('employee-roles.providing_condition') }}</th>
-                            <th class="px-6 py-3 w-[15%]">{{ __('employee-roles.status') }}</th>
+                            <th class="px-6 py-3 w-[15%]">{{ __('employee-roles.start_date') }}</th>
+                            <th class="px-6 py-3 w-[10%]">{{ __('employee-roles.end_date') }}</th>
+                            <th class="px-6 py-3 w-[10%]">{{ __('employee-roles.status') }}</th>
                             <th class="px-6 py-3 w-[10%] text-center">{{ __('forms.action') }}</th>
                         </tr>
                         </thead>
@@ -174,6 +176,12 @@
                                     {{ $dictionaries['PROVIDING_CONDITION'][$employeeRole->healthcareService->providingCondition] }}
                                 </td>
                                 <td class="px-6 py-4 align-top">
+                                    {{ $employeeRole->startDate->format('d.m.Y') }}
+                                </td>
+                                <td class="px-6 py-4 align-top">
+                                    {{ $employeeRole->endDate?->format('d.m.Y') }}
+                                </td>
+                                <td class="px-6 py-4 align-top whitespace-nowrap">
                                     <span class="{{
                                         match($employeeRole->status) {
                                             Status::ACTIVE => 'badge-green',

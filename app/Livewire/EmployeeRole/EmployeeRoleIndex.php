@@ -51,7 +51,7 @@ class EmployeeRoleIndex extends Component
      *
      * @var array|string[]
      */
-    public array $statusFilter = ['ACTIVE', 'INACTIVE'];
+    public array $statusFilter = ['ACTIVE'];
 
     /**
      * List of all speciality types.
