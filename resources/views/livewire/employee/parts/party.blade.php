@@ -1,28 +1,33 @@
-<fieldset class="fieldset" x-data="{ party: $wire.entangle('form.party') }">
+<fieldset class="fieldset"
+          x-data="{ party: $wire.entangle('form.party') }"
+          :disabled="$wire.isPersonalDataLocked">
     <legend class="legend">
         <h2>{{__('forms.personal_data')}}</h2>
     </legend>
     <div class="form">
         <div class="form-row-3">
             <div class="form-group">
-                <input wire:model="form.party.lastName" type="text" name="lastName" id="lastName" class="peer input text-gray-500" placeholder=" " required :disabled="$wire.isPersonalDataLocked"/>
+                <input wire:model="form.party.lastName" type="text" name="lastName" id="lastName" class="peer input text-gray-500" placeholder=" " required
+                       :disabled="$wire.isPersonalDataLocked || $wire.isPartyDataPartiallyLocked"/>
                 <label for="lastName" class="label">{{__('forms.last_name')}}</label>
                 @error('form.party.lastName') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group">
-                <input wire:model="form.party.firstName"  type="text" name="firstName" id="firstName" class="peer input text-gray-500" placeholder=" " required :disabled="$wire.isPersonalDataLocked"/>
+                <input wire:model="form.party.firstName"  type="text" name="firstName" id="firstName" class="peer input text-gray-500" placeholder=" " required
+                       :disabled="$wire.isPersonalDataLocked || $wire.isPartyDataPartiallyLocked"/>
                 <label for="firstName" class="label">{{__('forms.first_name')}}</label>
                 @error('form.party.firstName') <p class="text-error">{{$message}}</p> @enderror
             </div>
         </div>
         <div class="form-row-3">
             <div class="form-group">
-                <input wire:model="form.party.secondName" type="text" name="secondName" id="secondName" class="peer input text-gray-500" placeholder=" " :disabled="$wire.isPersonalDataLocked"/>
+                <input wire:model="form.party.secondName" type="text" name="secondName" id="secondName" class="peer input text-gray-500" placeholder=" "/>
                 <label for="secondName" class="label">{{ __('forms.second_name') }}</label>
                 @error('form.party.secondName') <p class="text-error">{{$message}}</p> @enderror
             </div>
             <div class="form-group">
-                <select wire:model="form.party.gender" name="employeeGender" id="employeeGender" class="input-select @error('form.party.gender') input-error @enderror" required>
+                <select wire:model="form.party.gender" name="employeeGender" id="employeeGender" class="input-select @error('form.party.gender') input-error @enderror" required
+                    @disabled($isPersonalDataLocked)>
                     <option value="" disabled selected hidden>{{ __('forms.select') }} {{ __('forms.gender') }}</option>
                     @foreach($this->dictionaries['GENDER'] as $k => $gender)
                         <option value="{{ $k }}">{{ $gender }}</option>
@@ -36,7 +41,8 @@
         </div>
         <div class="form-row-3 items-start">
             <div class="form-group datepicker-wrapper relative w-full">
-                <input wire:model="form.party.birthDate" type="text" name="birthDate" id="birthDate" class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400" placeholder=" " required datepicker-autohide datepicker-format="yyyy-mm-dd" datepicker-button="false" :disabled="$wire.isPersonalDataLocked"/>
+                <input wire:model="form.party.birthDate" type="text" name="birthDate" id="birthDate" class="peer input pl-10 ..." placeholder=" " required ...
+                       :disabled="$wire.isPersonalDataLocked || $wire.isPartyDataPartiallyLocked"/>
                 <label for="birthDate" class="wrapped-label">{{__('forms.birth_date')}}</label>
                 @error('form.party.birthDate') <p class="text-error">{{$message}}</p> @enderror
             </div>
@@ -72,7 +78,7 @@
                     maxlength="10"
                     placeholder=" "
                     class="input peer text-gray-500 @error('form.party.taxId') input-error @enderror"
-                    :disabled="noTaxId || {{ $isPersonalDataLocked ? 'true' : 'false' }}"
+                    :disabled="noTaxId || $wire.isPersonalDataLocked || $wire.isPartyDataPartiallyLocked"
                 />
                 <label for="taxId" class="label z-10" x-text="noTaxId ? '{{ __('forms.document_no_tax_id') }}' : '{{ __('forms.tax_id') }}'"></label>
                 @error('form.party.taxId') <p class="text-error">{{ $message }}</p> @enderror
@@ -86,14 +92,14 @@
                         type="checkbox"
                         id="noTaxId"
                         class="default-checkbox text-blue-500 focus:ring-blue-300"
-                        {{ $isPersonalDataLocked ? 'disabled' : '' }}
+                        :disabled="$wire.isPersonalDataLocked || $wire.isPartyDataPartiallyLocked"
                     >
                     <label for="noTaxId" class="ms-2 text-sm font-medium text-gray-500 dark:text-gray-300">{{ __('forms.no_tax_id') }}</label>
                 </div>
             </div>
         </div>
 
-        {{-- Phones Section --}}
+        {{-- Phones Section (НЕ МАЄ часткового блокування) --}}
         <div
             class="space-y-2"
             x-data="{ phones: $wire.entangle('form.party.phones') }"
@@ -104,7 +110,7 @@
 
                     {{-- Phone Type Select --}}
                     <div class="form-group">
-                        <select x-model="phone.type" class="input-select @error('form.party.phones.*.type') input-error @enderror" required :disabled="$wire.isPersonalDataLocked">
+                        <select x-model="phone.type" class="input-select @error('form.party.phones.*.type') input-error @enderror" required>
                             <option value="" disabled>{{__('forms.type_mobile')}} *</option>
                             @foreach($this->dictionaries['PHONE_TYPE'] as $key => $phoneType)
                                 <option value="{{$key}}">{{$phoneType}}</option>
@@ -123,7 +129,6 @@
                             class="peer input pl-10 with-leading-icon text-gray-500"
                             x-model="phone.number"
                             x-mask="+380999999999"
-                            :disabled="$wire.isPersonalDataLocked"
                         />
                         <label class="wrapped-label">{{ __('forms.phone') }}</label>
                         @error('form.party.phones.*.number') <p class="text-error">{{ $message }}</p> @enderror
@@ -147,6 +152,7 @@
             </template>
         </div>
 
+        {{-- Email & About Myself --}}
         <div class="form-row-3">
             <div class="form-group">
                 <input wire:model="form.party.email" type="email" id="email" name="email" class="peer input text-gray-500" placeholder=" " required/>

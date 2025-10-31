@@ -54,8 +54,24 @@
                 @endforeach
             </select>
             <label for="division" class="label">{{ __('forms.division') }}</label>
-
             @error('form.divisionId') <p class="text-error">{{ $message }}</p> @enderror
         </div>
+
+        {{-- Start of email field --}}
+        @if (!empty($partyUsers))
+            <div class="form-group" x-transition>
+                <select name="formEmail" id="formEmail"
+                        class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                        required wire:model="formEmail">
+                    <option value="" disabled>{{ __('forms.select_user_email') }}</option>
+                    @foreach($partyUsers as $user)
+                        <option value="{{ $user->email }}">{{ $user->email }}</option>
+                    @endforeach
+                </select>
+                <label for="formEmail" class="label">{{ __('forms.email') }}</label>
+                @error('formEmail') <p class="text-error">{{ $message }}</p> @enderror
+            </div>
+        @endif
+        {{-- End of email filed --}}
     </div>
 </fieldset>

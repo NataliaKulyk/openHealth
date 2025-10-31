@@ -23,16 +23,30 @@ class EmployeeEdit extends AbstractEmployeeFormManager
     #[Locked]
     public ?int $employeeId = null;
     public bool $showSignatureModal = false;
+    public bool $isLockedDueToSignedRequest = false;
 
     public function mount(LegalEntity $legalEntity, Employee $employee): void
     {
+        $mostRecentPendingRequest = EmployeeRequest::where('employee_id', $employee->id)
+            ->whereNull('applied_at')
+            ->latest()
+            ->first();
+
+        if ($mostRecentPendingRequest) {
+            $this->redirectRoute('employee-request.edit', [
+                'legalEntity' => $legalEntity->id,
+                'employee_request' => $mostRecentPendingRequest->id
+            ]);
+            return;
+        }
+
         $this->loadDictionaries();
         $this->employee = $employee;
         $this->employeeId = $employee->id;
         $this->isPersonalDataLocked = true;
         $this->loadDivisions($legalEntity);
-        $this->pageTitle = __('forms.edit_employee') . ' ' . ($employee->party->fullName ?? '');
-
+        $positionName = $this->dictionaries['POSITION'][$employee->position] ?? $employee->position;
+        $this->pageTitle = __('forms.edit_employee') . ' "' . $positionName . '" - ' . ($employee->party->fullName ?? '');
         $this->form->hydrate($this->employee);
     }
 

@@ -8,8 +8,8 @@ use AllowDynamicProperties;
 use App\Core\Arr;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
+use App\Repositories\Repository;
 use Illuminate\View\View;
-use Livewire\Attributes\Locked;
 
 #[AllowDynamicProperties]
 class EmployeeRequestEdit extends AbstractEmployeeFormManager
@@ -21,9 +21,17 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
         $this->employeeRequest = $employee_request;
         $this->employeeRequestId = $employee_request->id;
         $employeeName = $employee_request->party->fullName ?? ($employee_request->employee->party->fullName ?? '');
-        $this->pageTitle = __('forms.edit_employee_request') . ' ' . $employeeName;
+        $positionName = $this->dictionaries['POSITION'][$employee_request->position] ?? $employee_request->position;
+        $this->pageTitle = __('forms.edit_employee_request') . ' "' . $positionName . '" - ' . $employeeName;
+
 
         $this->form->hydrate($this->employeeRequest);
+
+        if (!is_null($employee_request->uuid)) {
+            $this->isPositionDataLocked = true;
+
+            session()->flash('info', __('forms.signed_request_can_edit_party_only'));
+        }
     }
 
     public function boot(): void
@@ -41,21 +49,41 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
     protected function handleDraftPersistence(): EmployeeRequest
     {
         $preparedData = $this->form->getPreparedData();
-
-        // Logic for updating the EmployeeRequest model itself
-        $requestAttributes = Arr::only($preparedData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
-        $this->employeeRequest->fill($requestAttributes)->save();
-
-        // Logic for updating the revision to reflect the latest state
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
-        if ($this->employeeRequest->revision) {
-            $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
-        } else {
-            // This is a fallback in case a revision doesn't exist for some reason
-            $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
-        }
 
-        return $this->employeeRequest;
+        if (!is_null($this->employeeRequest->uuid)) {
+
+            $employeeRequestData = Arr::only($preparedData, ['position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email']);
+
+            $employeeRequestData['user_id'] = $this->employeeRequest->user_id;
+            $employeeRequestData['party_id'] = $this->employeeRequest->party_id;
+            $employeeRequestData['employee_id'] = $this->employeeRequest->employee_id;
+
+            $newRequest = Repository::employee()->createEmployeeRequestDraft(
+                $employeeRequestData,
+                legalEntity(),
+                $this->employeeRequest->employee
+            );
+
+            $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
+
+            $this->employeeRequestId = $newRequest->id;
+
+
+            return $newRequest;
+
+        } else {
+            $requestAttributes = Arr::only($preparedData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
+            $this->employeeRequest->fill($requestAttributes)->save();
+
+            if ($this->employeeRequest->revision) {
+                $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
+            } else {
+                $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
+            }
+
+            return $this->employeeRequest;
+        }
     }
 
     public function render(): View

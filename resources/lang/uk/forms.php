@@ -209,7 +209,8 @@ return [
 
     // Position & Division
     'position' => 'Посада',
-    'add_position' => 'Додати посаду',
+    'positions' => 'Посади',
+    'add_position' => 'Нова посада',
     'select_position' => 'Обрати посаду',
     'role' => 'Роль',
     'add_role' => 'Додати роль',

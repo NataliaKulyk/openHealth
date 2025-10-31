@@ -13,7 +13,7 @@
     <div class="form space-y-8">
         {{-- The fieldset is always disabled in a "show" view --}}
         <fieldset disabled class="space-y-8">
-            @include('livewire.employee.parts.employee')
+            @include('livewire.employee.parts.party')
             @include('livewire.employee.parts.documents')
             @include('livewire.employee.parts.position')
 

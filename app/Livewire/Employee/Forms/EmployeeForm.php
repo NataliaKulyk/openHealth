@@ -340,19 +340,43 @@ class EmployeeForm extends Form
         $request->loadMissing(['party', 'revision']);
         $revisionData = $request->revision->data ?? [];
 
-        // 1. Populate from revision data first
-        $this->position = $revisionData['employee_request_data']['position'] ?? '';
-        $this->employeeType = $revisionData['employee_request_data']['employee_type'] ?? '';
-        $this->startDate = $revisionData['employee_request_data']['start_date'] ?? '';
-        $this->documents = Arr::toCamelCase($revisionData['documents'] ?? []);
-        $doctorDataFromRevision = Arr::toCamelCase($revisionData['doctor'] ?? []);
-        $this->doctor = array_merge($this->doctor, $doctorDataFromRevision);
-
-        $this->party = array_merge($this->party, Arr::toCamelCase($revisionData['party'] ?? []));
-        $this->party['phones'] = !empty($revisionData['phones']) ? Arr::toCamelCase($revisionData['phones']) : [['type' => 'MOBILE', 'number' => '']];
-
+        // 1. Base Party data (if exist)
         if ($request->party) {
             $this->populatePartyData($request->party);
+        }
+
+        // 2.add Revision data (draft)
+
+        // --- position data ---
+        if (!empty($revisionData['employee_request_data'])) {
+            $this->position = $revisionData['employee_request_data']['position'] ?? $this->position;
+            $this->employeeType = $revisionData['employee_request_data']['employee_type'] ?? $this->employeeType;
+            $this->startDate = $revisionData['employee_request_data']['start_date'] ?? $this->startDate;
+        }
+
+        // --- documents ---
+        if (!empty($revisionData['documents'])) {
+            $this->documents = Arr::toCamelCase($revisionData['documents']);
+        }
+
+        // --- doctor(specialist) data ---
+        if (!empty($revisionData['doctor'])) {
+            $doctorDataFromRevision = Arr::toCamelCase($revisionData['doctor']);
+            // Using array_merge_recursive, to only update values
+            $this->doctor = array_merge_recursive($this->doctor, $doctorDataFromRevision);
+        }
+
+        // --- Personal data (Party) ---
+        if (!empty($revisionData['party'])) {
+            $partyDataFromRevision = Arr::toCamelCase($revisionData['party']);
+            $this->party = array_merge($this->party, $partyDataFromRevision);
+        }
+
+        // --- Phones ---
+        if (!empty($revisionData['phones'])) {
+            $this->party['phones'] = Arr::toCamelCase($revisionData['phones']);
+        } elseif (empty($this->party['phones'][0]['number'])) {
+            $this->party['phones'] = [['type' => 'MOBILE', 'number' => '']];
         }
     }
 

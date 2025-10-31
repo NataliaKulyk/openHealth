@@ -21,7 +21,7 @@
         <form wire:submit.prevent="save" class="form space-y-8">
 
             {{-- Part 1: Personal Data --}}
-            @include('livewire.employee.parts.employee')
+            @include('livewire.employee.parts.party')
 
             {{-- Part 2: Documents --}}
             @include('livewire.employee.parts.documents')

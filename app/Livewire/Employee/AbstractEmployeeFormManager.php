@@ -19,6 +19,7 @@ use Auth;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -33,8 +34,39 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
 
     #[Locked]
     public ?int $employeeRequestId = null;
+    public bool $isLockedDueToSignedRequest = false;
     protected ?BaseEmployee $employeeRequest;
     protected ?BaseEmployee $employee = null;
+
+    /**
+     * Визначає, в якому режимі працює форма.
+     * Можливі значення: 'party_edit', 'position_add', 'position_edit'
+     */
+    public string $context = 'position_edit'; // 'position_edit' - це наш стандартний режим
+
+    /**
+     * Спеціальний прапор для PartyEdit, який блокує лише ПІБ, дату народження і ІПН,
+     * але залишає телефони, email тощо активними.
+     */
+    public bool $isPartyDataPartiallyLocked = false;
+
+    /**
+     * Колекція користувачів (User) для Party,
+     * використовується у 'position_add' для вибору email.
+     */
+    public ?Collection $partyUsers = null;
+
+    /**
+     * Email, обраний у випадаючому списку в 'position_add'.
+     * Ми НЕ МОЖЕМО використовувати 'form.party.email', бо він вже зайнятий.
+     */
+    public ?string $formEmail = null;
+
+    /**
+     * Колекція існуючих посад для Party,
+     * використовується у 'party_edit' для відображення списку.
+     */
+    public ?Collection $partyExistingPositions = null;
 
     // === PUBLIC ACTIONS ===
     // These methods define the shared algorithm. They call the abstract method.
@@ -55,7 +87,7 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         }
     }
 
-    // Used by resources/views/livewire/employee/employee.blade.php
+    // Used by resources/views/livewire/employee/party.blade.php
     public function prepareForSigning(): void
     {
         try {

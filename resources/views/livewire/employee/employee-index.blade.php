@@ -312,9 +312,11 @@
                                                 @endif
                                             </td>
                                             <td class="td-input text-center">
+                                                @if($positionToShow)
                                                 @include('livewire.employee.parts.actions-dropdown', [
                                                     'position' => $positionToShow
                                                 ])
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
