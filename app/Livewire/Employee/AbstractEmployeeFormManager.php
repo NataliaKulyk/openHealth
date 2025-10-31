@@ -61,6 +61,8 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
      */
     public ?Collection $partyExistingPositions = null;
 
+    public string $pageTitle = '';
+
     // === PUBLIC ACTIONS ===
     // These methods define the shared algorithm. They call the abstract method.
     public function save(): void

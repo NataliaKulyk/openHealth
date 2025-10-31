@@ -88,6 +88,6 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
 
     public function render(): View
     {
-        return view('livewire.employee.employee-edit');
+        return view('livewire.employee.employee-edit')->with('pageTitle', $this->pageTitle);
     }
 }

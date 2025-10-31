@@ -1,4 +1,9 @@
 <div>
+    <div
+        x-data="{ showSignatureModal: $wire.entangle('showSignatureModal') }"
+        x-on:close-signature-modal.window="showSignatureModal = false"
+        x-on:open-signature-modal.window="showSignatureModal = true"
+    >
     <x-header-navigation class="breadcrumb-form shift-content">
         <x-slot name="title">{{ $pageTitle ?? '' }}</x-slot>
     </x-header-navigation>

@@ -289,7 +289,7 @@
 
                             <div class="flex items-center gap-4">
                                 @can('create', \App\Models\Employee\EmployeeRequest::class)
-                                    <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                    <a href="{{ route('party.edit', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                        class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
                                         @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
                                         <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
