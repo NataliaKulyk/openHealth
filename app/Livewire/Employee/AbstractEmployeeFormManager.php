@@ -34,15 +34,8 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
 
     #[Locked]
     public ?int $employeeRequestId = null;
-    public bool $isLockedDueToSignedRequest = false;
     protected ?BaseEmployee $employeeRequest;
     protected ?BaseEmployee $employee = null;
-
-    /**
-     * Визначає, в якому режимі працює форма.
-     * Можливі значення: 'party_edit', 'position_add', 'position_edit'
-     */
-    public string $context = 'position_edit'; // 'position_edit' - це наш стандартний режим
 
     /**
      * Спеціальний прапор для PartyEdit, який блокує лише ПІБ, дату народження і ІПН,

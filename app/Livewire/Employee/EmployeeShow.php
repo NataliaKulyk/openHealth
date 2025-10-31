@@ -8,6 +8,7 @@ use App\Models\Employee\Employee;
 use App\Models\LegalEntity;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
+use Illuminate\Support\Collection;
 
 class EmployeeShow extends EmployeeComponent
 {
@@ -15,6 +16,11 @@ class EmployeeShow extends EmployeeComponent
 
     #[Locked]
     public ?int $employeeId = null;
+
+    public bool $isPersonalDataLocked = true;
+    public bool $isPositionDataLocked = true;
+    public bool $isPartyDataPartiallyLocked = false;
+    public ?Collection $partyUsers = null;
 
     public function mount(LegalEntity $legalEntity, Employee $employee): void
     {
@@ -34,8 +40,15 @@ class EmployeeShow extends EmployeeComponent
 
     public function render(): View
     {
+        $partyExistingPositions = null;
+        if ($this->employee->party) {
+            $this->employee->party->loadMissing(['employees.division', 'employeeRequests.division']);
+            $partyExistingPositions = $this->employee->party->employees->merge($this->employee->party->employeeRequests);
+        }
+
         return view('livewire.employee.employee-show', [
-            'employee' => $this->employee
+            'employee' => $this->employee,
+            'partyExistingPositions' => $partyExistingPositions
         ]);
     }
 }
