@@ -18,6 +18,13 @@ return [
     'lot_number' => '№ закупівлі',
     'notes_and_comments' => 'Примітки та коментарі',
 
+    'equipment' => 'Обладнання',
+    'search_equipment' => 'Пошук обладнання',
+    'name_inventory_number' => 'Назва або інвентарний №',
+    'non_active' => 'Не активний',
+    'legal_entity' => 'Заклад',
+    'date_creation' => 'Дата створення',
+
     'status' => [
         'active' => 'Активний',
         'inactive' => 'Неактивний',
