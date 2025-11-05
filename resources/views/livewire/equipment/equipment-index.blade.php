@@ -64,7 +64,6 @@
                     <div x-cloak x-show="showFilter" x-transition>
                         <div class="form-row-4">
                             <div class="form-group group">
-                                {{-- @comment Змінна Livewire `wire:model="form.typeMedicalDevice"` закоментована --}}
                                 <select {{-- wire:model="form.typeMedicalDevice" --}}
                                         name="typeMedicalDevice"
                                         id="typeMedicalDevice"
@@ -80,7 +79,6 @@
                                 @enderror --}}
                             </div>
                             <div class="form-group group">
-                                {{-- @comment Змінна Livewire `wire:model="form.medicalFacility"` закоментована --}}
                                 <select {{-- wire:model="form.medicalFacility" --}}
                                         name="medicalFacility"
                                         id="medicalFacility"
@@ -97,7 +95,6 @@
                             </div>
                         </div>
                         <div class="form-row-4">
-                            {{-- @comment Використання @entangle('form.category') закоментовано для чистої структури --}}
                             <div class="form-group group" x-data="{ open: false, selectedStatuses: /* @entangle('form.category') */ ['APPROVED'] }">
                                 <label for="categoryFilter" class="label">{{ __('forms.statuteMd5') }}</label>
                                 <div class="relative">
@@ -107,13 +104,12 @@
                                            class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
                                            placeholder="{{ __('forms.select') }}"
                                            x-on:click="open = !open"
-                                           {{-- @comment Використання selectedStatuses.map(...) для відображення значення закоментовано --}}
                                            :value="selectedStatuses.length ? selectedStatuses.map(s => {
                                                     /* if (s === 'APPROVED') return '{{ __('forms.active') }}';
                                                     if (s === 'NEW') return '{{ __('equipment.non_active') }}';
                                                     if (s === 'DISMISSED') return '{{ __('forms.draft') }}';
                                                     if (s === 'VERIFIED') return '{{ __('equipment.marked_as_incorrect') }}'; */
-                                                    return 'Активний, Неактивний'; // Статичний текст для прикладу
+                                                    return 'Активний, Неактивний';
                                                 }).join(', ') : ''"
                                            readonly
                                     />
@@ -132,7 +128,6 @@
                                         <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="APPROVED" {{-- wire:model.defer="form.category" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('forms.active') }}</span>
@@ -140,7 +135,6 @@
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="NEW" {{-- wire:model.defer="form.category" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('equipment.non_active') }}</span>
@@ -148,7 +142,6 @@
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="DISMISSED" {{-- wire:model.defer="form.category" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('forms.draft') }}</span>
@@ -156,7 +149,6 @@
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="VERIFIED" {{-- wire:model.defer="form.category" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
                                                     <span>{{ __('equipment.marked_as_incorrect') }}</span>
@@ -167,7 +159,6 @@
                                 </div>
                             </div>
 
-                            {{-- @comment Використання @entangle('form.availability') закоментовано для чистої структури --}}
                             <div class="form-group group" x-data="{ open: false, selectedStatuses: /* @entangle('form.availability') */ ['AVAILABLE'] }">
                                 <label for="availabilityFilter" class="label">{{ __('equipment.accessibility') }}</label>
                                 <div class="relative">
@@ -177,13 +168,12 @@
                                            class="input peer w-full cursor-pointer text-gray-500 dark:text-gray-400"
                                            placeholder="{{ __('forms.select') }}"
                                            x-on:click="open = !open"
-                                           {{-- @comment Використання selectedStatuses.map(...) для відображення значення закоментовано --}}
                                            :value="selectedStatuses.length ? selectedStatuses.map(s => {
                                                     /* if (s === 'AVAILABLE') return '{{ __('equipment.available') }}';
                                                     if (s === 'DAMAGED') return '{{ __('equipment.damaged') }}';
                                                     if (s === 'DESTROYED') return '{{ __('equipment.destroyed') }}';
                                                     if (s === 'LOST') return '{{ __('equipment.lost') }}'; */
-                                                    return 'Доступний, Пошкоджений'; // Статичний текст для прикладу
+                                                    return 'Доступний, Пошкоджений';
                                                 }).join(', ') : ''"
                                            readonly
                                     />
@@ -202,7 +192,6 @@
                                         <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="AVAILABLE" {{-- wire:model.defer="form.availability" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('equipment.available') }}</span>
@@ -210,7 +199,6 @@
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="DAMAGED" {{-- wire:model.defer="form.availability" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('equipment.damaged') }}</span>
@@ -218,7 +206,6 @@
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="DESTROYED" {{-- wire:model.defer="form.availability" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                     <span>{{ __('equipment.destroyed') }}</span>
@@ -226,7 +213,6 @@
                                             </li>
                                             <li>
                                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                                    {{-- @comment wire:model.defer закоментований --}}
                                                     <input type="checkbox" value="LOST" {{-- wire:model.defer="form.availability" --}}
                                                     class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
                                                     <span>{{ __('equipment.lost') }}</span>
@@ -239,7 +225,6 @@
                         </div>
                     </div>
                     <div class="mb-9 mt-6 flex flex-col sm:flex-row gap-2 w-full">
-                        {{-- @comment wire:click для кнопки скидання закоментований --}}
                         <button type="submit" class="flex items-center gap-2 button-primary">
                             @icon('search', 'w-4 h-4')
                             <span>{{ __('forms.search') }}</span>
