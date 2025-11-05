@@ -220,6 +220,7 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                         });
                 });
 
+            Route::get('/equipment', \App\Livewire\Equipment\EquipmentIndex::class)->name('equipment.index');
             Route::get('/equipment/create', \App\Livewire\Equipment\EquipmentCreate::class)->name('equipment.index');
 
             Route::get('/declaration', DeclarationIndex::class)
