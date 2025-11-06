@@ -302,7 +302,7 @@
                           id="conclusion"
                           name="conclusion"
                           class="textarea"
-                          placeholder="{{ __('patients.write_comment_here') }}"
+                          placeholder="{{ __('forms.write_comment_here') }}"
                           maxlength="1000"
                 ></textarea>
 

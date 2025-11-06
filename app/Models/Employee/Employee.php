@@ -101,15 +101,28 @@ class Employee extends BaseEmployee
     }
 
     #[Scope]
-    protected function activeSpecialists(Builder $query): Builder
+    protected function activeSpecialists(Builder $query, int $legalEntityId): Builder
     {
-        return $query->whereLegalEntityId(legalEntity()->id)
+        return $query->whereLegalEntityId($legalEntityId)
             ->whereStatus(Status::APPROVED)
-            ->where('is_active', '=', true)
+            ->whereIsActive(true)
             ->whereHas('specialities', function (Builder $query) {
                 $query->select('id')->whereSpecialityOfficio(true);
             })
             ->select(['id', 'uuid', 'party_id', 'position'])
+            ->with('party:id,first_name,last_name,second_name');
+    }
+
+    #[Scope]
+    protected function activeRecorders(Builder $query, int $legalEntityId): Builder
+    {
+        return $query->whereLegalEntityId($legalEntityId)
+            ->whereStatus(Status::APPROVED)
+            ->whereIsActive(true)
+            ->whereHas(
+                'party',
+                fn (Builder $query) => $query->select('id')->whereNot('verification_status', '=', 'NOT_VERIFIED')
+            )
             ->with('party:id,first_name,last_name,second_name');
     }
 }

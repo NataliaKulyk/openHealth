@@ -100,4 +100,9 @@ final class Repository
     {
         return app(LicenseRepository::class);
     }
+
+    public static function equipment(): EquipmentRepository
+    {
+        return app(EquipmentRepository::class);
+    }
 }

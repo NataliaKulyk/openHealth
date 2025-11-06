@@ -6,9 +6,11 @@ namespace App\Classes\eHealth;
 
 use App\Classes\eHealth\Api\Declaration;
 use App\Classes\eHealth\Api\DeclarationRequest;
+use App\Classes\eHealth\Api\DeviceDefinition;
 use App\Classes\eHealth\Api\Employee;
 use App\Classes\eHealth\Api\EmployeeRequest;
 use App\Classes\eHealth\Api\EmployeeRole;
+use App\Classes\eHealth\Api\Equipment;
 use App\Classes\eHealth\Api\License;
 use App\Classes\eHealth\Api\Job;
 use App\Classes\eHealth\Api\Division;
@@ -34,6 +36,11 @@ final class EHealth
     public static function job(): Job
     {
         return app(Job::class);
+    }
+
+    public static function deviceDefinition(): DeviceDefinition
+    {
+        return app(DeviceDefinition::class);
     }
 
     public static function personRequest(): PersonRequest
@@ -89,6 +96,11 @@ final class EHealth
     public static function employeeRole(): EmployeeRole
     {
         return app(EmployeeRole::class);
+    }
+
+    public static function equipment(): Equipment
+    {
+        return app(Equipment::class);
     }
 
     public static function procedure(): Procedure

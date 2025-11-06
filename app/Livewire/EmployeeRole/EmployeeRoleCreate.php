@@ -49,7 +49,7 @@ class EmployeeRoleCreate extends Component
     {
         $this->getDictionary();
 
-        $this->employees = Employee::activeSpecialists()->get()
+        $this->employees = Employee::activeSpecialists($legalEntity->id)->get()
             ->map(static fn (Employee $employee) => [
                 'uuid' => $employee->uuid,
                 'fullName' => $employee->fullName,

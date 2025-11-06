@@ -15,7 +15,7 @@
                               id="comment"
                               name="comment"
                               class="textarea"
-                              placeholder="{{ __('patients.write_comment_here') }}"
+                              placeholder="{{ __('forms.write_comment_here') }}"
                     ></textarea>
                 </div>
             </div>

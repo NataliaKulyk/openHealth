@@ -42,6 +42,7 @@ use App\Livewire\EmployeeRole\EmployeeRoleCreate;
 use App\Livewire\EmployeeRole\EmployeeRoleIndex;
 use App\Livewire\Encounter\EncounterCreate;
 use App\Livewire\Encounter\EncounterEdit;
+use App\Livewire\Equipment\EquipmentCreate;
 use App\Livewire\LegalEntity\CreateLegalEntity;
 use App\Livewire\LegalEntity\EditLegalEntity;
 use App\Livewire\License\LicenseCreate;
@@ -61,6 +62,7 @@ use App\Models\Declaration;
 use App\Models\DeclarationRequest;
 use App\Models\Division;
 use App\Models\EmployeeRole;
+use App\Models\Equipment;
 use App\Models\HealthcareService;
 use App\Models\LegalEntity;
 use App\Models\License;
@@ -221,7 +223,9 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 });
 
             Route::get('/equipment', \App\Livewire\Equipment\EquipmentIndex::class)->name('equipment.index');
-            Route::get('/equipment/create', \App\Livewire\Equipment\EquipmentCreate::class)->name('equipment.index');
+            Route::get('/equipment/create', EquipmentCreate::class)
+                ->name('equipment.create')
+                ->can('create', Equipment::class);
 
             Route::get('/declaration', DeclarationIndex::class)
                 ->name('declaration.index')

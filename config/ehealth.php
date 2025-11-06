@@ -624,6 +624,9 @@ return [
     'legal_entity_outpatient_providing_conditions' => ['INPATIENT', 'OUTPATIENT', 'FIELD'],
     'legal_entity_emergency_providing_conditions' => ['FIELD'],
 
+    // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/18504778043/NEW+Equipment+dictionaries+and+configurable+parameters+OMB-126
+    'equipment_types_with_required_serial_number' => ['Z1203010502'],
+
     // Set the test environment
     'test' => [
         'client_id' => env('TEST_CLIENT_ID'),

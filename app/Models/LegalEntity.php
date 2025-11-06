@@ -115,6 +115,11 @@ class LegalEntity extends Model
         return $this->hasMany(License::class);
     }
 
+    public function equipments(): HasMany
+    {
+        return $this->hasMany(Equipment::class);
+    }
+
     // Get Legal Entity UUID
     public function getUuid(): string
     {

@@ -25,7 +25,6 @@ return [
     'priority' => 'Пріоритет',
     'icpc-2_status_code' => 'Код стану за ICPC-2',
     'code_and_name' => 'Код та назва',
-    'write_comment_here' => 'Напишіть коментар тут',
     'diagnoses' => 'Діагнози',
     'date' => 'Дата',
     'observation' => 'Обстеження',

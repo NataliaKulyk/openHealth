@@ -176,4 +176,10 @@ class Division extends Model
 
         return $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($toSearch) . '%']);
     }
+
+    #[Scope]
+    public function active(Builder $query): Builder
+    {
+        return $query->whereIsActive(true)->whereStatus(Status::ACTIVE);
+    }
 }
