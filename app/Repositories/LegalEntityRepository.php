@@ -27,17 +27,7 @@ class LegalEntityRepository
             ->when(!empty($legalEntityIds), fn ($query) => $query->whereIn('id', $legalEntityIds))
             ->get()
             ->groupBy(fn ($item) => data_get($item, 'edr.name') ?: data_get($item, 'edr.public_name'))
-            ->map(fn ($group) => $group->each->makeHidden(['id', 'edr'])) // Hide unnecessary fields
-            ->toArray();
-
-        $result = [];
-
-
-        // Get list of Legal Entities grouped by their name
-        $legalEntityList = LegalEntity::listByFields()
-            ->get()
-            ->groupBy(fn ($item) => data_get($item, 'edr.name') ?: data_get($item, 'edr.public_name'))
-            ->map(fn ($group) => $group->each->makeHidden(['id', 'edr'])) // Hide unnecessary fields
+            ->map(fn ($group) => $group->each->makeHidden(['edr'])) // Hide unnecessary fields
             ->toArray();
 
         $result = [];
@@ -55,7 +45,7 @@ class LegalEntityRepository
                     $name .= " <{$legalEntityTypeName}>";
                 }
 
-                $result[] = ['uuid' => $data['uuid'], 'name' => $name];
+                $result[] = ['id' => $data['id'], 'uuid' => $data['uuid'], 'name' => $name];
             }
         }
 

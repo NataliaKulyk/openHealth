@@ -2,26 +2,40 @@
 
 namespace App\Rules;
 
-use App\Models\User;
 use Closure;
-use Illuminate\Contracts\Validation\ValidationRule;
 use App\Models\LegalEntity;
+use App\Models\LegalEntityType;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 class UniqueEdrpou implements ValidationRule
 {
     protected ?int $legalEntityId;
 
+    protected ?int $legalEntityTypeId;
 
-    public function __construct()
+    protected ?string $legalEntityTypeName;
+
+    protected ?int $selectedLegalEntityTypeId;
+
+    public function __construct(string $legalEntityType = '')
     {
-        /** @var User|null $user */
-        $user = auth()->user();
+        // Check if user is authenticated
+        $user = Auth::user();
 
-        // TODO: check this
         $this->legalEntityId = $user && legalEntity()
             ? legalEntity()->id
             : null;
 
+        $this->legalEntityTypeId = $user && legalEntity()
+            ? legalEntity()->type->id
+            : null;
+
+        $this->legalEntityTypeName = $user && legalEntity()
+            ? legalEntity()->type->name
+            : null;
+
+        $this->selectedLegalEntityTypeId = LegalEntityType::where('name', $legalEntityType)->first()?->id ?? null;
     }
 
     /**
@@ -35,6 +49,7 @@ class UniqueEdrpou implements ValidationRule
     {
         // Check if value already exists in another legal entity, excluding the current entity
         $exists = LegalEntity::where('edrpou', $value)
+            ->where('legal_entity_type_id', $this->selectedLegalEntityTypeId)
             ->when($this->legalEntityId !== null, function ($query) {
                 $query->where('id', '<>', $this->legalEntityId); //Exclude the current entity
             })

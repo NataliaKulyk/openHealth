@@ -159,6 +159,7 @@ abstract class LegalEntity extends Component
         $this->legalEntityTypes = LegalEntityType::whereIn('name', $this->allowedLegalEntityTypes)
             ->pluck('localized_name', 'name')
             ->map(fn ($label) => __($label))
+            ->reverse()
             ->toArray();
     }
 
@@ -270,6 +271,10 @@ abstract class LegalEntity extends Component
             return null;
         }
 
+        if ($this->legalEntityForm->owner['employee_id'] ?? null) {
+            $data['employee_id'] = $this->legalEntityForm->owner['employee_id'];
+        }
+
         Log::info('Legal Entity Success SOURCE DATA', $data);
         Log::info('Legal Entity Success RESPONSE', $response); // TODO: Important! Delete after testing!!!
 
@@ -295,11 +300,13 @@ abstract class LegalEntity extends Component
      */
     protected function validateResponse(mixed $data): array
     {
-        $validator = Validator::make($data, [
+        $replaced = $this->replaceEHealthPropNames($data);
+
+        $validator = Validator::make($replaced , [
             'data' => 'required|array',
             'data.edr' => 'required|array',
             "data.edr.edrpou" => "required|string",
-            "data.edr.id" => "required|string",
+            "data.edr.uuid" => "required|string",
             "data.edr.name" => "required|string",
             'data.edr.short_name' => 'nullable|string',
             'data.edr.public_name' => 'nullable|string',
@@ -323,7 +330,7 @@ abstract class LegalEntity extends Component
             "data.edr.registration_address.parts.num_type" => 'nullable|string',
             "data.edr.state" => 'required|int',
             "data.edr_verified" => 'nullable|boolean',
-            'data.id' => 'required|string',
+            'data.uuid' => 'required|string',
             'data.type' => 'required|string',
             'data.edrpou' => 'required|string',
             'data.status' => 'required|string',
@@ -357,7 +364,7 @@ abstract class LegalEntity extends Component
             'data.accreditation.expiry_date' => 'sometimes|string',
             'data.accreditation.order_no' => 'required_with:data.accreditation.category|string',
             'data.license' => 'nullable|array',
-            'data.license.id' => 'sometimes|string',
+            'data.license.uuid' => 'sometimes|string',
             'data.license.type' => 'sometimes|string',
             'data.license.license_number' => 'sometimes|string',
             'data.license.issued_by' => 'sometimes|string',
@@ -400,6 +407,34 @@ abstract class LegalEntity extends Component
     }
 
     /**
+     * Replace eHealth property names with the ones used in the application.
+     * E.g., id => uuid.
+     */
+    protected function replaceEHealthPropNames(array $properties): array
+    {
+        $replaced = [];
+
+        foreach ($properties as $name => $value) {
+            $newName = match ($name) {
+                'id' => 'uuid',
+                'inserted_at' => 'ehealth_inserted_at',
+                'inserted_by' => 'ehealth_inserted_by',
+                'updated_at' => 'ehealth_updated_at',
+                'updated_by' => 'ehealth_updated_by',
+                default => $name
+            };
+
+            $replaced[$newName] = $value;
+
+            if (is_array($value)) {
+                $replaced[$newName] = self::replaceEHealthPropNames($value);
+            }
+        }
+
+        return $replaced;
+    }
+
+    /**
      * Prepares a public offer array with consent text and consent status.
      *
      * @return array
@@ -437,6 +472,11 @@ abstract class LegalEntity extends Component
 
         $data = $this->convertArrayKeysToSnakeCase($data);
 
+        // Converting documents to array
+        if (Arr::has($data, 'owner.employee_uuid')) {
+            Arr::set($data, 'owner.employee_id',Arr::get($data, 'owner.employee_uuid'));
+        }
+
         // If no_tax_id=true its means that taxID should store related document's number
         if (Arr::boolean($data, 'owner.no_tax_id')) {
             Arr::set($data, 'owner.tax_id',  Arr::get($data, 'owner.documents.number'));
@@ -450,9 +490,11 @@ abstract class LegalEntity extends Component
         Arr::forget($data, [
             'owner.user_id',
             'owner.id',
+            'owner.employee_uuid',
             'owner.uuid',
             'owner.about_myself',
-            'owner.working_experience'
+            'owner.working_experience',
+            'owner.verification_status'
         ]);
 
         $data['residence_address'] = $this->convertArrayKeysToSnakeCase($this->address);
@@ -489,7 +531,9 @@ abstract class LegalEntity extends Component
      */
     private function mapEmployeRequestData(array $requestData): array
     {
-        return [
+        $employeeId = Arr::pull($requestData, 'owner.employee_id', null);
+
+        $arr = [
             "position" => $requestData['owner']['position'],
             "employee_type" => "OWNER",
             "start_date" => Carbon::now()->format('Y-m-d'),
@@ -514,6 +558,13 @@ abstract class LegalEntity extends Component
                 "educations" => []
             ]
         ];
+
+        if ($employeeId) {
+            unset($requestData['owner']['employee_id']);
+            $arr['employee_id'] = $requestData['employee_id'];
+        }
+
+        return $arr;
     }
 
     /**
@@ -541,7 +592,7 @@ abstract class LegalEntity extends Component
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
-        if(!isset($requestData['accreditation'])) {
+        if(!isset($requestData['accreditation']) || !$requestData['accreditation'] ['category']) {
             unset($response['data']['accreditation']);
         }
 
@@ -550,7 +601,7 @@ abstract class LegalEntity extends Component
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
-        if(!isset($requestData['archive'])) {
+        if(!isset($requestData['archive']) || empty($requestData['archive'])) {
             unset($response['data']['archive']);
         }
 
@@ -647,7 +698,7 @@ abstract class LegalEntity extends Component
         $type = Arr::pull($data['data'], 'type', '');
 
         // Get the UUID from the data, if it exists
-        $uuid = Arr::pull($data['data'], 'id', '');
+        $uuid = Arr::pull($data['data'], 'uuid', '');
 
         // This need because the LegalEntity has a separate table for the address
         $addressData= [Arr::pull($data['data'], 'residence_address', [])];
@@ -676,17 +727,24 @@ abstract class LegalEntity extends Component
             $type = LegalEntityType::firstWhere('name', $type);
             $this->legalEntity->type()->associate($type);
 
+            $clientSecret = $data['urgent']['security']['client_secret'] ?? $data['urgent']['security']['secret_key'] ?? null;
+            $clientId = $data['urgent']['security']['client_id'] ?? null;
+
             // Set client secret from data or default to empty string
-            $this->legalEntity->client_secret = $data['urgent']['security']['client_secret'] ?? $data['urgent']['security']['secret_key'] ?? null;
+            if ($clientSecret) {
+                $this->legalEntity->client_secret = $clientSecret;
+            }
 
             // Set client id from data or default to null
-            $this->legalEntity->client_id = $data['urgent']['security']['client_id'] ?? null;
+            if ($clientId) {
+                $this->legalEntity->client_id = $clientId;
+            }
 
             // Save or update the object in the database
             $this->legalEntity->save();
 
         } catch (Exception $err) {
-            throw new Exception('LegalEntity Create Error: ' . $err->getMessage());
+            throw new Exception('LegalEntity Store Error: ' . $err->getMessage());
         }
 
         return ['addressData' => $addressData, 'phones' => $phones];
@@ -733,12 +791,10 @@ abstract class LegalEntity extends Component
      */
     protected function createLicense(array $data): void
     {
-        $uuid = $data['id'];
-        unset($data['id']);
+        $uuid = Arr::pull($data, 'uuid', '');
 
         $license = License::firstOrNew(['uuid' => $uuid]);
         $license->fill($data);
-        $license->uuid = $uuid;
         $license->is_primary = true;
 
         if (isset($this->legalEntity)) {
@@ -816,6 +872,10 @@ abstract class LegalEntity extends Component
                 $employeeRequestData = Arr::only($this->preparedData, [
                     'position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email'
                 ]);
+
+                if (!empty($this->preparedData['employee_id'])) {
+                    $employeeRequestData['employee_id'] = $this->preparedData['employee_id'];
+                }
 
                 // If no draft exists, create a new one.
                 $newRequest = Repository::employee()->createEmployeeRequestDraft($employeeRequestData, $this->legalEntity);

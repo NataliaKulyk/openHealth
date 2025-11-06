@@ -160,12 +160,14 @@
                     </div>
                 </template>
 
-                <button x-on:click.prevent="archives.push({ date: '', place: '' })" {{-- Add new archive data --}}
+                <button
+                    x-show="!@json($isDetails ?? false)"
+                    x-on:click.prevent="archives.push({ date: '', place: '' })" {{-- Add new archive data --}}
                     class="item-add"
                     :class="{ 'lg:justify-self-start': index > 0 }" {{-- Apply this style only if it's not a first arhive data group --}}
-            >
-                {{ __('forms.archive_add') }}
-            </button>
+                >
+                    {{ __('forms.archive_add') }}
+                </button>
             </div>
         </template>
     </div>

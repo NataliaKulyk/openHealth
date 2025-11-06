@@ -139,6 +139,7 @@
 
                 <!-- Action Phone Buttons -->
                 <div
+                    x-show="!@json($isDetails ?? false)"
                     class="flex items-center space-x-4 justify-start"
                 >
                     <!-- Add phone -->

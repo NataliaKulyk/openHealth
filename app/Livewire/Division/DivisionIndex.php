@@ -120,6 +120,8 @@ class DivisionIndex extends DivisionComponent
                 ->onQueue('sync')
                 ->name('DivisionSync')
                 ->dispatch();
+
+                session()->flash('success', __('Синхронізація запущена у фоновому режимі'));
         } else {
             session()->flash('success', __('Інформацію успішно оновлено'));
         }

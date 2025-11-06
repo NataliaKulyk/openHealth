@@ -29,7 +29,6 @@
     </head>
     <body>
         <div class="antialiased bg-white dark:bg-gray-800">
-            <x-messages />
 
             <main class="bg-gray-50 dark:bg-gray-900">
                 <div class="flex flex-col items-center justify-center px-6 mx-auto md:h-screen pt:mt-0 dark:bg-gray-900">
@@ -45,6 +44,8 @@
             @once
                 @livewireScripts
             @endonce
+
+            @livewire('components.flash-message')
 
             @stack('scripts')
 

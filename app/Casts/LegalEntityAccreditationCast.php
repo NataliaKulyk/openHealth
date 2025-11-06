@@ -52,7 +52,7 @@ class LegalEntityAccreditationCast implements CastsAttributes
      *
      * @return array The processed data array.
      */
-    protected function proceedValueData(string|array $value): array
+    protected function proceedValueData(string|array|null $value): array
     {
         $arrayData = is_array($value) ? $value: json_decode($value, true) ?? [];
 
