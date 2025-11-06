@@ -141,6 +141,7 @@ class TestUserMigrate extends Seeder
                     'nhs_verified' => true,
                     'receiver_funds_code' => '777',
                     'status' => 'ACTIVE',
+                    'sync_status' => 'COMPLETED',
                     'legal_entity_type_id' => $legalEntityType->id,
                     'updated_by' => '4261eacf-8008-4e62-899f-de1e2f7065f0',
                     'website' => 'www.openhealths.com',
