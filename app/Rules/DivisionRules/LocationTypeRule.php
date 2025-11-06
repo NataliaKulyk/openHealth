@@ -22,7 +22,7 @@ class LocationTypeRule implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $localEntityType = legalEntity()->type;
+        $localEntityType = legalEntity()->type->name;
         $hasLocation = $this->division['location']['longitude'] && $this->division['location']['latitude'];
 
         // CustomValidationException

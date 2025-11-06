@@ -47,4 +47,27 @@
             </label>
         </div>
     </div>
+
+    <div class='form-row-2'>
+        <div class="form-group group">
+            <select
+                required
+                id="lealEntityType"
+                wire:model.defer="legalEntityForm.type"
+                class="input-select peer"
+                :class="isDisabled ? 'text-gray-400 border-gray-200 dark:text-gray-500' : 'text-gray-900 border-gray-300'"
+                :disabled="isDisabled"
+            >
+                @foreach($legalEntityTypes as $k => $legalEntityType)
+                    <option value="{{ $k }}" {{ $k === $legalEntityForm->type ? 'selected' : ''}}>
+                        {{ $legalEntityType }}
+                    </option>
+                @endforeach
+            </select>
+
+            <label for="lealEntityType" class="label z-10">
+                {{ __('forms.legal_entity_type') }}
+            </label>
+        </div>
+    </div>
 </fieldset>

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Auth\EHealth\Services\TokenStorage;
 use App\Classes\eHealth\Exceptions\ApiException;
+use App\Enums\JobStatus;
 use App\Events\EHealthUserLogin;
 use App\Http\Controllers\Controller;
 use App\Mail\UserCredentialsMail;
@@ -164,8 +165,10 @@ class EHealthLoginController extends Controller
     {
         $user = User::with('party')->where('uuid', $authUserUUID)->first();
 
-        // If user already logged in before
-        if ($user) {
+        $syncStatus = $legalEntity->getEntityStatus();
+
+        // If user already logged in before and legal entity sync is completed or processing
+        if ($user && $syncStatus) {
             setPermissionsTeamId($legalEntity->id);
             $user->unsetRelation('roles')->unsetRelation('permissions');
 

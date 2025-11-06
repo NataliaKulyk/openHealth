@@ -66,7 +66,7 @@ class LicenseForm extends Form
     {
         $licenseTypes = dictionary()->getDictionary('LICENSE_TYPE');
 
-        if (legalEntity()->type === 'OUTPATIENT' || legalEntity()->type === 'PHARMACY') {
+        if (legalEntity()->type->name === 'OUTPATIENT' || legalEntity()->type->name === 'PHARMACY') {
             return ['PHARMACY_DRUGS' => $licenseTypes['PHARMACY_DRUGS']];
         }
 

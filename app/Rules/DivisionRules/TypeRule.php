@@ -115,7 +115,7 @@ class TypeRule implements ValidationRule
      */
     protected function checkMapping(): bool
     {
-        $legalEntityType = legalEntity()->type;
+        $legalEntityType = legalEntity()->type->name;
         $divisionType = $this->division['type'];
 
         if (in_array($divisionType, Division::getValidDivisionTypes()) &&

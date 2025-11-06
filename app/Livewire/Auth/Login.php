@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Livewire\Auth;
 
 use App\Models\User;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
+use App\Models\Role;
 use Livewire\Component;
 use App\Models\LegalEntity;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Illuminate\Validation\Rule;
+use App\Repositories\Repository;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +22,6 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Features\SupportRedirects\Redirector;
-use Spatie\Permission\Models\Role;
 
 #[Layout('layouts.guest')]
 class Login extends Component
@@ -51,36 +52,8 @@ class Login extends Component
 
     public function mount(): void
     {
-        $this->legalEntitiesList = $this->getLegalEntitiesList();
+        $this->legalEntitiesList = Repository::legalEntity()->getLegalEntitiesList();
         $this->rolesList = Role::pluck('name', 'id')->unique()->toArray();
-    }
-
-    /**
-     * Get all legal entities founded in the system.
-     * Reformat it data to the array looks like:
-     * [
-     *  ['<uuid-1>', 'Legal Entity 1 Name']
-     *  ['<uuid-2>', 'Legal Entity 2 Name']
-     * ]
-     *
-     * @return array
-     */
-    protected function getLegalEntitiesList(): array
-    {
-        $edrList = LegalEntity::select(['id', 'uuid', 'edr'])->get()->toArray();
-
-        return array_map(static function (array $data) {
-            $edr = $data['edr'];
-            $arr['uuid'] = $data['uuid'];
-
-            if (!empty($edr['name'])) {
-                $arr['name'] = $edr['name'];
-            } elseif (!empty($arr['public_name'])) {
-                $arr['name'] = $edr['public_name'];
-            }
-
-            return $arr;
-        }, $edrList);
     }
 
     /**
@@ -255,7 +228,7 @@ class Login extends Component
         $legalEntityId = LegalEntity::where('uuid', $this->legalEntityUUID)->value('id');
 
         return DB::table('model_has_roles')
-            ->where('model_type', get_class($user))
+            ->where('model_type', $user->getMorphClass())
             ->where('model_id', $user->id)
             ->where('legal_entity_id', $legalEntityId)
             ->exists();
@@ -306,7 +279,7 @@ class Login extends Component
         // Additional query parameters if email is provided
         if (!empty($user->email)) {
             $queryParams['email'] = $user->email;
-            $queryParams['scope'] = $user->getScopes($selectedLegalEntityClientId);
+            $queryParams['scope'] = $user->getScopes();
         }
 
         Session::put(config('ehealth.api.auth_ehealth'), $user->id);
@@ -328,17 +301,19 @@ class Login extends Component
 
         $selectedLegalEntityClientId = $this->getLegalEntityClientIdFromUuid($this->legalEntityUUID);
 
-        $permissions = Role::where('name', $this->role)
-            ->whereGuardName('ehealth')
-            ->firstOrFail()
-            ->permissions()
-            ->pluck('name')
-            ->toArray();
+        // TODO: check if setPermissionsTeamId is really needed here
+        // Ensure Spatie team context is set so Role->permissions() is scoped by the selected Legal Entity type
+        $selectedLegalEntityId = LegalEntity::whereUuid($this->legalEntityUUID)->value('id');
 
-        $type = LegalEntity::whereUuid($this->legalEntityUUID)->value('type');
-        if ($type === LegalEntity::TYPE_PRIMARY_CARE) {
-            $permissions = $this->excludeContractPermissions($permissions);
+        Auth::shouldUse('ehealth');
+
+        if ($selectedLegalEntityId) {
+            setPermissionsTeamId($selectedLegalEntityId);
         }
+
+        $role = Role::findByName($this->role)->loadMissing('permissions', 'legalEntityTypes');
+
+        $permissions = $role->permissions->pluck('name')->unique()->toArray();
 
         $scope = implode(' ', $permissions);
 
@@ -355,19 +330,6 @@ class Login extends Component
 
         // Build the full URL with query parameters
         return $baseUrl . '?' . http_build_query($queryParams);
-    }
-
-    private function excludeContractPermissions(array $permissions): array
-    {
-        $contractPermissions = [
-            'contract:write',
-            'contract_request:approve',
-            'contract_request:create',
-            'contract_request:sign',
-            'contract_request:terminate',
-        ];
-
-        return array_diff($permissions, $contractPermissions);
     }
 
     /**

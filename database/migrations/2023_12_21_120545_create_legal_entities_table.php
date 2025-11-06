@@ -29,7 +29,7 @@ return new class extends Migration
             $table->boolean('nhs_verified')->default(false);
             $table->string('receiver_funds_code')->nullable();
             $table->string('status')->nullable();
-            $table->string('type')->nullable();
+            $table->foreignId('legal_entity_type_id')->constrained('legal_entity_types')->cascadeOnDelete();
             $table->uuid('updated_by')->nullable();
             $table->string('client_id')->nullable();
             $table->string('client_secret')->nullable();

@@ -337,7 +337,7 @@ class EncounterComponent extends Component
         })->toArray();
 
         $this->patientId = $patientId;
-        $this->legalEntityType = legalEntity()->type;
+        $this->legalEntityType = legalEntity()->type->name;
         $this->role = $authUser->roles->first()->name;
         $this->divisions = legalEntity()->divisions->toArray();
 

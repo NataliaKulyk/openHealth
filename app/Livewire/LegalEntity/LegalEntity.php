@@ -14,6 +14,7 @@ use App\Traits\FormTrait;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use App\Traits\AddressSearch;
+use App\Models\LegalEntityType;
 use App\Repositories\Repository;
 use App\Models\Employee\Employee;
 use App\Events\LegalEntityCreate;
@@ -99,13 +100,22 @@ abstract class LegalEntity extends Component
         'DOCUMENT_TYPE'
     ];
 
+    public array $legalEntityTypes = [];
+
+    protected array $allowedLegalEntityTypes = [
+        LegalEntityModel::TYPE_PRIMARY_CARE,
+        LegalEntityModel::TYPE_OUTPATIENT,
+        LegalEntityModel::TYPE_EMERGENCY,
+        LegalEntityModel::TYPE_PHARMACY
+    ];
+
     /**
      * @return void set cache keys
      */
     public function boot(
         AddressRepository $addressRepository,
         PhoneRepository $phoneRepository
-    ): void{
+    ): void {
         $this->addressRepository = $addressRepository;
         $this->phoneRepository = $phoneRepository;
 
@@ -119,6 +129,8 @@ abstract class LegalEntity extends Component
         $this->mergeAddress($this->convertArrayKeysToCamelCase($this->legalEntity->toArray())['address'] ?? []);
 
         $this->getDictionary();
+
+        $this->setLegalEntityTypes();
 
         $this->setCertificateAuthority();
 
@@ -142,6 +154,14 @@ abstract class LegalEntity extends Component
         }
     }
 
+    protected function setLegalEntityTypes(): void
+    {
+        $this->legalEntityTypes = LegalEntityType::whereIn('name', $this->allowedLegalEntityTypes)
+            ->pluck('localized_name', 'name')
+            ->map(fn ($label) => __($label))
+            ->toArray();
+    }
+
     abstract protected function getLegalEntity(): ?LegalEntityModel;
 
     protected function setLegalEntity(): bool
@@ -153,6 +173,8 @@ abstract class LegalEntity extends Component
         if ($this->legalEntity) {
             $modelData = $this->convertArrayKeysToCamelCase($this->legalEntity->toArray());
             $modelData['license'] = [];
+
+            $modelData['type'] = $this->legalEntity->type?->name ?: '';
 
             if (!empty($modelData['licenses'])) {
                 $modelData['license'] = $modelData['licenses'] ?? [];
@@ -621,17 +643,20 @@ abstract class LegalEntity extends Component
      */
     protected function persistLegalEntity(array $data): array
     {
+        // Get the legalEntity's type from the data
+        $type = Arr::pull($data['data'], 'type', '');
+
         // Get the UUID from the data, if it exists
-        $uuid = $data['data']['id'] ?? '';
-        unset($data['data']['id']);
+        $uuid = Arr::pull($data['data'], 'id', '');
 
         // This need because the LegalEntity has a separate table for the address
-        $addressData = [$data['data']['residence_address']];
-        unset($data['data']['residence_address']);
+        $addressData= [Arr::pull($data['data'], 'residence_address', [])];
 
-        $phones = $data['data']['phones'];
-        unset($data['data']['phones']);
-        unset($data['data']['license']); // Do unset this because it already set if create or present and deny to modify if edit
+        // This need because the LegalEntity has a separate table for the phones
+        $phones = Arr::pull($data['data'], 'phones', []);
+
+        // Do unset this because it already set if create or present and deny to modify if edit
+        unset($data['data']['license']);
 
         try {
             // Find or create a new LegalEntity object by UUID
@@ -647,6 +672,9 @@ abstract class LegalEntity extends Component
 
             // Fill the object with data
             $this->legalEntity->fill($data['data']);
+
+            $type = LegalEntityType::firstWhere('name', $type);
+            $this->legalEntity->type()->associate($type);
 
             // Set client secret from data or default to empty string
             $this->legalEntity->client_secret = $data['urgent']['security']['client_secret'] ?? $data['urgent']['security']['secret_key'] ?? null;

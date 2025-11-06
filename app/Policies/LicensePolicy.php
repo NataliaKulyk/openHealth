@@ -54,13 +54,13 @@ class LicensePolicy
         }
 
         // Can create additional license only when legal entity type is PHARMACY
-        if (legalEntity()->type !== LegalEntity::TYPE_PHARMACY) {
+        if (legalEntity()->type->name !== LegalEntity::TYPE_PHARMACY) {
             return Response::denyWithStatus(404);
         }
 
         // The license can be created only with the following type of legal entity.
         if (!in_array(
-            legalEntity()->type,
+            legalEntity()->type->name,
             [
                 LegalEntity::TYPE_PRIMARY_CARE,
                 LegalEntity::TYPE_EMERGENCY,
