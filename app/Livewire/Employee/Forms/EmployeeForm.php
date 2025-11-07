@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Livewire\Employee\Forms;
 
 use App\Core\Arr;
-use App\Livewire\Employee\EmployeeCreate;
 use App\Models\Employee\BaseEmployee;
 use App\Rules\Cyrillic;
 use App\Rules\DocumentNumber;
@@ -63,11 +62,6 @@ class EmployeeForm extends Form
     public function rulesForSave(Component $component): array
     {
         $partyRules = $this->partyRules();
-
-        // If the form is being used inside the EmployeeCreate component...
-        if ($component instanceof EmployeeCreate) {
-            $partyRules['party.email'][] = new UniqueEmailInLegalEntity();
-        }
 
         // Merge the potentially modified party rules with the others.
         return array_merge(

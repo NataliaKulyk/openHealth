@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules;
 
 use App\Models\User;
@@ -16,7 +18,7 @@ class UniqueEmailInLegalEntity implements ValidationRule
     /**
      * Create a new rule instance.
      *
-     * @param int|null $ignorePartyId The ID of the party to ignore.
+     * @param  int|null  $ignorePartyId  The ID of the party to ignore.
      */
     public function __construct(?int $ignorePartyId = null)
     {
@@ -42,7 +44,7 @@ class UniqueEmailInLegalEntity implements ValidationRule
         }
 
         if ($query->exists()) {
-            $fail(__('validation.unique', ['attribute' => 'email']));
+            $fail(__('validation.email_already_exists'));
         }
     }
 }

@@ -148,35 +148,35 @@
                                             <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" value="APPROVED" wire:model.defer="status"
+                                                        <input type="checkbox" value="APPROVED" wire:model="status"
                                                                class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                         <span>{{ __('forms.active') }}</span>
                                                     </label>
                                                 </li>
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" value="NEW" wire:model.defer="status"
+                                                        <input type="checkbox" value="NEW" wire:model="status"
                                                                class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                         <span>{{ __('forms.draft') }}</span>
                                                     </label>
                                                 </li>
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" value="DISMISSED" wire:model.defer="status"
+                                                        <input type="checkbox" value="DISMISSED" wire:model="status"
                                                                class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                         <span>{{ __('forms.dismissed') }}</span>
                                                     </label>
                                                 </li>
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" value="VERIFIED" wire:model.defer="status"
+                                                        <input type="checkbox" value="VERIFIED" wire:model="status"
                                                                class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
                                                         <span>{{ __('forms.verified') }}</span>
                                                     </label>
                                                 </li>
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" value="NOT_VERIFIED" wire:model.defer="status"
+                                                        <input type="checkbox" value="NOT_VERIFIED" wire:model="status"
                                                                class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
                                                         <span>{{ __('forms.not_verified') }}</span>
                                                     </label>
@@ -205,7 +205,7 @@
 
     <x-section class="shift-content pl-3.5">
         <div class="space-y-6 employee-section-no-left-padding mt-6">
-            <div class="table-container-responsive overflow-x-auto" style="max-width:100%;">
+            <div class="table-container-responsive overflow-x-auto" style="max-width:100%;" wire:key="{{ $filterKey }}">
                 @forelse($parties as $party)
                     <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]" wire:key="party-{{ $party->id }}">
                         <legend class="legend">{{ $party->fullName }}</legend>
@@ -225,18 +225,7 @@
 
                                 {{-- Email --}}
                                 @php
-                                    $user = $party->users->first();
-
-                                    $emails = [];
-                                    if ($user && $user->email) {
-                                        $emails[] = $user->email;
-                                        if ($party->id % 2 === 0) {
-                                            $emails[] = 'secondary.email.' . $party->id . '@example.com';
-                                            $emails[] = 'third.email.' . $party->id . '@test.com';
-                                        }
-                                    }
-
-                                    $emailsCollection = collect($emails);
+                                    $emailsCollection = $party->users->pluck('email')->filter()->unique();
                                     $visibleEmail = $emailsCollection->first();
                                     $hiddenEmails = $emailsCollection->slice(1);
                                     $hiddenCount = $hiddenEmails->count();
@@ -288,6 +277,7 @@
                             </div>
 
                             <div class="flex items-center gap-4">
+                                @if($party->employees->isNotEmpty())
                                 @can('create', \App\Models\Employee\EmployeeRequest::class)
                                     <a href="{{ route('party.edit', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                        class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
@@ -295,7 +285,6 @@
                                         <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
                                     </a>
 
-                                    @if($party->employees->isNotEmpty())
                                         <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                            class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
                                             <span
@@ -311,51 +300,65 @@
                                 <table class="table-input w-full table-fixed min-w-[600px] text-sm">
                                     <thead class="thead-input">
                                     <tr>
-                                        <th scope="col" class="th-input w-[28%]">Посада</th>
-                                        <th scope="col" class="th-input w-[22%]">Роль</th>
-                                        <th scope="col" class="th-input w-[20%]">Підрозділ</th>
-                                        <th scope="col" class="th-input w-[15%]">Статус</th>
-                                        <th scope="col" class="th-input w-[15%] text-center"></th>
+                                        <th scope="col" class="th-input w-[25%]">{{ __('forms.position') }}</th>
+                                        <th scope="col" class="th-input w-[29%]">{{ __('forms.role') }}</th>
+                                        <th scope="col" class="th-input w-[15%]">{{ __('forms.division') }}</th>
+                                        <th scope="col" class="th-input w-[24%]">{{ __('forms.email') }}</th>
+                                        <th scope="col" class="th-input w-[10%]">{{ __('forms.status.label') }}</th>
+                                        <th scope="col" class="th-input w-[7%] text-center"></th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     @php
-                                        $positions = $party->employees->merge($party->employeeRequests);
-                                        $groupedPositions = $positions->groupBy('position');
+                                        $drafts = $party->employeeRequests;
+                                        $employees = $party->employees;
+                                        $positions = $drafts->merge($employees);
                                     @endphp
-                                    @foreach($groupedPositions as $positionCode => $items)
+                                    @foreach($positions as $position)
                                         @php
-                                            $positionToShow = $items->firstWhere(fn($item) => $item instanceof \App\Models\Employee\Employee) ?? $items->first();
+                                            $positionEmail = null;
+                                            if ($position instanceof \App\Models\Employee\Employee) {
+                                                $positionEmail = $position->user->email ?? null;
+                                            } else if ($position instanceof \App\Models\Employee\EmployeeRequest) {
+                                                $positionEmail = $position->revision->data['party']['email'] ?? null;
+                                            }
                                         @endphp
                                         <tr>
-                                            <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['POSITION'][$positionToShow->position] ?? $positionToShow->position }}</td>
-                                            <td class="td-input break-words whitespace-normal align-top">{{ $dictionaries['EMPLOYEE_TYPE'][$positionToShow->employee_type] ?? $positionToShow->employee_type }}</td>
-                                            <td class="td-input break-words whitespace-normal align-top">{{ $positionToShow->division->name ?? 'N/A' }}</td>
+                                            <td class="td-input break-words whitespace-normal align-top">
+                                                {{ $dictionaries['POSITION'][$position->position] ?? $position->position }}
+                                            </td>
+                                            <td class="td-input break-words whitespace-normal align-top">
+                                                {{ $dictionaries['EMPLOYEE_TYPE'][$position->employee_type] ?? $position->employee_type }}
+                                            </td>
+                                            <td class="td-input break-words whitespace-normal align-top">
+                                                {{ $position->division->name ?? 'N/A' }}
+                                            </td>
+
+                                            <td class="td-input break-words whitespace-normal align-top">
+                                                @if($positionEmail)
+                                                    <a href="mailto:{{ $positionEmail }}" class="hover:underline" title="{{ $positionEmail }}">{{ $positionEmail }}</a>
+                                                @else
+                                                    N/A
+                                                @endif
+                                            </td>
 
                                             <td class="td-input break-words whitespace-nowrap align-top">
-                                                @php
-                                                    $isEmployee = $positionToShow instanceof \App\Models\Employee\Employee;
-                                                @endphp
-
+                                                @php $isEmployee = $position instanceof \App\Models\Employee\Employee; @endphp
                                                 @if($isEmployee)
-                                                    @if($positionToShow->status?->value === 'APPROVED')
+                                                    @if($position->status?->value === 'APPROVED')
                                                         <span class="badge-green">{{__('forms.status.active')}}</span>
                                                     @else
                                                         <span class="badge-red">{{__('forms.status.dismissed')}}</span>
                                                     @endif
                                                 @else
-                                                    @if(is_null($positionToShow->applied_at))
-                                                        <span class="badge-red">{{__('forms.status.draft')}}</span>
-                                                    @else
-                                                        <span class="badge-green">{{__('forms.status.active')}}</span>
-                                                    @endif
+                                                    <span class="badge-red">{{__('forms.status.draft')}}</span>
                                                 @endif
                                             </td>
                                             <td class="td-input text-center">
-                                                @if($positionToShow)
-                                                @include('livewire.employee.parts.actions-dropdown', [
-                                                    'position' => $positionToShow
-                                                ])
+                                                @if($position)
+                                                    @include('livewire.employee.parts.actions-dropdown', [
+                                                        'position' => $position
+                                                    ])
                                                 @endif
                                             </td>
                                         </tr>
@@ -373,7 +376,7 @@
             </div>
         </div>
 
-        <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
+        <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5" wire:key="pagination-{{ $filterKey }}">
             {{ $parties->links() }}
         </div>
     </x-section>

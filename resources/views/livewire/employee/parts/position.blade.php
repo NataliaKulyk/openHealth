@@ -59,7 +59,7 @@
 
         {{-- Start of email field --}}
         @if (!empty($partyUsers))
-            <div class="form-group" x-transition>
+            <div class="form-group" x-transition wire:key="party-user-email-select">
                 <select name="formEmail" id="formEmail"
                         class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                         required wire:model="formEmail">

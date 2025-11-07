@@ -116,6 +116,8 @@ class EHealthLoginController extends Controller
         }
 
         Auth::guard('ehealth')->login($user);
+        Log::info('[EHealthLoginController] Користувач успішно аутентифікований через eHealth.', ['user_id' => $user->id, 'email' => $user->email, 'isFirstLogin' => $this->isFirstLogin]);
+        // --- КІНЕЦЬ ЛОГУ ---
 
         $ehealthScopes = explode(
             ' ',
@@ -124,11 +126,15 @@ class EHealthLoginController extends Controller
 
         $user->syncPermissions($ehealthScopes);
 
+        Log::info('[EHealthLoginController] Запускаємо EHealthUserLogin event (який запустить EmployeeCreate).', ['user_id' => $user->id]);
+
         EHealthUserLogin::dispatch($user, $legalEntity, $authUserUUID, $this->isFirstLogin);
 
         $user->refresh();
 
         if (!$user->party) {
+            Log::info('[EHealthLoginController] У користувача НЕМАЄ party_id. Відправляємо на верифікацію КЕП.', ['user_id' => $user->id]);
+
             Session::put('selected_legal_entity_uuid', $legalEntity->uuid);
             $user->syncPermissions($ehealthScopes);
 

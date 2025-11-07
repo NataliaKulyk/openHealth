@@ -12,26 +12,23 @@ use App\Events\EHealthUserLogin;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Repositories\Repository;
+use App\Traits\FindsAndVerifiesPartyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Log;
 use Throwable;
 
 class EmployeeCreate
 {
+    use FindsAndVerifiesPartyTrait;
+
     /**
      * @throws Throwable
      */
     public function handle(EHealthUserLogin $event): void
     {
         $user = $event->user;
-
-        // Guard clause: Ensure the user has the necessary scope from eHealth.
-        // This prevents a guaranteed '403 Forbidden' error from the API call
-        // if a user with a limited role (e.g., "Assistant") logs in.
-        // if (!$user->can('employee:read')) {
-        // return;
-        // }
 
         $employeeRequests = EmployeeRequest::with('revision')
             ->where('status', RequestStatus::SIGNED)
@@ -40,6 +37,42 @@ class EmployeeCreate
             ->get();
 
         if ($employeeRequests->isEmpty()) {
+            return;
+        }
+
+        Log::info('[EmployeeCreate] Знайдено EmployeeRequests. Спроба прив\'язати User до існуючої Party.', ['user_id' => $user->id, 'email' => $user->email]);
+
+        $revisionData = $employeeRequests->first()->revision->data['party'] ?? null;
+        if (!$revisionData) {
+            Log::error('[EmployeeCreate] EmployeeRequest не має revision data. Неможливо прив\'язати party.', ['request_id' => $employeeRequests->first()->id]);
+
+            return;
+        }
+
+        $taxId = $revisionData['tax_id'] ?? null;
+        $firstName = $revisionData['first_name'] ?? null;
+        $lastName = $revisionData['last_name'] ?? null;
+        $secondName = $revisionData['second_name'] ?? null;
+
+        if (!$taxId || !$firstName || !$lastName) {
+            Log::error('[EmployeeCreate] Revision data не містить taxId, firstName або lastName. Неможливо прив\'язати party.', ['request_id' => $employeeRequests->first()->id]);
+
+            return;
+        }
+
+        // this trait will identify party by first_name, last_name, date_of_birth and tax_id
+        $party = $this->findAndVerifyParty($taxId, $lastName, $firstName, $secondName);
+
+        if ($party) {
+            //  get party.
+            $user->party()->associate($party);
+            $user->save();
+            $user->refresh(); // User update
+            Log::info('[EmployeeCreate] УСПІШНО прив\'язано нового User до існуючої Party. Верифікацію КЕП буде пропущено.', ['user_id' => $user->id, 'party_id' => $party->id]);
+        } else {
+            // employee_request doesn`t match any party datea
+            Log::warning('[EmployeeCreate] Дані з EmployeeRequest не збіглися з існуючою Party. Користувач буде відправлений на верифікацію КЕП.', ['user_id' => $user->id, 'tax_id' => $taxId]);
+
             return;
         }
 
@@ -73,6 +106,13 @@ class EmployeeCreate
 
         DB::transaction(function () use ($user, $employees, $employeeRequests, $event, &$newRoles) {
             foreach ($employees as $eHealthEmployee) {
+
+                Log::info('[EmployeeCreate] Обробляємо eHealthEmployee:', [
+                    'ehealth_uuid' => $eHealthEmployee['uuid'] ?? 'N/A',
+                    'position' => $eHealthEmployee['position'] ?? 'N/A',
+                    'employee_type' => $eHealthEmployee['employee_type'] ?? 'N/A', // <-- ДИВИМОСЬ СЮДИ
+                ]);
+
                 $employeeRequest = $this->findMatchingLocalRequest($employeeRequests, $eHealthEmployee);
 
                 if (!$employeeRequest) {
@@ -80,7 +120,7 @@ class EmployeeCreate
                 }
 
                 $dataFromRevision = EHealth::employeeRequest()->mapCreate($employeeRequest->revision->data);
-                $dataFromEHealth = Arr::only($eHealthEmployee, ['uuid', 'status', 'position', 'employee_type', 'start_date', 'end_date']);
+                $dataFromEHealth = Arr::only($eHealthEmployee, ['uuid', 'status', 'position', 'employee_type', 'start_date', 'end_date', 'is_active']);
 
                 $newEmployee = Employee::updateOrCreate(
                     ['uuid' => $dataFromEHealth['uuid']],
@@ -125,12 +165,30 @@ class EmployeeCreate
                 $employeeRequest->revision->update(['status' => RevisionStatus::APPLIED]);
 
                 if (!$user->hasRole($newEmployee->employeeType)) {
+                    Log::info('[EmployeeCreate] Знайдена нова роль для додавання:', [
+                        'employeeType' => $newEmployee->employeeType,
+                    ]);
                     $newRoles[] = $newEmployee->employeeType;
                 }
             }
         });
 
         if (!empty($newRoles)) {
+            $cleanRoles = array_filter($newRoles, function ($roleName) {
+                if (empty($roleName) || !is_string($roleName) || strtolower($roleName) === 'ehealth') {
+                    Log::error('[EmployeeCreate] Спроба призначити некоректну або пусту роль.', ['roleName' => $roleName]);
+
+                    return false;
+                }
+
+                return true;
+            });
+
+            if (empty($cleanRoles)) {
+                Log::warning('[EmployeeCreate] Немає валідних ролей для призначення.', ['original_roles_list' => $newRoles]);
+
+                return;
+            }
             setPermissionsTeamId($event->legalEntity->id);
             $user->unsetRelation('roles')->unsetRelation('permissions');
             $user->assignRole($newRoles);

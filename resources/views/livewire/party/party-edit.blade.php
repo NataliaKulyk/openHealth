@@ -27,7 +27,7 @@
                     </thead>
                     <tbody>
                     @forelse($partyExistingPositions ?? [] as $position)
-                        <tr>
+                        <tr wire:key="position-{{ $position->id }}">
                             <td class="td-input">{{ $this->dictionaries['POSITION'][$position->position] ?? $position->position }}</td>
                             <td class="td-input">{{ $this->dictionaries['EMPLOYEE_TYPE'][$position->employee_type] ?? $position->employee_type }}</td>
                             <td class="td-input">{{ $position->division->name ?? 'N/A' }}</td>

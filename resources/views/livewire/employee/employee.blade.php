@@ -31,7 +31,7 @@
 
             {{-- Part 4: Doctor-specific fields --}}
             <template x-if="isDoctor()">
-                <div class="space-y-8">
+                <div class="space-y-8" wire:key="doctor-specific-fields">
                     @include('livewire.employee.parts.education')
                     @include('livewire.employee.parts.specialities')
                     @include('livewire.employee.parts.science_degree')

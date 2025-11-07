@@ -6,7 +6,6 @@ namespace App\Livewire\Employee;
 
 use AllowDynamicProperties;
 use App\Classes\eHealth\EHealth;
-use App\Core\Arr;
 use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
@@ -15,17 +14,20 @@ use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
+use App\Models\User;
 use App\Notifications\EmployeeSyncCompleted;
 use App\Notifications\SyncNotification;
 use App\Traits\BatchLegalEntityQueries;
 use Illuminate\Bus\Batch;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
+use JsonException;
 use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
 use Psr\Container\ContainerExceptionInterface;
@@ -42,7 +44,7 @@ class EmployeeIndex extends EmployeeComponent
 
     // --- Component State for Filters ---
     public string $search = '';
-    public array $status = ['APPROVED', 'NEW', 'DISMISSED'];
+    public array $status = ['APPROVED', 'NEW'];
     public array $filter = [
         'phone' => '',
         'email' => '',
@@ -90,13 +92,24 @@ class EmployeeIndex extends EmployeeComponent
     #[Computed]
     public function parties(): LengthAwarePaginator
     {
-        // === Step 1: Fetch ALL potential data (real parties and drafts) ===
+        // === Step 1: Eager load existing Parties that have any relevant positions ===
         $realParties = Party::query()
+            // Find parties that have either active employees...
             ->whereHas('employees', fn ($sub) => $sub->where('legal_entity_id', $this->legalEntity->id))
+            // ...or have pending/signed requests.
             ->orWhereHas('employeeRequests', fn ($sub) => $sub->where('legal_entity_id', $this->legalEntity->id))
-            ->with(['phones', 'employees.division',  'employeeRequests.division', 'users'])
+            // Eager load all required relations to prevent N+1 queries and Lazy Loading exceptions
+            ->with([
+                       'phones',
+                       'employees.division',
+                       'employees.user',           // For the position's email row
+                       'employeeRequests.revision',  // For draft data
+                       'employeeRequests.division',
+                       'users'                   // For the party header email(s)
+                   ])
             ->get();
 
+        // Fetch "pure" drafts (requests without an assigned party_id) that are 'NEW' or 'SIGNED'.
         $unassignedRequests = EmployeeRequest::query()
             ->where('legal_entity_id', $this->legalEntity->id)
             ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
@@ -104,18 +117,25 @@ class EmployeeIndex extends EmployeeComponent
             ->with(['revision', 'division'])
             ->get();
 
-        // === Step 2: Transform drafts into the same "Party" structure ===
+        // === Step 2: Transform "pure" drafts into "fake" Party objects ===
+        // This allows us to process real Parties and pure drafts in a single, unified list.
         $draftParties = $unassignedRequests->map(function (EmployeeRequest $request) {
             $partyData = $request->revision->data['party'] ?? [];
 
-            $cleanPartyData = Arr::except($partyData, ['email']);
             $fakeParty = new Party();
-            $fakeParty->fill($cleanPartyData);
 
-            if (isset($partyData['email'])) {
-                $fakeParty->email = $partyData['email'];
-            }
+            // Manually set name fields so the 'fullName' accessor works for searching.
+            $fakeParty->last_name = $partyData['last_name'] ?? null;
+            $fakeParty->first_name = $partyData['first_name'] ?? null;
+            $fakeParty->second_name = $partyData['second_name'] ?? null;
+            $fakeParty->verification_status = 'NOT_VERIFIED'; // Set for verification status filtering.
 
+            // Create a "fake" User relation to handle email filtering consistently.
+            $fakeUser = new User();
+            $fakeUser->email = $partyData['email'] ?? null;
+            $fakeParty->setRelation('users', collect([$fakeUser])->filter(fn ($u) => !empty($u->email)));
+
+            // Set relations to match the real Party structure.
             $fakeParty->id = 'draft_' . $request->id;
             $fakeParty->setRelation('employeeRequests', collect([$request]));
             $fakeParty->setRelation('employees', collect());
@@ -124,56 +144,46 @@ class EmployeeIndex extends EmployeeComponent
             return $fakeParty;
         });
 
-        // === Step 3: Create a single, unified list of all "people" ===
+        // === Step 3: Merge real Parties and "fake" draft Parties into one list ===
         $allItems = $realParties->merge($draftParties);
 
-        // === Step 4: UNIFIED FILTERING LOGIC (map-then-filter) ===
-
+        // === Step 4: Apply all filters to the unified collection ===
         $filteredItems = $allItems
-            // First, filter the "children" (positions) of each party
+            // 4.1. First, filter the "children" (positions) within each Party.
             ->map(function (Party $party) {
-                // Filter the actual employee records
+                // Use the helper to filter positions based on the current state.
                 $filteredEmployees = $party->employees->filter(fn ($pos) => $this->positionMatchesFilters($pos));
-                // Filter the draft requests
                 $filteredRequests = $party->employeeRequests->filter(fn ($pos) => $this->positionMatchesFilters($pos));
 
-                // Replace the original relationships with the filtered ones
                 $party->setRelation('employees', $filteredEmployees);
                 $party->setRelation('employeeRequests', $filteredRequests);
 
                 return $party;
             })
-            // Now, filter the "parents" (parties)
+            // 4.2. Second, filter the "parent" Parties themselves.
             ->filter(function (Party $party) {
-                // 1. Remove parties that have no positions left after filtering
+                // Remove any Party that has no matching positions left after filtering.
                 if ($party->employees->isEmpty() && $party->employeeRequests->isEmpty()) {
                     return false;
                 }
 
-                // 2. Apply party-level filters (search, email, phone)
-                if (!empty($this->search) && !str_contains(strtolower($party->fullName), strtolower($this->search))) {
+                // Filter by Full Name (case-insensitive, multi-byte safe).
+                if (!empty($this->search) && mb_stripos($party->fullName, $this->search) === false) {
                     return false;
                 }
 
+                // Filter by Email (checks all users associated with the party).
                 if (!empty($this->filter['email'])) {
                     $emailToSearch = $this->filter['email'];
-                    $emailMatches = false;
-
-                    if ($party->relationLoaded('users') && $party->users->isNotEmpty()) {
-                        $emailMatches = $party->users->contains(
-                            fn ($user) => stripos($user->email, $emailToSearch) !== false
-                        );
-                    }
-
-                    if (!$emailMatches && isset($party->email)) {
-                        $emailMatches = stripos($party->email, $emailToSearch) !== false;
-                    }
-
+                    $emailMatches = $party->users->contains(
+                        fn ($user) => stripos($user->email, $emailToSearch) !== false
+                    );
                     if (!$emailMatches) {
                         return false;
                     }
                 }
 
+                // Filter by Phone.
                 if (!empty($this->filter['phone'])) {
                     $phoneMatches = $party->phones->contains(fn ($phone) => str_contains($phone->number, $this->filter['phone']));
                     if (!$phoneMatches) {
@@ -181,15 +191,36 @@ class EmployeeIndex extends EmployeeComponent
                     }
                 }
 
-                // If all checks passed, keep this party
+                // Filter by verification status (handles 'Verified Only' or 'Not Verified Only')
+                if (in_array('VERIFIED', $this->status, true) && !in_array(
+                    'NOT_VERIFIED',
+                    $this->status,
+                    true
+                ) && $party->verification_status !== 'VERIFIED') {
+                    return false;
+                }
+                if (!in_array('VERIFIED', $this->status, true) && in_array(
+                    'NOT_VERIFIED',
+                    $this->status,
+                    true
+                ) && $party->verification_status === 'VERIFIED') {
+                    return false;
+                }
+
                 return true;
             });
 
-        // === Step 5: Manually paginate the FINAL filtered and sorted collection ===
+        // === Step 5: Sort and Paginate the final list ===
         $perPage = 10;
         $currentPage = $this->getPage();
 
-        $sortedItems = $filteredItems->sortBy(fn ($party) => $party->employees->isNotEmpty() ? 1 : 2);
+        // Sort by the newest date (either employee or request) to bring most recent activity to the top.
+        $sortedItems = $filteredItems->sortByDesc(function (Party $party) {
+            $maxEmployeeDate = $party->employees->max('created_at');
+            $maxRequestDate = $party->employeeRequests->max('created_at');
+
+            return max($maxEmployeeDate, $maxRequestDate) ?? '1970-01-01 00:00:00';
+        });
 
         $currentPageItems = $sortedItems->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
@@ -198,29 +229,34 @@ class EmployeeIndex extends EmployeeComponent
             $sortedItems->count(),
             $perPage,
             $currentPage,
-            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            ['path' => Paginator::resolveCurrentPath()]
         );
     }
 
     /**
-     * A new helper method to check if a single position (Employee or EmployeeRequest)
+     * Helper method to check if a single position (Employee or EmployeeRequest)
      * matches the current position-level filters (status, division, etc.).
      */
     private function positionMatchesFilters($position): bool
     {
-        // Filter by Status
+        // --- 1. Filter by Status ---
         $currentStatuses = $this->status;
         if (!empty($currentStatuses)) {
+            // 1.1. Basic check: is the position's status in the selected filter array?
             $statusMatch = $position->status && in_array($position->status->value, $currentStatuses, true);
+
+            // 1.2. Business Logic: If 'NEW' (Draft) is selected, also show 'SIGNED'.
             if (!$statusMatch && $position instanceof EmployeeRequest && in_array(Status::NEW->value, $currentStatuses, true) && $position->status?->value === Status::SIGNED->value) {
                 $statusMatch = true;
             }
+
+            // 1.3. Final check: if no status match was found, hide the position.
             if (!$statusMatch) {
                 return false;
             }
         }
 
-        // Filter by Division, Role, Position
+        // --- 2. Filter by other position attributes ---
         if (!empty($this->filter['division_id']) && $position->division_id !== $this->filter['division_id']) {
             return false;
         }
@@ -258,7 +294,7 @@ class EmployeeIndex extends EmployeeComponent
     public function resetFilters(): void
     {
         $this->reset(['filter', 'status', 'search']);
-        $this->status = ['APPROVED', 'NEW', 'DISMISSED'];
+        $this->status = ['APPROVED', 'NEW'];
         $this->resetPage();
     }
 
@@ -436,12 +472,17 @@ class EmployeeIndex extends EmployeeComponent
 
     /**
      * Renders the component view.
+     *
+     * @throws JsonException
      */
     public function render(): object
     {
+        $filterKey = md5($this->search . implode(',', $this->status) . json_encode($this->filter, JSON_THROW_ON_ERROR));
+
         return view('livewire.employee.employee-index', [
             'parties' => $this->parties,
             'dictionaries' => $this->dictionaries,
+            'filterKey' => $filterKey,
         ]);
     }
 
