@@ -37,7 +37,7 @@ class EmployeeCreate
             return;
         }
 
-        $requestWithParty = $employeeRequests->firstWhereNotNull('party_id');
+        $requestWithParty = $employeeRequests->whereNotNull('party_id')->first();
         $firstRequest = $employeeRequests->first();
 
         if ($requestWithParty) {
