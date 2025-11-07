@@ -30,7 +30,7 @@ class EquipmentForm extends Form
 
     public ?string $parentId;
     public ?string $deviceDefinitionId;
-    public array $properties;
+    public ?array $properties;
 
     /**
      * Rules based on: https://e-health-ua.atlassian.net/wiki/spaces/ESOZ/pages/17571807355/REST+API+Create+equipment+API-007-028-0001#Request-data-validation
@@ -65,7 +65,7 @@ class EquipmentForm extends Form
             'divisionId' => [
                 'nullable',
                 'uuid',
-                Rule::exists('divisions', 'uuid')->where('is_active', true)->where('status', Status::ACTIVE)
+                Rule::exists('divisions', 'uuid')->where('is_active', true)->where('status', \App\Enums\Status::ACTIVE)
             ],
             'availabilityStatus' => ['required', 'string', Rule::in(AvailabilityStatus::AVAILABLE)],
             'inventoryNumber' => [

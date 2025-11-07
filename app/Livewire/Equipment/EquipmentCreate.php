@@ -28,6 +28,38 @@ class EquipmentCreate extends EquipmentComponent
         $this->form->availabilityStatus = AvailabilityStatus::AVAILABLE->value;
     }
 
+    public function create(): void
+    {
+        if (Auth::user()?->cannot('create', Equipment::class)) {
+            Session::flash('error', 'У вас немає дозволу на створення обладнання');
+
+            return;
+        }
+
+        $validated = $this->validateForm();
+        if (!$validated) {
+            return;
+        }
+
+        $response = $this->createInEHealth($validated);
+        if (!$response) {
+            return;
+        }
+
+        try {
+            $validated = $response->validate();
+            Repository::equipment()->store($response->map($validated));
+
+            Session::flash('success', 'Обладнання успішно створено.');
+            $this->redirectRoute('equipment.index', [legalEntity()], navigate: true);
+        } catch (Throwable $exception) {
+            $this->logDatabaseErrors($exception, 'Failed to store equipment');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        }
+    }
+
     public function createLocally(): void
     {
         if (Auth::user()?->cannot('create', Equipment::class)) {
