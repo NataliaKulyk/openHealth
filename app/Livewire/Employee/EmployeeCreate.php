@@ -27,12 +27,14 @@ class EmployeeCreate extends AbstractEmployeeFormManager
         $preparedData = $this->form->getPreparedData();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
-        // Prepare the data for the request model itself
         $employeeRequestData = Arr::only($preparedData, [
             'position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email'
         ]);
 
-        // Check if a draft already exists for this form session
+        if ($this->matchedParty) {
+            $employeeRequestData['party_id'] = $this->matchedParty->id;
+        }
+
         if ($this->employeeRequestId) {
             $existingRequest = EmployeeRequest::find($this->employeeRequestId);
 

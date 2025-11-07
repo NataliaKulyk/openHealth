@@ -33,6 +33,7 @@ use Livewire\WithPagination;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Spatie\Permission\PermissionRegistrar;
+use Str;
 use Throwable;
 use Illuminate\Support\Facades\Crypt;
 
@@ -117,10 +118,14 @@ class EmployeeIndex extends EmployeeComponent
             ->with(['revision', 'division'])
             ->get();
 
-        // === Step 2: Transform "pure" drafts into "fake" Party objects ===
-        // This allows us to process real Parties and pure drafts in a single, unified list.
-        $draftParties = $unassignedRequests->map(function (EmployeeRequest $request) {
-            $partyData = $request->revision->data['party'] ?? [];
+        $groupedUnassignedRequests = $unassignedRequests->groupBy(function (EmployeeRequest $request) {
+            return $request->revision->data['party']['tax_id'] ?? Str::uuid()->toString();
+        });
+
+        $draftParties = $groupedUnassignedRequests->map(function (Collection $groupOfRequests) {
+
+            $firstRequest = $groupOfRequests->first();
+            $partyData = $firstRequest->revision->data['party'] ?? [];
 
             $fakeParty = new Party();
 
@@ -128,7 +133,7 @@ class EmployeeIndex extends EmployeeComponent
             $fakeParty->last_name = $partyData['last_name'] ?? null;
             $fakeParty->first_name = $partyData['first_name'] ?? null;
             $fakeParty->second_name = $partyData['second_name'] ?? null;
-            $fakeParty->verification_status = 'NOT_VERIFIED'; // Set for verification status filtering.
+            $fakeParty->verification_status = 'NOT_VERIFIED';
 
             // Create a "fake" User relation to handle email filtering consistently.
             $fakeUser = new User();
@@ -136,8 +141,8 @@ class EmployeeIndex extends EmployeeComponent
             $fakeParty->setRelation('users', collect([$fakeUser])->filter(fn ($u) => !empty($u->email)));
 
             // Set relations to match the real Party structure.
-            $fakeParty->id = 'draft_' . $request->id;
-            $fakeParty->setRelation('employeeRequests', collect([$request]));
+            $fakeParty->id = 'draft_' . $firstRequest->id;
+            $fakeParty->setRelation('employeeRequests', $groupOfRequests);
             $fakeParty->setRelation('employees', collect());
             $fakeParty->setRelation('phones', collect());
 
@@ -477,7 +482,12 @@ class EmployeeIndex extends EmployeeComponent
      */
     public function render(): object
     {
-        $filterKey = md5($this->search . implode(',', $this->status) . json_encode($this->filter, JSON_THROW_ON_ERROR));
+        $filterKey = md5(
+            $this->search .
+            implode(',', $this->status) .
+            json_encode($this->filter, JSON_THROW_ON_ERROR) .
+            $this->getPage()
+        );
 
         return view('livewire.employee.employee-index', [
             'parties' => $this->parties,

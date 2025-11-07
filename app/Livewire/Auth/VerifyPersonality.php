@@ -8,7 +8,7 @@ use App\Classes\Cipher\Api\CipherRequest;
 use App\Classes\Cipher\Exceptions\CipherApiException;
 use App\Events\EhealthUserVerified;
 use App\Models\LegalEntity;
-use App\Traits\FindsAndVerifiesPartyTrait;
+use App\Models\Relations\Party;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +24,6 @@ use Livewire\WithFileUploads;
 class VerifyPersonality extends Component
 {
     use WithFileUploads;
-    use FindsAndVerifiesPartyTrait;
 
     #[Validate(['required', 'string'])]
     public string $knedp;
@@ -55,27 +54,22 @@ class VerifyPersonality extends Component
 
         $ownerFullName = $response?->getOwnerFullName();
         $taxId = $response?->getTaxId();
+        [$lastName, $firstName, $secondName] = explode(' ', $ownerFullName);
 
-        // Safely parse the full name from the KEP (digital signature).
-        // This handles extra whitespace and limits the result to 3 parts (Last, First, Second).
-        $nameParts = preg_split('/\s+/', trim($ownerFullName), 3, PREG_SPLIT_NO_EMPTY);
-        $lastName = $nameParts[0] ?? null;
-        $firstName = $nameParts[1] ?? null;
-        $secondName = $nameParts[2] ?? null;
-
-        // If the KEP full name is invalid (e.g., only one word or empty), we can't proceed.
-        if (!$lastName || !$firstName) {
-            Log::warning('KEP parsing failed', ['name' => $ownerFullName]);
-            Session::flash('error', __('errors.kep_name_parse_failed'));
-
-            return;
-        }
-
-        $party = $this->findAndVerifyParty($taxId, $lastName, $firstName, $secondName);
+        /*
+         * Search for the Party (person) based on the e-signature data.
+         * We no longer check for `whereNull('user_id')` as this column
+         * was removed from the 'parties' table during refactoring.
+         */
+        $party = Party::query()
+            ->where('tax_id', $taxId)
+            ->whereRaw('LOWER(TRIM(last_name)) = ?', [mb_strtolower($lastName)])
+            ->whereRaw('LOWER(TRIM(first_name)) = ?', [mb_strtolower($firstName)])
+            ->whereRaw('LOWER(TRIM(second_name)) = ?', [mb_strtolower($secondName)])
+            ->first();
 
         if (!$party) {
-
-            Session::flash('error', __('errors.kep_name_mismatch'));
+            Session::flash('error', 'Співпадінь не знайдено, зверніться до адміністратора');
 
             return;
         }
@@ -97,7 +91,6 @@ class VerifyPersonality extends Component
          * already-linked user.
          */
         if (!$user->partyId) {
-
             $user->partyId = $party->id;
             $user->save();
         }

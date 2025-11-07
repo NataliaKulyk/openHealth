@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Employee;
 
+use AllowDynamicProperties;
 use App\Classes\eHealth\Api\EmployeeRequest as EHealthEmployeeRequest;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
@@ -30,6 +31,7 @@ use Livewire\WithFileUploads;
 use RuntimeException;
 use Throwable;
 
+#[AllowDynamicProperties]
 abstract class AbstractEmployeeFormManager extends EmployeeComponent
 {
     use WithFileUploads;
@@ -258,9 +260,9 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
      */
     protected function validatePartyDataConsistency(): void
     {
+        $this->matchedParty = null;
         $partyData = $this->form->party;
         $taxId = $partyData['taxId'] ?? null;
-
         $email = $this->formEmail ?? $partyData['email'] ?? null;
 
         if (!$taxId || $partyData['noTaxId']) {
@@ -271,34 +273,36 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         $userByEmail = $email ? User::where('email', $email)->first() : null;
 
         if ($partyByTaxId) {
-            // tax_id exist in db, checking other fields
-
-            Log::debug('===== ПОЧАТОК ПЕРЕВІРКИ CONSISTENCY =====');
-            Log::debug('Party в базі (ID: ' . $partyByTaxId->id . '):', [
-                'LastName' => $partyByTaxId->last_name,
-                'FirstName' => $partyByTaxId->first_name,
-                'BirthDate' => $partyByTaxId->birth_date?->format('Y-m-d'),
-            ]);
-            Log::debug('Party з форми:', [
-                'LastName' => trim($partyData['lastName']),
-                'FirstName' => trim($partyData['firstName']),
-                'BirthDate' => $partyData['birthDate'],
-            ]);
-
             $lastNameMatch = strcasecmp(trim($partyByTaxId->last_name), trim($partyData['lastName'])) === 0;
             $firstNameMatch = strcasecmp(trim($partyByTaxId->first_name), trim($partyData['firstName'])) === 0;
             $birthDateMatch = $partyByTaxId->birth_date?->format('Y-m-d') === $partyData['birthDate'];
             $dataMatches = $lastNameMatch && $firstNameMatch && $birthDateMatch;
 
-            // no tax_id, Means - new party
-            if ($userByEmail && $userByEmail->partyId) {
-                // email is already existing but input new tax_id
+            if (!$dataMatches) {
                 throw ValidationException::withMessages(
                     [
-                        'form.party.email' => __('validation.party.email_linked_to_existing_party'),
+                        'form.party.taxId' => __('validation.party_data_mismatch'),
                     ]
                 );
             }
+
+            $this->matchedParty = $partyByTaxId;
+
+            if ($userByEmail && $userByEmail->partyId && $userByEmail->partyId !== $partyByTaxId->id) {
+                throw ValidationException::withMessages([
+                                                            'form.party.email' => __('validation.party.email_linked_to_other_party'),
+                                                        ]);
+            }
+
+            return;
+        }
+
+        if ($userByEmail && $userByEmail->partyId) {
+            throw ValidationException::withMessages(
+                [
+                    'form.party.email' => __('validation.party.email_linked_to_existing_party'),
+                ]
+            );
         }
     }
 
