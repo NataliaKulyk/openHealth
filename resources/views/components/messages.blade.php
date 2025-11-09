@@ -1,13 +1,8 @@
 @if(session('error') || session('success') || session('status'))
     <div class="alert-message flex fixed top-[1.5rem] w-auto z-[100000] right-2"
-         x-init="
-             setTimeout(() => {
-                 const alertMessage = document.querySelector('.alert-message');
-                 if (alertMessage) {
-                     alertMessage.remove();
-                 }
-             }, 30000)
-         "
+         wire:key="{{ random_bytes(5) }}"
+         x-data="message"
+         x-show="showAlertMessage"
     >
         @session('error')
             <div role="alert"
@@ -32,3 +27,15 @@
         @endsession
     </div>
 @endif
+<script>
+    document.addEventListener('alpine:init', () => {
+        Livewire.hook('commit.prepare', () => {
+            Alpine.data('message', () => ({
+                showAlertMessage: true,
+                init() {
+                    setTimeout(() => this.showAlertMessage = false, 30000)
+                }
+            }))
+        })
+    });
+</script>
