@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-abstract class BasePerson extends Model
+class BasePerson extends Model
 {
     protected $hidden = [
         'created_at',

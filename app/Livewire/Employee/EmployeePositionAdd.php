@@ -30,7 +30,12 @@ class EmployeePositionAdd extends AbstractEmployeeFormManager
         $this->partyId = $party->id;
         $this->form->hydrate($this->party);
         $this->form->resetPositionFields();
-        $this->pageTitle = __('forms.add_position') . ' ' . ($party->fullName ?? '');
+        $this->pageTitle = __('forms.add_position') . ' - ' . ($party->fullName ?? '');
+        $users = $party->users()->oldest()->get();
+        $this->partyUsers = $users;
+        $this->formEmail = $users->first()?->email;
+        $this->form->party['email'] = $this->formEmail;
+
     }
 
     public function boot(): void
@@ -50,24 +55,20 @@ class EmployeePositionAdd extends AbstractEmployeeFormManager
         $preparedData = $this->form->getPreparedData();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
-        // Prepare the base data for the request
         $employeeRequestData = Arr::only($preparedData, [
-            'position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email'
+            'position', 'start_date', 'end_date', 'employee_type', 'division_id'
         ]);
 
-        // Add user and party IDs once, as they are constant for this component
-        $employeeRequestData['user_id'] = $this->party->users->first()?->id;
+        $selectedUser = $this->partyUsers->firstWhere('email', $this->formEmail);
+        $employeeRequestData['user_id'] = $selectedUser?->id;
+
         $employeeRequestData['party_id'] = $this->party->id;
 
-        // Check if a draft already exists for this form session
         if ($this->employeeRequestId) {
             $existingRequest = EmployeeRequest::find($this->employeeRequestId);
-
             if ($existingRequest && is_null($existingRequest->uuid)) {
-                // Update the existing draft with the prepared data
                 $existingRequest->fill($employeeRequestData)->save();
                 $existingRequest->revision?->update(['data' => $nestedDataForRevision]);
-
                 return $existingRequest;
             }
         }
@@ -81,7 +82,7 @@ class EmployeePositionAdd extends AbstractEmployeeFormManager
 
     public function render(): View
     {
-        return view('livewire.employee.employee-position-add');
+        return view('livewire.employee.employee-position-add')->with('pageTitle', $this->pageTitle);
     }
 
     /**

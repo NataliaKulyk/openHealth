@@ -129,6 +129,7 @@ class EHealthLoginController extends Controller
         $user->refresh();
 
         if (!$user->party) {
+
             Session::put('selected_legal_entity_uuid', $legalEntity->uuid);
             $user->syncPermissions($ehealthScopes);
 

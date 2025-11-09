@@ -15,6 +15,7 @@ use App\Repositories\Repository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Log;
 use Throwable;
 
 class EmployeeCreate
@@ -26,13 +27,6 @@ class EmployeeCreate
     {
         $user = $event->user;
 
-        // Guard clause: Ensure the user has the necessary scope from eHealth.
-        // This prevents a guaranteed '403 Forbidden' error from the API call
-        // if a user with a limited role (e.g., "Assistant") logs in.
-        // if (!$user->can('employee:read')) {
-        // return;
-        // }
-
         $employeeRequests = EmployeeRequest::with('revision')
             ->where('status', RequestStatus::SIGNED)
             ->where('email', $user->email)
@@ -43,7 +37,23 @@ class EmployeeCreate
             return;
         }
 
-        $taxId = $employeeRequests->first()->revision->data['party']['tax_id'];
+        $requestWithParty = $employeeRequests->whereNotNull('party_id')->first();
+        $firstRequest = $employeeRequests->first();
+
+        if ($requestWithParty) {
+            $user->party()->associate($requestWithParty->party_id);
+            $user->save();
+            $user->refresh();
+            Log::info('[EmployeeCreate] Associated new User with existing Party.', ['user_id' => $user->id, 'party_id' => $requestWithParty->party_id]);
+        } else {
+            Log::info('[EmployeeCreate] No party_id found on any EmployeeRequest. User will be sent to KEP verification.', ['user_id' => $user->id]);
+        }
+
+        $taxId = $firstRequest->revision->data['party']['tax_id'] ?? null;
+        if (!$taxId) {
+            return;
+        }
+
         $employees = EHealth::employee()->getMany(
             [
                 'legal_entity_id' => $event->legalEntity->uuid,
@@ -56,13 +66,12 @@ class EmployeeCreate
             return;
         }
 
-        // This filters out only uuids associated with the cuurent user
+        // This filters out only uuids associated with the current user
         $existingUuids = Employee::whereIn('uuid', array_column($employees, 'uuid'))
             ->where('legal_entity_id', $event->legalEntity->id)
             ->pluck('uuid')
             ->all();
 
-        // Filter out employees that already exist in the local database
         $employees = array_filter($employees, fn (array $employee) => !in_array($employee['uuid'], $existingUuids));
 
         if (empty($employees)) {
@@ -73,6 +82,7 @@ class EmployeeCreate
 
         DB::transaction(function () use ($user, $employees, $employeeRequests, $event, &$newRoles) {
             foreach ($employees as $eHealthEmployee) {
+
                 $employeeRequest = $this->findMatchingLocalRequest($employeeRequests, $eHealthEmployee);
 
                 if (!$employeeRequest) {
@@ -80,7 +90,10 @@ class EmployeeCreate
                 }
 
                 $dataFromRevision = EHealth::employeeRequest()->mapCreate($employeeRequest->revision->data);
-                $dataFromEHealth = Arr::only($eHealthEmployee, ['uuid', 'status', 'position', 'employee_type', 'start_date', 'end_date']);
+                $dataFromEHealth = Arr::only(
+                    $eHealthEmployee,
+                    ['uuid', 'status', 'position', 'employee_type', 'start_date', 'end_date', 'is_active']
+                );
 
                 $newEmployee = Employee::updateOrCreate(
                     ['uuid' => $dataFromEHealth['uuid']],
@@ -131,9 +144,17 @@ class EmployeeCreate
         });
 
         if (!empty($newRoles)) {
+            $cleanRoles = array_filter($newRoles, static function ($roleName) {
+                return !(empty($roleName) || !is_string($roleName));
+            });
+
+            if (empty($cleanRoles)) {
+                return;
+            }
+
             setPermissionsTeamId($event->legalEntity->id);
             $user->unsetRelation('roles')->unsetRelation('permissions');
-            $user->assignRole($newRoles);
+            $user->assignRole($cleanRoles);
         }
     }
 

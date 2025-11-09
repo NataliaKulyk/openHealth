@@ -32,6 +32,7 @@ class Login extends Component
 
     /**
      * List of ALL founded Legal Entities
+     *
      * @var array
      */
     public array $legalEntitiesList = [];
@@ -97,6 +98,8 @@ class Login extends Component
         // If first login(user doesn't exist in users table, or user doesn't have roles for the selected legal entity)
         if (!$this->isLocalAuth && (!$user || !$this->userHasRolesForLegalEntity($user))) {
             $this->showRoleSelect = true;
+
+            Log::info('[Login] Користувач не знайдений або не має ролей. Перехід до "першого входу" eHealth.', ['email' => $this->email, 'legalEntityUUID' => $this->legalEntityUUID]);
 
             if (empty($this->role)) {
                 $this->addError('role', __('Будь ласка, оберіть роль.'));

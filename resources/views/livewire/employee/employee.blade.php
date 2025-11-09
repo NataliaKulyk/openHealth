@@ -21,7 +21,7 @@
         <form wire:submit.prevent="save" class="form space-y-8">
 
             {{-- Part 1: Personal Data --}}
-            @include('livewire.employee.parts.employee')
+            @include('livewire.employee.parts.party')
 
             {{-- Part 2: Documents --}}
             @include('livewire.employee.parts.documents')
@@ -31,7 +31,7 @@
 
             {{-- Part 4: Doctor-specific fields --}}
             <template x-if="isDoctor()">
-                <div class="space-y-8">
+                <div class="space-y-8" wire:key="doctor-specific-fields">
                     @include('livewire.employee.parts.education')
                     @include('livewire.employee.parts.specialities')
                     @include('livewire.employee.parts.science_degree')

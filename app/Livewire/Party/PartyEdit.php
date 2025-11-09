@@ -25,15 +25,12 @@ class PartyEdit extends AbstractEmployeeFormManager
         $this->loadDivisions($legalEntity);
         $this->party = $party;
         $this->partyId = $party->id;
-        $this->pageTitle = __('forms.edit_personal_data') . ' ' . ($party->fullName ?? '');
-
+        $this->pageTitle = __('forms.edit_personal_data') . ' - ' . ($party->fullName ?? '');
         $employee = $party->employees()->latest('start_date')->first();
-        if ($employee) {
-            $this->form->hydrate($employee);
-        } else {
-            $this->form->hydrate($party);
-        }
+        $this->form->hydrate($employee ?? $party);
+        $this->isPartyDataPartiallyLocked = true;
         $this->isPositionDataLocked = true;
+        $this->partyExistingPositions = $party->employees()->with('division')->get();
     }
 
     public function boot(): void

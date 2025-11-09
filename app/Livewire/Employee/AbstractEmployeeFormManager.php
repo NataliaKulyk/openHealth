@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Employee;
 
+use AllowDynamicProperties;
 use App\Classes\eHealth\Api\EmployeeRequest as EHealthEmployeeRequest;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
@@ -14,11 +15,14 @@ use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
+use App\Models\Relations\Party;
 use App\Models\Revision;
+use App\Models\User;
 use Auth;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -27,6 +31,7 @@ use Livewire\WithFileUploads;
 use RuntimeException;
 use Throwable;
 
+#[AllowDynamicProperties]
 abstract class AbstractEmployeeFormManager extends EmployeeComponent
 {
     use WithFileUploads;
@@ -36,6 +41,29 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
     protected ?BaseEmployee $employeeRequest;
     protected ?BaseEmployee $employee = null;
 
+    /**
+     * blocking only first_name, last_name, date_of_birth, tax_id
+     */
+    public bool $isPartyDataPartiallyLocked = false;
+
+    /**
+     * users collection for selecting on position add email field
+     */
+    public ?Collection $partyUsers = null;
+
+    /**
+     * Email, обраний у випадаючому списку в 'position_add'.
+     * Ми НЕ МОЖЕМО використовувати 'form.party.email', бо він вже зайнятий.
+     */
+    public ?string $formEmail = null;
+
+    /**
+     * collection of already existing employees for edit personal data
+     */
+    public ?Collection $partyExistingPositions = null;
+
+    public string $pageTitle = '';
+
     // === PUBLIC ACTIONS ===
     // These methods define the shared algorithm. They call the abstract method.
     public function save(): void
@@ -43,6 +71,7 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         try {
             // The validation call is now dynamic
             $this->form->validate($this->form->rulesForSave($this));
+            $this->validatePartyDataConsistency();
 
             $this->employeeRequest = $this->handleDraftPersistence();
             $this->employeeRequestId = $this->employeeRequest->id;
@@ -55,11 +84,12 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         }
     }
 
-    // Used by resources/views/livewire/employee/employee.blade.php
+    // Used by resources/views/livewire/employee/party.blade.php
     public function prepareForSigning(): void
     {
         try {
             $this->form->validate($this->form->rulesForSave($this));
+            $this->validatePartyDataConsistency();
             $this->employeeRequest = $this->handleDraftPersistence();
             $this->employeeRequestId = $this->employeeRequest->id;
 
@@ -83,6 +113,7 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         try {
             // 1. Validate the form
             $this->form->validate($this->form->rulesForSave($this));
+            $this->validatePartyDataConsistency();
             // 2. Persist the draft using the component's specific logic
             $this->employeeRequest = $this->handleDraftPersistence();
             $this->employeeRequestId = $this->employeeRequest->id;
@@ -223,6 +254,59 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
     }
 
     /**
+     * party-user data consistency check
+     *
+     * @throws ValidationException
+     */
+    protected function validatePartyDataConsistency(): void
+    {
+        $this->matchedParty = null;
+        $partyData = $this->form->party;
+        $taxId = $partyData['taxId'] ?? null;
+        $email = $this->formEmail ?? $partyData['email'] ?? null;
+
+        if (!$taxId || $partyData['noTaxId']) {
+            return;
+        }
+
+        $partyByTaxId = Party::where('tax_id', $taxId)->first();
+        $userByEmail = $email ? User::where('email', $email)->first() : null;
+
+        if ($partyByTaxId) {
+            $lastNameMatch = strcasecmp(trim($partyByTaxId->last_name), trim($partyData['lastName'])) === 0;
+            $firstNameMatch = strcasecmp(trim($partyByTaxId->first_name), trim($partyData['firstName'])) === 0;
+            $birthDateMatch = $partyByTaxId->birth_date?->format('Y-m-d') === $partyData['birthDate'];
+            $dataMatches = $lastNameMatch && $firstNameMatch && $birthDateMatch;
+
+            if (!$dataMatches) {
+                throw ValidationException::withMessages(
+                    [
+                        'form.party.taxId' => __('validation.party_data_mismatch'),
+                    ]
+                );
+            }
+
+            $this->matchedParty = $partyByTaxId;
+
+            if ($userByEmail && $userByEmail->partyId && $userByEmail->partyId !== $partyByTaxId->id) {
+                throw ValidationException::withMessages([
+                                                            'form.party.email' => __('validation.party.email_linked_to_other_party'),
+                                                        ]);
+            }
+
+            return;
+        }
+
+        if ($userByEmail && $userByEmail->partyId) {
+            throw ValidationException::withMessages(
+                [
+                    'form.party.email' => __('validation.party.email_linked_to_existing_party'),
+                ]
+            );
+        }
+    }
+
+    /**
      * Signs the data using SignatureService.
      */
     private function signDataWithCipher(EmployeeRequest $requestToSign): string
@@ -308,6 +392,24 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
     private function handleValidationException(ValidationException $e): void
     {
         $validator = $e->validator;
+        $specificEmailError = __('validation.email_already_exists');
+        $allMessages = $validator->errors()->all();
+
+        if (in_array($specificEmailError, $allMessages, true)) {
+            $this->dispatch('flashMessage', ['message' => $specificEmailError, 'type' => 'error', 'persistent' => true]);
+
+            $this->dispatch('validation-failed-scroll', firstErrorKey: 'form.party.email');
+
+            return;
+        }
+
+        $specificTaxIdError = __('validation.party_data_mismatch');
+        if (in_array($specificTaxIdError, $allMessages, true)) {
+            $this->dispatch('flashMessage', ['message' => $specificTaxIdError, 'type' => 'error', 'persistent' => true]);
+            $this->dispatch('validation-failed-scroll', firstErrorKey: 'form.party.taxId');
+
+            return;
+        }
         $allErrorKeys = collect($validator->errors()->keys())->unique();
 
         // A map of translatable field sections.
