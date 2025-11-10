@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Jobs\EmployeeRoleSync;
+use App\Jobs\EquipmentSync;
 use App\Jobs\HealthcareServiceSync;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
 use Illuminate\Bus\BatchRepository;
@@ -67,6 +68,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for(
             'ehealth-healthcare-service-get',
             static fn (HealthcareServiceSync $job) => Limit::perMinute(config('ehealth.rate_limit.healthcare_service'))
+                ->by($job->user->id)
+        );
+
+        RateLimiter::for(
+            'ehealth-equipment-get',
+            static fn (EquipmentSync $job) => Limit::perMinute(config('ehealth.rate_limit.equipment'))
                 ->by($job->user->id)
         );
 

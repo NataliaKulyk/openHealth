@@ -24,6 +24,18 @@ class EquipmentPolicy
     }
 
     /**
+     * User allowed to synchronize equipments.
+     */
+    public function sync(User $user): Response
+    {
+        if ($user->cannot('equipment:write') && $user->cannot('equipment:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * User allow to create equipment
      */
     public function create(User $user): Response

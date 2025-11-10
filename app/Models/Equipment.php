@@ -39,6 +39,7 @@ class Equipment extends Model
         'expiration_date',
         'note',
         'error_reason',
+        'properties',
         'ehealth_inserted_at',
         'ehealth_inserted_by',
         'ehealth_updated_at',
@@ -49,7 +50,9 @@ class Equipment extends Model
 
     protected $casts = [
         'status' => Status::class,
-        'availability_status' => AvailabilityStatus::class
+        'availability_status' => AvailabilityStatus::class,
+        'ehealth_inserted_at' => 'datetime',
+        'created_at' => 'datetime'
     ];
 
     public function recorder(): BelongsTo
@@ -71,5 +74,33 @@ class Equipment extends Model
     public function active(Builder $query): Builder
     {
         return $query->whereStatus(Status::ACTIVE);
+    }
+
+    /**
+     * List of equipments for the current legal entity.
+     *
+     * @param  Builder  $query
+     * @param  int  $legalEntityId
+     * @return Builder
+     */
+    #[Scope]
+    protected function filterByLegalEntity(Builder $query, int $legalEntityId): Builder
+    {
+        return $query->where('legal_entity_id', $legalEntityId)
+            ->select([
+                'id',
+                'uuid',
+                'legal_entity_id',
+                'division_id',
+                'inventory_number',
+                'type',
+                'status',
+                'availability_status',
+                'ehealth_inserted_at',
+                'created_at'
+            ])
+            ->with(['names', 'division:id,name'])
+            ->orderByDesc('ehealth_inserted_at')
+            ->orderByDesc('created_at');
     }
 }

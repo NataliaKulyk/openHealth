@@ -15,16 +15,16 @@ enum Status: string
 
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
-    case ENTERED_IN_ERROR = 'entered_in_error';
     case DRAFT = 'DRAFT';
+    case ENTERED_IN_ERROR = 'entered_in_error';
 
     public function label(): string
     {
         return match($this) {
             self::ACTIVE => __('equipments.status.active'),
             self::INACTIVE => __('equipments.status.inactive'),
-            self::ENTERED_IN_ERROR => __('equipments.status.entered_in_error'),
-            self::DRAFT => __('equipments.status.draft')
+            self::DRAFT => __('equipments.status.draft'),
+            self::ENTERED_IN_ERROR => __('equipments.status.entered_in_error')
         };
     }
 }
