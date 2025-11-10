@@ -145,23 +145,24 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
             Route::prefix('division')->middleware(['permission:division:read|division:details'])->group(function () {
                 Route::get('/', DivisionIndex::class)->name('division.index')->can('viewAny', Division::class);
-
                 Route::get('/create', DivisionCreate::class)->name('division.create')->can('create', Division::class);
                 Route::get('/{division}', DivisionView::class)->name('division.view')->can('viewAny', Division::class);
                 Route::get('/{division}/edit', DivisionEdit::class)->name('division.edit')->can('update', 'division');
 
-                Route::get('/{division}/healthcare-service/create', HealthcareServiceCreate::class)
-                    ->name('healthcare-service.create')
-                    ->can('create', HealthcareService::class);
-                Route::get('/{division}/healthcare-service/{healthcareService}', HealthcareServiceView::class)
-                    ->name('healthcare-service.view')
-                    ->can('view', 'healthcareService');
-                Route::get('/{division}/healthcare-service/{healthcareService}/edit', HealthcareServiceEdit::class)
-                    ->name('healthcare-service.edit')
-                    ->can('edit', 'healthcareService');
-                Route::get('/{division}/healthcare-service/{healthcareService}/update', HealthcareServiceUpdate::class)
-                    ->name('healthcare-service.update')
-                    ->can('update', 'healthcareService');
+                Route::prefix('{division}/healthcare-service')->name('healthcare-service.')->group(static function () {
+                    Route::get('/create', HealthcareServiceCreate::class)
+                        ->name('create')
+                        ->can('create', HealthcareService::class);
+                    Route::get('/{healthcareService}', HealthcareServiceView::class)
+                        ->name('view')
+                        ->can('view', 'healthcareService');
+                    Route::get('/{healthcareService}/edit', HealthcareServiceEdit::class)
+                        ->name('edit')
+                        ->can('edit', 'healthcareService');
+                    Route::get('/{healthcareService}/update', HealthcareServiceUpdate::class)
+                        ->name('update')
+                        ->can('update', 'healthcareService');
+                });
             });
 
             Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {

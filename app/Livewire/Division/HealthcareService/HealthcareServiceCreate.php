@@ -58,6 +58,38 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
         }
     }
 
+    public function create(): void
+    {
+        if (Auth::user()?->cannot('create', HealthcareService::class)) {
+            Session::flash('error', 'У вас немає дозволу на створення послуги');
+
+            return;
+        }
+
+        $validated = $this->validateForm();
+        if (!$validated) {
+            return;
+        }
+
+        $response = $this->createInEHealth($validated);
+        if (!$response) {
+            return;
+        }
+
+        try {
+            $validated = $response->validate();
+            Repository::healthcareService()->store($response->map($validated));
+
+            Session::flash('success', 'Послугу успішно створено.');
+            $this->redirectRoute('healthcare-service.index', [legalEntity(), $this->divisionId], navigate: true);
+        } catch (Throwable $exception) {
+            $this->logDatabaseErrors($exception, 'Failed to store healthcare service');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        }
+    }
+
     public function render(): View
     {
         return view('livewire.division.healthcare-service.healthcare-service-create');

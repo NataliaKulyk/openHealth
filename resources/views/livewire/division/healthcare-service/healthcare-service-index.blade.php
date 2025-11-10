@@ -17,9 +17,9 @@
                         {{-- Show the create button if a division is selected in the filter and has an active status --}}
                         @if(isset($divisionId))
                             @php
-                                $selectedDivision = collect($divisions)->firstWhere('id', $divisionFilter)
+                                $selectedDivision = collect($divisions)->firstWhere('id', $divisionFilter);
                             @endphp
-                            @if($selectedDivision['status'] === Status::ACTIVE)
+                            @if($selectedDivision['status'] === Status::ACTIVE->value)
                                 @can('create', HealthcareService::class)
                                     <a href="{{ route('healthcare-service.create', [legalEntity(), $divisionId]) }}"
                                        class="button-primary flex items-center gap-2"
@@ -31,10 +31,12 @@
                             @endif
                         @endif
 
-                        <button wire:click="sync" class="button-sync flex items-center gap-2">
-                            @icon('refresh', 'w-4 h-4')
-                            {{ __('forms.synchronise_with_eHealth') }}
-                        </button>
+                        @can('sync', HealthcareService::class)
+                            <button wire:click="sync" class="button-sync flex items-center gap-2">
+                                @icon('refresh', 'w-4 h-4')
+                                {{ __('forms.synchronise_with_eHealth') }}
+                            </button>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -139,16 +141,16 @@
                                 </td>
 
                                 <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                <span class="{{
-                                    match($service->status) {
-                                        Status::DRAFT => 'badge-dark',
-                                        Status::ACTIVE => 'badge-green',
-                                        Status::INACTIVE => 'badge-red',
-                                        default => ''
-                                    }
-                                }}">
-                                    {{ $service->status->label() }}
-                                </span>
+                                    <span class="{{
+                                        match($service->status) {
+                                            Status::DRAFT => 'badge-dark',
+                                            Status::ACTIVE => 'badge-green',
+                                            Status::INACTIVE => 'badge-red',
+                                            default => ''
+                                        }
+                                    }}">
+                                        {{ $service->status->label() }}
+                                    </span>
                                 </td>
 
                                 <td class="px-6 py-4 text-center">

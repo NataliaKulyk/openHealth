@@ -184,6 +184,12 @@ class HealthcareServiceIndex extends Component
 
     public function sync(): void
     {
+        if (Auth::user()?->cannot('sync', HealthcareService::class)) {
+            Session::flash('error', 'У вас немає дозволу на синхронізацію послуг');
+
+            return;
+        }
+
         try {
             $query = $this->divisionUuid ? ['division_id' => $this->divisionUuid] : null;
 

@@ -24,6 +24,18 @@ class HealthcareServicePolicy
     }
 
     /**
+     * User allowed to synchronize healthcare services.
+     */
+    public function sync(User $user): Response
+    {
+        if ($user->cannot('healthcare_service:write') && $user->cannot('healthcare_service:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * User allowed to view exactly that healthcare service.
      */
     public function view(User $user, HealthcareService $healthcareService): Response
