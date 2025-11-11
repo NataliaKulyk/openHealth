@@ -250,12 +250,6 @@ class EmployeeIndex extends EmployeeComponent
             // 1.1. Basic check: is the position's status in the selected filter array?
             $statusMatch = $position->status && in_array($position->status->value, $currentStatuses, true);
 
-            // 1.2. Business Logic: If 'NEW' (Draft) is selected, also show 'SIGNED'.
-            if (!$statusMatch && $position instanceof EmployeeRequest && in_array(Status::NEW->value, $currentStatuses, true) && $position->status?->value === Status::SIGNED->value) {
-                $statusMatch = true;
-            }
-
-            // 1.3. Final check: if no status match was found, hide the position.
             if (!$statusMatch) {
                 return false;
             }

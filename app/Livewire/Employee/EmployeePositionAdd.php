@@ -56,7 +56,7 @@ class EmployeePositionAdd extends AbstractEmployeeFormManager
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
         $employeeRequestData = Arr::only($preparedData, [
-            'position', 'start_date', 'end_date', 'employee_type', 'division_id'
+            'position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email'
         ]);
 
         $selectedUser = $this->partyUsers->firstWhere('email', $this->formEmail);
