@@ -1,4 +1,4 @@
-<div x-data="{ show: $wire.entangle('showUpdateStatusModal') }">
+<div x-data="{ show: $wire.entangle('show-update-status-modal') }">
     <template x-teleport="body">
         <div x-show="show"
              style="display: none"
@@ -27,7 +27,7 @@
                         <form wire:submit.prevent="updateStatus">
                             <div class="mb-4 text-left">
                                 <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {{ __('forms.status') }}
+                                    {{ __('forms.status.label') }}
                                 </label>
                                 <select id="status"
                                         wire:model.defer="newStatus"
@@ -57,7 +57,7 @@
                                         wire:loading.attr="disabled"
                                         class="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-75"
                                 >
-                                    {{ __('forms.synchronise_with_eHealth') }}
+                                    {{ __('forms.update_data') }}
                                 </button>
                             </div>
                         </form>
