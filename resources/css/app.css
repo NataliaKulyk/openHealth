@@ -491,10 +491,6 @@ input:-webkit-autofill ~ .label {
     @apply text-blue-600 dark:text-blue-500 hover:underline
 }
 
-/*.step-completed-color {
-    @apply step-header-completed-blue
-}*/
-
 .step-active-color {
     @apply text-blue-600 dark:text-blue-500 cursor-default
 }

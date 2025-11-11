@@ -227,13 +227,11 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                         });
                 });
 
-            Route::get('/equipment', EquipmentIndex::class)->name('equipment.index')->can('viewAny', Equipment::class);
-            Route::get('/equipment/create', EquipmentCreate::class)
-                ->name('equipment.create')
-                ->can('create', Equipment::class);
-            Route::get('/equipment/{equipment}/edit', EquipmentEdit::class)
-                ->name('equipment.edit')
-                ->can('edit', 'equipment');
+            Route::prefix('equipment')->name('equipment.')->group(static function () {
+                Route::get('/', EquipmentIndex::class)->name('index')->can('viewAny', Equipment::class);
+                Route::get('/create', EquipmentCreate::class)->name('create')->can('create', Equipment::class);
+                Route::get('/{equipment}/edit', EquipmentEdit::class)->name('edit')->can('edit', 'equipment');
+            });
 
             Route::get('/declaration', DeclarationIndex::class)
                 ->name('declaration.index')

@@ -100,7 +100,6 @@ return [
     // Legal Entity
     'institution' => 'Заклад',
     'create_legal_entity' => 'Новий заклад',
-    'edit_legal_entity' => 'Редагувати',
     'legal_entity_name' => 'Медична організація',
     'legal_entity_owner' => 'Представник організації',
     'legal_entity_info' => 'Інформація про заклад',

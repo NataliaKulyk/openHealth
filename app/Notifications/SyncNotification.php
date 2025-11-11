@@ -17,6 +17,7 @@ class SyncNotification extends Notification
         'employee' => 'Синхронізація співробітників',
         'division' => 'Синхронізація підрозділів',
         'healthcare_service' => 'Синхронізація послуг',
+        'equipment' => 'Синхронізація обладнання',
         'employee_role' => 'Синхронізація ролей',
         'patient' => 'Синхронізація пацієнтів',
         'license' => 'Синхронізація ліцензій'

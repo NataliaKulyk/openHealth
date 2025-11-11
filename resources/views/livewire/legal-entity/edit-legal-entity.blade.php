@@ -1,6 +1,6 @@
 <div>
     <x-header-navigation x-data="{ showFilter: false }">
-        <x-slot name="title">{{ __('forms.edit_legal_entity') }}</x-slot>
+        <x-slot name="title">{{ __('forms.edit') }}</x-slot>
     </x-header-navigation>
 
     <section class="section-form shift-content"

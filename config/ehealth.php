@@ -170,6 +170,7 @@ return [
         'employee_request' => 30,
         'division_request' => 50,
         'healthcare_service' => 50,
+        'equipment' => 50,
         'employee_role' => 50,
         'party_request' => 30
     ],
