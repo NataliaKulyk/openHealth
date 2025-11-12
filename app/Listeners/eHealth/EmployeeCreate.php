@@ -41,10 +41,10 @@ class EmployeeCreate
         $firstRequest = $employeeRequests->first();
 
         if ($requestWithParty) {
-            $user->party()->associate($requestWithParty->party_id);
+            $user->party()->associate($requestWithParty->partyId);
             $user->save();
             $user->refresh();
-            Log::info('[EmployeeCreate] Associated new User with existing Party.', ['user_id' => $user->id, 'party_id' => $requestWithParty->party_id]);
+            Log::info('[EmployeeCreate] Associated new User with existing Party.', ['user_id' => $user->id, 'party_id' => $requestWithParty->partyId]);
         } else {
             Log::info('[EmployeeCreate] No party_id found on any EmployeeRequest. User will be sent to KEP verification.', ['user_id' => $user->id]);
         }
@@ -119,8 +119,8 @@ class EmployeeCreate
                     $dataFromRevision['scienceDegree'] ?? null
                 );
 
-                if (!$user->party_id && $newEmployee->partyId) {
-                    $user->party_id = $newEmployee->partyId;
+                if (!$user->partyId && $newEmployee->partyId) {
+                    $user->partyId = $newEmployee->partyId;
                     $user->save();
 
                     Log::info('[EmployeeCreate] Associated User with Party from new Employee record.', ['user_id' => $user->id, 'party_id' => $newEmployee->partyId]);
