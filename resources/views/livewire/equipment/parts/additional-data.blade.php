@@ -11,7 +11,7 @@
                     name="divisionId"
                     id="divisionId"
                     class="peer input-select"
-                @disabled($context === 'view')
+                    @disabled($context === 'view')
             >
                 <option value="" selected>{{ __('forms.select') }}</option>
                 @foreach($divisions as $key => $division)
@@ -56,7 +56,7 @@
                    id="inventoryNumber"
                    placeholder=" "
                    class="peer input"
-                @disabled($context === 'view')
+                   @disabled($context === 'view')
             >
             <label for="inventoryNumber" class="label">
                 {{ __('equipments.inventory_number') }}
@@ -74,7 +74,7 @@
                    id="manufacturer"
                    placeholder=" "
                    class="peer input"
-                @disabled($context === 'view')
+                   @disabled($context === 'view')
             >
             <label for="manufacturer" class="label">
                 {{ __('equipments.manufacturer') }}
@@ -95,7 +95,7 @@
                    class="peer input pl-10 datepicker-input"
                    datepicker-max-date="{{ now() }}"
                    placeholder=" "
-                @disabled($context === 'view')
+                   @disabled($context === 'view')
             >
             <label for="manufactureDate" class="wrapped-label">{{ __('equipments.manufacture_date') }}</label>
 
@@ -109,7 +109,7 @@
                    id="expirationDate"
                    class="peer input pl-10 datepicker-input"
                    placeholder=" "
-                @disabled($context === 'view')
+                   @disabled($context === 'view')
             >
             <label for="expirationDate" class="wrapped-label">{{__('equipments.expiration_date')}}</label>
 
@@ -127,7 +127,7 @@
                    id="modelNumber"
                    placeholder=" "
                    class="peer input"
-                @disabled($context === 'view')
+                   @disabled($context === 'view')
             >
             <label for="modelNumber" class="label">
                 {{ __('equipments.model_number') }}
@@ -145,7 +145,7 @@
                    id="lotNumber"
                    placeholder=" "
                    class="peer input"
-                @disabled($context === 'view')
+                   @disabled($context === 'view')
             >
             <label for="lotNumber" class="label">
                 {{ __('equipments.lot_number') }}
@@ -163,7 +163,7 @@
                     name="parentId"
                     id="parentId"
                     class="peer input-select"
-                @disabled($context === 'view')
+                    @disabled($context === 'view')
             >
                 <option value="" selected>{{ __('forms.select') }}</option>
                 @foreach($equipments as $key => $equipment)
