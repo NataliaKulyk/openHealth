@@ -1,9 +1,10 @@
 @use('App\Enums\Equipment\AvailabilityStatus')
 
-<div x-data="{ show: false, equipmentUuid: null, equipmentName: '' }"
+<div x-data="{ show: false, equipmentUuid: null, equipmentName: '', equipmentStatus: '' }"
      @open-update-availability-status-modal.window="
          equipmentUuid = $event.detail.uuid;
          equipmentName = $event.detail.name;
+         equipmentStatus = $event.detail.status;
          show = true;
     "
      @close-update-availability-status-modal.window="show = false"
@@ -42,6 +43,7 @@
                             </label>
 
                             <select id="availabilityStatus"
+                                    x-model="equipmentStatus"
                                     wire:model="availabilityStatus"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
                                     required
