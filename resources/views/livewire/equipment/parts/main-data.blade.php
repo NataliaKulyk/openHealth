@@ -45,7 +45,9 @@
                         </template>
                     </select>
 
-                    <label :for="$id('name', 'type' + index)" class="label peer-focus:text-blue-600 peer-valid:text-blue-600">
+                    <label :for="$id('name', 'type' + index)"
+                           class="label peer-focus:text-blue-600 peer-valid:text-blue-600"
+                    >
                         {{ __('equipments.name_type') }}
                     </label>
                     <template x-if="errors[`form.names.${index}.type`]">

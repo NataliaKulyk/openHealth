@@ -328,23 +328,35 @@
                                                         {{ __('forms.view') }}
                                                     </a>
 
-                                                    <a href="#"
-                                                       @click.prevent="$dispatch('open-update-status-modal', { uuid: '{{ $equipment->uuid }}', name: '{{ $equipment->names->first()->name }}', status: '{{ $equipment->status }}' })"
-                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                    >
-                                                        @icon('edit', 'w-5 h-5 text-gray-600')
-                                                        {{ __('equipments.update_status') }}
-                                                    </a>
-
-                                                    @if ($equipment->status === Status::ACTIVE)
+                                                    @can('updateStatus', $equipment)
                                                         <a href="#"
-                                                           @click.prevent="$dispatch('open-update-availability-status-modal', { uuid: '{{ $equipment->uuid }}', name: '{{ $equipment->names->first()->name }}' })"
+                                                           @click.prevent="$dispatch('open-update-status-modal', {
+                                                               uuid: '{{ $equipment->uuid }}',
+                                                               name: '{{ $equipment->names->first()->name }}',
+                                                               status: '{{ $equipment->status }}'
+                                                           })"
                                                            class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
                                                         >
                                                             @icon('edit', 'w-5 h-5 text-gray-600')
-                                                            {{ __('equipments.update_availability_status') }}
+                                                            {{ __('equipments.update_status') }}
                                                         </a>
-                                                    @endif
+                                                    @endcan
+
+                                                    @can('updateAvailabilityStatus', $equipment)
+                                                        @if ($equipment->status === Status::ACTIVE)
+                                                            <a href="#"
+                                                               @click.prevent="$dispatch('open-update-availability-status-modal', {
+                                                                   uuid: '{{ $equipment->uuid }}',
+                                                                   name: '{{ $equipment->names->first()->name }}',
+                                                                   status: '{{ $equipment->availabilityStatus }}'
+                                                               })"
+                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                            >
+                                                                @icon('edit', 'w-5 h-5 text-gray-600')
+                                                                {{ __('equipments.update_availability_status') }}
+                                                            </a>
+                                                        @endif
+                                                    @endcan
                                                 @else
                                                     <a href="{{ route('equipment.view', [legalEntity(), $equipment->id]) }}"
                                                        class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"

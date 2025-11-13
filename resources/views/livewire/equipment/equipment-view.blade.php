@@ -170,23 +170,35 @@
                 {{ __('forms.cancel') }}
             </a>
 
-            @if($equipment->status !== Status::ENTERED_IN_ERROR)
-                <button type="button"
-                        @click.prevent="$dispatch('open-update-status-modal', { uuid: '{{ $equipment->uuid }}', name: '{{ $equipment->names->first()->name }}', status: '{{ $equipment->status }}' })"
-                        class="button-primary"
-                >
-                    {{ __('equipments.update_status') }}
-                </button>
-            @endif
+            @can('updateStatus', $equipment)
+                @if($equipment->status !== Status::ENTERED_IN_ERROR)
+                    <button type="button"
+                            @click.prevent="$dispatch('open-update-status-modal', {
+                                uuid: '{{ $equipment->uuid }}',
+                                name: '{{ $equipment->names->first()->name }}',
+                                status: '{{ $equipment->status }}'
+                            })"
+                            class="button-primary"
+                    >
+                        {{ __('equipments.update_status') }}
+                    </button>
+                @endif
+            @endcan
 
-            @if($equipment->status === Status::ACTIVE)
-                <button type="button"
-                        @click.prevent="$dispatch('open-update-availability-status-modal', { uuid: '{{ $equipment->uuid }}', name: '{{ $equipment->names->first()->name }}' })"
-                        class="button-primary"
-                >
-                    {{ __('equipments.update_availability_status') }}
-                </button>
-            @endif
+            @can('updateAvailabilityStatus', $equipment)
+                @if($equipment->status === Status::ACTIVE)
+                    <button type="button"
+                            @click.prevent="$dispatch('open-update-availability-status-modal', {
+                                uuid: '{{ $equipment->uuid }}',
+                                name: '{{ $equipment->names->first()->name }}',
+                                status: '{{ $equipment->availabilityStatus }}'
+                            })"
+                            class="button-primary"
+                    >
+                        {{ __('equipments.update_availability_status') }}
+                    </button>
+                @endif
+            @endcan
         </div>
     </div>
 
