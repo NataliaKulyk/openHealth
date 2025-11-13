@@ -20,16 +20,8 @@ class EquipmentView extends EquipmentComponent
     public function mount(LegalEntity $legalEntity, Equipment $equipment): void
     {
         $this->baseMount($legalEntity);
-
-        $equipment->loadMissing(['names', 'recorder:id,uuid', 'division:id,uuid']);
-
-        $formData = $equipment->toArray();
-
-        $formData['recorder'] = $equipment->recorder()->value('uuid');
-        $formData['divisionId'] = $equipment->division()->value('uuid');
-
-        $this->form->fill($formData);
-        $this->form->ehealthInsertedAt = $formData['ehealthInsertedAt'];
+        $this->loadEquipmentToForm($equipment);
+        $this->form->ehealthInsertedAt = $equipment->ehealthInsertedAt;
     }
 
     public function render(): View

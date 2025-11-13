@@ -87,6 +87,19 @@ class EquipmentComponent extends Component
         $this->form->recorder = $recorderData->uuid;
     }
 
+    protected function loadEquipmentToForm(Equipment $equipment): void
+    {
+        $equipment->loadMissing(['names', 'recorder:id,uuid', 'division:id,uuid']);
+
+        $formData = $equipment->toArray();
+
+        $formData['recorder'] = $equipment->recorder()->value('uuid');
+        $formData['divisionId'] = $equipment->division()->value('uuid');
+        $formData['parentId'] = $equipment->value('parent_id');
+
+        $this->form->fill($formData);
+    }
+
     /**
      * Validate form, if valid return validated data.
      *

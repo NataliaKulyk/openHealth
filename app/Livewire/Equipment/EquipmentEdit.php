@@ -20,14 +20,8 @@ class EquipmentEdit extends EquipmentComponent
         $this->baseMount($legalEntity);
         $this->equipmentId = $equipment->id;
 
-        $equipment->loadMissing(['names', 'recorder:id,uuid', 'division:id,uuid']);
-
-        $formData = $equipment->toArray();
-
-        $formData['recorder'] = $equipment->recorder()->value('uuid');
-        $formData['divisionId'] = $equipment->division()->value('uuid');
-
-        $this->form->fill($formData);
+        $this->loadEquipmentToForm($equipment);
+        $this->form->ehealthInsertedAt = $equipment->ehealthInsertedAt;
     }
 
     public function create(): void

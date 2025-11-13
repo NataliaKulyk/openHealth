@@ -14,7 +14,6 @@ use App\Models\LegalEntity;
 use App\Repositories\Repository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
 
@@ -68,20 +67,21 @@ class EquipmentCreate extends EquipmentComponent
             return;
         }
 
-        try {
-            $validated = $this->form->validate();
-        } catch (ValidationException $exception) {
-            Session::flash('error', $exception->validator->errors()->first());
-            $this->setErrorBag($exception->validator->getMessageBag());
-
+        $validated = $this->validateForm();
+        if (!$validated) {
             return;
         }
 
         $validated['legal_entity_id'] = legalEntity()->id;
         $validated['status'] = Status::DRAFT;
         $validated['recorder'] = Employee::whereUuid($validated['recorder'])->value('id');
+
         if (!empty($validated['divisionId'])) {
             $validated['divisionId'] = Division::whereUuid($validated['divisionId'])->value('id');
+        }
+
+        if (!empty($validated['parentId'])) {
+            $validated['parentId'] = Equipment::whereUuid($validated['parentId'])->value('id');
         }
 
         try {

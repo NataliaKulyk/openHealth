@@ -6,8 +6,8 @@ namespace App\Livewire\Equipment\Forms;
 
 use App\Enums\Equipment\AvailabilityStatus;
 use App\Enums\Equipment\Status;
-use App\Models\Equipment;
 use App\Rules\InDictionary;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Fluent;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
@@ -75,7 +75,9 @@ class EquipmentForm extends Form
                 'nullable',
                 'string',
                 'max:255',
-                Rule::unique('equipments', 'inventory_number')->where('legal_entity_id', legalEntity()->id)
+                Rule::unique('equipments', 'inventory_number')
+                    ->where(fn (Builder $query) => $query->where('legal_entity_id', legalEntity()->id))
+                    ->ignore($this->component->equipmentId)
             ],
             'manufacturer' => ['nullable', 'string', 'max:255'],
             'manufactureDate' => ['nullable', Rule::date()->beforeOrEqual(today())],
@@ -83,11 +85,10 @@ class EquipmentForm extends Form
             'modelNumber' => ['nullable', 'string', 'max:255'],
             'lotNumber' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:1000'],
-
             'parentId' => [
                 'nullable',
                 'uuid',
-                Rule::exists('equipments', 'uuid')->where('is_active', true)->where('status', Status::ACTIVE)
+                Rule::exists('equipments', 'uuid')->where('status', Status::ACTIVE)
             ],
             'properties' => ['nullable', 'array'],
             'properties.*.type' => ['required', 'string', 'max:255', new InDictionary('device_properties')],

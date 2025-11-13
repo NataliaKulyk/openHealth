@@ -6,66 +6,66 @@
     </legend>
 
     <div class="space-y-4"
-         x-data="{ names: $wire.entangle('form.equipmentNames') }"
-         x-init="if (!Array.isArray(names) || names.length === 0) { names = [{ name: '', typeId: '' }] }"
-         x-id="['equipmentName']"
+         x-data="{ names: $wire.entangle('form.names'), types: @js(Type::options()), errors: @js($errors->getMessages()) }"
+         x-init="if (!Array.isArray(names) || names.length === 0) { names = [{ name: '', type: '' }] }"
+         x-id="['name']"
     >
-        <template x-for="(equipmentName, index) in names" :key="index">
-            <div x-data="{ errors: @js($errors->getMessages()) }"
-                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-center"
-            >
+        <template x-for="(name, index) in names" :key="index">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-center" :key="index">
                 <div class="form-group group">
                     <input x-model="names[index].name"
                            type="text"
-                           :name="$id('equipmentName', 'name' + index)"
-                           :id="$id('equipmentName', 'name' + index)"
+                           :name="$id('name', 'name' + index)"
+                           :id="$id('name', 'name' + index)"
                            placeholder=" "
                            required
                            class="peer input"
-                           :class="{ 'input-error': errors[`form.equipmentNames.${index}.name`] }"
+                           :class="{ 'input-error': errors[`form.names.${index}.name`] }"
                     >
-                    <label :for="$id('equipmentName', 'name' + index)" class="label">
+                    <label :for="$id('name', 'name' + index)" class="label">
                         {{ __('equipments.name_medical_product') }}
                     </label>
-                    <template x-if="errors[`form.equipmentNames.${index}.name`]">
-                        <p class="text-error" x-text="errors[`form.equipmentNames.${index}.name`]"></p>
+
+                    <template x-if="errors[`form.names.${index}.name`]">
+                        <p class="text-error" x-text="errors[`form.names.${index}.name`]"></p>
                     </template>
                 </div>
 
                 <div class="form-group group">
-                    <select x-model="names[index].typeId"
-                            :name="$id('equipmentName', 'type' + index)"
-                            :id="$id('equipmentName', 'type' + index)"
+                    <select x-model="names[index].type"
+                            :name="$id('name', 'type' + index)"
+                            :id="$id('name', 'type' + index)"
                             required
                             class="peer input-select"
-                            :class="{ 'input-error': errors[`form.equipmentNames.${index}.typeId`] }"
+                            :class="{ 'input-error': errors[`form.names.${index}.type`] }"
                     >
-                        <option value="">{{ __('forms.select') }}</option>
-                        <template x-for="(typeName, key) in $wire.dictionaries.EQUIPMENT_NAME_TYPE" :key="key">
-                            <option x-text="typeName" :value="key"></option>
+                        <option value="" :selected="names[index].type == ''">{{ __('forms.select') }}</option>
+                        <template x-for="[key, typeName] in Object.entries(types)" :key="key">
+                            <option :value="key" :selected="names[index].type == key" x-text="typeName"></option>
                         </template>
                     </select>
-                    <label :for="$id('equipmentName', 'type' + index)" class="label peer-focus:text-blue-600 peer-valid:text-blue-600">
+
+                    <label :for="$id('name', 'type' + index)" class="label peer-focus:text-blue-600 peer-valid:text-blue-600">
                         {{ __('equipments.name_type') }}
                     </label>
-                    <template x-if="errors[`form.equipmentNames.${index}.typeId`]">
-                        <p class="text-error" x-text="errors[`form.equipmentNames.${index}.typeId`]"></p>
+                    <template x-if="errors[`form.names.${index}.type`]">
+                        <p class="text-error" x-text="errors[`form.names.${index}.type`]"></p>
                     </template>
                 </div>
 
                 <div class="flex items-center space-x-4">
                     <template x-if="names.length > 1">
-                        <button type="button" @click.prevent="names.splice(index, 1)"
+                        <button type="button"
+                                @click.prevent="names.splice(index, 1)"
                                 class="text-red-600 hover:text-red-800 item-remove justify-self-start">
                             @icon('delete', 'w-5 h-5 text-red-600')
                         </button>
                     </template>
+
                     <template x-if="index === names.length - 1">
                         <button type="button"
-                                @click.prevent="names.push({ name: '', typeId: '' })"
-                                class="text-indigo-600 hover:text-indigo-800 item-add"
-                        >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                @click.prevent="names.push({ name: '', type: '' })"
+                                class="text-indigo-600 hover:text-indigo-800 item-add">
                             {{ __('equipments.add_name') }}
                         </button>
                     </template>
@@ -73,6 +73,7 @@
             </div>
         </template>
     </div>
+
     <div class="form-row-2">
         <div class="form-group group">
             <select wire:model="form.type"
