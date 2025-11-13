@@ -278,12 +278,12 @@
 
                             <div class="flex items-center gap-4">
                                 @if($party->employees->isNotEmpty())
-                                @can('create', \App\Models\Employee\EmployeeRequest::class)
-                                    <a href="{{ route('party.edit', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                                       class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                        @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
-                                        <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
-                                    </a>
+                                    @can('create', \App\Models\Employee\EmployeeRequest::class)
+                                        <a href="{{ route('party.edit', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                           class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                            @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                            <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
+                                        </a>
 
                                         <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                            class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
@@ -324,17 +324,17 @@
                                             }
                                         @endphp
                                         <tr>
-                                            <td class="td-input break-words whitespace-normal align-top">
+                                            <td class="td-input break-words whitespace-normal **align-middle**">
                                                 {{ $dictionaries['POSITION'][$position->position] ?? $position->position }}
                                             </td>
-                                            <td class="td-input break-words whitespace-normal align-top">
+                                            <td class="td-input break-words whitespace-normal **align-middle**">
                                                 {{ $dictionaries['EMPLOYEE_TYPE'][$position->employee_type] ?? $position->employee_type }}
                                             </td>
-                                            <td class="td-input break-words whitespace-normal align-top">
+                                            <td class="td-input break-words whitespace-normal **align-middle**">
                                                 {{ $position->division->name ?? 'N/A' }}
                                             </td>
 
-                                            <td class="td-input break-words whitespace-normal align-top">
+                                            <td class="td-input break-words whitespace-normal **align-middle**">
                                                 @if($positionEmail)
                                                     <a href="mailto:{{ $positionEmail }}" class="hover:underline" title="{{ $positionEmail }}">{{ $positionEmail }}</a>
                                                 @else
@@ -342,8 +342,7 @@
                                                 @endif
                                             </td>
 
-                                            <td class="td-input break-words whitespace-nowrap align-top">
-                                                @php $isEmployee = $position instanceof \App\Models\Employee\Employee; @endphp
+                                            <td class="td-input break-words whitespace-nowrap **align-middle** cursor-pointer">                                                @php $isEmployee = $position instanceof \App\Models\Employee\Employee; @endphp
                                                 @if($isEmployee)
                                                     @if($position->status?->value === 'APPROVED')
                                                         <span class="badge-green">{{__('forms.status.active')}}</span>
@@ -354,7 +353,7 @@
                                                     <span class="badge-red">{{__('forms.status.draft')}}</span>
                                                 @endif
                                             </td>
-                                            <td class="td-input text-center">
+                                            <td class="td-input text-center **align-middle** cursor-pointer">
                                                 @if($position)
                                                     @include('livewire.employee.parts.actions-dropdown', [
                                                         'position' => $position
@@ -381,6 +380,6 @@
         </div>
     </x-section>
 
-@include('livewire.employee.parts.modals.deactivate-modal')
-@include('livewire.employee.parts.modals.delete-draft-modal')
+    @include('livewire.employee.parts.modals.deactivate-modal')
+    @include('livewire.employee.parts.modals.delete-draft-modal')
 </div>

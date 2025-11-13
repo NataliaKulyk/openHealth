@@ -121,7 +121,7 @@
                     @include('livewire.legal-entity.step._step_public_offer')
 
                     <div class="steps-footer pt-6">
-                        <div class="mx-auto max-w-[880px] px-6 flex items-center">
+                        <div class="flex items-center">
                             {{-- Agreement checkbox --}}
                             <div class="xl:w-1/2" x-show="isLastStep()" x-cloak>
                                 <div class="flex items-center">

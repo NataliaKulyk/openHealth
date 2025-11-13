@@ -49,7 +49,7 @@
                             @can('access', legalEntity())
                                 <li>
                                     <a href="{{ route('legal-entity.details', [legalEntity()]) }}"
-                                       class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                       class="flex items-center p-2 pl-8 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                                     >
                                         @icon('details', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
                                         <span class="ml-3">{{ __('forms.details') }}</span>
@@ -62,7 +62,7 @@
                             @can('edit', LegalEntity::class)
                                 <li>
                                     <a href="{{ route('legal-entity.edit', [legalEntity()]) }}"
-                                       class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                       class="flex items-center p-2 pl-8 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                                     >
                                         @icon('edit2', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
                                         <span class="ml-3">{{ __('forms.edit') }}</span>
@@ -76,7 +76,7 @@
                                 <a href="{{ legalEntity()
                                     ? route('legal-entity.create', [legalEntity()->id])
                                     : route('legal-entity.new.create') }}"
-                                   class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                   class="flex items-center p-2 pl-8 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                                 >
                                     @icon('create', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
                                     <span class="ml-3">{{ __('forms.create_legal_entity') }}</span>
