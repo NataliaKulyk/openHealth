@@ -126,6 +126,7 @@
                                                :value="selectedStatuses.length ? selectedStatuses.map(s => {
                                                    if (s === 'APPROVED') return '{{ __('forms.active') }}';
                                                    if (s === 'NEW') return '{{ __('forms.draft') }}';
+                                                   if (s === 'SIGNED') return '{{ __('forms.status.sent') }}';
                                                    if (s === 'DISMISSED') return '{{ __('forms.dismissed') }}';
                                                    if (s === 'VERIFIED') return '{{ __('forms.verified') }}';
                                                    if (s === 'NOT_VERIFIED') return '{{ __('forms.not_verified') }}';
@@ -160,6 +161,15 @@
                                                         <span>{{ __('forms.draft') }}</span>
                                                     </label>
                                                 </li>
+
+                                                <li>
+                                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                                        <input type="checkbox" value="SIGNED" wire:model="status"
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
+                                                        <span>{{ __('forms.status.sent') }}</span>
+                                                    </label>
+                                                </li>
+
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
                                                         <input type="checkbox" value="DISMISSED" wire:model="status"
@@ -264,7 +274,7 @@
                                 @endif
 
                                 {{-- Verification Status --}}
-                                @if ($party->verification_status)
+                                @if ($party->verification_status && is_numeric($party->id))
                                     <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="flex items-center gap-1.5 group">
                                         <span class="font-semibold text-gray-700 dark:text-gray-300 group-hover:underline">@lang('general.verification'):</span>
                                         @if ($party->verification_status === 'VERIFIED')
@@ -277,21 +287,23 @@
                             </div>
 
                             <div class="flex items-center gap-4">
-                                @if($party->employees->isNotEmpty())
-                                @can('create', \App\Models\Employee\EmployeeRequest::class)
-                                    <a href="{{ route('party.edit', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                                       class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                        @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
-                                        <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
-                                    </a>
+                                @if(is_numeric($party->id))
+                                    @if($party->employees->isNotEmpty())
+                                        @can('create', \App\Models\Employee\EmployeeRequest::class)
+                                            <a href="{{ route('party.edit', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                               class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                                <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
+                                            </a>
 
-                                        <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                                           class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                            <span
-                                                class="text-xl leading-none">+</span><span>{{ __('forms.add_position') }}</span>
-                                        </a>
-                                    @endif
-                                @endcan
+                                            <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
+                                               class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                            <span class="text-xl leading-none">+</span>
+                                                <span>{{ __('forms.add_position') }}</span>
+                                            </a>
+                                        @endif
+                                    @endcan
+                                @endif
                             </div>
                         </div>
 
@@ -351,7 +363,11 @@
                                                         <span class="badge-red">{{__('forms.status.dismissed')}}</span>
                                                     @endif
                                                 @else
-                                                    <span class="badge-red">{{__('forms.status.draft')}}</span>
+                                                    @if($position->status?->value === 'NEW')
+                                                        <span class="badge-red">{{__('forms.status.draft')}}</span>
+                                                    @elseif($position->status?->value === 'SIGNED')
+                                                        <span class="badge-yellow">{{__('forms.status.sent')}}</span>
+                                                    @endif
                                                 @endif
                                             </td>
                                             <td class="td-input text-center">

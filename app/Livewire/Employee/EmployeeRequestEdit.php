@@ -72,18 +72,18 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
 
             return $newRequest;
 
-        } else {
-            $requestAttributes = Arr::only($preparedData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
-            $this->employeeRequest->fill($requestAttributes)->save();
-
-            if ($this->employeeRequest->revision) {
-                $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
-            } else {
-                $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
-            }
-
-            return $this->employeeRequest;
         }
+
+        $requestAttributes = Arr::only($preparedData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id', 'email']);
+        $this->employeeRequest->fill($requestAttributes)->save();
+
+        if ($this->employeeRequest->revision) {
+            $this->employeeRequest->revision->update(['data' => $nestedDataForRevision]);
+        } else {
+            $this->saveRevisionForRequest($this->employeeRequest, $nestedDataForRevision);
+        }
+
+        return $this->employeeRequest;
     }
 
     public function render(): View
