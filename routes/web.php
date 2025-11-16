@@ -9,6 +9,7 @@ use App\Http\Controllers\HomeController;
 use App\Livewire\Actions\Logout;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\Login;
+use App\Livewire\Auth\LoginDev;
 use App\Livewire\Auth\Register;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\SelectLegalEntity;
@@ -96,7 +97,7 @@ Route::post('/send-email', [EmailController::class, 'sendEmail'])->name('send.em
 
 /* Auth */
 
-Route::get('/ehealth/oauth/', EHealthLoginController::class)->name('ehealth.oauth.callback');
+Route::get('/ehealth/oauth', EHealthLoginController::class)->name('ehealth.oauth.callback');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', Login::class)->name('login');
@@ -109,12 +110,18 @@ Route::middleware('guest')->group(function () {
     Route::get('email/verify/{id}/{hash}', VerifyEmailController::class)
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
+
+    // Login to eHealth for development environment only
+    if (App::isLocal()) {
+        Route::get('dev/login', LoginDev::class)->name('dev.login');
+    }
 });
 
 Route::post('logout', Logout::class)->name('logout');
 
 /* Dashboard */
 Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
+
     Route::get('/verify-personality', VerifyPersonality::class)->name('party.verify');
 
     Route::get('/select-legal-entity', SelectLegalEntity::class)->name('legalEntity.select');

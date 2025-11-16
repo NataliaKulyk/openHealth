@@ -7,8 +7,9 @@ return [
         'domain' => env('EHEALTH_API_URL', 'private-anon-cb2ce4f7fc-uaehealthapi.apiary-mock.com'),
         'token' => env('EHEALTH_X_CUSTOM_PSK', 'X-Custom-PSK'),
         'api_key' => env('EHEALTH_API_KEY', ''),
+        'mis_id' => env('EHEALTH_MIS_ID'),
         'callback_prod' => env('EHEALTH_CALLBACK_PROD', true),
-        'auth_host' => env('EHEALTH_AUTH_HOST', 'https://auth-preprod.ehealth.gov.ua/sign-in'),
+        'auth_host' => env('EHEALTH_AUTH_HOST', 'https://auth-preprod.ehealth.gov.ua'),
         'redirect_uri' => env('EHEALTH_REDIRECT_URI', 'https://openhealths.com/ehealth/oauth'),
         'url_dev' => env('EHEALTH_URL_DEV', 'http://localhost'),
         'auth_ehealth' => env('EHEALTH_CODE_TOKEN', 'user_id_auth_ehealth'),
@@ -26,7 +27,7 @@ return [
     ],
 
     'auth' => [
-        'decay_seconds' => 300,     // Amount of the seconds to another login attempt
+        'delay_seconds' => 300,     // Amount of the seconds to another login attempt
         'max_login_attempts' => 5   // Amount of the wrong attempt before locking out
     ],
 

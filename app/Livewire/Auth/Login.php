@@ -90,7 +90,7 @@ class Login extends Component
         if (!$user && $this->isLocalAuth) {
             $this->addError('email', __('auth.login.error.validation.credentials'));
 
-            RateLimiter::hit($key, config('ehealth.auth.decay_seconds'));
+            RateLimiter::hit($key, config('ehealth.auth.delay_seconds'));
 
             return back();
         }
@@ -138,7 +138,7 @@ class Login extends Component
         }
 
         if (!Auth::attempt($credentials)) {
-            RateLimiter::hit($key, config('ehealth.auth.decay_seconds'));
+            RateLimiter::hit($key, config('ehealth.auth.delay_seconds'));
 
             $this->addError('email', __('auth.login.error.validation.credentials'));
 
@@ -222,7 +222,7 @@ class Login extends Component
      * @param  User|null  $user
      * @return bool
      */
-    private function userHasRolesForLegalEntity(?User $user): bool
+    protected function userHasRolesForLegalEntity(?User $user): bool
     {
         if (!$user) {
             return false;
@@ -355,5 +355,13 @@ class Login extends Component
     protected function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->email) . '|' . request()->ip());
+    }
+
+    public function render()
+    {
+        return view('livewire.auth.login')->with([
+            'hasEmailError' => $this->getErrorBag()->has('email'),
+            'hasPasswordError' => $this->getErrorBag()->has('password'),
+        ]);
     }
 }

@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Auth\EHealth\Services\TokenStorage;
 use App\Classes\eHealth\Exceptions\ApiException;
-use App\Enums\JobStatus;
 use App\Events\EHealthUserLogin;
 use App\Http\Controllers\Controller;
 use App\Mail\UserCredentialsMail;

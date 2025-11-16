@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
+use App\Classes\eHealth\Api\Auth;
 use App\Classes\eHealth\Api\ContractRequest;
 use App\Classes\eHealth\Api\Declaration;
 use App\Classes\eHealth\Api\DeclarationRequest;
@@ -149,5 +150,10 @@ final class EHealth
     public static function contract(): Contract
     {
         return app(Contract::class);
+    }
+
+    public static function auth(): Auth
+    {
+        return app(Auth::class);
     }
 }
