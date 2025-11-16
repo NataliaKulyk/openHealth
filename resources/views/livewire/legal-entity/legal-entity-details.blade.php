@@ -301,7 +301,7 @@
             </a>
 
             @if(auth()->getDefaultDriver() === 'ehealth')
-                @can('edit', LegalEntity::class)
+                @can('edit', [LegalEntity::class, $le])
                     <a role="button" class="default-button cursor-pointer inline-flex items-center leading-none !mb-0" href="{{ route('legal-entity.edit', [legalEntity()]) }}">
                         {{ __('forms.edit') }}
                     </a>
