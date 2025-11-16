@@ -33,6 +33,18 @@ class LegalEntityPolicy
     }
 
     /**
+     * User allowed to view the list of divisions
+     */
+    public function viewAny(User $user): Response
+    {
+        if ($user->cannot('legal_entity:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * Determine if the user can create a legal entities
      *
      * @param  User  $user
@@ -53,9 +65,35 @@ class LegalEntityPolicy
         return Response::denyWithStatus(404);
     }
 
-    public function edit(User $user): Response
+    public function edit(User $user, LegalEntity $legalEntity): Response
     {
+        // Should belong to the same legal entity
+        if (legalEntity()->id !== $legalEntity->id) {
+            return Response::denyWithStatus(404);
+        }
+
         if ($user->hasRole(['OWNER']) && Auth::guard('ehealth')->check()) {
+            return Response::allow();
+        }
+
+        return Response::denyWithStatus(404);
+    }
+
+    /**
+     * Determine if the user can sync data of a legal entities
+     *
+     * @param  User  $user
+     *
+     * @return true|Response
+     */
+    public function sync(User $user, LegalEntity $legalEntity): true|Response
+    {
+        // Should belong to the same legal entity
+        if (legalEntity()->id !== $legalEntity->id) {
+            return Response::denyWithStatus(404);
+        }
+
+        if ($user->hasAnyRole(['OWNER', 'ADMIN', 'HR']) && Auth::guard('ehealth')->check()) {
             return Response::allow();
         }
 

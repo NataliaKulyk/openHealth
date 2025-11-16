@@ -53,13 +53,15 @@ class CreateLegalEntity extends LegalEntity
      *
      * @param array $initials // Array should contains key(s) and its initial value(s)
      *
-     * @return void
+     * @return array
      */
-    private function setInitialOwnerValues(array $initials): void
+    private function setInitialOwnerValues(array $initials): array
     {
         foreach ($initials as $key => $value) {
             $this->legalEntityForm->owner[$key] ??= $value;
         }
+
+        return $this->legalEntityForm->owner;
     }
 
     public function mount(?string $legalEntityId = null): void
@@ -69,12 +71,6 @@ class CreateLegalEntity extends LegalEntity
         $this->setLegalEntity();
 
         $this->getOwnerFields();
-
-        $this->setInitialOwnerValues([
-            'taxId' => '',
-            'phones' => [],
-            'noTaxId' => false
-        ]);
 
         $this->setOwnerFromCache();
     }
@@ -102,9 +98,11 @@ class CreateLegalEntity extends LegalEntity
     private function setOwnerFromCache(): void
     {
         // Check if the owner information is available in the cache and the user is not a legal entity
-        if (Cache::has($this->ownerCacheKey) && !legalEntity()) {
-            $this->legalEntityForm->owner = Cache::get($this->ownerCacheKey); // Set the owner information from cache
-        }
+        $this->legalEntityForm->owner = Cache::get($this->ownerCacheKey) ?? $this->setInitialOwnerValues([
+            'taxId' => '',
+            'phones' => [],
+            'noTaxId' => false
+        ]); // Set the base owner data if no data in cache
     }
 
     /**

@@ -64,6 +64,10 @@ class LegalEntity extends Model
         'website',
         'client_id',
         'client_secret',
+        'ehealth_inserted_at',
+        'ehealth_inserted_by',
+        'ehealth_updated_at',
+        'ehealth_updated_by'
     ];
 
     protected $casts = [
@@ -195,8 +199,7 @@ class LegalEntity extends Model
      *
      * @return Builder
      */
-    #[Scope]
-    protected function listByFields(Builder $query, array $fields = []): void
+    protected function scopeListByFields(Builder $query, array $fields = []): void
     {
         if (empty($fields)) {
             $query->select(['id', 'uuid', 'edr', 'legal_entity_type_id'])->orderBy('id');

@@ -31,7 +31,7 @@
                 class="grid-cols-1"
             >
                 <div class="p-5">
-                    @include('livewire.legal-entity.step._step_edrpou', ['isEdit' => true])
+                    @include('livewire.legal-entity.step._step_edrpou')
                     @include('livewire.legal-entity.step._step_owner')
                     @include('livewire.legal-entity.step._step_contact')
                     @include('livewire.legal-entity.step._step_residence_address')

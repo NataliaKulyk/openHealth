@@ -58,10 +58,16 @@
                 :class="isDisabled ? 'text-gray-400 border-gray-200 dark:text-gray-500' : 'text-gray-900 border-gray-300'"
                 :disabled="isDisabled"
             >
+                @if($isEdit)
+                    <option value="{{ $legalEntityForm->type}}" selected>{{ $legalEntityTypes[$legalEntityForm->type]}}</option>
+                @endif
+
                 @foreach($legalEntityTypes as $k => $legalEntityType)
-                    <option value="{{ $k }}" {{ $k === $legalEntityForm->type ? 'selected' : ''}}>
-                        {{ $legalEntityType }}
-                    </option>
+                    @if(legalEntity()?->type->name !== $k)
+                        <option value="{{ $k }}" {{ $k === $legalEntityForm->type ? 'selected' : ''}}>
+                            {{ $legalEntityType }}
+                        </option>
+                    @endif
                 @endforeach
             </select>
 

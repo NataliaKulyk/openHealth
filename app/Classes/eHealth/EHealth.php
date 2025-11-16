@@ -15,6 +15,7 @@ use App\Classes\eHealth\Api\License;
 use App\Classes\eHealth\Api\Job;
 use App\Classes\eHealth\Api\Division;
 use App\Classes\eHealth\Api\HealthcareService;
+use App\Classes\eHealth\Api\LegalEntity;
 use App\Classes\eHealth\Api\Party;
 use App\Classes\eHealth\Api\Patient;
 use App\Classes\eHealth\Api\Person;
@@ -131,5 +132,10 @@ final class EHealth
     public static function party(): Party
     {
         return app(Party::class);
+    }
+
+    public static function legalEntity(): LegalEntity
+    {
+        return app(LegalEntity::class);
     }
 }

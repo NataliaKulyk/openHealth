@@ -19,7 +19,7 @@ class SelectLegalEntity extends Component
 {
     public array $accessibleLegalEntities = [];
 
-    public ?string $selectedLegalEntityId = null;
+    public ?int $selectedLegalEntityId = null;
 
     protected ?User $user;
 
@@ -68,6 +68,7 @@ class SelectLegalEntity extends Component
 
             return Redirect::route('dashboard', [$legalEntity]);
         }
+
         // Get array with the id and names of the all LegalEntities available to the User
         $this->accessibleLegalEntities = Repository::legalEntity()->getLegalEntitiesList($this->accessibleLegalEntities);
 

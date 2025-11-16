@@ -17,6 +17,14 @@ class FlashMessage extends Component
 
     protected $listeners = ['flashMessage'];
 
+    public function mount()
+    {
+        // This need for displaying flash messages after redirects (via ->with() method)
+        $this->message = session('success') ?? session('error') ?? '';
+        $this->type = session('success') ? 'success' : (session('error') ? 'error' : '');
+        $this->errors = session('errors') ? session('errors')->all() : [];
+    }
+
     public function flashMessage($flash): void
     {
         $this->message = $flash['message'] ?? '';

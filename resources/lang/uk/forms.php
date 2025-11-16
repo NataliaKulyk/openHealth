@@ -411,8 +411,10 @@ return [
         'dismissed' => 'Звільнено',
         'active' => 'Активний',
         'non_active' => 'Не активний',
+        'suspended' => 'Призупинено',
         'draft' => 'Чернетка',
-        'unsynced' => 'Не синхронізовано'
+        'unsynced' => 'Не синхронізовано',
+        'unknown' => 'Невідомо'
     ],
 
     // Declarations

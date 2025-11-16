@@ -45,6 +45,7 @@ use App\Livewire\Encounter\EncounterEdit;
 use App\Livewire\Equipment\EquipmentCreate;
 use App\Livewire\Equipment\EquipmentEdit;
 use App\Livewire\Equipment\EquipmentIndex;
+use App\Livewire\LegalEntity\LegalEntityDetails;
 use App\Livewire\Equipment\EquipmentView;
 use App\Livewire\LegalEntity\CreateLegalEntity;
 use App\Livewire\LegalEntity\EditLegalEntity;
@@ -130,15 +131,17 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
         ->group(function () {
             Route::get('/', Dashboard::class)->name('dashboard');
 
-            Route::get('/details', \App\Livewire\LegalEntity\LegalEntityDetails::class)->name('legal-entity.details');
-
             Route::get('/edit', EditLegalEntity::class)
-                ->can('edit', LegalEntity::class)
+                ->can('edit','legalEntity')
                 ->name('legal-entity.edit');
 
             Route::get('/create', CreateLegalEntity::class)
                 ->can('create', LegalEntity::class)
                 ->name('legal-entity.create');
+
+            Route::get('/details', LegalEntityDetails::class)
+                ->can('viewAny', LegalEntity::class)
+                ->name('legal-entity.details');
 
             Route::get('/healthcare-service', HealthcareServiceIndex::class)
                 ->name('healthcare-service.index')

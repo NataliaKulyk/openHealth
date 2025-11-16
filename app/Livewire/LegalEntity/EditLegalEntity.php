@@ -128,7 +128,9 @@ class EditLegalEntity extends LegalEntity
         $ownerData['phones'] = $owner->party->phones->toArray() ?? [];
         $ownerData['documents'] = $this->prepareDocumentsData($owner->party->documents->toArray());
         $ownerData['position'] = $owner->position;
-        $ownerData['employee_id'] = $owner->uuid;
+        $ownerData['employee_uuid'] = $owner->uuid;
+        $ownerData['employee_id'] = $owner->id;
+        $ownerData['email'] = $owner->user->email;
 
         return $ownerData;
     }
@@ -144,6 +146,21 @@ class EditLegalEntity extends LegalEntity
 
     public function updateLegalEntity()
     {
+        /*
+         * This is need by Livewire behavior.
+         * On the first render, mount() runs and assigns $this->legalEntity.
+         * On subsequent requests (e.g., when clicking synchronize button), Livewire does NOT run mount() again
+         * and does NOT rehydrate protected typed properties.
+         * Code below allows to ensure that property is set before use.
+         */
+        $this->legalEntity ??= $this->getLegalEntity();
+
+        if (Auth::user()->cannot('edit', $this->legalEntity)) {
+            $this->dispatchErrorMessage(__('legal-entity.policy.deny.edit'));
+
+            return null;
+        }
+
         $this->legalEntityForm->allFieldsValidate();
 
         if ($this->getErrorBag()->isNotEmpty()) {
@@ -163,7 +180,7 @@ class EditLegalEntity extends LegalEntity
              * The code below is need to save new client_secret if ESOZ returns successfull response
              * Without it next login may be impossible!
              */
-            $legalEntity = LegalEntityModel::where(['uuid' => $response['data']['id'] ])->first();
+            $legalEntity = LegalEntityModel::where(['uuid' => $response['data']['uuid'] ])->first();
 
             $legalEntity->clientSecret = $response['urgent']['security']['client_secret'] ?? $response['urgent']['security']['secret_key'] ?? null;
 
@@ -172,8 +189,6 @@ class EditLegalEntity extends LegalEntity
 
             DB::transaction(function () use ($response, $data) {
                 $this->modifyLegalEntity($response);
-
-                $user = Auth::user();
 
                 try {
                     $this->createEmployeeRequest($this->legalEntity, $data, $response['urgent']['employee_request_id']);
@@ -194,9 +209,6 @@ class EditLegalEntity extends LegalEntity
 
     public function render()
     {
-        $beneficiary = legalEntity()->beneficiary ?? null;
-        $receiverFundsCode = legalEntity()->receiverFundsCode ?? null;
-
         return view('livewire.legal-entity.edit-legal-entity', ['isEdit' => true]);
     }
 }

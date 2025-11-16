@@ -25,7 +25,6 @@
 
     <body>
         <div class="antialiased bg-white dark:bg-gray-800">
-            <x-messages />
 
             @livewire('components.header')
 
