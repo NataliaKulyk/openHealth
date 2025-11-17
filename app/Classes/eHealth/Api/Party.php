@@ -26,9 +26,8 @@ class Party extends EHealthRequest
      * Fetches a paginated list of party verification statuses.
      * Now accepts a token for authentication and attaches a data mapper.
      *
-     * @param array $filters An array of filters to apply to the query.
-     * @param int   $page
-     *
+     * @param  array  $filters  An array of filters to apply to the query.
+     * @param  int  $page
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
      */
@@ -48,24 +47,28 @@ class Party extends EHealthRequest
     }
 
     /**
-     * Maps (transforms) the validated data into a simple [party_uuid => verification_status] array.
-     * This method is called by the EHealthResponse's map() function.
+     * Maps (transforms) the validated data.
+     * It now returns [party_uuid=>{full_item_object}]
      *
-     * @param array $validatedData The data that has passed validation.
+     * @param  array  $validatedData  The data that has passed validation.
      * @return array
      */
     protected function mapMany(array $validatedData): array
     {
-        return collect($validatedData)->mapWithKeys(function ($verification) {
-            return [$verification['party_id'] => $verification['verification_status']];
+        return collect($validatedData)->mapWithKeys(function ($item) {
+            if (empty($item['party_id'])) {
+                return [];
+            }
+
+            return [$item['party_id'] => $item];
         })->filter()->all();
     }
 
     /**
      * Fetches the detailed verification status for a single party.
      *
-     * @param string $uuid The UUID of the party.
-     * @param array|null $query Optional query parameters.
+     * @param  string  $uuid  The UUID of the party.
+     * @param  array|null  $query  Optional query parameters.
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
      */
@@ -80,8 +83,8 @@ class Party extends EHealthRequest
      * Sends a request to update a party's verification status.
      * The API currently supports updating 'dracs_death' and 'dracs_name_change'.
      *
-     * @param string $uuid The UUID of the party to update.
-     * @param array $data The data for the update request.
+     * @param  string  $uuid  The UUID of the party to update.
+     * @param  array  $data  The data for the update request.
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
      */
@@ -93,7 +96,7 @@ class Party extends EHealthRequest
     /**
      * Validates the response for a single party's verification details.
      *
-     * @param EHealthResponse $response The response from the eHealth API.
+     * @param  EHealthResponse  $response  The response from the eHealth API.
      * @return array
      * @throws ValidationException
      */
@@ -141,20 +144,32 @@ class Party extends EHealthRequest
 
     /**
      * Validates the response for a list of party verification statuses.
+     * UPDATED: Added rules for 'details'
      *
-     * @param EHealthResponse $response The response from the eHealth API.
+     * @param  EHealthResponse  $response  The response from the eHealth API.
      * @return array The extracted 'data' array from the response.
      * @throws ValidationException
      */
     protected function validateMany(EHealthResponse $response): array
     {
-        // The full response body is validated as the list is not wrapped in a 'data' key by this specific endpoint.
         $fullResponse = $response->json();
 
         $rules = [
             'data' => 'present|array',
             'data.*.party_id' => 'required|uuid',
             'data.*.verification_status' => 'required|string',
+
+            'data.*.details' => 'nullable|array',
+            'data.*.details.drfo' => 'nullable|array',
+            'data.*.details.drfo.verification_status' => 'nullable|string',
+            'data.*.details.dracs_death' => 'nullable|array',
+            'data.*.details.dracs_death.verification_status' => 'nullable|string',
+            'data.*.details.mvs_passport' => 'nullable|array',
+            'data.*.details.mvs_passport.verification_status' => 'nullable|string',
+            'data.*.details.dms_passport' => 'nullable|array',
+            'data.*.details.dms_passport.verification_status' => 'nullable|string',
+            'data.*.details.dracs_name_change' => 'nullable|array',
+            'data.*.details.dracs_name_change.verification_status' => 'nullable|string',
         ];
 
         $validator = Validator::make($fullResponse, $rules);
@@ -162,7 +177,6 @@ class Party extends EHealthRequest
         try {
             $validatedData = $validator->validated();
 
-            // Return only the 'data' array, as the listener expects.
             return $validatedData['data'];
 
         } catch (ValidationException $e) {
@@ -170,7 +184,6 @@ class Party extends EHealthRequest
                 'errors' => $e->errors(),
                 'data_received' => $fullResponse
             ]);
-
             throw $e;
         }
     }

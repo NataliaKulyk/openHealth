@@ -33,6 +33,14 @@
                         <td class="px-6 py-4 text-sm align-top whitespace-normal">
                             @if($status === 'VERIFIED')
                                 <span class="badge-green">@lang('general.verified')</span>
+
+                            @elseif($status === 'NOT_VERIFIED')
+                                <span class="badge-red">@lang('general.not_verified')</span>
+                            @elseif($status === 'VERIFICATION_NEEDED')
+                                <span class="badge-yellow">@lang('general.verification_needed')</span>
+                            @elseif($status === 'VERIFICATION_NOT_NEEDED')
+                                <span class="badge-gray">@lang('general.verification_not_needed')</span>
+
                             @elseif($status)
                                 <span class="badge-red">@lang('general.' . strtolower($status))</span>
                             @else
@@ -66,14 +74,22 @@
             </table>
         </div>
 
-        @php
-            $overallStatus = data_get($verificationDetails, 'verification_status');
-            $translatedStatus = $overallStatus ? __('general.' . strtolower($overallStatus)) : __('general.unknown');
-        @endphp
 
-        @if($overallStatus !== 'VERIFIED')
+        @if($this->hasVerificationWarnings)
             <div class="p-4 mt-6 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                @lang('general.ehealth_fitness_warning', ['status' => $translatedStatus])
+                <h4 class="font-bold">@lang('general.verification_warning.header')</h4>
+
+                <ul class="mt-2 list-disc list-inside space-y-1">
+                    @if($this->drfoNotVerified)
+                        <li>@lang('general.verification_warning.drfo')</li>
+                    @endif
+
+                    @if($this->dracsDeathNotVerified)
+                        <li>@lang('general.verification_warning.dracs_death')</li>
+                    @endif
+                </ul>
+
+                <p class="mt-3">@lang('general.verification_warning.footer')</p>
             </div>
         @endif
 
@@ -85,7 +101,13 @@
                 @lang('forms.edit_personal_data')
             </a>
 
-            <button type="button" @click="showUpdateModal = true" class="button-primary-outline">
+            <button type="button"
+                    @click="{{ $this->canUpdateDracs ? 'showUpdateModal = true' : '' }}"
+                    class="button-primary-outline"
+                    :disabled="{{ !$this->canUpdateDracs ? 'true' : 'false' }}"
+
+                    title="{{ !$this->canUpdateDracs ? __('general.update_unavailable_reason') : '' }}"
+            >
                 @lang('forms.update_death_data')
             </button>
         </div>
@@ -95,7 +117,6 @@
     <div
             x-show="showUpdateModal"
             @keydown.escape.window="showUpdateModal = false"
-            {{-- Modify the listener to log --}}
             @status-updated-close-modal.window="() => { console.log('Alpine received status-updated-close-modal event!'); showUpdateModal = false; }"
             class="fixed inset-0 z-50 flex items-center justify-center"
             style="display: none;"

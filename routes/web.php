@@ -56,6 +56,7 @@ use App\Livewire\License\LicenseIndex;
 use App\Livewire\License\LicenseView;
 use App\Livewire\Party\PartyEdit;
 use App\Livewire\Party\PartyVerify;
+use App\Livewire\Party\VerificationIndex;
 use App\Livewire\Patient\PatientCreate;
 use App\Livewire\Patient\PatientEdit;
 use App\Livewire\Patient\PatientIndex;
@@ -189,6 +190,9 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 Route::get('/{employee_request}/edit', EmployeeRequestEdit::class)
                     ->name('edit')->middleware('can:update,employee_request');
             });
+
+            Route::get('/party-verifications', VerificationIndex::class)
+                ->name('party.verification.index');
 
             Route::get('/party/{party}/verification', PartyVerify::class)
                 ->name('party.verification.show');

@@ -22,7 +22,16 @@ return new class extends Migration
             $table->boolean('no_tax_id')->nullable()->default(false);
             $table->text('about_myself')->nullable();
             $table->integer('working_experience')->nullable();
-            $table->string('verification_status')->nullable(); // TODO - make enum
+
+            // --- Verification Section ---
+            $table->string('verification_status')->nullable()->comment('Overall verification status');
+            $table->string('drfo_status')->nullable()->index()->comment('DRFO verification status');
+            $table->string('dracs_death_status')->nullable()->index()->comment('DRACS (death) verification status');
+            $table->string('mvs_passport_status')->nullable()->index()->comment('MVS (passport) verification status');
+            $table->string('dms_passport_status')->nullable()->index()->comment('DMS (passport) verification status');
+            $table->string('dracs_name_change_status')->nullable()->index()->comment('DRACS (name change) verification status');
+            // --- End Section ---
+
             $table->integer('declaration_count')->nullable();
             $table->integer('declaration_limit')->nullable();
         });

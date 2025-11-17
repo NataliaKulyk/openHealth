@@ -9,6 +9,7 @@ use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Log;
 
@@ -22,6 +23,32 @@ class PartyVerify extends Component
     public string $status = '';
     public string $reason = '';
     public string $comment = '';
+
+    #[Computed]
+    public function canUpdateDracs(): bool
+    {
+        $status = data_get($this->verificationDetails, 'details.dracs_death.verification_status');
+
+        return $status === 'NOT_VERIFIED';
+    }
+
+    #[Computed]
+    public function drfoNotVerified(): bool
+    {
+        return data_get($this->verificationDetails, 'details.drfo.verification_status') === 'NOT_VERIFIED';
+    }
+
+    #[Computed]
+    public function dracsDeathNotVerified(): bool
+    {
+        return data_get($this->verificationDetails, 'details.dracs_death.verification_status') === 'NOT_VERIFIED';
+    }
+
+    #[Computed]
+    public function hasVerificationWarnings(): bool
+    {
+        return $this->drfoNotVerified || $this->dracsDeathNotVerified;
+    }
 
     public function mount(LegalEntity $legalEntity, Party $party): void
     {
@@ -48,8 +75,8 @@ class PartyVerify extends Component
     {
         $this->validate(
             [
-                'status'  => 'required|string',
-                'reason'  => 'required|string',
+                'status' => 'required|string',
+                'reason' => 'required|string',
                 'comment' => 'nullable|string',
             ]
         );
