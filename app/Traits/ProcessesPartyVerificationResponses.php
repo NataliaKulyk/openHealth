@@ -9,6 +9,7 @@ use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Notifications\PartyVerificationStatusChanged;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 trait ProcessesPartyVerificationResponses
 {
@@ -21,11 +22,12 @@ trait ProcessesPartyVerificationResponses
      * @param  EHealthResponse  $response  The API response object.
      * @param  LegalEntity  $legalEntity  The legal entity context.
      * @return void
-     * @throws \Throwable If the upsert operation fails.
+     * @throws Throwable If the upsert operation fails.
      */
     private function processPartyVerificationResponse(EHealthResponse $response, LegalEntity $legalEntity): void
     {
         $validatedData = $response->validate();
+
         $eHealthStatuses = $response->map($validatedData);
 
         if (empty($eHealthStatuses)) {
@@ -34,10 +36,6 @@ trait ProcessesPartyVerificationResponses
             return;
         }
 
-        /**
-         * Step 1: Fetch the current state of relevant parties from the local database.
-         * We load the 'users' relation eagerly to avoid N+1 queries later when sending notifications.
-         */
         $partyUuids = array_keys($eHealthStatuses);
         $localParties = Party::whereIn('uuid', $partyUuids)
             ->with('users')
@@ -49,29 +47,45 @@ trait ProcessesPartyVerificationResponses
 
             return;
         }
+
         Log::info("Found " . $localParties->count() . " local parties to check against eHealth statuses.");
 
-        /**
-         * Step 2: Prepare data for the bulk 'upsert' operation.
-         */
         $upsertData = [];
-        foreach ($eHealthStatuses as $uuid => $newStatus) {
+        foreach ($eHealthStatuses as $uuid => $newStatusItem) {
             $party = $localParties->get($uuid);
-            if ($party && $party->verification_status !== $newStatus) {
-                // Provide all NOT NULL fields to ensure INSERT succeeds
-                // if `upsert` chooses that path instead of UPDATE.
-                $upsertData[] = [
-                    'uuid' => $uuid,
-                    'verification_status' => $newStatus,
-                    'last_name' => $party->last_name,   // Added to prevent NOT NULL violation
-                    'first_name' => $party->first_name, // Added to prevent NOT NULL violation
-                    // NOTE: Add any other non-nullable fields here if they exist
+            if ($party) {
+
+                $newStatuses = [
+                    'verification_status' => data_get($newStatusItem, 'verification_status'),
+                    'drfo_status' => data_get($newStatusItem, 'details.drfo.verification_status'),
+                    'dracs_death_status' => data_get($newStatusItem, 'details.dracs_death.verification_status'),
+                    'mvs_passport_status' => data_get($newStatusItem, 'details.mvs_passport.verification_status'),
+                    'dms_passport_status' => data_get($newStatusItem, 'details.dms_passport.verification_status'),
+                    'dracs_name_change_status' => data_get($newStatusItem, 'details.dracs_name_change.verification_status'),
                 ];
+
+                $isChanged = $party->verification_status !== $newStatuses['verification_status']
+                    || $party->drfo_status !== $newStatuses['drfo_status']
+                    || $party->dracs_death_status !== $newStatuses['dracs_death_status']
+                    || $party->mvs_passport_status !== $newStatuses['mvs_passport_status']
+                    || $party->dms_passport_status !== $newStatuses['dms_passport_status']
+                    || $party->dracs_name_change_status !== $newStatuses['dracs_name_change_status'];
+
+                if ($isChanged) {
+                    $upsertData[] = array_merge(
+                        [
+                            'uuid' => $uuid,
+                            'last_name' => $party->last_name,
+                            'first_name' => $party->first_name,
+                        ],
+                        $newStatuses
+                    );
+                }
             }
         }
 
         /**
-         * Step 3: Execute the single 'upsert' query.
+         * Step 4: Perform the 'upsert'.
          */
         $successfullyUpdatedCount = 0;
         if (!empty($upsertData)) {
@@ -81,17 +95,22 @@ trait ProcessesPartyVerificationResponses
                 Party::upsert(
                     values: $upsertData,
                     uniqueBy: ['uuid'],
-                    // Only the verification_status should be updated if the record exists.
-                    update: ['verification_status']
+                    update: [
+                                'verification_status',
+                                'drfo_status',
+                                'dracs_death_status',
+                                'mvs_passport_status',
+                                'dms_passport_status',
+                                'dracs_name_change_status',
+                            ]
                 );
 
                 $successfullyUpdatedCount = count($upsertData);
                 Log::info("[UPSERT SUCCEEDED] Upsert finished (potentially updated {$successfullyUpdatedCount} records).");
 
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Log::error('[UPSERT FAILED] The upsert call failed.', [
                     'error' => $e->getMessage(),
-                    // Log the first item to avoid oversized logs
                     'first_item_passed_to_upsert' => $upsertData[0] ?? 'empty'
                 ]);
                 throw $e;
@@ -102,18 +121,17 @@ trait ProcessesPartyVerificationResponses
         }
 
         /**
-         * Step 4: Determine and send notifications based on specific status changes.
+         * Step 5: Define and send notifications.
          */
         foreach ($localParties as $uuid => $party) {
-            $newStatus = $eHealthStatuses[$uuid] ?? null;
-            $oldStatus = $party->verification_status; // The status as it was before this job ran
+            $newOverallStatus = $eHealthStatuses[$uuid]['verification_status'] ?? null;
+            $oldStatus = $party->verification_status;
 
-            // Send notification ONLY if the status changed FROM 'VERIFIED' TO something else
-            if ($newStatus && $oldStatus === 'VERIFIED' && $newStatus !== 'VERIFIED') {
+            if ($newOverallStatus && $oldStatus === 'VERIFIED' && $newOverallStatus !== 'VERIFIED') {
                 $usersToNotify = $party->users;
                 foreach ($usersToNotify as $userToNotify) {
-                    Log::info("Notifying user about status change.", ['user_id' => $userToNotify->id, 'party_uuid' => $uuid, 'old_status' => $oldStatus, 'new_status' => $newStatus]);
-                    $userToNotify->notify(new PartyVerificationStatusChanged($party, $newStatus, $legalEntity));
+                    Log::info("Notifying user about status change.", ['user_id' => $userToNotify->id, 'party_uuid' => $uuid, 'old_status' => $oldStatus, 'new_status' => $newOverallStatus]);
+                    $userToNotify->notify(new PartyVerificationStatusChanged($party, $newOverallStatus, $legalEntity));
                 }
             }
         }

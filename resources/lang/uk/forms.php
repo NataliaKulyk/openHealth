@@ -208,6 +208,7 @@ return [
     'save_and_send' => 'Зберегти та надіслати',
     'cyrillic_with_spaces_and_dots' => ':Attribute має містити лише кириличні символи, пробіли та крапки.',
     'update_verification_status_dracs' => 'Оновити статус верифікації співробітника в ДРАЦС',
+    'no_positions_found' => 'Посади відсутні',
 
     // Documents
     'documents' => 'Документи',
