@@ -16,18 +16,16 @@ class EmployeeRequestShow extends EmployeeComponent
 
     #[Locked]
     public ?int $employeeRequestId = null;
-
-    public bool        $isPersonalDataLocked       = true;
-    public bool        $isPositionDataLocked       = true;
-    public bool        $isPartyDataPartiallyLocked = false;
-    public ?Collection $partyUsers                 = null;
-
+    public bool $isPersonalDataLocked = true;
+    public bool $isPositionDataLocked = true;
+    public bool $isPartyDataPartiallyLocked = false;
+    public ?Collection $partyUsers = null;
 
     public function mount(LegalEntity $legalEntity, EmployeeRequest $employee_request): void
     {
         $this->loadDictionaries();
         $this->loadDivisions($legalEntity);
-        $this->employee          = $employee_request;
+        $this->employee = $employee_request;
         $this->employeeRequestId = $employee_request->id;
         $this->form->hydrate($this->employee);
     }

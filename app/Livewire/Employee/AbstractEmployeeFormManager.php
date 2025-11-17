@@ -15,7 +15,6 @@ use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Employee\BaseEmployee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
-use App\Models\Relations\Party;
 use App\Models\Revision;
 use App\Models\User;
 use Auth;
@@ -52,8 +51,8 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
     public ?Collection $partyUsers = null;
 
     /**
-     * Email, обраний у випадаючому списку в 'position_add'.
-     * Ми НЕ МОЖЕМО використовувати 'form.party.email', бо він вже зайнятий.
+     * Email selected in the drop-down list in 'position_add'.
+     * We CANNOT use 'form.party.email' because it is already occupied.
      */
     public ?string $formEmail = null;
 
@@ -331,13 +330,14 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
     #[Computed]
     public function canEnableNoTaxId(): bool
     {
-        foreach ($this->form->documents as $document) {
-            if (!empty($document['number']) && in_array($document['type'], ['PASSPORT', 'NATIONAL_ID', 'REFUGEE_CERTIFICATE'])) {
-                return true;
-            }
-        }
+        return array_any(
+            $this->form->documents,
+            fn ($document) => !empty($document['number']) && in_array(
+                $document['type'],
+                ['PASSPORT', 'NATIONAL_ID', 'REFUGEE_CERTIFICATE']
+            )
+        );
 
-        return false;
     }
 
     /**

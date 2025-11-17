@@ -25,8 +25,14 @@
                         <div role="alert"
                              class="mt-4 p-4 text-sm text-left text-gray-700 bg-gray-50 rounded-lg dark:bg-gray-700 dark:text-gray-300"
                         >
-                            {{ __('employees.dismissalWarning') }}
+                            @if ($dismissalMessageType === 'doctor')
+                                {{ __('employees.dismissal_warning_doctor') }}
+                            @else
+                                {{ __('employees.dismissal_warning') }}
+                            @endif
                         </div>
+
+
 
                         <div class="mt-6 flex justify-center gap-4">
                             <button type="button" @click="show = false" class="button-minor">

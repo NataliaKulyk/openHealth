@@ -30,6 +30,7 @@ class EmployeeCreate
         $employeeRequests = EmployeeRequest::with('revision')
             ->where('status', RequestStatus::SIGNED)
             ->where('email', $user->email)
+            ->whereNull('employee_id')
             ->orderBy('created_at', 'desc')
             ->get();
 

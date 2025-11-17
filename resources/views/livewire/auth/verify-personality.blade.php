@@ -82,7 +82,7 @@
                         wire:target="login"
                 >
                     <span wire:loading.remove wire:target="login">{{ __('forms.to_enter') }}</span>
-                    <span wire:loading wire:target="login">Signing...</span>
+                    <span wire:loading wire:target="login">{{ __('general.loading') }}</span>
                 </button>
             </div>
         </form>

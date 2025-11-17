@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Jobs\Traits\AppliesEmployeeRequestChanges;
 use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\EHealthResponse;
 use App\Core\EHealthJob;
 use App\Enums\Employee\RequestStatus as LocalStatus;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
-use App\Repositories\Repository;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\Middleware\RateLimited;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class EmployeeRequestsSyncAll extends EHealthJob
 {
+    use AppliesEmployeeRequestChanges;
+
     public const string BATCH_NAME = 'EmployeeRequestsSyncAll';
     public const string SCOPE_REQUIRED = 'employee_request:read';
     public const string ENTITY = LegalEntity::ENTITY_EMPLOYEE;
@@ -43,11 +44,6 @@ class EmployeeRequestsSyncAll extends EHealthJob
 
     /**
      * Processes the API response for a page of employee requests.
-     *
-     * It compares the statuses from eHealth with local 'SIGNED' records.
-     * 'REJECTED'/'EXPIRED' statuses are updated immediately. 'APPROVED' requests
-     * are collected and processed to apply changes from the latest revision
-     * for each unique employee.
      *
      * @param  EHealthResponse|null  $response  The API response object.
      * @return void
@@ -109,43 +105,6 @@ class EmployeeRequestsSyncAll extends EHealthJob
             }
         }
         Log::info('[EmployeeRequestsSyncAll] --- Finished processing page ' . $this->page . ' ---');
-    }
-
-    /**
-     * Applies the data from a specific EmployeeRequest's revision to its associated Employee model.
-     *
-     * @param  EmployeeRequest  $request  The employee request containing the revision data.
-     * @return bool True on success, false on failure.
-     * @throws Throwable
-     */
-    private function applyChangesFromRevision(EmployeeRequest $request): bool
-    {
-        $employeeToUpdate = $request->employee;
-        $revisionData = $request->revision?->data;
-
-        if (!$employeeToUpdate || !$revisionData) {
-            Log::warning('[EmployeeRequestsSyncAll] Skipping update: missing employee or revision data.', ['request_id' => $request->id]);
-
-            return false;
-        }
-
-        $mappedData = EHealth::employeeRequest()->mapCreate($revisionData);
-
-        Repository::employee()->updateDetails(
-            $employeeToUpdate,
-            $mappedData['party'],
-            $mappedData['documents'],
-            $mappedData['phones'],
-            $mappedData['educations'] ?? null,
-            $mappedData['specialities'] ?? null,
-            $mappedData['qualifications'] ?? null,
-            $mappedData['science_degree'] ?? null
-        );
-        $employeeToUpdate->update(Arr::get($mappedData, 'employee', []));
-
-        Log::info('[EmployeeRequestsSyncAll] Successfully applied changes for employee ID: ' . $employeeToUpdate->id);
-
-        return true;
     }
 
     /**

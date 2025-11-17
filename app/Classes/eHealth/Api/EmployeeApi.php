@@ -13,51 +13,7 @@ use Spatie\Permission\Models\Role;
 
 class EmployeeApi
 {
-    public const URL_REQUEST = '/api/employee_requests';
-    public const URL_REQUEST_MIS = '/api/mis/employee_requests';
-    public const URL_REQUEST_V2 = '/api/v2/employee_requests';
-
     public const URL = '/api/employees';
-
-    public static function _get($params): array
-    {
-        return new Request('GET', self::URL, $params)->sendRequest();
-    }
-
-    public static function _create($params = []): array
-    {
-        return new Request('POST', self::URL_REQUEST_V2, $params)->sendRequest();
-    }
-
-    public static function _dismissed($id): array
-    {
-        return new Request('PATCH', self::URL.'/'.$id.'/actions/deactivate', [])->sendRequest();
-    }
-
-    public static function _getById($id)
-    {
-        return new Request('GET', self::URL.'/'.$id, [])->sendRequest();
-    }
-
-    public static function _getRequestList($data): array
-    {
-        return new Request('GET', self::URL_REQUEST, $data)->sendRequest();
-    }
-
-    public static function _getRequestById($id): array
-    {
-        return new Request('GET', self::URL_REQUEST.'/'.$id, [])->sendRequest();
-    }
-
-    public static function _getRequestByIdMis($id): array
-    {
-        return new Request('GET', self::URL_REQUEST_MIS.'/'.$id, [])->sendRequest();
-    }
-
-    public function getApikey(): string
-    {
-        return config('ehealth.api.api_key');
-    }
 
     /**
      * Authenticate user with eHealth
@@ -109,91 +65,6 @@ class EmployeeApi
     public static function getUserDetails(): array
     {
         return new Request('GET', config('ehealth.api.oauth.user'), [])->sendRequest();
-    }
-
-    /**
-     * Get a list of employees from E-Health with pagination and optional filters.
-     *
-     * @param array $filters An associative array of query parameters to filter the results.
-     *
-     * @return array
-     * @throws ApiException
-     */
-    public static function getEmployeesList(array $filters): array
-    {
-        $employees = [];
-        $page = 1;
-        $perPage = config('ehealth.api.page_size', 150);
-        $totalPages = 1;
-
-        while ($page <= $totalPages) {
-            $queryParams = array_merge($filters, [
-                'page' => $page,
-                'page_size' => $perPage
-            ]);
-
-            $response = new Request('GET', self::URL, $queryParams)->sendRequest();
-
-            if (isset($response['data']) && is_array($response['data'])) {
-                array_push($employees, ...$response['data']);
-            }
-
-            $totalPages = $response['paging']['total_pages'] ?? 1;
-            $page++;
-        }
-
-        if (count($employees) > 1) {
-            $ownerIndex = array_search('OWNER', array_column($employees, 'employee_type'), true);
-            if ($ownerIndex !== false) {
-                $tmp = $employees[$ownerIndex];
-                $employees[$ownerIndex] = $employees[0];
-                $employees[0] = $tmp;
-            }
-        }
-
-        return $employees;
-    }
-
-    /**
-     * Retrieve Employee Details by it's uuid
-     *
-     * @param string $employeeId
-     *
-     * @return array
-     * @throws ApiException
-     */
-    public static function getEmployeeData(string $employeeId): array
-    {
-        $url = config('ehealth.api.domain') . "/api/employees/$employeeId";
-
-        return new Request('GET', $url, [])->sendRequest();
-    }
-
-    /**
-     * Retrieve EmployeeRequest Details by it's uuid
-     *
-     * @param  string  $requestId
-     * @return array
-     * @throws ApiException
-     */
-    public static function getEmployeeRequeestData(string $requestId): array
-    {
-        $url = config('ehealth.api.domain') . "/api/employee_requests/$requestId";
-
-        return new Request('GET', $url, [])->sendRequest();
-    }
-
-    private static function excludeContractPermissions(array $permissions): array
-    {
-        $contractPermissions = [
-            'contract:write',
-            'contract_request:approve',
-            'contract_request:create',
-            'contract_request:sign',
-            'contract_request:terminate',
-        ];
-
-        return array_diff($permissions, $contractPermissions);
     }
 
     public static function schemaRequest(): array

@@ -54,28 +54,62 @@
                     <td class="td-input" x-text="specDict[scienceDegree.speciality]"></td>
                     <td class="td-input" x-text="scienceDegree.diplomaNumber"></td>
                     <td class="td-input">
-                        <div class="flex items-center space-x-2">
+                        <div
+                            x-data="{ openDropdown: false }"
+                            @keydown.escape.prevent.stop="openDropdown = false"
+                            @focusin.window="!$refs.panel.contains($event.target) && (openDropdown = false)"
+                            x-id="['dropdown-button']"
+                            class="relative"
+                        >
+                            {{-- Головна кнопка для випадаючого меню --}}
                             <button
-                                @click.prevent="
-                                    openModal = true;
-                                    isNew = false;
-                                    modalScienceDegree = new ScienceDegree(scienceDegree);
-                                "
+                                x-ref="button"
+                                @click="openDropdown = !openDropdown"
+                                :aria-expanded="openDropdown"
+                                :aria-controls="$id('dropdown-button')"
+                                type="button"
                                 class="cursor-pointer"
                             >
+                                {{-- Іконка редагування, яка тепер відкриває меню --}}
                                 <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 svg-hover-action" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                     <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2" d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z"></path>
                                 </svg>
                             </button>
 
-                            <button
-                                @click.prevent="scienceDegree = new ScienceDegree()"
-                                class="cursor-pointer"
+                            {{-- Панель випадаючого меню --}}
+                            <div
+                                x-ref="panel"
+                                x-show="openDropdown"
+                                x-transition.origin.top.left
+                                @click.outside="openDropdown = false"
+                                :id="$id('dropdown-button')"
+                                class="dropdown-panel absolute"
+                                style="left: -120%; display: none;"
                             >
-                                <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 svg-hover-delete" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
-                                </svg>
-                            </button>
+                                {{-- Кнопка "Редагувати" --}}
+                                <button
+                                    @click.prevent="
+                                        openModal = true;
+                                        isNew = false;
+                                        modalScienceDegree = new ScienceDegree(scienceDegree);
+                                        openDropdown = false;
+                                    "
+                                    class="dropdown-button"
+                                >
+                                    {{ __('forms.edit') }}
+                                </button>
+
+                                {{-- Кнопка "Видалити" --}}
+                                <button
+                                    @click.prevent="
+                                        scienceDegree = new ScienceDegree();
+                                        openDropdown = false;
+                                    "
+                                    class="dropdown-button dropdown-delete"
+                                >
+                                    {{ __('forms.delete') }}
+                                </button>
+                            </div>
                         </div>
                     </td>
                 </tr>

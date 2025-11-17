@@ -67,6 +67,7 @@ class EmployeeIndex extends EmployeeComponent
     public ?string $deleteRequestName = null;
 
     public ?string $batchId = null;
+    public string $dismissalMessageType = 'default';
 
     private LegalEntity $legalEntity;
 
@@ -95,18 +96,24 @@ class EmployeeIndex extends EmployeeComponent
     {
         // === Step 1: Eager load existing Parties that have any relevant positions ===
         $realParties = Party::query()
-            // Find parties that have either active employees...
             ->whereHas('employees', fn ($sub) => $sub->where('legal_entity_id', $this->legalEntity->id))
             // ...or have pending/signed requests.
-            ->orWhereHas('employeeRequests', fn ($sub) => $sub->where('legal_entity_id', $this->legalEntity->id))
-            // Eager load all required relations to prevent N+1 queries and Lazy Loading exceptions
+            ->orWhereHas(
+                'employeeRequests',
+                fn ($sub) => $sub
+                    ->where('legal_entity_id', $this->legalEntity->id)
+                    ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
+            )
             ->with([
                        'phones',
                        'employees.division',
-                       'employees.user',           // For the position's email row
-                       'employeeRequests.revision',  // For draft data
+                       'employees.user',
+                       'employeeRequests' => fn ($query) => $query
+                           ->whereIn('status', [Status::NEW->value, Status::SIGNED->value]),
+
+                       'employeeRequests.revision',
                        'employeeRequests.division',
-                       'users'                   // For the party header email(s)
+                       'users'
                    ])
             ->get();
 
@@ -196,7 +203,12 @@ class EmployeeIndex extends EmployeeComponent
                     }
                 }
 
-                // Filter by verification status (handles 'Verified Only' or 'Not Verified Only')
+                if (in_array('DRACS_DEATH_NOT_VERIFIED', $this->status, true)) {
+                    if ($party->dracs_death_status !== 'NOT_VERIFIED') {
+                        return false;
+                    }
+                }
+
                 if (in_array('VERIFIED', $this->status, true) && !in_array(
                     'NOT_VERIFIED',
                     $this->status,
@@ -278,6 +290,13 @@ class EmployeeIndex extends EmployeeComponent
 
         $this->employeeToDeactivateName = $employee->party->fullName ?? __('employees.modals.deactivate.default_name');
         $this->employeeToDeactivateId = $id;
+
+        if ($employee->employee_type === 'DOCTOR') {
+            $this->dismissalMessageType = 'doctor';
+        } else {
+            $this->dismissalMessageType = 'default';
+        }
+
         $this->showDeactivateModal = true;
     }
 
@@ -287,7 +306,8 @@ class EmployeeIndex extends EmployeeComponent
     public function closeModal(): void
     {
         $this->showDeactivateModal = false;
-        $this->reset(['employeeToDeactivateId', 'employeeToDeactivateName']);
+
+        $this->reset(['employeeToDeactivateId', 'employeeToDeactivateName', 'dismissalMessageType']);
     }
 
     public function resetFilters(): void
@@ -310,13 +330,15 @@ class EmployeeIndex extends EmployeeComponent
         }
 
         try {
-            $response = EmployeeRequestApi::dismissedEmployeeRequest($employee->uuid);
+            $endDate = Carbon::now('UTC')->format('Y-m-d');
+
+            $response = EHealth::employee()->deactivate($employee->uuid, $endDate);
 
             if (!empty($response)) {
                 $employee->update(
                     [
                         'status' => Status::DISMISSED->value,
-                        'end_date' => Carbon::now()->format('Y-m-d'),
+                        'end_date' => $endDate,
                     ]
                 );
 
@@ -504,48 +526,5 @@ class EmployeeIndex extends EmployeeComponent
         if (!empty($this->filter['position'])) {
             $query->where('position', $this->filter['position']);
         }
-    }
-
-    /**
-     * Fetches unassigned EmployeeRequests and applies filters to them manually.
-     *
-     * @return Collection
-     */
-    private function getUnassignedRequests(): Collection
-    {
-        // Only search for drafts if "New" status is selected
-        if (!in_array(Status::NEW->value, $this->status, true)) {
-            return collect();
-        }
-
-        $unassignedQuery = EmployeeRequest::query()
-            ->where('legal_entity_id', $this->legalEntity->id)
-            ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
-            ->whereNull('party_id')
-            ->with(['revision', 'division']);
-
-        // ... (the rest of the method remains the same)
-        $this->applyCommonFiltersToQuery($unassignedQuery);
-
-        // Manually apply filters that relate to party/revision data
-        return $unassignedQuery->get()->filter(function (EmployeeRequest $request) {
-            $revisionData = $request->revision->data ?? [];
-            $partyData = $revisionData['party'] ?? [];
-
-            if (!empty($this->search)) {
-                $fullName = strtolower(($partyData['last_name'] ?? '') . ' ' . ($partyData['first_name'] ?? '') . ' ' . ($partyData['second_name'] ?? ''));
-                if (!str_contains($fullName, strtolower($this->search))) {
-                    return false;
-                }
-            }
-
-            if (!empty($this->filter['email'])) {
-                if (stripos($partyData['email'] ?? '', $this->filter['email']) === false) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
     }
 }

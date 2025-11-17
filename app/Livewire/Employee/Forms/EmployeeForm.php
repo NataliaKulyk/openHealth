@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Employee\Forms;
 
 use App\Core\Arr;
+use App\Livewire\Employee\EmployeeCreate;
+use App\Livewire\Party\PartyEdit;
 use App\Models\Employee\BaseEmployee;
 use App\Rules\Cyrillic;
 use App\Rules\DocumentNumber;
@@ -64,10 +66,26 @@ class EmployeeForm extends Form
     {
         $partyRules = $this->partyRules();
 
-        // Merge the potentially modified party rules with the others.
+        // Specific logic for EmployeeCreate
+        if ($component instanceof EmployeeCreate) {
+            $partyRules['party.email'][] = new UniqueEmailInLegalEntity();
+        }
+
+        //
+        // If we are summoned by PartyEdit, we validate ONLY
+        // personal data (party) and documents.
+        if ($component instanceof PartyEdit) {
+            return array_merge(
+                $partyRules,
+                $this->documentsRules()
+            );
+        }
+
+        // Standard behavior for EmployeeCreate, EmployeeEdit, EmployeePositionAdd:
+        // validate everything (position, party, documents, doctor).
         return array_merge(
             $this->rootFieldsRules(),
-            $partyRules, // Use the modified $partyRules variable here
+            $partyRules,
             $this->documentsRules(),
             $this->doctorRules()
         );
@@ -88,7 +106,16 @@ class EmployeeForm extends Form
             'position' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['POSITION'] ?? []))],
             'employeeType' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['EMPLOYEE_TYPE'] ?? []))],
             'startDate' => ['required', 'date_format:Y-m-d'],
-            'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
+            'endDate' => [
+                'nullable',
+                Rule::when(
+                    !empty($this->endDate),
+                    [
+                        'date_format:Y-m-d',
+                        'after_or_equal:startDate',
+                    ]
+                ),
+            ],
             'divisionId' => [
                 Rule::requiredIf(function () {
                     $pharmacyTypes = config('ehealth.pharmacy_employee_types', []);
@@ -360,6 +387,7 @@ class EmployeeForm extends Form
             $this->position = $revisionData['employee_request_data']['position'] ?? $this->position;
             $this->employeeType = $revisionData['employee_request_data']['employee_type'] ?? $this->employeeType;
             $this->startDate = $revisionData['employee_request_data']['start_date'] ?? $this->startDate;
+            $this->endDate = $revisionData['employee_request_data']['end_date'] ?? $this->endDate;
         }
 
         // --- documents ---

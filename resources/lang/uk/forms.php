@@ -84,6 +84,7 @@ return [
     'send_files' => 'Відправити файли',
     'max_file_size_and_format' => 'Розмір завантажуваного файлу не більше 10МБ у форматі jpeg',
     'select_filter' => 'Оберіть фільтр',
+    'select_user_email' => 'Оберіть email',
     'success_response' => 'Запит виконано успішно',
     'notifications' => 'Сповіщення',
     'mark_as_read' => 'Позначити як прочитане',
@@ -97,6 +98,7 @@ return [
     // Legal Entity
     'institution' => 'Заклад',
     'create_legal_entity' => 'Новий заклад',
+    'edit_legal_entity' => 'Редагувати',
     'legal_entity_name' => 'Медична організація',
     'legal_entity_owner' => 'Представник організації',
     'legal_entity_info' => 'Інформація про заклад',
@@ -125,6 +127,7 @@ return [
     'legal_entity_updated' => 'Дані медичного закладу було оновлено',
     'details' => 'Деталі',
     'verification_NSZU' => 'Верифікація НСЗУ',
+    'verifications' => 'Верифікації',
     'comment_NSZU' => 'Коментар НСЗУ',
     'reviewed_NHS' => 'Перевірено НСЗУ',
     'status_in_the_system' => 'Статус закладу в системі',
@@ -376,7 +379,9 @@ return [
         'draft' => 'Чернетка',
         'drafts' => 'Чернетки',
         'unsynced' => 'Не синхронізовано',
-        'unknown' => 'Невідомо'
+        'dracs_death_unverified' => 'Потребує підтвердження смерті',
+        'unknown' => 'Невідомо',
+        'stopped' => 'Зупинений'
     ],
 
     // Declarations

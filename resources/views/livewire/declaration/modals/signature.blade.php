@@ -86,7 +86,7 @@
                         <button wire:click="sign" type="button" class="button-primary" wire:loading.attr="disabled"
                                 wire:target="sign">
                             <span wire:loading.remove wire:target="sign">{{ __('forms.sign') }}</span>
-                            <span wire:loading wire:target="sign">Signing...</span>
+                            <span wire:loading wire:target="sign">{{ __('general.loading') }}</span>
                         </button>
                     </div>
                 </div>
