@@ -251,7 +251,12 @@ class DeclarationIndex extends Component
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error while rejecting declaration request');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         } catch (Exception $exception) {
@@ -265,14 +270,11 @@ class DeclarationIndex extends Component
     /**
      * Delete declaration request with status DRAFT from DB.
      *
-     * @param  int  $id
+     * @param  DeclarationRequest  $declarationRequest
      * @return void
      */
-    public function delete(int $id): void
+    public function delete(DeclarationRequest $declarationRequest): void
     {
-        $declarationRequest = DeclarationRequest::select(['id', 'legal_entity_id', 'employee_id', 'status'])
-            ->findOrFail($id);
-
         if (Auth::user()?->cannot('delete', $declarationRequest)) {
             Session::flash('error', 'У вас немає дозволу на видалення заявки на подання декларації');
 
@@ -280,7 +282,7 @@ class DeclarationIndex extends Component
         }
 
         try {
-            DeclarationRequest::destroy($id);
+            DeclarationRequest::destroy($declarationRequest->id);
         } catch (Exception $exception) {
             $this->logDatabaseErrors($exception, 'Error while deleting declaration request');
             Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');

@@ -1,4 +1,4 @@
-<div x-show="showFilter">
+<div x-show="showFilter" wire:key="{{ random_int(1, 100) }}">
     <div class="form-row-3">
         <div class="form-group group">
             <input wire:model="form.patientsFilter.firstName"
@@ -215,7 +215,8 @@
                                         </label>
                                     </li>
                                     <li>
-                                        <label class="flex items-center space-x-2 cursor-pointer" @click=" open = false">
+                                        <label class="flex items-center space-x-2 cursor-pointer"
+                                               @click=" open = false">
                                             <input type="radio"
                                                    value="APPLICATION"
                                                    wire:model.live="activeFilter"

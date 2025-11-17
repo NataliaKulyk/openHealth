@@ -44,7 +44,7 @@ class DeclarationRequestPolicy
             return Response::denyWithStatus(404);
         }
 
-        $user->load(['party:id,user_id,tax_id', 'party.employees:id,uuid,party_id']);
+        $user->load(['party:id,tax_id', 'party.employees:id,uuid,party_id']);
         // Check if belongs to employee_id
         if (!$user->party->employees->contains('id', $declarationRequest->employeeId)) {
             return Response::denyWithStatus(404);
@@ -94,12 +94,12 @@ class DeclarationRequestPolicy
      */
     public function delete(User $user, DeclarationRequest $declarationRequest): Response
     {
-        if ($declarationRequest->legal_entity_id !== legalEntity()->id) {
+        if ($declarationRequest->legalEntityId !== legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
         // Check if belongs to employee_id
-        if (!$user->party->employees->contains('id', $declarationRequest->employee_id)) {
+        if (!$user->party->employees->contains('id', $declarationRequest->employeeId)) {
             return Response::denyWithStatus(404);
         }
 

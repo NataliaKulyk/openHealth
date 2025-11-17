@@ -124,7 +124,7 @@
                                             {{ __('declarations.continue') }}
                                         </a>
 
-                                        <button wire:click="delete('{{ $declaration['id'] }}')"
+                                        <button wire:click="delete({{ $declaration->getKey() }})"
                                                 @click="openDropdown = false"
                                                 class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
                                         >

@@ -7,6 +7,7 @@ namespace App\Livewire\Declaration;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Enums\Declaration\Status;
+use App\Enums\Person\AuthenticationMethod;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Declaration\Forms\DeclarationForm as Form;
@@ -49,36 +50,42 @@ abstract class DeclarationComponent extends Component
 
     /**
      * Check is patient sign form.
+     *
      * @var bool
      */
     public bool $isSigned = true;
 
     /**
      * Content that formatted by eHealth that we propose to print.
+     *
      * @var string
      */
     public string $printableContent;
 
     /**
      * List of documents that must be uploaded.
+     *
      * @var array
      */
     public array $uploadedDocuments;
 
     /**
      * Data that we sign with Cipher and then send to EHealth
+     *
      * @var array
      */
     public array $dataToBeSigned;
 
     /**
      * Patient full name.
+     *
      * @var string
      */
     public string $patientFullName;
 
     /**
      * List of patient authentication methods.
+     *
      * @var array
      */
     public array $authMethods;
@@ -87,6 +94,7 @@ abstract class DeclarationComponent extends Component
 
     /**
      * Check is sms was resent.
+     *
      * @var bool
      */
     public bool $smsResent = false;
@@ -95,18 +103,21 @@ abstract class DeclarationComponent extends Component
 
     /**
      * UUID of created declaration request.
+     *
      * @var string
      */
     public string $declarationRequestUuid;
 
     /**
      * ID of created declaration request.
+     *
      * @var null|int
      */
     public ?int $declarationRequestId = null;
 
     /**
      * Patient UUID, used for eHeath request.
+     *
      * @var string
      */
     protected string $patientUuid;
@@ -190,7 +201,7 @@ abstract class DeclarationComponent extends Component
 
             $this->declarationRequestUuid = $response->getData()['id'];
 
-            if ($response->getUrgent()['authentication_method_current']['type'] === 'OFFLINE') {
+            if ($response->getUrgent()['authentication_method_current']['type'] === AuthenticationMethod::OFFLINE->value) {
                 $this->uploadedDocuments = $response->getUrgent()['documents'];
             }
 
@@ -202,7 +213,12 @@ abstract class DeclarationComponent extends Component
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when creating a declaration');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }
@@ -275,7 +291,12 @@ abstract class DeclarationComponent extends Component
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when approving a declaration');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }
@@ -356,7 +377,12 @@ abstract class DeclarationComponent extends Component
                 return;
             } catch (EHealthValidationException|EHealthResponseException $exception) {
                 $this->logEHealthException($exception, 'Error when approving a declaration after sending files');
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+                if ($exception instanceof EHealthValidationException) {
+                    Session::flash('error', $exception->getFormattedMessage());
+                } else {
+                    Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+                }
 
                 return;
             }
@@ -385,7 +411,12 @@ abstract class DeclarationComponent extends Component
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when resending sms to person');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }
@@ -488,7 +519,12 @@ abstract class DeclarationComponent extends Component
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when signing declaration request');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }

@@ -25,6 +25,10 @@
                     </option>
                 @endforeach
             </select>
+
+            @error('form.authorizeWith')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
