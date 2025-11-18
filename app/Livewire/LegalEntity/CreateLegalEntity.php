@@ -490,7 +490,7 @@ class CreateLegalEntity extends LegalEntity
                 setPermissionsTeamId($this->legalEntity->id);
 
                 if (isset($response['data']['license'])) {
-                    $this->createLicense($response['data']['license']);
+                    $this->saveLicense($response['data']['license']);
                 }
 
                 $user = $this->createUser();

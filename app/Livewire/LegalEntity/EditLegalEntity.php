@@ -70,6 +70,7 @@ class EditLegalEntity extends LegalEntity
             $this->legalEntityForm->license = Arr::only(
                 $this->convertArrayKeysToCamelCase($license->toArray()),
                 [
+                    'uuid',
                     'type',
                     'licenseNumber',
                     'issuedBy',

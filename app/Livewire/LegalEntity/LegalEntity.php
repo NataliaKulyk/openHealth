@@ -364,15 +364,20 @@ abstract class LegalEntity extends Component
             'data.accreditation.expiry_date' => 'sometimes|string',
             'data.accreditation.order_no' => 'required_with:data.accreditation.category|string',
             'data.license' => 'nullable|array',
-            'data.license.uuid' => 'sometimes|string',
-            'data.license.type' => 'sometimes|string',
+            'data.license.uuid' => 'required_if:data.license,array|string',
+            'data.license.type' => 'required_if:data.license,array|string',
             'data.license.license_number' => 'sometimes|string',
             'data.license.issued_by' => 'sometimes|string',
             'data.license.issued_date' => 'sometimes|string',
             'data.license.expiry_date' => 'nullable|string',
+            'data.license.is_active' => 'nullable|boolean',
+            'data.license.ehealth_inserted_at' => 'required_if:data.license,array|string',
+            'data.license.ehealth_inserted_by' => 'required_if:data.license,array|string',
             'data.license.active_from_date' => 'sometimes|string',
             'data.license.what_licensed' => 'sometimes|string',
             'data.license.order_no' => 'sometimes|string',
+            'data.license.ehealth_updated_at' => 'required_if:data.license,array|string',
+            'data.license.ehealth_updated_by' => 'required_if:data.license,array|string',
             'data.archive' => 'nullable|array',
             'data.archive.*.date' => 'required_if:data.archive,array|string',
             'data.archive.*.place' => 'required_if:data.archive,array|string',
@@ -468,7 +473,13 @@ abstract class LegalEntity extends Component
      */
     private function prepareDataForRequest(array $data): array
     {
-        // TODO: check if need leave empty archive and accreditation if not checked when sending request to the ESOZ
+        if (Arr::has($data, 'license.uuid')) {
+            $uuid = Arr::pull($data, 'license.uuid');
+
+            if (! $this->isLicenseChanged($data['license'], $uuid)) {
+                $data['license'] = ['id' => $uuid];
+            }
+        }
 
         $data = $this->convertArrayKeysToSnakeCase($data);
 
@@ -519,6 +530,31 @@ abstract class LegalEntity extends Component
         $data['website'] ??= "";
 
         return $data;
+    }
+
+    /**
+     * Check if the license data has been changed for a given legal entity.
+     *
+     * @param array $data The new license data to compare
+     * @param string $uuid The unique identifier of the license model
+     *
+     * @return bool Returns true if the license has been changed, false otherwise
+     */
+    protected function isLicenseChanged(array $data, string $uuid): bool
+    {
+        $license = License::where('uuid', $uuid)->first()->toArray();
+
+        if (empty($license)) {
+            return true;
+        }
+
+        foreach ($data as $key => $value) {
+            if ($value !== $license[$key]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -777,6 +813,8 @@ abstract class LegalEntity extends Component
             $this->phoneRepository->syncPhones($this->legalEntity, $legalEntityData['phones']);
 
             $this->legalEntity->refresh();
+
+            $this->saveLicense($data['data']['license']);
         } catch (Exception $err) {
             throw new Exception('LegalEntity Create Error: ' . $err->getMessage());
         }
@@ -789,11 +827,9 @@ abstract class LegalEntity extends Component
      *
      * @param array $data The data to fill the license with.
      */
-    protected function createLicense(array $data): void
+    protected function saveLicense(array $data): void
     {
-        $uuid = Arr::pull($data, 'uuid', '');
-
-        $license = License::firstOrNew(['uuid' => $uuid]);
+        $license = License::firstOrNew(['uuid' => $data['uuid']]);
         $license->fill($data);
         $license->is_primary = true;
 

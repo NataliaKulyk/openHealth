@@ -13,8 +13,7 @@
     xmlns="http://www.w3.org/1999/html"
     x-data="{
         title: '{{ __('forms.licenses') }}',
-        index: 6,
-        isDisabled: @json($isEdit)
+        index: 6
     }"
     x-init="typeof addHeader !== 'undefined' && addHeader(title, index)"
     x-show="activeStep === index || isEdit"
