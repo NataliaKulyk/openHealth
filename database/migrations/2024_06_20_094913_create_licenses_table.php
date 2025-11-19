@@ -20,7 +20,7 @@ return new class extends Migration
             $table->id();
             $table->string('uuid')->unique()->nullable();
             $table->foreignId('legal_entity_id')->constrained()->cascadeOnDelete();
-            $table->enum('type', array_column(Type::cases(), 'value'));
+            $table->enum('type', Type::values());
             $table->boolean('is_active')->nullable();
             $table->string('issued_by');
             $table->date('issued_date');
@@ -32,9 +32,9 @@ return new class extends Migration
             $table->string('what_licensed');
             $table->boolean('is_primary')->default(false);
             $table->date('ehealth_inserted_at')->nullable();
-            $table->string('ehealth_inserted_by')->nullable();
+            $table->uuid('ehealth_inserted_by')->nullable();
             $table->date('ehealth_updated_at')->nullable();
-            $table->string('ehealth_updated_by')->nullable();
+            $table->uuid('ehealth_updated_by')->nullable();
             $table->timestamps();
         });
     }

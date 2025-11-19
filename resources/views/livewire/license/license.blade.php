@@ -1,4 +1,5 @@
 <div class="form"
+     wire:key="{{ random_int(1, 100) }}"
       x-data="{
           licenseType: $wire.entangle('form.type'),
           licenseTypes: @js($licenseTypes)
@@ -29,6 +30,10 @@
             />
 
             <label for="orderNumber" class="label">{{ __('licenses.order_no') }}</label>
+
+            @error('form.orderNo')
+                <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -72,6 +77,10 @@
 
             <label class="label" for="licenseType">{{ __('licenses.type') }}</label>
             <input type="hidden" name="licenseType" :value="selected">
+
+            @error('form.type')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -86,7 +95,12 @@
                    required
             />
             <label for="issuedBy" class="label">{{ __('licenses.issued_by') }}</label>
+
+            @error('form.issuedBy')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
+
         <div class="form-group">
             <input wire:model="form.whatLicensed"
                    type="text"
@@ -97,6 +111,10 @@
                    required
             />
             <label for="whatLicensed" class="label">{{ __('licenses.what_licensed') }}</label>
+
+            @error('form.whatLicensed')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -110,6 +128,10 @@
                    placeholder=" "
             />
             <label for="licenseNumber" class="label">{{ __('licenses.number') }}</label>
+
+            @error('form.licenseNumber')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="form-group datepicker-wrapper relative w-full">
@@ -120,9 +142,14 @@
                    class="peer input pl-10 appearance-none datepicker-input"
                    placeholder=" "
                    required
-                   datepicker-max-date="{{ now()->format('Y-m-d') }}"
+                   datepicker-max-date="{{ now()->format('d.m.Y') }}"
+                   datepicker-format="dd.mm.yyyy"
             />
             <label for="dateOfLicenseIssuance" class="wrapped-label">{{ __('licenses.issued_date') }}</label>
+
+            @error('form.issuedDate')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -135,9 +162,14 @@
                    class="peer input pl-10 appearance-none datepicker-input"
                    placeholder=" "
                    required
-                   datepicker-max-date="{{ now()->format('Y-m-d') }}"
+                   datepicker-max-date="{{ now()->format('d.m.Y') }}"
+                   datepicker-format="dd.mm.yyyy"
             />
             <label for="activeFromDate" class="wrapped-label">{{ __('licenses.active_from_date') }}</label>
+
+            @error('form.activeFromDate')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="form-group datepicker-wrapper relative w-full">
@@ -147,9 +179,14 @@
                    id="expiryDate"
                    class="peer input pl-10 appearance-none datepicker-input"
                    placeholder=" "
-                   datepicker-min-date="{{ now()->format('Y-m-d') }}"
+                   datepicker-min-date="{{ now()->format('d.m.Y') }}"
+                   datepicker-format="dd.mm.yyyy"
             />
             <label for="expiryDate" class="wrapped-label">{{ __('licenses.expiry_date') }}</label>
+
+            @error('form.expiryDate')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 

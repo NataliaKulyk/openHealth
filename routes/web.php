@@ -75,8 +75,6 @@ use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\MedicalEvents\Sql\Procedure;
 use App\Models\Person\Person;
 use App\Models\Person\PersonRequest;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -132,7 +130,7 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
             Route::get('/', Dashboard::class)->name('dashboard');
 
             Route::get('/edit', EditLegalEntity::class)
-                ->can('edit','legalEntity')
+                ->can('edit', 'legalEntity')
                 ->name('legal-entity.edit');
 
             Route::get('/create', CreateLegalEntity::class)
@@ -217,17 +215,8 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
 
                     Route::middleware(['can:view,license'])->prefix('{license}')
                         ->whereNumber('license')->group(function () {
-                            Route::get('/', static function (LegalEntity $legalEntity, License $license) {
-                                if (Gate::allows('update', [$license, $legalEntity]) &&
-                                    !$license->isPrimary && $legalEntity->type->name === LegalEntity::TYPE_PHARMACY) {
-                                    return App::call(LicenseEdit::class, [$legalEntity, $license]);
-                                } elseif (Gate::allows('view', [$license, $legalEntity])) {
-                                    return App::call(LicenseView::class, [$legalEntity, $license]);
-                                }
-
-                                // If both check is false
-                                abort(404);
-                            })->name('view');
+                            Route::get('/', LicenseView::class)->name('view')->can('view', 'license');
+                            Route::get('/edit', LicenseEdit::class)->name('edit')->can('update', 'license');
                         });
                 });
 

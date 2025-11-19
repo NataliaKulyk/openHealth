@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Casts\NullableDateCast;
 use App\Enums\License\Type;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,7 +30,7 @@ class License extends Model
         'ehealth_inserted_at',
         'ehealth_inserted_by',
         'ehealth_updated_at',
-        'ehealth_updated_by',
+        'ehealth_updated_by'
     ];
 
     protected $hidden = [
@@ -40,13 +39,9 @@ class License extends Model
 
     protected $casts = [
         'type' => Type::class,
-        'issued_date' => NullableDateCast::class,
-        'active_from_date' => NullableDateCast::class,
-        'expiry_date' => NullableDateCast::class,
-        'ehealth_inserted_at' => 'datetime',
-        'ehealth_inserted_by' => 'string',
-        'ehealth_updated_at' => 'datetime',
-        'ehealth_updated_by' => 'string',
+        'issued_date' => 'date:d.m.Y',
+        'active_from_date' => 'date:d.m.Y',
+        'expiry_date' => 'date:d.m.Y'
     ];
 
     public function legalEntity(): BelongsTo

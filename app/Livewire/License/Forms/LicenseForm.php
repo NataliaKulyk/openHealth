@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\License\Forms;
 
+use App\Core\Arr;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Form;
@@ -45,15 +46,41 @@ class LicenseForm extends Form
                     ->where('legal_entity_id', legalEntity()->id)
                     ->ignore($this->component->uuid, 'uuid')
             ],
-            'licenseNumber' => ['nullable', 'string'],
-            'issuedBy' => ['required', 'string'],
-            'issuedDate' => ['required', 'date', 'before_or_equal:activeFromDate'],
-            'expiryDate' => ['required_if:type,PHARMACY_DRUGS', 'date', 'after_or_equal:today'],
-            'activeFromDate' => ['required', 'date', 'before_or_equal:expiryDate'],
-            'whatLicensed' => ['required', 'string'],
-            'orderNo' => ['required', 'string'],
+            'licenseNumber' => ['nullable', 'string', 'max:255'],
+            'issuedBy' => ['required', 'string', 'max:255'],
+            'issuedDate' => ['required', 'date_format:d.m.Y', 'before_or_equal:activeFromDate'],
+            'expiryDate' => ['required_if:type,PHARMACY_DRUGS', 'date_format:d.m.Y', 'after_or_equal:today'],
+            'activeFromDate' => ['required', 'date_format:d.m.Y', 'before_or_equal:expiryDate'],
+            'whatLicensed' => ['required', 'string', 'max:255'],
+            'orderNo' => ['required', 'string', 'max:255'],
             'isPrimary' => ['required', Rule::in([false])]
         ];
+    }
+
+    /**
+     * Convert date to ISO 8601 and format to snake case.
+     */
+    public function toApiArray(): array
+    {
+        $data = $this->all();
+
+        collect($data)
+            ->only(['issuedDate', 'expiryDate', 'activeFromDate'])
+            ->each(static function (string $value, string $key) use (&$data) {
+                $data[$key] = convertToISO8601($value);
+            });
+
+        return removeEmptyKeys(Arr::toSnakeCase($data));
+    }
+
+    /**
+     * Redefine field names for error messages.
+     *
+     * @return array
+     */
+    protected function validationAttributes(): array
+    {
+        return ['type' => __('licenses.type')];
     }
 
     /**

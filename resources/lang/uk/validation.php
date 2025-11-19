@@ -397,14 +397,6 @@ return [
             ]
         ],
 
-        'license' => [
-            'licenseType' => 'Тип',
-            'issuedBy' => 'Орган яким виданий документ',
-            'issuedDate' => 'Дата видачі документа',
-            'orderNo' => 'Номер  наказу ',
-            'licenseNumber' => 'Номер ліцензії',
-            'activeFromDate' => 'Дата початку дії ліцензії',
-        ],
         'educations' => [
             'degree' => 'Ступінь',
             'speciality' => 'Спеціальність',
@@ -477,6 +469,7 @@ return [
 
         // Licence
         'issuedBy' => 'ким видано ліцензію',
+        'licenseNumber' => 'Серія та/або номер ліцензії',
         'issuedDate' => 'дата видачі ліцензії',
         'activeFromDate' => 'дата початку дії ліцензії',
         'orderNo' => 'номер наказу',
