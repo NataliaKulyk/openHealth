@@ -5,7 +5,17 @@
             aria-label="Notifications"
             class="cursor-pointer p-2 mr-1 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
     >
-        @icon('bell', 'w-6 h-6')
+        <div class="relative">
+
+            @icon('bell', 'w-6 h-6')
+
+            @if($notifications->count() > 0)
+                <div class="absolute -top-2 -right-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 border-2 border-white rounded-full dark:border-gray-800">
+                    {{ $notifications->count() }}
+                </div>
+            @endif
+
+        </div>
     </button>
 
     {{-- List of notifications --}}
@@ -14,9 +24,7 @@
          @click.away="open = false"
          class="absolute right-0 mt-2 w-80 max-w-sm bg-white rounded-xl shadow-lg z-50 overflow-hidden dark:bg-gray-700 dark:divide-gray-600"
     >
-        <div
-            class="block py-2 px-4 text-base font-medium text-center text-gray-700 bg-gray-50 dark:bg-gray-600 dark:text-gray-300"
-        >
+        <div class="block py-2 px-4 text-base font-medium text-center text-gray-700 bg-gray-50 dark:bg-gray-600 dark:text-gray-300">
             {{ __('forms.notifications') }}
         </div>
         <ul>
@@ -25,16 +33,12 @@
                     wire:transition
                     class="flex items-center justify-between px-4 py-2 border-b last:border-b-0 border-gray-100 dark:border-gray-600"
                 >
-
-                    {{-- Message --}}
                     <div>
                         <span class="text-gray-900 dark:text-white">{{ $notification->data['message'] ?? '' }}</span>
                         <small class="block text-xs text-gray-400">
                             {{ $notification->created_at->diffForHumans() }}
                         </small>
                     </div>
-
-                    {{-- Remove button --}}
                     <button wire:click="markAsRead('{{ $notification->id }}')"
                             type="button"
                             class="cursor-pointer ml-2 text-xs text-blue-600 hover:underline"

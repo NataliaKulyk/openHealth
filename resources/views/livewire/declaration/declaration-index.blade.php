@@ -2,13 +2,22 @@
 @use('Carbon\CarbonImmutable')
 
 <div>
-    <x-header-navigation x-data="{ showFilter: false }">
+    <x-header-navigation x-data="{ showFilter: false, synchronizing: false }">
         <x-slot name="title">{{ __('forms.declarations') }}</x-slot>
-
         <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
-            <button class="button-sync flex items-center gap-2 whitespace-nowrap">
-                @icon('refresh', 'w-4 h-4')
-                {{ __('forms.synchronise_with_eHealth') }}
+            <button
+                class="button-sync flex items-center gap-2 whitespace-nowrap"
+                wire:click="synchronize"
+                wire:loading.attr="disabled"
+                x-bind:disabled="synchronizing"
+                @click="synchronizing = true"
+            >
+                <div wire:loading.remove>@icon('refresh', 'w-4 h-4')</div>
+                <div wire:loading>
+                    @icon('loading-spinner', 'w-4 h-4 animate-spin')
+                </div>
+                <span wire:loading.remove>{{ __('forms.synchronise_with_eHealth') }}</span>
+                <span wire:loading>{{ __('forms.synchronising') }}...</span>
             </button>
         </div>
 
@@ -28,29 +37,31 @@
                             </div>
                         @endisset
                     </div>
+                    <div class="flex items-end gap-3 mt-1">
+                        <div class="form-group group top-3 flex-grow max-w-xs">
+                            <input type="text"
+                                   id="searchByName"
+                                   placeholder=" "
+                                   class="input peer"
+                                   wire:model.live.debounce.300ms="searchByName"
+                                   autocomplete="off"
+                            />
+                            <label for="searchByName" class="label">
+                                {{ __('patients.patient_full_name') }}
+                            </label>
+                        </div>
 
-                    {{-- Search by name --}}
-                    <div class="form-row-3 form-group group top-3 mt-2">
-                        <input type="text"
-                               id="searchByName"
-                               placeholder=" "
-                               class="input peer"
-                               wire:model.live.debounce.300ms="searchByName"
-                               autocomplete="off"
-                        />
-                        <label for="searchByName" class="label">
-                            {{ __('patients.patient_full_name') }}
-                        </label>
-
-                        <button class="flex items-center gap-2 button-minor" @click="showFilter = !showFilter">
+                        <button class="flex items-center gap-2 button-minor h-[44px] min-w-max px-4"
+                                @click="showFilter = !showFilter">
                             @icon('adjustments', 'w-4 h-4')
-                            <span>{{ __('forms.additional_search_parameters') }}</span>
+                            <span x-text="showFilter ? '{{ __('forms.additional_search_parameters') }}'">
+                                {{ __('forms.additional_search_parameters') }}
+                            </span>
                         </button>
                     </div>
 
                     {{-- Show additional filters --}}
-                    <div x-show="showFilter" x-cloak x-transition class="mt-12" x-data="{ openType: false }">
-                        {{-- Show different filters for owner --}}
+                    <div x-show="showFilter" x-cloak x-transition class="mt-8" x-data="{ openType: false }">
                         @if(Auth::user()->hasRole('OWNER'))
                             @include('livewire.declaration.parts.owner-filters')
                         @else
@@ -62,28 +73,30 @@
         </x-slot>
     </x-header-navigation>
 
-    <div wire:key="declarations-table-{{ $declarations->total() }}-{{ $declarations->currentPage() }}">
-        <div class="max-w-7xl mx-auto">
-            @if($declarations->isNotEmpty())
-                <table class="table-input w-full">
-                    <thead class="thead-input">
-                    <tr>
-                        <th scope="col" class="th-input">{{ __('forms.full_name') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.number') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.birth_date_abbreviated') }}</th>
-                        <th scope="col" class="th-input">{{ __('employees.doctor') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.status.label') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.action') }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($declarations as $declaration)
-                        <tr wire:key="{{ $declaration->declarationNumber }}">
-                            <td class="td-input">{{ $declaration->person->fullName }}</td>
-                            <td class="td-input">{{ $declaration->declarationNumber }}</td>
-                            <td class="td-input">{{ CarbonImmutable::parse($declaration->person->birth_date)->format('d.m.Y') }}</td>
-                            <td class="td-input">{{ $declaration->employee->fullName }}</td>
-                            <td class="td-input">
+    <div class="flow-root mt-8 shift-content pl-3.5">
+        <div class="max-w-screen-xl">
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <div wire:key="declarations-table-{{ $declarations->total() }}-{{ $declarations->currentPage() }}">
+                    @if($declarations->isNotEmpty())
+                        <table class="table-input w-full min-w-[1000px]">
+                            <thead class="thead-input">
+                            <tr>
+                                <th scope="col" class="th-input w-[25%]">{{ __('forms.full_name') }}</th>
+                                <th scope="col" class="th-input w-[15%]">{{ __('forms.number') }}</th>
+                                <th scope="col" class="th-input w-[15%]">{{ __('forms.birth_date_abbreviated') }}</th>
+                                <th scope="col" class="th-input w-[25%]">{{ __('employees.doctor') }}</th>
+                                <th scope="col" class="th-input w-[15%]">{{ __('forms.status.label') }}</th>
+                                <th scope="col" class="th-input w-[5%]">{{ __('forms.action') }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($declarations as $declaration)
+                                <tr wire:key="{{ $declaration->declarationNumber }}">
+                                    <td class="td-input">{{ $declaration->person->fullName }}</td>
+                                    <td class="td-input">{{ $declaration->declarationNumber }}</td>
+                                    <td class="td-input">{{ CarbonImmutable::parse($declaration->person->birth_date)->format('d.m.Y') }}</td>
+                                    <td class="td-input">{{ $declaration->employee->fullName }}</td>
+                                    <td class="td-input">
                                 <span class="{{
                                     match($declaration->status) {
                                         Status::DRAFT => 'badge-dark',
@@ -95,104 +108,108 @@
                                 }}">
                                     {{ $declaration->status->label() }}
                                 </span>
-                            </td>
-                            <td x-data="{ openDropdown: false }" class="relative td-input text-center overflow-visible">
-                                <button @click.stop="openDropdown = !openDropdown" type="button" class="cursor-pointer">
-                                    @if($declaration->type === 'declaration' || $declaration->status === Status::REJECTED)
-                                        @can('view', $declaration)
-                                            <a href="{{ route('declaration.view', [legalEntity(), $declaration->id]) }}">
-                                                @icon('eye', 'w-6 h-6 text-gray-800 dark:text-white')
-                                            </a>
-                                        @endcan
-                                    @else
-                                        @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-white')
-                                    @endif
-                                </button>
-
-                                <div x-show="openDropdown"
-                                     @click.outside="openDropdown = false"
-                                     x-transition
-                                     class="absolute right-0 mt-2 z-10 w-fit bg-white rounded divide-y divide-gray-100 shadow"
-                                     style="display: none"
-                                >
-                                    @if($declaration->type === 'request' && $declaration->status === Status::DRAFT)
-                                        <a href="{{ route('declaration.edit', [legalEntity(), $declaration->person->id, $declaration->id]) }}"
-                                           @click="openDropdown = false"
-                                           class="cursor-pointer text-[#222222] text-nowrap flex gap-3 items-center py-2 pl-4 pr-10"
-                                        >
-                                            @icon('check-circle', 'w-5 h-5 text-red-500')
-                                            {{ __('declarations.continue') }}
-                                        </a>
-
-                                        <button wire:click="delete({{ $declaration->getKey() }})"
-                                                @click="openDropdown = false"
-                                                class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
-                                        >
-                                            @icon('delete', 'w-5 h-5')
-                                            {{ __('declarations.delete') }}
+                                    </td>
+                                    <td x-data="{ openDropdown: false }" class="relative td-input text-center overflow-visible">
+                                        <button @click.stop="openDropdown = !openDropdown" type="button" class="cursor-pointer">
+                                            @if($declaration->type === 'declaration' || $declaration->status === Status::REJECTED)
+                                                @can('view', $declaration)
+                                                    <a href="{{ route('declaration.view', [legalEntity(), $declaration->id]) }}">
+                                                        @icon('eye', 'w-6 h-6 text-gray-800 dark:text-white')
+                                                    </a>
+                                                @endcan
+                                            @else
+                                                @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-white')
+                                            @endif
                                         </button>
-                                    @endif
 
-                                    @if($declaration->type === 'request' && $declaration->status === Status::NEW)
-                                        @can('approve', $declaration)
-                                            <button @click="openDropdown = false"
-                                                    wire:click="approve({{ $declaration->person->id }}, {{ $declaration->id }})"
-                                                    class="cursor-pointer text-[#222222] text-nowrap flex gap-3 items-center py-2 pl-4 pr-19"
-                                            >
-                                                @icon('check-circle', 'w-5 h-5 text-red-500')
-                                                {{ __('declarations.approve') }}
-                                            </button>
-                                        @endcan
+                                        <div x-show="openDropdown"
+                                             @click.outside="openDropdown = false"
+                                             x-transition
+                                             class="absolute right-0 mt-2 z-10 w-fit bg-white rounded divide-y divide-gray-100 shadow"
+                                             style="display: none"
+                                        >
+                                            @if($declaration->type === 'request')
+                                                @if($declaration->status === Status::DRAFT)
+                                                    <a href="{{ route('declaration.edit', [legalEntity(), $declaration->person->id, $declaration->id]) }}"
+                                                       @click="openDropdown = false"
+                                                       class="cursor-pointer text-[#222222] text-nowrap flex gap-3 items-center py-2 pl-4 pr-10 hover:bg-gray-100"
+                                                    >
+                                                        @icon('check-circle', 'w-5 h-5 text-green-500')
+                                                        {{ __('declarations.continue') }}
+                                                    </a>
 
-                                        @can('reject', $declaration)
-                                            <button wire:click="reject('{{ $declaration['uuid'] }}')"
-                                                    @click="openDropdown = false"
-                                                    class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
-                                            >
-                                                @icon('delete', 'w-5 h-5')
-                                                {{ __('declarations.reject_declaration_request') }}
-                                            </button>
-                                        @endcan
-                                    @endif
+                                                    <button wire:click="delete({{ $declaration->getKey() }})"
+                                                            @click="openDropdown = false"
+                                                            class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5 hover:bg-gray-100 w-full text-left"
+                                                    >
+                                                        @icon('delete', 'w-5 h-5')
+                                                        {{ __('declarations.delete') }}
+                                                    </button>
+                                                @endif
 
-                                    @if($declaration->type === 'request' && $declaration->status === Status::APPROVED)
-                                        @can('sign', $declaration)
-                                            <button @click="openDropdown = false"
-                                                    wire:click="sign({{ $declaration->person->id }}, {{ $declaration->id }})"
-                                                    class="cursor-pointer text-[#222222] text-nowrap flex gap-3 items-center py-2 pl-4 pr-19"
-                                            >
-                                                @icon('check-circle', 'w-5 h-5 text-red-500')
-                                                {{ __('declarations.sign') }}
-                                            </button>
-                                        @endcan
+                                                @if($declaration->status === Status::NEW)
+                                                    @can('approve', $declaration)
+                                                        <button @click="openDropdown = false"
+                                                                wire:click="approve({{ $declaration->person->id }}, {{ $declaration->id }})"
+                                                                class="cursor-pointer text-[#222222] text-nowrap flex gap-3 items-center py-2 pl-4 pr-19 hover:bg-gray-100 w-full text-left"
+                                                        >
+                                                            @icon('check-circle', 'w-5 h-5 text-green-500')
+                                                            {{ __('declarations.approve') }}
+                                                        </button>
+                                                    @endcan
 
-                                        @can('reject', $declaration)
-                                            <button wire:click="reject('{{ $declaration['uuid'] }}')"
-                                                    @click="openDropdown = false"
-                                                    class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
-                                            >
-                                                @icon('delete', 'w-5 h-5')
-                                                {{ __('declarations.reject_declaration_request') }}
-                                            </button>
-                                        @endcan
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
+                                                    @can('reject', $declaration)
+                                                        <button wire:click="reject('{{ $declaration['uuid'] }}')"
+                                                                @click="openDropdown = false"
+                                                                class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5 hover:bg-gray-100 w-full text-left"
+                                                        >
+                                                            @icon('delete', 'w-5 h-5')
+                                                            {{ __('declarations.reject_declaration_request') }}
+                                                        </button>
+                                                    @endcan
+                                                @endif
 
-            @else
-                <div class="text-center py-16">
-                    <p class="text-gray-500 dark:text-gray-400 text-lg">{{ __('forms.nothing_found') }}</p>
+                                                @if($declaration->status === Status::APPROVED)
+                                                    @can('sign', $declaration)
+                                                        <button @click="openDropdown = false"
+                                                                wire:click="sign({{ $declaration->person->id }}, {{ $declaration->id }})"
+                                                                class="cursor-pointer text-[#222222] text-nowrap flex gap-3 items-center py-2 pl-4 pr-19 hover:bg-gray-100 w-full text-left"
+                                                        >
+                                                            @icon('check-circle', 'w-5 h-5 text-green-500')
+                                                            {{ __('declarations.sign') }}
+                                                        </button>
+                                                    @endcan
+
+                                                    @can('reject', $declaration)
+                                                        <button wire:click="reject('{{ $declaration['uuid'] }}')"
+                                                                @click="openDropdown = false"
+                                                                class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5 hover:bg-gray-100 w-full text-left"
+                                                        >
+                                                            @icon('delete', 'w-5 h-5')
+                                                            {{ __('declarations.reject_declaration_request') }}
+                                                        </button>
+                                                    @endcan
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+
+                    @else
+                        <div class="text-center py-16">
+                            <p class="text-gray-500 dark:text-gray-400 text-lg">{{ __('forms.nothing_found') }}</p>
+                        </div>
+                    @endif
                 </div>
-            @endif
-        </div>
-    </div>
+            </div>
 
-    <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
-        {{ $declarations->links() }}
+            <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
+                {{ $declarations->links() }}
+            </div>
+        </div>
     </div>
 
     <x-forms.loading/>
