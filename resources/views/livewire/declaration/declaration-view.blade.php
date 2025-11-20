@@ -23,6 +23,7 @@
         </div>
     </div>
 
+    <div class="shift-content">
     <fieldset class="fieldset">
         <legend class="legend">
             {{ __('declarations.label') }} № {{ $declaration->declarationNumber }}
@@ -219,9 +220,9 @@
                 />
             </div>
         </div>
-
-        <a href="{{ url()->previous() }}" type="submit" class="button-minor">
-            {{ __('forms.back') }}
-        </a>
     </fieldset>
+    <a href="{{ url()->previous() }}" type="submit" class="button-minor">
+        {{ __('forms.back') }}
+    </a>
+    </div>
 </section>

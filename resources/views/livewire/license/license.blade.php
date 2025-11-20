@@ -1,4 +1,4 @@
-<div class="form"
+<div class="form shift-content"
       x-data="{
           licenseType: $wire.entangle('form.type'),
           licenseTypes: @js($licenseTypes)
