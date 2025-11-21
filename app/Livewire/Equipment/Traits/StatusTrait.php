@@ -39,7 +39,7 @@ trait StatusTrait
         }
 
         try {
-            $validated = $this->validate($this->rulesForChangingStatus($uuid));
+            $validated = $this->validate($this->rulesForChangingStatus($equipment->uuid));
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
             $this->setErrorBag($exception->validator->getMessageBag());
@@ -48,7 +48,7 @@ trait StatusTrait
         }
 
         try {
-            $response = EHealth::equipment()->changeStatus($uuid, removeEmptyKeys(Arr::toSnakeCase($validated)));
+            $response = EHealth::equipment()->changeStatus($equipment->uuid, removeEmptyKeys(Arr::toSnakeCase($validated)));
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when updating status of equipment');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
@@ -69,7 +69,7 @@ trait StatusTrait
         try {
             Repository::equipment()->updateStatus($response->validate()['uuid'], $response->validate());
 
-            Session::flash('success', 'Статус обладнання успішно оновлено.');
+            Session::flash('success', __('equipments.success.status_updated'));
             $this->dispatch('close-update-status-modal');
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store equipment');
@@ -82,7 +82,7 @@ trait StatusTrait
     public function updateAvailabilityStatus(string $uuid): void
     {
         $equipment = Equipment::whereUuid($uuid)->firstOrFail();
-        if (Auth::user()?->cannot('updateAvailabilityStatus', $equipment)) {
+        if (Auth::user()->cannot('updateAvailabilityStatus', $equipment)) {
             Session::flash('error', 'У вас немає дозволу на оновлення доступності обладнання');
 
             return;
@@ -122,7 +122,7 @@ trait StatusTrait
         try {
             Repository::equipment()->updateStatus($response->validate()['uuid'], $response->validate());
 
-            Session::flash('success', 'Доступність обладнання успішно оновлено.');
+            Session::flash('success', __('equipments.success.availability_status_updated'));
             $this->dispatch('close-update-availability-status-modal');
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store equipment');

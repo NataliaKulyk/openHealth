@@ -433,4 +433,10 @@ return [
     'manually_confirmed' => 'Підтверджено вручну',
     'choose_reason' => 'Оберіть причину',
     'select_statuse' => 'Оберіть статус',
+
+    // Message displayed to the user
+    'success' => [
+        'sync_started' => 'Синхронізацію успішно розпочато',
+        'updated' => 'Інформацію успішно оновлено',
+    ]
 ];

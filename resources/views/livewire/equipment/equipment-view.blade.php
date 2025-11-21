@@ -125,7 +125,7 @@
                        readonly
                 >
                 <label for="uuid" class="label">
-                    {{ __('eHealth ID') }}
+                    {{ __('equipments.id') }}
                 </label>
             </div>
 
@@ -156,7 +156,7 @@
                        disabled
                 >
                 <label for="recorder" class="label">
-                    {{ __('Співробітник, що вніс дані') }}
+                    {{ __('equipments.recorded_by') }}
                 </label>
             </div>
         </div>
@@ -164,7 +164,7 @@
 
     @include('livewire.equipment.parts.additional-data', ['context' => 'view'])
 
-    <div class="mt-6 flex flex-row items-center gap-4 pt-6">
+    <div class="shift-content mt-6 flex flex-row items-center gap-4 pt-6">
         <div class="flex items-center space-x-3">
             <a href="{{ url()->previous() }}" class="button-minor">
                 {{ __('forms.cancel') }}

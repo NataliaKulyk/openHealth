@@ -29,8 +29,8 @@ class EquipmentEdit extends EquipmentComponent
         $equipment = Equipment::find($this->equipmentId);
         $this->form->status = Status::ACTIVE->value;
 
-        if (Auth::user()?->cannot('edit', $equipment)) {
-            Session::flash('error', 'У вас немає дозволу на редагування обладнання');
+        if (Auth::user()->cannot('edit', $equipment)) {
+            Session::flash('error', __('equipments.error.edit'));
 
             return;
         }
@@ -40,7 +40,9 @@ class EquipmentEdit extends EquipmentComponent
             return;
         }
 
-        $response = $this->createInEHealth($validated);
+        $apiPayload = $this->form->formatForApi($validated);
+
+        $response = $this->createInEHealth($apiPayload);
         if (!$response) {
             return;
         }
@@ -50,7 +52,7 @@ class EquipmentEdit extends EquipmentComponent
             $validated['id'] = $this->equipmentId;
             Repository::equipment()->update($response->map($validated));
 
-            Session::flash('success', 'Обладнання успішно створено.');
+            Session::flash('success', __('equipments.success.created'));
             $this->redirectRoute('equipment.index', [legalEntity()], navigate: true);
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store equipment');

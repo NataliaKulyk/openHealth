@@ -101,7 +101,7 @@ class EquipmentIndex extends Component
 
     public function sync(): void
     {
-        if (Auth::user()?->cannot('sync', Equipment::class)) {
+        if (Auth::user()->cannot('sync', Equipment::class)) {
             Session::flash('error', 'У вас немає дозволу на синхронізацію обладнань');
 
             return;
@@ -116,7 +116,12 @@ class EquipmentIndex extends Component
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error connecting when getting a equipment list');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }
@@ -136,14 +141,14 @@ class EquipmentIndex extends Component
             try {
                 Auth::user()->notify(new SyncNotification('equipment', 'started'));
                 $this->dispatchNextSyncJobs();
-                Session::flash('success', __('Синхронізацію успішно розпочато.'));
+                Session::flash('success', __('forms.success.sync_started'));
             } catch (Throwable $exception) {
                 Log::error('Failed to dispatch EquipmentSync batch', ['exception' => $exception]);
 
                 Auth::user()->notify(new SyncNotification('equipment', 'failed'));
             }
         } else {
-            Session::flash('success', __('Інформацію успішно оновлено'));
+            Session::flash('success', __('forms.success.updated'));
         }
     }
 

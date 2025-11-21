@@ -247,26 +247,26 @@
                             <tr wire:key="equipment-{{ $equipment->id }}"
                                 class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
                             >
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                                <td class="td-input">
                                     <ul class="font-semibold text-gray-900 dark:text-white">
                                         @foreach ($equipment->names as $name)
                                             <li>{{ $name->name }}</li>
                                         @endforeach
                                     </ul>
                                 </td>
-                                <td class="px-6 py-4 align-top text-left">
+                                <td class="td-input">
                                     {{ $equipment->inventoryNumber ?? '-' }}
                                 </td>
-                                <td class="px-6 py-4 break-words whitespace-normal align-top text-left">
+                                <td class="td-input">
                                     {{ dictionary()->getDictionary('device_definition_classification_type')[$equipment->type] }}
                                 </td>
-                                <td class="px-6 py-4 align-top text-left">
+                                <td class="td-input">
                                     {{ $equipment->division?->name ?? '-' }}
                                 </td>
-                                <td class="px-6 py-4 align-top text-left">
+                                <td class="td-input">
                                     {{ $equipment->ehealthInsertedAt?->format('d.m.Y') ?? $equipment->createdAt->format('d.m.Y') }}
                                 </td>
-                                <td class="px-6 py-4 align-top text-left">
+                                <td class="td-input">
                                     <span class="{{
                                         match($equipment->status) {
                                             Status::DRAFT => 'badge-dark',
@@ -278,7 +278,7 @@
                                         {{ $equipment->status->label() }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 align-top text-left">
+                                <td class="td-input">
                                     <span class="{{
                                         match($equipment->availabilityStatus) {
                                             AvailabilityStatus::AVAILABLE => 'badge-green',
@@ -289,7 +289,7 @@
                                         {{ $equipment->availabilityStatus->label() }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="td-input">
                                     <div class="flex justify-center relative">
                                         <div x-data="{
                                                  open: false,
@@ -321,12 +321,14 @@
                                                  class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white shadow-md z-50"
                                             >
                                                 @if ($equipment->status === Status::ACTIVE || $equipment->status === Status::INACTIVE)
-                                                    <a href="{{ route('equipment.view', [legalEntity(), $equipment->id]) }}"
-                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                    >
-                                                        @icon('eye', 'w-5 h-5 text-gray-600')
-                                                        {{ __('forms.view') }}
-                                                    </a>
+                                                    @can('view', $equipment)
+                                                        <a href="{{ route('equipment.view', [legalEntity(), $equipment->id]) }}"
+                                                           class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                        >
+                                                            @icon('eye', 'w-5 h-5 text-gray-600')
+                                                            {{ __('forms.view') }}
+                                                        </a>
+                                                    @endcan
 
                                                     @can('updateStatus', $equipment)
                                                         <a href="#"
@@ -358,19 +360,23 @@
                                                         @endif
                                                     @endcan
                                                 @else
-                                                    <a href="{{ route('equipment.view', [legalEntity(), $equipment->id]) }}"
-                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                    >
-                                                        @icon('eye', 'w-5 h-5 text-gray-600')
-                                                        {{ __('forms.view') }}
-                                                    </a>
+                                                    @can('view', $equipment)
+                                                        <a href="{{ route('equipment.view', [legalEntity(), $equipment->id]) }}"
+                                                           class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                        >
+                                                            @icon('eye', 'w-5 h-5 text-gray-600')
+                                                            {{ __('forms.view') }}
+                                                        </a>
+                                                    @endcan
 
-                                                    <a href="{{ route('equipment.edit', [legalEntity(), $equipment->id]) }}"
-                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                    >
-                                                        @icon('edit', 'w-5 h-5 text-gray-600')
-                                                        {{ __('forms.edit') }}
-                                                    </a>
+                                                    @can('edit', $equipment)
+                                                        <a href="{{ route('equipment.edit', [legalEntity(), $equipment->id]) }}"
+                                                           class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                        >
+                                                            @icon('edit', 'w-5 h-5 text-gray-600')
+                                                            {{ __('forms.edit') }}
+                                                        </a>
+                                                    @endcan
                                                 @endif
                                             </div>
                                         </div>

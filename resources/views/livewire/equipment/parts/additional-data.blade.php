@@ -93,7 +93,8 @@
                    name="manufactureDate"
                    id="manufactureDate"
                    class="peer input pl-10 datepicker-input"
-                   datepicker-max-date="{{ now() }}"
+                   datepicker-max-date="{{ now()->format('d.m.Y') }}"
+                   datepicker-format="dd.mm.yyyy"
                    placeholder=" "
                    @disabled($context === 'view')
             >
@@ -108,6 +109,7 @@
                    name="expirationDate"
                    id="expirationDate"
                    class="peer input pl-10 datepicker-input"
+                   datepicker-format="dd.mm.yyyy"
                    placeholder=" "
                    @disabled($context === 'view')
             >

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Equipment\Forms;
 
+use App\Core\Arr;
 use App\Enums\Equipment\AvailabilityStatus;
 use App\Enums\Equipment\Status;
 use App\Rules\InDictionary;
@@ -81,7 +82,7 @@ class EquipmentForm extends Form
             ],
             'manufacturer' => ['nullable', 'string', 'max:255'],
             'manufactureDate' => ['nullable', Rule::date()->beforeOrEqual(today())],
-            'expirationDate' => ['nullable', 'date'],
+            'expirationDate' => ['nullable', 'date_format:d.m.Y'],
             'modelNumber' => ['nullable', 'string', 'max:255'],
             'lotNumber' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:1000'],
@@ -123,6 +124,20 @@ class EquipmentForm extends Form
     }
 
     /**
+     * Convert validated date to ISO 8601 and format to snake case.
+     */
+    public function formatForApi(array $data): array
+    {
+        collect($data)
+            ->only(['manufactureDate', 'expirationDate'])
+            ->each(static function (string $value, string $key) use (&$data) {
+                $data[$key] = convertToISO8601($value);
+            });
+
+        return removeEmptyKeys(Arr::toSnakeCase($data));
+    }
+
+    /**
      * Redefine field names for error messages.
      *
      * @return array
@@ -131,7 +146,7 @@ class EquipmentForm extends Form
     {
         return [
             'type' => __('equipments.type_medical_device'),
-            'divisionId' => __('forms.division_name'),
+            'divisionId' => __('forms.division_name')
         ];
     }
 }
