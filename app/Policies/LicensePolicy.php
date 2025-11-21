@@ -12,7 +12,7 @@ use Illuminate\Auth\Access\Response;
 class LicensePolicy
 {
     /**
-     * User allowed to synchronize healthcare services.
+     * User allowed to synchronize licenses.
      */
     public function sync(User $user): Response
     {

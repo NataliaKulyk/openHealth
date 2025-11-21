@@ -60,10 +60,8 @@ class LicenseForm extends Form
     /**
      * Convert date to ISO 8601 and format to snake case.
      */
-    public function toApiArray(): array
+    public function formatForApi(array $data): array
     {
-        $data = $this->all();
-
         collect($data)
             ->only(['issuedDate', 'expiryDate', 'activeFromDate'])
             ->each(static function (string $value, string $key) use (&$data) {

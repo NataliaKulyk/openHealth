@@ -31,7 +31,7 @@ class LicenseCreate extends LicenseComponent
         }
 
         try {
-            $this->form->validate();
+            $validated = $this->form->validate();
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
             $this->setErrorBag($exception->validator->getMessageBag());
@@ -40,7 +40,7 @@ class LicenseCreate extends LicenseComponent
         }
 
         try {
-            $response = EHealth::license()->create(data: $this->form->toApiArray());
+            $response = EHealth::license()->create(data: $this->form->formatForApi($validated));
 
             try {
                 $validated = $response->validate();

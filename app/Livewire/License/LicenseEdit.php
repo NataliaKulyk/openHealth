@@ -36,7 +36,7 @@ class LicenseEdit extends LicenseComponent
         }
 
         try {
-            $this->form->validate();
+            $validated = $this->form->validate();
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
             $this->setErrorBag($exception->validator->getMessageBag());
@@ -45,13 +45,13 @@ class LicenseEdit extends LicenseComponent
         }
 
         try {
-            $response = EHealth::license()->update($this->uuid, $this->form->toApiArray());
+            $response = EHealth::license()->update($this->uuid, $this->form->formatForApi($validated));
 
             try {
                 $validated = $response->validate();
                 License::whereUuid($this->uuid)->update($response->map($validated));
 
-                Session::flash('success', 'Ліцензія успішно оновлена');
+                Session::flash('success', __('licenses.success.updated'));
                 $this->redirectRoute('license.index', [legalEntity()], navigate: true);
             } catch (Exception $exception) {
                 $this->logDatabaseErrors($exception, 'Error while updating license');

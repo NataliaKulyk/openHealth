@@ -69,7 +69,7 @@ class LicenseIndex extends Component
             return;
         }
 
-        Session::flash('success', __('licenses.sync_success'));
+        Session::flash('success', __('licenses.success.sync'));
     }
 
     public function render(): View
