@@ -19,7 +19,7 @@ return new class extends Migration
             $table->uuid()->unique()->nullable();
             $table->foreignId('legal_entity_id')->nullable()->constrained();
             $table->foreignId('division_id')->nullable()->constrained();
-            $table->foreignId('parent_id')->nullable()->constrained('equipments');
+            $table->foreignId('parent_id')->nullable()->constrained('equipments')->nullOnDelete();
             $table->foreignId('recorder')->nullable()->constrained('employees');
             $table->uuid('device_definition_id')->comment('Reference to device definition')->nullable(); // separate table
             $table->string('type');
