@@ -508,7 +508,7 @@
         <div class='mb-4.5 pt-10 flex flex-col gap-6 xl:flex-row justify-between items-center'>
             <x-secondary-button>
                 <div class='xl:w-1/4 text-left'>
-                    <a href="{{ route('contracts.index', [legalEntity()]) }}">
+                    <a href="{{ route('contract.index', [legalEntity()]) }}">
                         {{ __('forms.back') }}
                     </a>
                 </div>
