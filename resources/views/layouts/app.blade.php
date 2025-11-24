@@ -7,20 +7,24 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <script>
+            // Flowbite's recommendation: On page load or when changing themes, best to add inline in `head` to avoid FOUC
+            (function() {
+                const theme = localStorage.getItem('color-theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (theme === 'dark' || (!theme && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            })();
+        </script>
+
         @once
             @livewireStyles
         @endonce
 
         @vite(['resources/css/app.css'])
-
-        <script>
-            // Flowbite's recommendation: On page load or when changing themes, best to add inline in `head` to avoid FOUC
-            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark')
-            }
-        </script>
     </head>
 
     <body>

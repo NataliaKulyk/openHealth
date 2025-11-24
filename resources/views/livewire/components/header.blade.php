@@ -53,7 +53,11 @@
             {{-- Change theme color --}}
             <button
                 x-data="{
-                    darkMode: localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+                    darkMode: false,
+                    init() {
+                        // Sync with DOM state set by inline script in <head>
+                        this.darkMode = document.documentElement.classList.contains('dark');
+                    },
                     toggleTheme() {
                         this.darkMode = !this.darkMode;
                         localStorage.setItem('color-theme', this.darkMode ? 'dark' : 'light');
@@ -64,19 +68,16 @@
                         }
                     }
                 }"
-                x-init="$nextTick(() => {
-                    if (darkMode) document.documentElement.classList.add('dark');
-                })"
                 @click="toggleTheme()"
                 type="button"
                 class="cursor-pointer p-2 mr-1 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
             >
 
-                <span x-show="!darkMode">
+                <span x-show="!darkMode" class="dark:hidden">
                     @icon('moon', 'w-6 h-6')
                 </span>
 
-                <span x-show="darkMode" style="display: none;">
+                <span x-show="darkMode" class="hidden dark:block">
                     @icon('sun', 'w-6 h-6')
                 </span>
             </button>
