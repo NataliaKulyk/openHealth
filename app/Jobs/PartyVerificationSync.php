@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Classes\eHealth\EHealthResponse;
@@ -13,10 +15,11 @@ use Illuminate\Queue\Middleware\RateLimited;
 
 class PartyVerificationSync extends EHealthJob
 {
-    use BatchLegalEntityQueries, ProcessesPartyVerificationResponses;
+    use BatchLegalEntityQueries;
+    use ProcessesPartyVerificationResponses;
 
     public const string BATCH_NAME = 'PartyVerificationFullSync';
-    public const string SCOPE_REQUIRED = 'party:read';
+    public const string SCOPE_REQUIRED = 'party_verification:read';
 
     /**
      * @throws ConnectionException

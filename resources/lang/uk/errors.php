@@ -50,6 +50,7 @@ return [
             'request_error' => 'Помилка в процесі обробки запиту',
             'server_error' => 'Помилка при обробці запиту до сервера',
             'no_connection' => 'Немає зв\'язку з eHealth',
+            'verification_data_upload_error' => 'Не вдалося завантажити деталі верифікації',
         ],
     ],
 ];

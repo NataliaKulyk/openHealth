@@ -10,30 +10,28 @@
     switch ($status) {
         case 'VERIFIED':
             $badgeClass = 'badge-green';
-            $text = __('general.verified');
+            $text = __('party_verification.statuses.VERIFIED');
             break;
 
         case 'NOT_VERIFIED':
             $badgeClass = 'badge-red';
-            $text = __('general.not_verified');
+            $text = __('party_verification.statuses.NOT_VERIFIED');
             break;
 
         case 'VERIFICATION_NEEDED':
             $badgeClass = 'badge-yellow';
-            $text = __('general.verification_needed');
+            $text = __('party_verification.statuses.VERIFICATION_NEEDED');
             break;
 
         case 'VERIFICATION_NOT_NEEDED':
             $badgeClass = 'badge-gray';
-            $text = __('general.verification_not_needed');
+            $text = __('party_verification.statuses.VERIFICATION_NOT_NEEDED');
             break;
 
         default:
-            // If the status is null or unknown, we do not show anything
-            if ($status === null) {
+            if ($status === null || $status === '-') {
                 $text = '-';
             } else {
-                // We show an unknown status, if there is one
                 $badgeClass = 'badge-gray';
                 $text = $status;
             }
@@ -41,16 +39,13 @@
     }
 @endphp
 
-{{-- If the text is not "-", show the badge --}}
 @if ($text !== '-')
     <span class="{{ $badgeClass }} whitespace-nowrap">
-      {{-- Show the prefix if it is --}}
         @if($prefix)
-            <span class="opacity-75">{{ $prefix }}</span>
+            <span class="opacity-75 mr-1">{{ $prefix }}</span>
         @endif
         {{ $text }}
     </span>
 @else
-    {{-- Otherwise just a hyphen --}}
-    <span>-</span>
+    <span class="text-gray-400">-</span>
 @endif
