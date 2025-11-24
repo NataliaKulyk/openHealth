@@ -10,7 +10,11 @@ use Illuminate\Http\Client\Response;
 class CipherResponse
 {
     public function __construct(
-        protected Response $response
+        public Response $response {
+            get {
+                return $this->response;
+            }
+        }
     ) {
     }
 
@@ -35,11 +39,6 @@ class CipherResponse
         return $this;
     }
 
-    public function getResponse()
-    {
-        return $this->response->json();
-    }
-
     public function getTicketUuid(): ?string
     {
         return $this->response->json('ticketUuid');
@@ -53,5 +52,10 @@ class CipherResponse
     public function getTaxId(): ?string
     {
         return $this->response->json('signature.certificateInfo.extensionsCertificateInfo.value.personalData.value.drfou.value');
+    }
+
+    public function getBase64Data(): ?string
+    {
+        return $this->response->json('base64Data');
     }
 }

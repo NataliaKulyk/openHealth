@@ -180,8 +180,8 @@ class CipherRequest extends PendingRequest
     /**
      * Check if some important data received from the forms are have the same value as in the DS FileContainer
      *
-     * @param $ticketUuid
-     * @param $password
+     * @param  $ticketUuid
+     * @param  $password
      * @param  string  $taxId
      * @param  string|null  $edrpou
      * @return void
@@ -190,14 +190,14 @@ class CipherRequest extends PendingRequest
     protected function verifyWithFileContainer($ticketUuid, $password, string $taxId, ?string $edrpou = null): void
     {
         // Get needed data contains into the key
-        $response = $this->verifyKeyContainer($ticketUuid, $password)->getResponse();
+        $response = $this->verifyKeyContainer($ticketUuid, $password)->response;
 
         // If KEP key is not valid (ex. very old one)
-        if (!$response['canBeUsed']) {
+        if (!$response['signature']['canBeUsed']) {
             throw new CipherApiException(__('validation.custom.cipher.kepNotValid'), $response);
         }
 
-        $keyData = Arr::get($response, 'certificateInfo.extensionsCertificateInfo.value.personalData.value');
+        $keyData = Arr::get($response, 'signature.certificateInfo.extensionsCertificateInfo.value.personalData.value');
 
         // Get value of 'edrpou' field for key's owner {string|null}
         $inKeyEdrpou = $keyData['edrpou']['value'] ?? '';
@@ -206,7 +206,7 @@ class CipherRequest extends PendingRequest
         $inKeyDrfou = $keyData['drfou']['value'] ?? '';
 
         // Get last date when validity period is valid
-        $endDate = $response['certificateInfo']['notAfter']['value'];
+        $endDate = $response['signature']['certificateInfo']['notAfter']['value'];
         $expirationDate = Carbon::parse($endDate);
 
         if ($expirationDate <= Carbon::now()) {

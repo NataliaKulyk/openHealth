@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateContractsTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        Schema::create('contracts', function (Blueprint $table) {
+        Schema::create('contracts', static function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid');
+            $table->uuid();
+            $table->foreignId('legal_entity_id')->constrained('legal_entities');
             $table->uuid('contractor_legal_entity_id');
             $table->uuid('contractor_owner_id');
             $table->string('contractor_base');
@@ -47,15 +50,11 @@ class CreateContractsTable extends Migration
             $table->text('misc')->nullable();
             $table->string('statute_md5')->nullable();
             $table->string('additional_document_md5')->nullable();
-
-            $table->foreignId('legal_entity_id')->constrained('legal_entities');
-
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('contracts');
     }
-}
-
+};

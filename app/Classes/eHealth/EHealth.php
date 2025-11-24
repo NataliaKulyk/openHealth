@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
+use App\Classes\eHealth\Api\ContractRequest;
 use App\Classes\eHealth\Api\Declaration;
 use App\Classes\eHealth\Api\DeclarationRequest;
 use App\Classes\eHealth\Api\DeviceDefinition;
@@ -21,6 +22,7 @@ use App\Classes\eHealth\Api\Patient;
 use App\Classes\eHealth\Api\Person;
 use App\Classes\eHealth\Api\PersonRequest;
 use App\Classes\eHealth\Api\RuleEngineRules;
+use App\Models\Contract;
 use App\Models\MedicalEvents\Sql\Condition;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\Episode;
@@ -137,5 +139,15 @@ final class EHealth
     public static function legalEntity(): LegalEntity
     {
         return app(LegalEntity::class);
+    }
+
+    public static function contractRequest(): ContractRequest
+    {
+        return app(ContractRequest::class);
+    }
+
+    public static function contract(): Contract
+    {
+        return app(Contract::class);
     }
 }

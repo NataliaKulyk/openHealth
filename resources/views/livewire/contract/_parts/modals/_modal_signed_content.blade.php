@@ -1,75 +1,113 @@
-<x-dialog-modal maxWidth="3xl" class="w-3 h-full" wire:model.live="showModal">
-    <x-slot name="title">
-        {{ __('Додати Спеціальність') }}
-    </x-slot>
+<div x-data="{ showSignatureModal: $wire.entangle('showSignatureModal') }">
+    <template x-teleport="body">
+        <div x-show="showSignatureModal"
+             style="display: none"
+             @keydown.escape.prevent.stop="showSignatureModal = false"
+             role="dialog"
+             aria-modal="true"
+             class="modal"
+        >
+            <div x-transition.opacity class="fixed inset-0 bg-black/30"></div>
+            <div x-transition @click="showSignatureModal = false" class="modal-wrapper">
+                <div @click.stop x-trap.noscroll.inert="showSignatureModal"
+                     class="modal-content w-full max-w-4xl mx-auto"
+                >
+                    {{-- Title --}}
+                    <h3 class="modal-header">{{ __('forms.sign_with_KEP') }}</h3>
 
-    <x-slot name="content">
-        <div class="mb-4.5 flex flex-col gap-6 xl:flex-container">
+                    {{-- Content --}}
+                    <div class="p-6">
+                        {{-- Error display inside the modal --}}
+                        @if (session()->has('error-modal'))
+                            <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                                <span class="font-medium">{{ __('forms.error') }}!</span> {{ session('error-modal') }}
+                            </div>
+                        @endif
 
-            <x-forms.form-group class="xl:w-1/2">
-                <x-slot name="label">
-                    <x-forms.label class="default-label" for="knedp" name="label">
-                        {{ __('forms.knedp') }} *
-                    </x-forms.label>
-                </x-slot>
+                        <div class="flex flex-col gap-6">
+                            {{-- KEP Provider --}}
+                            <x-forms.form-group>
+                                <x-slot name="label">
+                                    <x-forms.label class="default-label">{{ __('forms.knedp') }} *</x-forms.label>
+                                </x-slot>
+                                <x-slot name="input">
+                                    <x-forms.select class="default-input" wire:model="form.knedp" id="knedp">
+                                        <x-slot name="option">
+                                            <option value="">{{__('forms.select')}}</option>
+                                            @foreach(signatureService()->getCertificateAuthorities() as $certificateType)
+                                                <option value="{{ $certificateType['id'] }}"
+                                                        wire:key="{{ $certificateType['id'] }}"
+                                                >
+                                                    {{ $certificateType['name'] }}
+                                                </option>
+                                            @endforeach
+                                        </x-slot>
+                                    </x-forms.select>
+                                </x-slot>
+                                @error("form.knedp")
+                                <x-forms.error>{{ $message }}</x-forms.error>@enderror
+                            </x-forms.form-group>
 
-                <x-slot name="input">
-                    <x-forms.select class="default-input" wire:model="knedp" id="knedp">
-                        <x-slot name="option">
-                            @foreach ($getCertificateAuthority as $k => $certificate_type)
-                                <option value="{{ $certificate_type['id'] }}">{{ $certificate_type['name'] }}</option>
-                            @endforeach
-                        </x-slot>
-                    </x-forms.select>
-                </x-slot>
-                @error('knedp')
-                    <x-forms.error>
-                        {{ $message }}
-                    </x-forms.error>
-                @enderror
-            </x-forms.form-group>
+                            {{-- Key File --}}
+                            <x-forms.form-group>
+                                <x-slot name="label">
+                                    <x-forms.label class="default-label">{{ __('forms.key_container_upload') }} *
+                                    </x-forms.label>
+                                </x-slot>
+                                <x-slot name="input">
+                                    <x-forms.input class="default-input cursor-pointer"
+                                                   wire:model="form.keyContainerUpload"
+                                                   type="file"
+                                                   id="keyContainerUpload"
+                                    />
+                                    <div wire:loading
+                                         wire:target="form.keyContainerUpload"
+                                         class="text-sm text-gray-500 mt-2"
+                                    >
+                                        Uploading...
+                                    </div>
+                                </x-slot>
+                                @error("form.keyContainerUpload")
+                                <x-forms.error>{{ $message }}</x-forms.error>@enderror
+                            </x-forms.form-group>
 
-            <x-forms.form-group class="xl:w-1/2">
-                <x-slot name="label">
-                    <x-forms.label class="default-label" for="keyContainerUpload" name="label">
-                        {{ __('forms.keyContainerUpload') }} *
-                    </x-forms.label>
-                </x-slot>
-                <x-slot name="input">
-                    <x-forms.input class="default-input" wire:model="keyContainerUpload" type="file"
-                        id="keyContainerUpload" />
-                </x-slot>
-                @error('keyContainerUpload')
-                    <x-forms.error>
-                        {{ $message }}
-                    </x-forms.error>
-                @enderror
-            </x-forms.form-group>
+                            {{-- Password --}}
+                            <x-forms.form-group>
+                                <x-slot name="label">
+                                    <x-forms.label class="default-label">{{ __('forms.password') }} *</x-forms.label>
+                                </x-slot>
+                                <x-slot name="input">
+                                    <x-forms.input class="default-input"
+                                                   wire:model.defer="form.password"
+                                                   type="password"
+                                                   id="password"
+                                    />
+                                </x-slot>
+                                @error("form.password")
+                                <x-forms.error>{{ $message }}</x-forms.error>@enderror
+                            </x-forms.form-group>
+                        </div>
+                    </div>
 
-            <x-forms.form-group class="xl:w-1/2">
-                <x-slot name="label">
-                    <x-forms.label class="default-label" for="password" name="label">
-                        {{ __('forms.password') }} *
-                    </x-forms.label>
-                </x-slot>
-                <x-slot name="input">
-                    <x-forms.input class="default-input" wire:model="password" type="password" id="password" />
-                </x-slot>
-            </x-forms.form-group>
-
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row justify-between items-center ">
-                <div class="xl:w-1/4 text-left">
-                    <x-secondary-button wire:click="closeModalModel()">
-                        {{ __('Назад') }}
-                    </x-secondary-button>
-                </div>
-                <div class="xl:w-1/4 text-right">
-                    <button wire:click="sendApiRequest()" type="button" class="btn-primary">
-                        {{ __('forms.send_for_approval') }}
-                    </button>
+                    <div class="modal-footer">
+                        <button type="button"
+                                @click="showSignatureModal = false"
+                                class="button-minor"
+                        >
+                            {{__('forms.cancel')}}
+                        </button>
+                        <button wire:click="sign"
+                                type="button"
+                                class="button-primary"
+                                wire:loading.attr="disabled"
+                                wire:target="sign"
+                        >
+                            <span wire:loading.remove wire:target="sign">{{ __('forms.sign') }}</span>
+                            <span wire:loading wire:target="sign">Signing...</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-
         </div>
-    </x-slot>
-</x-dialog-modal>
+    </template>
+</div>
