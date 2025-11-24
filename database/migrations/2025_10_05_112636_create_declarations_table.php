@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Declaration\Status;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -29,7 +30,7 @@ return new class extends Migration
             $table->string('reason_description')->nullable();
             $table->dateTime('signed_at');
             $table->date('start_date');
-            $table->string('status');
+            $table->enum('status', Status::values());
             $table->timestamps();
         });
     }
