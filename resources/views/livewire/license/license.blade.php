@@ -1,5 +1,4 @@
-<div class="form"
-     wire:key="{{ random_int(1, 100) }}"
+<div class="form shift-content"
       x-data="{
           licenseType: $wire.entangle('form.type'),
           licenseTypes: @js($licenseTypes)

@@ -108,53 +108,16 @@ document.addEventListener('livewire:init', () => {
     });
 });
 
-// See Flowbite instruction on the dark mode switcher: https://flowbite.com/docs/customize/dark-mode/
 function initThemeToggle() {
-    if (
-        localStorage.getItem('color-theme') === 'dark' ||
-        (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    ) {
+    const theme = localStorage.getItem('color-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (theme === 'dark' || (!theme && prefersDark)) {
         document.documentElement.classList.add('dark');
     } else {
         document.documentElement.classList.remove('dark');
     }
-
-    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-    const themeToggleBtn = document.getElementById('theme-toggle');
-
-    if (!themeToggleBtn || !themeToggleDarkIcon || !themeToggleLightIcon) return;
-
-    // Reset icons
-    themeToggleDarkIcon.classList.add('hidden');
-    themeToggleLightIcon.classList.add('hidden');
-
-    // Set correct icon
-    if (document.documentElement.classList.contains('dark')) {
-        themeToggleLightIcon.classList.remove('hidden');
-    } else {
-        themeToggleDarkIcon.classList.remove('hidden');
-    }
-
-    // Set up the toggle button
-    themeToggleBtn.onclick = function () {
-        // Toggle icons
-        themeToggleDarkIcon.classList.toggle('hidden');
-        themeToggleLightIcon.classList.toggle('hidden');
-
-        // Toggle theme
-        if (document.documentElement.classList.contains('dark')) {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('color-theme', 'light');
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('color-theme', 'dark');
-        }
-    };
 }
-
-// On initial load
-initThemeToggle();
 
 // After Livewire SPA navigation
 document.addEventListener('livewire:navigated', () => {

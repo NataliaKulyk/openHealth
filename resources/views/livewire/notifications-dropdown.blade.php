@@ -5,7 +5,14 @@
             aria-label="Notifications"
             class="cursor-pointer p-2 mr-1 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
     >
-        @icon('bell', 'w-6 h-6')
+        <div class="relative">
+            @icon('bell', 'w-6 h-6')
+            @if($notifications->count() > 0)
+                <div class="absolute -top-2 -right-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 border-2 border-white rounded-full dark:border-gray-800">
+                    {{ $notifications->count() }}
+                </div>
+            @endif
+        </div>
     </button>
 
     {{-- List of notifications --}}

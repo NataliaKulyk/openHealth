@@ -41,6 +41,7 @@ return [
     'change_reason_if_exist' => 'Причина зміни статусу декларації (за наявності)',
     'change_reason_description_if_exist' => 'Опис причини зміни статусу (за наявності)',
     'method_of_filling_declaration' => 'Спосіб подання декларації',
+    'print_declaration' => 'Надрукувати декларацію',
 
     'status' => [
         'label' => 'Статус декларації',
