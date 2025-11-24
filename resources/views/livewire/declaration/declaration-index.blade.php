@@ -2,22 +2,13 @@
 @use('Carbon\CarbonImmutable')
 
 <div>
-    <x-header-navigation x-data="{ showFilter: false, synchronizing: false }">
+    <x-header-navigation x-data="{ showFilter: false }">
         <x-slot name="title">{{ __('forms.declarations') }}</x-slot>
+
         <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
-            <button
-                class="button-sync flex items-center gap-2 whitespace-nowrap"
-                wire:click="synchronize"
-                wire:loading.attr="disabled"
-                x-bind:disabled="synchronizing"
-                @click="synchronizing = true"
-            >
-                <div wire:loading.remove>@icon('refresh', 'w-4 h-4')</div>
-                <div wire:loading>
-                    @icon('loading-spinner', 'w-4 h-4 animate-spin')
-                </div>
-                <span wire:loading.remove>{{ __('forms.synchronise_with_eHealth') }}</span>
-                <span wire:loading>{{ __('forms.synchronising') }}...</span>
+            <button class="button-sync flex items-center gap-2 whitespace-nowrap">
+                @icon('refresh', 'w-4 h-4')
+                {{ __('forms.synchronise_with_eHealth') }}
             </button>
         </div>
 
