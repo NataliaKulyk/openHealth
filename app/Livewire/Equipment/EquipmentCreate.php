@@ -29,7 +29,7 @@ class EquipmentCreate extends EquipmentComponent
 
     public function create(): void
     {
-        if (Auth::user()?->cannot('create', Equipment::class)) {
+        if (Auth::user()->cannot('create', Equipment::class)) {
             Session::flash('error', 'У вас немає дозволу на створення обладнання');
 
             return;
@@ -40,7 +40,9 @@ class EquipmentCreate extends EquipmentComponent
             return;
         }
 
-        $response = $this->createInEHealth($validated);
+        $apiPayload = $this->form->formatForApi($validated);
+
+        $response = $this->createInEHealth($apiPayload);
         if (!$response) {
             return;
         }
@@ -49,7 +51,7 @@ class EquipmentCreate extends EquipmentComponent
             $validated = $response->validate();
             Repository::equipment()->store($response->map($validated));
 
-            Session::flash('success', 'Обладнання успішно створено.');
+            Session::flash('success', __('equipments.success.created'));
             $this->redirectRoute('equipment.index', [legalEntity()], navigate: true);
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store equipment');
@@ -61,7 +63,7 @@ class EquipmentCreate extends EquipmentComponent
 
     public function createLocally(): void
     {
-        if (Auth::user()?->cannot('create', Equipment::class)) {
+        if (Auth::user()->cannot('create', Equipment::class)) {
             Session::flash('error', 'У вас немає дозволу на створення обладнання');
 
             return;
@@ -72,22 +74,24 @@ class EquipmentCreate extends EquipmentComponent
             return;
         }
 
-        $validated['legal_entity_id'] = legalEntity()->id;
-        $validated['status'] = Status::DRAFT;
-        $validated['recorder'] = Employee::whereUuid($validated['recorder'])->value('id');
+        $apiPayload = $this->form->formatForApi($validated);
 
-        if (!empty($validated['divisionId'])) {
-            $validated['divisionId'] = Division::whereUuid($validated['divisionId'])->value('id');
+        $apiPayload['legalEntityId'] = legalEntity()->id;
+        $apiPayload['status'] = Status::DRAFT;
+        $apiPayload['recorder'] = Employee::whereUuid($apiPayload['recorder'])->value('id');
+
+        if (!empty($apiPayload['division_id'])) {
+            $apiPayload['division_id'] = Division::whereUuid($apiPayload['division_id'])->value('id');
         }
 
-        if (!empty($validated['parentId'])) {
-            $validated['parentId'] = Equipment::whereUuid($validated['parentId'])->value('id');
+        if (!empty($apiPayload['parent_id'])) {
+            $apiPayload['parent_id'] = Equipment::whereUuid($apiPayload['parent_id'])->value('id');
         }
 
         try {
-            Repository::equipment()->store(Arr::toSnakeCase($validated));
+            Repository::equipment()->store(Arr::toSnakeCase($apiPayload));
 
-            Session::flash('success', 'Чернетку обладнання успішно створено.');
+            Session::flash('success', __('equipments.success.draft_created'));
             $this->redirectRoute('equipment.index', [legalEntity()], navigate: true);
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store equipment');

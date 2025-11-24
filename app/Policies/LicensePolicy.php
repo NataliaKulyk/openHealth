@@ -12,6 +12,18 @@ use Illuminate\Auth\Access\Response;
 class LicensePolicy
 {
     /**
+     * User allowed to synchronize licenses.
+     */
+    public function sync(User $user): Response
+    {
+        if ($user->cannot('license:read') && $user->cannot('license:write')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * User can view the list of licenses
      */
     public function viewAny(User $user): Response
@@ -33,7 +45,7 @@ class LicensePolicy
         }
 
         // Should belong to the same legal entity
-        if ($currentLicense->legalEntity->id !== $currentLegalEntity->id) {
+        if ($currentLicense->legalEntityId !== $currentLegalEntity->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -53,22 +65,9 @@ class LicensePolicy
             return Response::denyWithStatus(404);
         }
 
-        // Can create additional license only when legal entity type is PHARMACY
-        if (legalEntity()->type->name !== LegalEntity::TYPE_PHARMACY) {
-            return Response::denyWithStatus(404);
-        }
-
-        // The license can be created only with the following type of legal entity.
-        if (!in_array(
-            legalEntity()->type->name,
-            [
-                LegalEntity::TYPE_PRIMARY_CARE,
-                LegalEntity::TYPE_EMERGENCY,
-                LegalEntity::TYPE_OUTPATIENT,
-                LegalEntity::TYPE_PHARMACY
-            ],
-            true
-        )) {
+        // The license can be created only with the following type of legal entity, based on LEGAL_ENTITY_<LEGAL_ENTITY_TYPE>_ADDITIONAL_LICENSE_TYPES
+        // see: https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/17092870145/Legal+Entities+configurable+parameters
+        if (!in_array(legalEntity()->type->name, [LegalEntity::TYPE_OUTPATIENT, LegalEntity::TYPE_PHARMACY], true)) {
             return Response::denyWithStatus(404);
         }
 
@@ -95,7 +94,7 @@ class LicensePolicy
         }
 
         // Should belong to the same legal entity
-        if ($currentLicense->legalEntity->id !== $currentLegalEntity->id) {
+        if ($currentLicense->legalEntityId !== $currentLegalEntity->id) {
             return Response::denyWithStatus(404);
         }
 

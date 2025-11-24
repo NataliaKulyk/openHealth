@@ -6,7 +6,6 @@ namespace App\Livewire\Equipment;
 
 use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\EHealthResponse;
-use App\Core\Arr;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Equipment;
@@ -95,7 +94,7 @@ class EquipmentComponent extends Component
 
         $formData['recorder'] = $equipment->recorder()->value('uuid');
         $formData['divisionId'] = $equipment->division()->value('uuid');
-        $formData['parentId'] = $equipment->value('parent_id');
+        $formData['parentId'] = $equipment->parent()->value('uuid');
 
         $this->form->fill($formData);
     }
@@ -126,7 +125,7 @@ class EquipmentComponent extends Component
     protected function createInEHealth(array $validated): EHealthResponse|PromiseInterface|null
     {
         try {
-            return EHealth::equipment()->create(removeEmptyKeys(Arr::toSnakeCase($validated)));
+            return EHealth::equipment()->create($validated);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating equipment');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");

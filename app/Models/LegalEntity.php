@@ -18,7 +18,6 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Casts\LegalEntityAccreditationCast;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -181,14 +180,15 @@ class LegalEntity extends Model
     /**
      * Scope a query to get an Legal Entity depends on it's UUID
      */
-    public function scopeByUuid(Builder $query, string $legalEntityUUID): void
+    #[Scope]
+    public function byUuid(Builder $query, string $legalEntityUUID): void
     {
         $query->where('uuid', $legalEntityUUID);
     }
 
     public function hasActivePrimaryLicense(): bool
     {
-        return $this->licenses->contains(fn (License $license) => $license->isPrimary && $license->isActive);
+        return $this->licenses()->whereIsPrimary(true)->whereIsActive(true)->exists();
     }
 
     /**
@@ -196,10 +196,11 @@ class LegalEntity extends Model
      * Default fields are: id, uuid, edr, legal_entity_type_id
      *
      * @param  Builder  $query
-     *
-     * @return Builder
+     * @param  array  $fields
+     * @return void
      */
-    protected function scopeListByFields(Builder $query, array $fields = []): void
+    #[Scope]
+    protected function listByFields(Builder $query, array $fields = []): void
     {
         if (empty($fields)) {
             $query->select(['id', 'uuid', 'edr', 'legal_entity_type_id'])->orderBy('id');

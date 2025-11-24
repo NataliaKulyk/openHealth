@@ -51,8 +51,10 @@ class Equipment extends Model
     protected $casts = [
         'status' => Status::class,
         'availability_status' => AvailabilityStatus::class,
-        'ehealth_inserted_at' => 'datetime',
-        'created_at' => 'datetime'
+        'manufacture_date' => 'date:d.m.Y',
+        'expiration_date' => 'date:d.m.Y',
+        'ehealth_inserted_at' => 'date:d.m.Y',
+        'created_at' => 'date:d.m.Y'
     ];
 
     public function recorder(): BelongsTo
@@ -63,6 +65,11 @@ class Equipment extends Model
     public function division(): BelongsTo
     {
         return $this->belongsTo(Division::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(__CLASS__, 'parent_id');
     }
 
     public function names(): HasMany

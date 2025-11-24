@@ -154,7 +154,7 @@ class Equipment extends Request
         $rules['*.division_id'] = ['nullable', 'uuid', Rule::in($divisionUuids)];
         $rules['*.legal_entity_id'] = ['required', 'uuid', Rule::in($legalEntityUuids)];
         $rules['*.recorder'] = ['required', 'uuid', Rule::in($employeeUuids)];
-        $rules['*.parent_id'] = ['nullable', 'uuid', Rule::in($parentUuids)];
+        $rules['*.parent_id'] = ['nullable', 'uuid'];
 
         $validator = Validator::make($replaced, $rules);
 

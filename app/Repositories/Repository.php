@@ -96,11 +96,6 @@ final class Repository
         return app(PersonRepository::class);
     }
 
-    public static function license(): LicenseRepository
-    {
-        return app(LicenseRepository::class);
-    }
-
     public static function equipment(): EquipmentRepository
     {
         return app(EquipmentRepository::class);

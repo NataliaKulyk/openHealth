@@ -31,27 +31,10 @@ class LicenseIndex extends Component
     #[Computed]
     public function licenses(): LengthAwarePaginator
     {
-        $allItems = License::where('legal_entity_id', legalEntity()->id)
-            ->select(['id', 'legal_entity_id', 'type', 'active_from_date', 'expiry_date', 'what_licensed', 'is_primary'])
-            ->get();
+        $query = License::whereLegalEntityId(legalEntity()->id)
+            ->select(['id', 'legal_entity_id', 'type', 'active_from_date', 'expiry_date', 'what_licensed', 'is_primary']);
 
-        // Pagination
-        $perPage = config('pagination.per_page');
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $currentItems = $allItems->slice(($currentPage - 1) * $perPage, $perPage)->values();
-
-        return new LengthAwarePaginator(
-            $currentItems,
-            $allItems->count(),
-            $perPage,
-            $currentPage,
-            ['path' => request()->url()]
-        );
-    }
-
-    public function render(): View
-    {
-        return view('livewire.license.license-index', ['licenses' => $this->licenses]);
+        return $query->paginate(config('pagination.per_page'));
     }
 
     /**
@@ -63,7 +46,6 @@ class LicenseIndex extends Component
     {
         try {
             $response = EHealth::license()->getMany();
-
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when getting licenses');
             session()?->flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
@@ -78,13 +60,8 @@ class LicenseIndex extends Component
 
         $licences = $response->validate();
 
-        foreach ($licences as $number => $license) {
-            unset($licences[$number]['legal_entity_uuid']);
-            $licences[$number]['legal_entity_id'] = legalEntity()->id;
-        }
-
         try {
-            License::upsert($licences, uniqueBy: ['uuid'], update: new License()->getFillable());
+            License::upsert($response->map($licences), uniqueBy: ['uuid'], update: new License()->getFillable());
         } catch (Exception $exception) {
             Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
             $this->logDatabaseErrors($exception, 'Error while synchronizing licenses with eHealth: ');
@@ -92,6 +69,11 @@ class LicenseIndex extends Component
             return;
         }
 
-        Session::flash('success', __('licenses.sync_success'));
+        Session::flash('success', __('licenses.success.sync'));
+    }
+
+    public function render(): View
+    {
+        return view('livewire.license.license-index', ['licenses' => $this->licenses]);
     }
 }

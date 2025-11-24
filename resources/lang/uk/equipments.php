@@ -8,7 +8,9 @@ return [
     'name_type' => 'Тип назви',
     'type_medical_device' => 'Тип медичного виробу',
     'serial_number' => 'Серійний №',
+    'id' => 'eHealth ID',
     'recorder' => 'Співробітник, що вносить дані',
+    'recorded_by' => 'Співробітник, що вніс дані',
     'additional_data' => 'Додаткові дані',
     'inventory_number' => 'Інвентарний №',
     'manufacturer' => 'Виробник',
@@ -48,5 +50,16 @@ return [
         'patient_reported' => 'Вказана пацієнтом',
         'registered' => 'Зареєстрована',
         'user_friendly' => 'Користувацька'
+    ],
+
+    'success' => [
+        'created' => 'Обладнання успішно створено',
+        'draft_created' => 'Чернетку обладнання успішно створено',
+        'status_updated' => 'Статус обладнання успішно оновлено',
+        'availability_status_updated' => 'Доступність обладнання успішно оновлено',
+    ],
+
+    'error' => [
+        'edit' => 'У вас немає дозволу на редагування обладнання',
     ]
 ];

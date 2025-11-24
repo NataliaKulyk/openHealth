@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Livewire\License;
 
 use App\Classes\eHealth\EHealth;
-use App\Core\Arr;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\LegalEntity;
 use App\Models\License;
-use App\Repositories\Repository;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +24,7 @@ class LicenseCreate extends LicenseComponent
 
     public function create(): void
     {
-        if (Auth::user()?->cannot('create', License::class)) {
+        if (Auth::user()->cannot('create', License::class)) {
             Session::flash('error', 'У вас немає дозволу на створення ліцензії');
 
             return;
@@ -36,15 +34,17 @@ class LicenseCreate extends LicenseComponent
             $validated = $this->form->validate();
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
 
             return;
         }
 
         try {
-            $response = EHealth::license()->create(data: removeEmptyKeys(Arr::toSnakeCase($validated)));
+            $response = EHealth::license()->create(data: $this->form->formatForApi($validated));
 
             try {
-                Repository::license()->store($response->getData());
+                $validated = $response->validate();
+                License::create($response->map($validated));
             } catch (Exception $exception) {
                 $this->logDatabaseErrors($exception, 'Error while creating license');
                 Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
@@ -58,7 +58,12 @@ class LicenseCreate extends LicenseComponent
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when creating a license');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }

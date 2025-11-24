@@ -19,7 +19,7 @@ return new class extends Migration
             $table->uuid()->unique()->nullable();
             $table->foreignId('legal_entity_id')->nullable()->constrained();
             $table->foreignId('division_id')->nullable()->constrained();
-            $table->foreignId('parent_id')->nullable()->constrained('equipments');
+            $table->foreignId('parent_id')->nullable()->constrained('equipments')->nullOnDelete();
             $table->foreignId('recorder')->nullable()->constrained('employees');
             $table->uuid('device_definition_id')->comment('Reference to device definition')->nullable(); // separate table
             $table->string('type');
@@ -34,7 +34,7 @@ return new class extends Migration
             $table->date('expiration_date')->nullable();
             $table->text('note')->nullable();
             $table->jsonb('properties')->nullable();
-            $table->string('error_reason')->nullable();
+            $table->enum('error_reason', ['typo'])->nullable(); // https://e-health-ua.atlassian.net/wiki/spaces/ESOZ/pages/18769543191/equipment_status_reasons
             $table->date('ehealth_inserted_at')->nullable();
             $table->uuid('ehealth_inserted_by')->nullable();
             $table->date('ehealth_updated_at')->nullable();
