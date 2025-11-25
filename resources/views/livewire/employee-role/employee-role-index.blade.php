@@ -139,7 +139,7 @@
          wire:key="employee-roles-table-page-{{ $employeeRoles->total() }}-{{ $employeeRoles->currentPage() }}"
     >
         <div class="max-w-screen-xl">
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div class="relative shadow-md sm:rounded-lg">
                 @if($employeeRoles->isNotEmpty())
                     <table
                         class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

@@ -225,7 +225,7 @@
          wire:key="equipments-table-page-{{ $equipments->total() }}-{{ $equipments->currentPage() }}"
     >
         <div class="max-w-screen-xl">
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div class="relative shadow-md sm:rounded-lg">
                 @if($equipments->isNotEmpty())
                     <table
                         class="w-full table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

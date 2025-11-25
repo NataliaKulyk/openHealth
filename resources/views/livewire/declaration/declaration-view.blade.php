@@ -1,7 +1,7 @@
 @use('Carbon\CarbonImmutable')
 
-<section class="section-form">
-    <div class="flex items-center justify-between gap-4 flex-wrap">
+<section class="shift-content section-form w-full max-w-7xl">
+    <div class="flex items-center justify-between gap-4 flex-wrap w-full">
         <x-header-navigation class="breadcrumb-form flex-1 min-w-0">
             <x-slot name="title">
                 {{ __('declarations.label') }} - {{ $declaration->person->fullName }}
@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <div class="shift-content">
+    <div class="shift-content w-full">
         <fieldset class="fieldset">
             <legend class="legend">
                 {{ __('declarations.label') }} № {{ $declaration->declarationNumber }}

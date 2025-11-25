@@ -8,7 +8,10 @@
         @can('create', \App\Models\Employee\EmployeeRequest::class)
             <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start">
                 <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
-                   class="button-primary">{{ __('forms.new_employee') }}</a>
+                   class="button-primary flex items-center gap-2">
+                     @icon('plus', 'w-4 h-4')
+                    {{ __('forms.new_employee') }}
+                </a>
                 <button wire:click="sync" type="button" class="button-sync flex items-center gap-2 whitespace-nowrap">
                     @icon('refresh', 'w-4 h-4')
                     {{ __('forms.synchronise_with_eHealth') }}

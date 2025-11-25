@@ -17,8 +17,9 @@
             @can('create', Division::class)
                 <a href="{{ route('division.create', [legalEntity()]) }}"
                    type="button"
-                   class="button-primary"
+                   class="button-primary flex items-center gap-2"
                 >
+                    @icon('plus', 'w-4 h-4')
                     {{ __('forms.add_new_division') }}
                 </a>
             @endcan
@@ -61,7 +62,7 @@
 
     <div class="flow-root mt-8 shift-content pl-3.5">
         <div class="max-w-screen-xl">
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div class="relative shadow-md sm:rounded-lg">
                 <table
                     class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">

@@ -96,7 +96,7 @@
          wire:key="healthcare-services-table-page-{{ $healthcareServices->total() }}-{{ $healthcareServices->currentPage() }}"
     >
         <div class="max-w-screen-xl">
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div class="relative shadow-md sm:rounded-lg">
                 @if($healthcareServices->isNotEmpty())
                     <table
                         class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -267,7 +267,7 @@
         </div>
     </div>
 
-    <div class="footer flex flex-start border-stroke px-7 py-2 my-4">
+    <div class="shift-content footer flex flex-start border-stroke px-7 py-2 my-4">
         <a class="button-minor" href="{{ route('division.index', legalEntity()) }}">
             {{ __('forms.back') }}
         </a>
