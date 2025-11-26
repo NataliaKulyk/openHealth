@@ -369,25 +369,38 @@ class EmployeeForm extends Form
 
     /**
      * Hydrates the form from an EmployeeRequest model.
+     * Merges original Employee data first, then applies Revision overrides.
      */
     private function hydrateFromEmployeeRequest(EmployeeRequest $request): void
     {
-        $request->loadMissing(['party', 'revision']);
+        $request->loadMissing(['party', 'revision', 'employee']); // Load original employee too
         $revisionData = $request->revision->data ?? [];
 
-        // 1. Base Party data (if exist)
-        if ($request->party) {
+        // 1. BASE: Hydrate from original Employee if exists (to fill gaps not present in revision)
+        if ($request->employee) {
+            $this->hydrateFromEmployee($request->employee);
+        } elseif ($request->party) {
+            // Fallback for new employees
             $this->populatePartyData($request->party);
         }
 
-        // 2.add Revision data (draft)
+        // 2. OVERRIDE: Apply Revision data (Draft changes)
 
         // --- position data ---
         if (!empty($revisionData['employee_request_data'])) {
-            $this->position = $revisionData['employee_request_data']['position'] ?? $this->position;
-            $this->employeeType = $revisionData['employee_request_data']['employee_type'] ?? $this->employeeType;
-            $this->startDate = $revisionData['employee_request_data']['start_date'] ?? $this->startDate;
-            $this->endDate = $revisionData['employee_request_data']['end_date'] ?? $this->endDate;
+            $reqData = $revisionData['employee_request_data'];
+
+            $this->position = $reqData['position'] ?? $this->position;
+            $this->employeeType = $reqData['employee_type'] ?? $this->employeeType;
+            $this->startDate = $reqData['start_date'] ?? $this->startDate;
+            $this->endDate = $reqData['end_date'] ?? $this->endDate;
+
+            // divisionId correction we made earlier
+            if (array_key_exists('division_id', $reqData)) {
+                $this->divisionId = $reqData['division_id'] !== null
+                    ? (string) $reqData['division_id']
+                    : null;
+            }
         }
 
         // --- documents ---
@@ -398,8 +411,8 @@ class EmployeeForm extends Form
         // --- doctor(specialist) data ---
         if (!empty($revisionData['doctor'])) {
             $doctorDataFromRevision = Arr::toCamelCase($revisionData['doctor']);
-            // Using array_merge_recursive, to only update values
-            $this->doctor = array_merge_recursive($this->doctor, $doctorDataFromRevision);
+            // Merge recursive to override specific fields
+            $this->doctor = array_replace_recursive($this->doctor, $doctorDataFromRevision);
         }
 
         // --- Personal data (Party) ---
@@ -411,8 +424,6 @@ class EmployeeForm extends Form
         // --- Phones ---
         if (!empty($revisionData['phones'])) {
             $this->party['phones'] = Arr::toCamelCase($revisionData['phones']);
-        } elseif (empty($this->party['phones'][0]['number'])) {
-            $this->party['phones'] = [['type' => 'MOBILE', 'number' => '']];
         }
     }
 

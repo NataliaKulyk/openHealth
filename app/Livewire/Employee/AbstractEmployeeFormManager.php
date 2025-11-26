@@ -253,6 +253,30 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
     }
 
     /**
+     * Applies locks to fields that cannot be changed in eHealth for an existing employee.
+     * Call this in the mount() method of child components.
+     */
+    protected function applyImmutableFieldLocks(): void
+    {
+        // Check if we are editing a draft linked to an existing employee OR editing the employee directly
+        $isExistingEmployee =
+            ($this->employee && $this->employee->id) ||
+            ($this->employeeRequest && $this->employeeRequest->employee_id);
+
+        if ($isExistingEmployee) {
+            // 1. Lock Immutable Party Data
+            // Blocks: first_name, last_name, birth_date, tax_id
+            // Allows: second_name, gender, phones, email, documents (if needed), about_myself, working_experience
+            $this->isPartyDataPartiallyLocked = true;
+
+            // 2. Lock Immutable Position Data
+            // Blocks: position, employee_type, start_date
+            // Allows: division_id
+            $this->isCorePositionDataLocked = true;
+        }
+    }
+
+    /**
      * party-user data consistency check
      * Finds an existing Party associated with the user's email, if one exists.
      * This method sets the $this->matchedParty property if found.

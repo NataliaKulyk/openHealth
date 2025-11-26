@@ -4,38 +4,36 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Jobs\Traits\AppliesEmployeeRequestChanges;
 use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\EHealthResponse;
+use App\Core\Arr;
 use App\Core\EHealthJob;
 use App\Enums\Employee\RequestStatus as LocalStatus;
+use App\Enums\Employee\RevisionStatus;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
+use App\Repositories\Repository;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\Middleware\RateLimited;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class EmployeeRequestsSyncAll extends EHealthJob
 {
-    use AppliesEmployeeRequestChanges;
-
     public const string BATCH_NAME = 'EmployeeRequestsSyncAll';
     public const string SCOPE_REQUIRED = 'employee_request:read';
     public const string ENTITY = LegalEntity::ENTITY_EMPLOYEE;
 
     /**
-     * Fetches a single page of employee requests from the eHealth API
-     * for the current legal entity, filtered by its EDRPOU.
+     * Send request to fetch Employee Requests list.
      *
-     * @param  string  $token  The authorization token for the API request.
-     * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
      */
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse
     {
-        Log::info('[EmployeeRequestsSyncAll] Sending request to eHealth for page ' . $this->page . ' for EDRPOU: ' . $this->legalEntity->edrpou);
+        Log::info('[EmployeeRequestsSyncAll] Sending request for page ' . $this->page);
 
         return EHealth::employeeRequest()
             ->withToken($token)
@@ -43,24 +41,22 @@ class EmployeeRequestsSyncAll extends EHealthJob
     }
 
     /**
-     * Processes the API response for a page of employee requests.
+     * Process the response.
      *
-     * @param  EHealthResponse|null  $response  The API response object.
-     * @return void
      * @throws Throwable
      */
     protected function processResponse(?EHealthResponse $response): void
     {
-        Log::info('[EmployeeRequestsSyncAll] --- Starting to process page ' . $this->page . ' ---');
+        Log::info('[EmployeeRequestsSyncAll] Processing page ' . $this->page);
+
+        // 1. Key eHealth data by UUID for easy lookup
         $eHealthRequests = collect($response?->validate() ?? [])->keyBy('uuid');
 
         if ($eHealthRequests->isEmpty()) {
-            Log::info('[EmployeeRequestsSyncAll] No eHealth requests found on this page. Finishing job.');
-
             return;
         }
-        Log::info('[EmployeeRequestsSyncAll] Received ' . $eHealthRequests->count() . ' requests from eHealth API.');
 
+        // 2. Find matching local requests
         $localSignedRequests = EmployeeRequest::where('legal_entity_id', $this->legalEntity->id)
             ->where('status', LocalStatus::SIGNED)
             ->whereNull('applied_at')
@@ -69,49 +65,87 @@ class EmployeeRequestsSyncAll extends EHealthJob
             ->get();
 
         if ($localSignedRequests->isEmpty()) {
-            Log::info('[EmployeeRequestsSyncAll] No local SIGNED requests match the UUIDs from eHealth on this page.');
-
             return;
         }
-        Log::info('[EmployeeRequestsSyncAll] Found ' . $localSignedRequests->count() . ' matching SIGNED requests in local DB to check.');
 
-        $approvedRequestsToApply = collect();
+        // 3. Filter Approved items
+        $approvedGroup = collect();
 
         foreach ($localSignedRequests as $localRequest) {
-            $eHealthStatus = $eHealthRequests->get($localRequest->uuid)['status'] ?? null;
+            // Retrieve status directly from the collection, DO NOT attach to model to avoid SQL errors
+            $eHealthData = $eHealthRequests->get($localRequest->uuid);
+            $status = $eHealthData['status'] ?? null;
 
-            if ($eHealthStatus === 'APPROVED') {
-                $approvedRequestsToApply->push($localRequest);
-            } elseif (in_array($eHealthStatus, ['REJECTED', 'EXPIRED'])) {
-                $newStatus = ($eHealthStatus === 'REJECTED') ? LocalStatus::REJECTED : LocalStatus::EXPIRED;
+            if ($status === 'APPROVED') {
+                $approvedGroup->push($localRequest);
+            } elseif (in_array($status, ['REJECTED', 'EXPIRED'])) {
+                $newStatus = ($status === 'REJECTED') ? LocalStatus::REJECTED : LocalStatus::EXPIRED;
                 $localRequest->update(['status' => $newStatus, 'applied_at' => now()]);
-                Log::info('[EmployeeRequestsSyncAll] Request ' . $localRequest->uuid . ' status updated to ' . $eHealthStatus);
             }
         }
 
-        if ($approvedRequestsToApply->isNotEmpty()) {
-            Log::info('[EmployeeRequestsSyncAll] Found ' . $approvedRequestsToApply->count() . ' approved requests to process.');
-            $groupedByEmployee = $approvedRequestsToApply->groupBy('employee_id');
-
-            foreach ($groupedByEmployee as $employeeId => $requests) {
-                $latestRequest = $requests->sortByDesc('created_at')->first();
-                Log::info('[EmployeeRequestsSyncAll] Applying changes for employee ID ' . $employeeId . ' from the latest request: ' . $latestRequest->uuid);
-
-                if ($this->applyChangesFromRevision($latestRequest)) {
-                    EmployeeRequest::where('employee_id', $employeeId)
-                        ->whereIn('id', $requests->pluck('id'))
-                        ->update(['status' => LocalStatus::APPROVED, 'applied_at' => now()]);
-                }
-            }
+        if ($approvedGroup->isEmpty()) {
+            return;
         }
-        Log::info('[EmployeeRequestsSyncAll] --- Finished processing page ' . $this->page . ' ---');
+
+        // 4. Group by Employee to handle chain of requests
+        $groupedByEmployee = $approvedGroup->groupBy('employee_id');
+
+        foreach ($groupedByEmployee as $employeeId => $requests) {
+            /** @var EmployeeRequest $latestRequest */
+            $latestRequest = $requests->sortByDesc('created_at')->first();
+
+            // Get data from the source collection using the UUID of the latest request
+            $eHealthData = $eHealthRequests->get($latestRequest->uuid);
+
+            Log::info("[EmployeeRequestsSyncAll] Trusting Revision from APPROVED Request {$latestRequest->uuid}");
+            $this->applyRevisionUpdate($requests, $latestRequest, $eHealthData);
+        }
     }
 
     /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
+     * @throws Throwable
      */
+    private function applyRevisionUpdate($allRequestsInGroup, EmployeeRequest $latestRequest, array $eHealthData): void
+    {
+        DB::transaction(static function () use ($allRequestsInGroup, $latestRequest, $eHealthData) {
+            $revisionData = $latestRequest->revision->data;
+            $mappedLocalData = EHealth::employeeRequest()->mapCreate($revisionData);
+            $employee = $latestRequest->employee;
+
+            // Update Employee: Use Revision as source of truth for mutable fields,
+            // but respect immutable fields if they are present in eHealth payload (like status, dates)
+            $systemOverrides = Arr::only($eHealthData, ['status', 'start_date', 'end_date', 'position', 'employee_type']);
+
+            // division_id is mutable, so if eHealth returns it, we can use it
+            if (isset($eHealthData['division_id'])) {
+                $systemOverrides['division_id'] = $eHealthData['division_id'];
+            }
+
+            $employee->update(array_merge(
+                $mappedLocalData['employee'],
+                $systemOverrides
+            ));
+
+            // Update Details: Revision is the absolute source of truth
+            Repository::employee()->updateDetails(
+                $employee,
+                $mappedLocalData['party'],
+                $mappedLocalData['documents'],
+                $mappedLocalData['phones'],
+                $mappedLocalData['educations'] ?? null,
+                $mappedLocalData['specialities'] ?? null,
+                $mappedLocalData['qualifications'] ?? null,
+                $mappedLocalData['scienceDegree'] ?? null
+            );
+
+            foreach ($allRequestsInGroup as $req) {
+                $req->update(['status' => LocalStatus::APPROVED, 'applied_at' => now()]);
+                $req->revision?->update(['status' => RevisionStatus::APPLIED]);
+            }
+        });
+    }
+
     protected function getAdditionalMiddleware(): array
     {
         return [new RateLimited('ehealth-employee-request-get')];

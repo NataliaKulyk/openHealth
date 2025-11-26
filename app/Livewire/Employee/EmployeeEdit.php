@@ -16,10 +16,6 @@ use Livewire\Attributes\Locked;
 #[AllowDynamicProperties]
 class EmployeeEdit extends AbstractEmployeeFormManager
 {
-    /**
-     * We only expose the ID to the frontend.
-     * #[Locked] prevents the user from changing this ID from the browser.
-     */
     #[Locked]
     public ?int $employeeId = null;
     public bool $showSignatureModal = false;
@@ -27,27 +23,34 @@ class EmployeeEdit extends AbstractEmployeeFormManager
 
     public function mount(LegalEntity $legalEntity, Employee $employee): void
     {
-        $mostRecentPendingRequest = EmployeeRequest::where('employee_id', $employee->id)
+        // MERGE STRATEGY: Instead of redirecting, check for an existing OPEN draft.
+        $existingDraft = EmployeeRequest::where('employee_id', $employee->id)
+            ->whereNull('uuid') // Only drafts (not signed/approved)
             ->whereNull('applied_at')
             ->latest()
             ->first();
 
-        if ($mostRecentPendingRequest) {
-            $this->redirectRoute('employee-request.edit', [
-                'legalEntity' => $legalEntity->id,
-                'employee_request' => $mostRecentPendingRequest->id
-            ]);
-            return;
-        }
-
         $this->loadDictionaries();
         $this->employee = $employee;
         $this->employeeId = $employee->id;
-        $this->isPersonalDataLocked = true;
+        $this->isPersonalDataLocked = true; // Still true for EmployeeEdit view logic
         $this->loadDivisions($legalEntity);
+
         $positionName = $this->dictionaries['POSITION'][$employee->position] ?? $employee->position;
         $this->pageTitle = __('forms.edit_employee') . ' "' . $positionName . '" - ' . ($employee->party->fullName ?? '');
-        $this->form->hydrate($this->employee);
+
+        if ($existingDraft) {
+            // Found a draft! Load it so we merge changes.
+            $this->employeeRequestId = $existingDraft->id;
+            $this->employeeRequest = $existingDraft;
+            $this->form->hydrate($existingDraft);
+
+            // Optionally, show a message that a draft exists
+            session()?->flash('info', __('forms.draft_loaded_automatically'));
+        } else {
+            // No draft, load fresh from Employee
+            $this->form->hydrate($this->employee);
+        }
     }
 
     public function boot(): void
@@ -57,15 +60,14 @@ class EmployeeEdit extends AbstractEmployeeFormManager
         }
     }
 
-    /**
-     * Implements the draft persistence logic for editing an active employee.
-     * This creates a NEW EmployeeRequest linked to the existing employee's party and user.
-     */
     protected function handleDraftPersistence(): EmployeeRequest
     {
         $preparedData = $this->form->getPreparedData();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
         $nestedDataForRevision['employee_uuid'] = $this->employee->uuid;
+
+        // Since we check for draft in mount(), $this->employeeRequestId is likely set if a draft existed.
+        // We reuse the logic to update it.
 
         $employeeRequestData = Arr::only($preparedData, ['position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email']);
         $employeeRequestData['user_id'] = $this->employee->user_id;
@@ -77,12 +79,16 @@ class EmployeeEdit extends AbstractEmployeeFormManager
 
             if ($existingRequest && is_null($existingRequest->uuid)) {
                 $existingRequest->fill($employeeRequestData)->save();
+
+                // Merge revision data carefully (though mapRevisionData usually has everything needed from form)
+                // Since form was hydrated from draft, getPreparedData contains previous draft values + new edits.
                 $existingRequest->revision?->update(['data' => $nestedDataForRevision]);
 
                 return $existingRequest;
             }
         }
 
+        // Create new if really nothing exists
         $newRequest = Repository::employee()->createEmployeeRequestDraft(
             $employeeRequestData,
             legalEntity(),

@@ -20,41 +20,44 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
         $this->loadDivisions($legalEntity);
         $this->employeeRequest = $employee_request;
         $this->employeeRequestId = $employee_request->id;
+
         $employeeName = $employee_request->party->fullName ?? ($employee_request->employee->party->fullName ?? '');
         $positionName = $this->dictionaries['POSITION'][$employee_request->position] ?? $employee_request->position;
         $this->pageTitle = __('forms.edit_employee_request') . ' "' . $positionName . '" - ' . $employeeName;
 
-
         $this->form->hydrate($this->employeeRequest);
 
+        // LOCK LOGIC:
         if (!is_null($employee_request->uuid)) {
+            // Signed Request: Lock Position fully
             $this->isPositionDataLocked = true;
+            session()?->flash('info', __('forms.signed_request_can_edit_party_only'));
+        } else {
+            // Draft: Allow editing mutable fields, but LOCK immutable ones if linked to Employee
+            $this->isPositionDataLocked = false;
+            $this->isPersonalDataLocked = false;
 
-            session()->flash('info', __('forms.signed_request_can_edit_party_only'));
+            // This sets isCorePositionDataLocked = true AND isPartyDataPartiallyLocked = true
+            // IF employee_id is present.
+            $this->applyImmutableFieldLocks();
         }
     }
 
     public function boot(): void
     {
         if ($this->employeeRequestId) {
-            // Ensure the model instance is always fresh
             $this->employeeRequest = EmployeeRequest::findOrFail($this->employeeRequestId);
         }
     }
 
-    /**
-     * Implements the draft persistence logic for editing an existing EmployeeRequest.
-     * It updates the existing draft and its revision.
-     */
     protected function handleDraftPersistence(): EmployeeRequest
     {
         $preparedData = $this->form->getPreparedData();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
+        // If it's a SIGNED request being corrected -> Create NEW Draft (Standard logic)
         if (!is_null($this->employeeRequest->uuid)) {
-
             $employeeRequestData = Arr::only($preparedData, ['position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email']);
-
             $employeeRequestData['user_id'] = $this->employeeRequest->user_id;
             $employeeRequestData['party_id'] = $this->employeeRequest->party_id;
             $employeeRequestData['employee_id'] = $this->employeeRequest->employee_id;
@@ -66,14 +69,12 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
             );
 
             $this->saveRevisionForRequest($newRequest, $nestedDataForRevision);
-
             $this->employeeRequestId = $newRequest->id;
 
-
             return $newRequest;
-
         }
 
+        // If it's a DRAFT -> Update existing
         $requestAttributes = Arr::only($preparedData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id', 'email']);
         $this->employeeRequest->fill($requestAttributes)->save();
 

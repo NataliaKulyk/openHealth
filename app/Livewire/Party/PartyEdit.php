@@ -29,8 +29,29 @@ class PartyEdit extends AbstractEmployeeFormManager
         $this->party = $party;
         $this->partyId = $party->id;
         $this->pageTitle = __('forms.edit_personal_data') . ' - ' . ($party->fullName ?? '');
+
         $employee = $party->employees()->latest('start_date')->first();
-        $this->form->hydrate($employee ?? $party);
+
+        // MERGE STRATEGY
+        $existingDraft = null;
+        if ($employee) {
+            $existingDraft = EmployeeRequest::where('employee_id', $employee->id)
+                ->whereNull('uuid')
+                ->whereNull('applied_at')
+                ->latest()
+                ->first();
+        }
+
+        if ($existingDraft) {
+            $this->employeeRequestId = $existingDraft->id;
+            $this->employeeRequest = $existingDraft;
+            $this->form->hydrate($existingDraft);
+            session()->flash('info', __('forms.draft_loaded_automatically'));
+        } else {
+            // Hydrate from Employee if exists, otherwise Party (standard logic)
+            $this->form->hydrate($employee ?? $party);
+        }
+
         $this->isPartyDataPartiallyLocked = true;
         $this->isPositionDataLocked = true;
     }
@@ -54,24 +75,24 @@ class PartyEdit extends AbstractEmployeeFormManager
      */
     protected function handleDraftPersistence(): EmployeeRequest
     {
-
         $employee = $this->party->employees()
             ->where('status', '!=', Status::DISMISSED->value)
             ->latest('start_date')
             ->firstOrFail();
 
         $preparedData = $this->form->getPreparedData();
-
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
+        // Data for Request Model (System fields)
+        // Since PartyEdit view blocks position fields, preparedData has them from hydrate (which got them from Draft or Employee)
         $employeeRequestData = [
             'user_id' => $employee->user_id,
             'party_id' => $this->party->id,
             'employee_id' => $employee->id,
-            'position' => $employee->position,
-            'employee_type' => $employee->employee_type,
-            'start_date' => $employee->start_date?->format('Y-m-d'),
-            'division_id' => $employee->division_id,
+            'position' => $preparedData['position'] ?? $employee->position, // Use form data if present (from merged draft)
+            'employee_type' => $preparedData['employee_type'] ?? $employee->employee_type,
+            'start_date' => $preparedData['start_date'] ?? $employee->start_date?->format('Y-m-d'),
+            'division_id' => $preparedData['division_id'] ?? $employee->division_id,
             'email' => $employee->user?->email,
         ];
 

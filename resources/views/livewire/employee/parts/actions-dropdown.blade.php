@@ -92,7 +92,7 @@
                         @can('update', $position)
                             <li>
                                 <a href="{{ route('employee-request.edit', ['legalEntity' => legalEntity()->id, 'employee_request' => $position->id]) }}" class="flex items-center gap-2 py-2 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
-                                    @icon('pencil', 'w-5 h-5 text-gray-500 dark:text-gray-300')
+                                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"/></svg>
                                     <span>{{ __('forms.edit') }}</span>
                                 </a>
                             </li>
@@ -101,7 +101,7 @@
                             <li>
                                 <button wire:click="$dispatch('openModal', { component: 'employee.delete-draft-modal', arguments: { requestId: {{ $position->id }} }})"
                                         class="flex items-center gap-2 py-2 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-600 dark:text-red-500 w-full">
-                                    @icon('trash', 'w-5 h-5 text-red-500')
+                                    <svg class="w-5 h-5 text-red-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 9-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                                     <span>{{ __('forms.delete') }}</span>
                                 </button>
                             </li>

@@ -29,6 +29,12 @@ class PartyVerificationSyncStatusOnLogin
         $user = $event->user;
         $legalEntity = $event->legalEntity;
 
+        if (!$user->can('party_verification:read')) {
+            Log::info('Listener ' . self::class . ' skipped. User lacks required scope: party_verification:read');
+
+            return;
+        }
+
         try {
             $token = Crypt::decryptString($event->token);
 
@@ -42,11 +48,11 @@ class PartyVerificationSyncStatusOnLogin
                     ->withOption('legal_entity_id', $legalEntity->id)
                     ->withOption('token', $event->token)
                     ->withOption('user', $user)
-                    ->then(function(Batch $batch) use ($user) {
+                    ->then(function (Batch $batch) use ($user) {
                         $user->notify(new SyncNotification('party_verification', 'completed'));
                         Log::info('Batch [Party Verification Status Sync] completed.', ['id' => $batch->id]);
                     })
-                    ->catch(function(Batch $batch, Throwable $e) use ($user) {
+                    ->catch(function (Batch $batch, Throwable $e) use ($user) {
                         $user->notify(new SyncNotification('party_verification', 'failed'));
                         Log::error('Batch [Party Verification Status Sync] failed.', ['id' => $batch->id, 'error' => $e->getMessage()]);
                     })
