@@ -7,6 +7,7 @@ namespace App\Livewire\LegalEntity;
 use Log;
 use Exception;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -132,6 +133,9 @@ class EditLegalEntity extends LegalEntity
         $ownerData['employee_uuid'] = $owner->uuid;
         $ownerData['employee_id'] = $owner->id;
         $ownerData['email'] = $owner->user->email;
+
+        // TODO: remove it when all other entity will use the same date format
+        $ownerData['birthDate'] = convertToAppDateFormat($ownerData['birthDate']);
 
         return $ownerData;
     }

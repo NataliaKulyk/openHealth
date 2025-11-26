@@ -42,9 +42,9 @@ return new class extends Migration
             $table->enum('document_sync_status', JobStatus::values())->nullable();
             $table->timestamp('inserted_at')->nullable();
             $table->date('ehealth_inserted_at')->nullable();
-            $table->string('ehealth_inserted_by')->nullable();
+            $table->uuid('ehealth_inserted_by')->nullable();
             $table->date('ehealth_updated_at')->nullable();
-            $table->string('ehealth_updated_by')->nullable();
+            $table->uuid('ehealth_updated_by')->nullable();
             $table->timestamps();
         });
     }

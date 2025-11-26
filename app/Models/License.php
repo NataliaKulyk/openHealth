@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\License\Type;
+use App\Casts\EHealthDateCast;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
@@ -39,9 +40,9 @@ class License extends Model
 
     protected $casts = [
         'type' => Type::class,
-        'issued_date' => 'date:d.m.Y',
-        'active_from_date' => 'date:d.m.Y',
-        'expiry_date' => 'date:d.m.Y'
+        'issued_date' => EHealthDateCast::class,
+        'active_from_date' => EhealthDateCast::class,
+        'expiry_date' => EhealthDateCast::class
     ];
 
     public function legalEntity(): BelongsTo

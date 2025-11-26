@@ -248,6 +248,8 @@ abstract class LegalEntity extends Component
 
         $taxId = $this->legalEntityForm->owner['taxId'];
 
+        Log::info('Legal Entity Success SOURCE DATA', $data);
+
         // Sending encrypted data
         $base64Data = $this->sendEncryptedData($data, $taxId, $data['edrpou']);
 
@@ -275,7 +277,6 @@ abstract class LegalEntity extends Component
             $data['employee_id'] = $this->legalEntityForm->owner['employee_id'];
         }
 
-        Log::info('Legal Entity Success SOURCE DATA', $data);
         Log::info('Legal Entity Success RESPONSE', $response); // TODO: Important! Delete after testing!!!
 
         try {
@@ -448,8 +449,8 @@ abstract class LegalEntity extends Component
     {
         // Define an array with consent text and consent status
         return [
-            'consent_text' => 'Sample consent_text',
-            'consent'      => true
+            'consent_text' => __(dictionary()->getDictionary('LE_CONSENT_TEXT')['APPROVED']),
+            'consent'      => $this->legalEntityForm->publicOffer['consent'] ?? false,
         ];
     }
 
@@ -473,6 +474,15 @@ abstract class LegalEntity extends Component
      */
     private function prepareDataForRequest(array $data): array
     {
+        $dateReformatArray = [
+            'owner.birth_date',
+            'owner.documents.issued_at',
+            'accreditation.order_date',
+            'accreditation.issued_date',
+            'accreditation.expiry_date',
+            'archive',
+        ];
+
         if (Arr::has($data, 'license.uuid')) {
             $uuid = Arr::pull($data, 'license.uuid');
 
@@ -481,7 +491,18 @@ abstract class LegalEntity extends Component
             }
         }
 
+        // If license has been added/edited, reformat its dates
+        if (empty($data['license']['id'])) {
+            $dateReformatArray = array_merge($dateReformatArray, [
+                'license.issued_date',
+                'license.expiry_date',
+                'license.active_from_date'
+            ]);
+        }
+
         $data = $this->convertArrayKeysToSnakeCase($data);
+
+        $data = $this->dateReformat($data, $dateReformatArray);
 
         // Converting documents to array
         if (Arr::has($data, 'owner.employee_uuid')) {
@@ -528,6 +549,38 @@ abstract class LegalEntity extends Component
         $data = removeEmptyKeys($data);
 
         $data['website'] ??= "";
+
+        return $data;
+    }
+
+    /**
+     * Reformats date values in the provided data array based on the specified data items.
+     *
+     *
+     * @param array $data The input data array containing date values to be reformatted
+     * @param array $dataItems Configuration array specifying which items are dates and how to format them
+     *
+     * @return array
+     */
+    protected function dateReformat(array $data, array $dataItems): array
+    {
+        foreach ($dataItems as $item) {
+            $itemValue = Arr::get($data, $item);
+
+            if (\is_array($itemValue)) {
+                $reformatted = collect($itemValue)->map(function($item) {
+                    if (isset($item['date'])) {
+                        $item['date'] = convertToISO8601($item['date']);
+                    }
+
+                    return $item;
+                })->toArray();
+
+                Arr::set($data, $item, $reformatted);
+            } else {
+                Arr::set($data, $item, convertToISO8601($itemValue));
+            }
+        }
 
         return $data;
     }

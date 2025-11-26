@@ -2,21 +2,11 @@
 
 namespace App\Casts;
 
-use Exception;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 
 class LegalEntityAccreditationCast implements CastsAttributes
 {
-    public const array KEYS_CAST_MAP = [
-        'category' => 'setCategory',
-        'issued_date' => 'setIssuedDate',
-        'expiry_date' => 'setExpiryDate',
-        'order_no' => 'setOrderNo',
-        'order_date' => 'setOrderDate'
-    ];
-
     /**
      * Cast the given value.
      *
@@ -30,7 +20,26 @@ class LegalEntityAccreditationCast implements CastsAttributes
             return [];
         }
 
-        return $this->proceedValueData($value);
+        $arrayData = \is_array($value) ? $value: json_decode($value, true) ?? [];
+
+        foreach ($arrayData as $key => $value) {
+           switch ($key) {
+                case 'issued_date':
+                    $arrayData[$key] = convertToAppDateFormat($value);
+                    break;
+                case 'expiry_date':
+                    $arrayData[$key] = convertToAppDateFormat($value);
+                    break;
+                case 'order_date':
+                    $arrayData[$key] = convertToAppDateFormat($value);
+                    break;
+                default:
+                    // Is not processed key, leave it as is
+                    $arrayData[$key] ??= "";
+            }
+        }
+
+        return $arrayData;
     }
 
     /**
@@ -42,93 +51,25 @@ class LegalEntityAccreditationCast implements CastsAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): string
     {
-        return json_encode($this->proceedValueData($value));
-    }
+        $arrayData = \is_array($value) ? $value: json_decode($value, true) ?? [];
 
-    /**
-     * Processes the provided value data and returns the resulting array.
-     *
-     * @param string|array $valueData The input data to be processed.
-     *
-     * @return array The processed data array.
-     */
-    protected function proceedValueData(string|array|null $value): array
-    {
-        $arrayData = is_array($value) ? $value: json_decode($value, true) ?? [];
-
-        foreach (self::KEYS_CAST_MAP as $key => $methodName) {
-            if (! isset($arrayData[$key])) {
-                continue;
+        foreach ($arrayData as $key => $value) {
+           switch ($key) {
+                case 'issued_date':
+                    $arrayData[$key] = convertToISO8601($value);
+                    break;
+                case 'expiry_date':
+                    $arrayData[$key] = convertToISO8601($value);
+                    break;
+                case 'order_date':
+                    $arrayData[$key] = convertToISO8601($value);
+                    break;
+                default:
+                    // Is not processed key, leave it as is
+                    $arrayData[$key] ??= "";
             }
-
-            if (!method_exists($this, $methodName)) {
-                throw new Exception("LegalEntityArchiveCast: method {$methodName} not found");
-            }
-
-            // Proceess value stored in array depend on its key and method
-            $arrayData[$key] = ! empty($arrayData[$key]) ? $this->{$methodName}($arrayData[$key]) : "";
         }
 
-        return $arrayData;
-    }
-
-    /**
-     * Sets the category value.
-     *
-     * @param string $value The category value to set.
-     *
-     * @return string The processed category value.
-     */
-    protected function setCategory(string $value): string
-    {
-        return $value;
-    }
-
-    /**
-     * Sets the issued_date value.
-     *
-     * @param string $value The issued_date value to set.
-     *
-     * @return string The formatted or processed issued_date value.
-     */
-    protected function setIssuedDate(string $value): string
-    {
-        return Carbon::parse($value)->format('Y-m-d');
-    }
-
-    /**
-     * Sets the expiry_date value.
-     *
-     * @param string $value The expiry_date value to set.
-     *
-     * @return string The formatted or processed expiry_date value.
-     */
-    protected function setExpiryDate(string $value): string
-    {
-        return Carbon::parse($value)->format('Y-m-d');
-    }
-
-    /**
-     * Sets the order number value.
-     *
-     * @param string $value The order number value to set.
-     *
-     * @return string The processed order number value.
-     */
-    protected function setOrderNo(string $value): string
-    {
-        return $value;
-    }
-
-    /**
-     * Sets the order_date value.
-     *
-     * @param string $value The order_date value to set.
-     *
-     * @return string The formatted or processed order_date value.
-     */
-    protected function setOrderDate(string $value): string
-    {
-        return Carbon::parse($value)->format('Y-m-d');
+        return json_encode($arrayData);
     }
 }

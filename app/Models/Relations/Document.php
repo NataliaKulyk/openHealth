@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Casts\EHealthDateCast;
 use Illuminate\Database\Eloquent\Model;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -31,8 +32,8 @@ class Document extends Model
     ];
 
     protected $casts = [
-        'issued_at' => 'date:Y-m-d',
-        'expiration_date' => 'date:Y-m-d',
+        'issued_at' => EHealthDateCast::class,
+        'expiration_date' => EHealthDateCast::class,
     ];
 
     public function documentable(): MorphTo

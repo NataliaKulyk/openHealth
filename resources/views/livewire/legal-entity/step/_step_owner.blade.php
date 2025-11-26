@@ -115,8 +115,8 @@
                 required
                 type="text"
                 placeholder=" "
-                x-mask="9999-99-99"
                 id="ownerBirthDate"
+                datepicker-format="{{ frontendDateFormat() }}"
                 wire:model="legalEntityForm.owner.birthDate"
                 aria-describedby="{{ $hasOwnerBirthDate ? 'ownerBirthDateErrorHelp' : '' }}"
                 class="input datepicker-input {{ $hasOwnerBirthDate ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
@@ -483,8 +483,8 @@
             <input
                 type="text"
                 placeholder=" "
-                x-mask="9999-99-99"
                 id="documentsIssuedAt"
+                datepicker-format="{{ frontendDateFormat() }}"
                 wire:model="legalEntityForm.owner.documents.issuedAt"
                 aria-describedby="{{ $hasOwnerDocumentIssuedAt ? 'ownerDocumentIssuedAtErrorHelp' : '' }}"
                 class="input datepicker-input {{ $hasOwnerDocumentIssuedAt ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"

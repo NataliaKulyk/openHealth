@@ -112,7 +112,7 @@
                 required
                 type="text"
                 placeholder=" "
-                x-mask="9999-99-99"
+                datepicker-format="{{ frontendDateFormat() }}"
                 id="licenseIssuedDate"
                 wire:model="legalEntityForm.license.issuedDate"
                 aria-describedby="{{ $hasLicenseIssuedDateError ? 'licenseIssuedDateErrorHelp' : '' }}"
@@ -141,7 +141,7 @@
                 required
                 type="text"
                 placeholder=" "
-                x-mask="9999-99-99"
+                datepicker-format="{{ frontendDateFormat() }}"
                 id="licenseActiveFromDate"
                 wire:model="legalEntityForm.license.activeFromDate"
                 aria-describedby="{{ $hasLicenseActiveFromDateError ? 'licenseActiveFromDateErrorHelp' : '' }}"
@@ -169,7 +169,7 @@
             <input
                 type="text"
                 placeholder=" "
-                x-mask="9999-99-99"
+                datepicker-format="{{ frontendDateFormat() }}"
                 id="licenseExpiryDate"
                 wire:model="legalEntityForm.license.expiryDate"
                 class="input datepicker-input peer"

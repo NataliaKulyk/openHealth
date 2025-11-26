@@ -27,13 +27,31 @@ if (!function_exists("removeEmptyKeys")) {
 }
 
 if (!function_exists('convertToISO8601')) {
-    function convertToISO8601(string $dateString): string
+    function convertToISO8601(?string $dateString): string
     {
         if (empty($dateString)) {
             return '';
         }
 
         return CarbonImmutable::parse($dateString)->format('Y-m-d');
+    }
+}
+
+if (!function_exists('convertToAppDateFormat')) {
+    function convertToAppDateFormat(string $dateString): string
+    {
+        if (empty($dateString)) {
+            return '';
+        }
+
+        return CarbonImmutable::parse($dateString)->format(config('app.date_format'));
+    }
+}
+
+if (!function_exists('frontendDateFormat')) {
+    function frontendDateFormat(): string
+    {
+        return config('ehealth.frontend_date_format')[config('app.date_format')] ?? 'dd.mm.yyyy';
     }
 }
 

@@ -111,7 +111,7 @@
                                 type="text"
                                 placeholder=" "
                                 x-model="archives[index].date"
-                                x-mask="9999-99-99"
+                                datepicker-format="{{ frontendDateFormat() }}"
                                 class="input datepicker-input peer"
                                 :id="$id('archive', '_date' + index)"
                                 :class="{ 'input-error border-red-500 focus:border-red-500' : errors[`legalEntityForm.archive.${index}.date`] }"

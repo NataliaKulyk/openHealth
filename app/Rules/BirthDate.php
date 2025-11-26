@@ -22,7 +22,7 @@ class BirthDate implements ValidationRule
         $this->email = $email;
     }
 
-    protected const string MIN_DATE = '1900-01-01';
+    protected const string MIN_DATE = '01.01.1900';
 
     /**
      * Run the validation rule.
@@ -36,15 +36,10 @@ class BirthDate implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $birthDate = Carbon::parse($value);
-        $minDate = Carbon::createFromFormat('Y-m-d', self::MIN_DATE);
+        $minDate = Carbon::parse(self::MIN_DATE);
 
         if ($birthDate->lte($minDate) || $birthDate->gt(Carbon::now())) {
             $fail(__('validation.employee.party.birth_date_value'));
-        }
-
-        // This pattern has used eHealth in his own validation of the Birth Date
-        if (!preg_match('/^(\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))?)?$/u', $value)) {
-            $fail(__('validation.employee.birth_date_iso'));
         }
 
         $user = User::where('email', $this->email)->first();

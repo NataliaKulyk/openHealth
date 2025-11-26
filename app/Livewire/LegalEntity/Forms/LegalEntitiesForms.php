@@ -10,6 +10,7 @@ use App\Rules\TaxId;
 use App\Rules\AgeCheck;
 use App\Rules\Cyrillic;
 use App\Rules\BirthDate;
+use App\Rules\DateFormat;
 use App\Rules\ExpiryDate;
 use App\Rules\PhoneNumber;
 use App\Rules\InDictionary;
@@ -73,12 +74,12 @@ class LegalEntitiesForms extends Form
             'owner.firstName' => ['required', 'min:3', new Name()],
             'owner.secondName' => ['nullable', new Name()],
             'owner.gender' => 'required|string',
-            'owner.birthDate' => ['required', 'date', 'before_or_equal:today', new BirthDate($this->owner['email'] ?? ''), new AgeCheck()],
+            'owner.birthDate' => ['required', new DateFormat(), 'before_or_equal:today', new BirthDate($this->owner['email'] ?? ''), new AgeCheck()],
             'owner.noTaxId' => 'boolean|nullable',
             'owner.taxId' => ['required_unless:owner.noTaxId,true', 'string', new TaxId()],
             'owner.documents.type' => ['required','string', new InDictionary('DOCUMENT_TYPE')],
             'owner.documents.number' => ['required', 'string', new DocumentNumber($this->owner['documents']['type'] ?? '')],
-            'owner.documents.issuedAt' => 'nullable|date|before_or_equal:today',
+            'owner.documents.issuedAt' => ['nullable', new DateFormat(), 'before_or_equal:today'],
             'owner.phones' => 'required|array',
             'owner.phones.*.number' => ['required', 'string', new PhoneNumber()],
             'owner.phones.*.type' => [
@@ -103,14 +104,14 @@ class LegalEntitiesForms extends Form
             'accreditation' => 'nullable|array',
             'accreditation.category' => $this->accreditationShow ? 'required|string' : 'nullable',
             'accreditation.orderNo' =>  $this->accreditationShow ? 'required|string|min:2' : 'nullable|string',
-            'accreditation.orderDate' => 'nullable|date|before_or_equal:today',
-            'accreditation.issuedDate' => ['nullable', 'date', 'before_or_equal:today'],
-            'accreditation.expiryDate' => ['nullable', 'date', new ExpiryDate($this->accreditation['issuedDate'] ?? '')],
+            'accreditation.orderDate' => ['nullable', new DateFormat(), 'before_or_equal:today'],
+            'accreditation.issuedDate' => ['nullable', new DateFormat(), 'before_or_equal:today'],
+            'accreditation.expiryDate' => ['nullable', new DateFormat(), new ExpiryDate($this->accreditation['issuedDate'] ?? '')],
             'license.type' => 'required|string',
             'license.issuedBy' => ['required', 'string','min:3',new Cyrillic()],
-            'license.issuedDate' => 'required|date|before_or_equal:today',
-            'license.activeFromDate' => 'required|date',
-            'license.expiryDate' => ['nullable', 'date', new ExpiryDate($this->license['activeFromDate'] ?? '')],
+            'license.issuedDate' => ['required', new DateFormat(), 'before_or_equal:today'],
+            'license.activeFromDate' => ['required', new DateFormat()],
+            'license.expiryDate' => ['nullable', new DateFormat(), new ExpiryDate($this->license['activeFromDate'] ?? '')],
             'license.orderNo' => 'required|string',
             'license.licenseNumber' => ['nullable', 'string', 'regex:/^(?!.*[ЫЪЭЁыъэё@$^#])[a-zA-ZА-ЯҐЇІЄа-яґїіє0-9№\"!\^\*)\]\[(&._-].*$/'],
             'receiverFundsCode' => [
@@ -125,12 +126,12 @@ class LegalEntitiesForms extends Form
                 "regex:/^(?!.*[ЫЪЭЁыъэё@%&$^#])[А-ЯҐЇІЄа-яґїіє’\'\- ]+$/u",
             ],
             'archive' => 'nullable|array',
-            'archive.*.date'  => 'required_if:archivationShow,true|date|before_or_equal:today',
+            'archive.*.date'  => ['required_if:archivationShow,true', new DateFormat(), 'before_or_equal:today'],
             'archive.*.place' => 'required_if:archivationShow,true|string',
         ];
 
         if (($this->accreditation['category'] ?? null) !== 'NO_ACCREDITATION' && $this->accreditationShow) {
-            $rules['accreditation.orderDate'] = 'required|date|before_or_equal:today';
+            $rules['accreditation.orderDate'] = ['required', new DateFormat(), 'before_or_equal:today'];
         }
 
         return $rules;

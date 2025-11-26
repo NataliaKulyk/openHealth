@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\LegalEntity\LegalEntity as LegalEntityComponent;
+use Illuminate\Support\Carbon;
 
 class LegalEntityDetails extends LegalEntityComponent
 {
@@ -144,6 +145,9 @@ class LegalEntityDetails extends LegalEntityComponent
         $ownerData['employee_id'] = $owner->uuid;
         $ownerData['email'] = $owner->user->email;
 
+        // TODO: remove it when all other entity will use the same date format
+        $ownerData['birthDate'] = convertToAppDateFormat($ownerData['birthDate']);
+
         $this->legalEntityForm->owner = array_merge($this->legalEntityForm->owner ?? [], $ownerData);
     }
 
@@ -159,6 +163,9 @@ class LegalEntityDetails extends LegalEntityComponent
         if (empty($documents)) {
             return [];
         }
+
+        // TODO: remove it when all other entity will use the same date format
+        // $documents[0]['issuedAt'] = Carbon::parse($documents[0]['issuedAt'])->format(config('app.date_format'));
 
         return $this->convertArrayKeysToCamelCase($documents[0]);
     }
