@@ -594,6 +594,95 @@ input:-webkit-autofill {
     }
 }
 
+/* ============================================
+   SIDEBAR NAVIGATION STYLES
+   ============================================ */
+
+/* Base menu item styles */
+#drawer-navigation .menu-item {
+    @apply cursor-pointer flex items-center p-2 w-full text-base font-medium;
+    @apply text-gray-900 rounded-lg transition-all duration-75;
+    @apply hover:bg-gray-100;
+    @apply dark:text-white dark:hover:bg-gray-700;
+}
+
+/* Submenu item (nested dropdown items) */
+#drawer-navigation .submenu-item {
+    @apply flex items-center p-2 pl-6 w-full text-sm font-medium;
+    @apply text-gray-900 rounded-lg transition-all duration-75;
+    @apply hover:bg-gray-100;
+    @apply dark:text-white dark:hover:bg-gray-700;
+}
+
+/* Simple menu item (single-level links) */
+#drawer-navigation .menu-item-simple {
+    @apply flex items-center p-2 text-base font-medium;
+    @apply text-gray-900 rounded-lg transition-all duration-75;
+    @apply hover:bg-gray-100;
+    @apply dark:text-white dark:hover:bg-gray-700;
+}
+
+/* Icon styles - використовуємо :not(:last-child) щоб виключити chevron */
+#drawer-navigation .menu-item > svg:not(:last-child),
+#drawer-navigation .menu-item-simple > svg {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+    flex-shrink: 0;
+    @apply text-gray-500 transition-all duration-75;
+    @apply dark:text-gray-400;
+}
+
+#drawer-navigation .menu-item:hover > svg:not(:last-child),
+#drawer-navigation .menu-item-simple:hover > svg {
+    @apply text-gray-900 dark:text-white;
+}
+
+/* Icon styles for submenu-item */
+#drawer-navigation .submenu-item > svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    min-width: 1.25rem;
+    min-height: 1.25rem;
+    flex-shrink: 0;
+    @apply text-gray-500 transition-all duration-75;
+    @apply dark:text-gray-400;
+}
+
+#drawer-navigation .submenu-item:hover > svg {
+    @apply text-gray-900 dark:text-white;
+}
+
+/* Text label styles */
+#drawer-navigation .menu-item > span {
+    @apply ml-3 whitespace-nowrap;
+}
+
+#drawer-navigation .menu-item > span:first-of-type {
+    @apply flex-1 text-left;
+}
+
+#drawer-navigation .menu-item-simple > span,
+#drawer-navigation .submenu-item > span {
+    @apply ml-3 whitespace-nowrap;
+}
+
+/* Chevron icon for dropdown - використовуємо :last-child */
+#drawer-navigation .menu-item > svg:last-child {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+    flex-shrink: 0;
+    @apply transition-transform duration-200;
+}
+
+/* Фіксуємо розміри для всіх SVG в списку */
+#drawer-navigation ul svg {
+    flex-shrink: 0;
+}
+
 @media (min-width: 2048px) {
     .shift-content {
         @apply mx-auto ml-[6%];
