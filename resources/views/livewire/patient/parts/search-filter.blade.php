@@ -1,4 +1,4 @@
-<div x-show="showFilter" wire:key="{{ random_int(1, 100) }}">
+<div x-show="showFilter" wire:key="{{ now() }}">
     <div class="form-row-3">
         <div class="form-group group">
             <input wire:model="form.patientsFilter.firstName"

@@ -102,7 +102,6 @@ return [
     'alias' => 'Роль',
     'leaflet' => "Пам’ятка",
     'print_leaflet_for_patient' => "Роздрукувати пам’ятку для ознайомлення пацієнтом",
-    'uploading_documents' => 'Завантаження документів',
 
     'status' => [
         // PERSON_VERIFICATION_STATUSES

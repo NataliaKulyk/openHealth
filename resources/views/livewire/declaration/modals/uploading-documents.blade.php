@@ -14,7 +14,7 @@
                 >
 
                     <h2 class="mb-8 text-2xl font-semibold text-gray-900 dark:text-white text-center">
-                        {{ __('patients.uploading_documents') }}
+                        {{ __('forms.uploading_documents') }}
 
                     </h2>
 

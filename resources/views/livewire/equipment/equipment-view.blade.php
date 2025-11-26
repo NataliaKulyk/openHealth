@@ -108,7 +108,7 @@
                        readonly
                 >
                 <label for="errorReason" class="label">
-                    {{ __('forms.statusReason') }}
+                    {{ __('equipments.reason_for_status_change') }}
                 </label>
             </div>
         </div>

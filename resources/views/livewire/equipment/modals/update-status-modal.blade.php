@@ -31,7 +31,7 @@
                         {{ __('equipments.update_equipment_status') }} "<span x-text="equipmentName"></span>"
                     </h2>
 
-                    <form @submit.prevent="$wire.updateStatus(equipmentUuid)" wire:key="{{ random_bytes(5) }}">
+                    <form @submit.prevent="$wire.updateStatus(equipmentUuid)" wire:key="{{ now() }}">
                         <div class="mb-4 text-left">
                             <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ __('forms.status.label') }}

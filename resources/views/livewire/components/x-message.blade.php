@@ -1,7 +1,7 @@
 <div>
     @if(session('error') || session('success') || session('status'))
         <div class="alert-message flex fixed top-[1.5rem] w-auto z-[100000] right-2"
-            wire:key="{{ bin2hex(random_bytes(5)) }}"
+            wire:key="{{ now() }}"
             x-data="message"
             x-show="showAlertMessage"
         >

@@ -7,7 +7,7 @@
         </x-slot>
     </x-header-navigation>
 
-    <form class="form shift-content" wire:key="{{ random_int(1, 100) }}">
+    <form class="form shift-content" wire:key="{{ now() }}">
         @include('livewire.declaration.parts.main-information')
         @include('livewire.declaration.parts.authentication')
 

@@ -5,7 +5,7 @@
         <x-slot name="title">{{ __('equipments.new') }}</x-slot>
     </x-header-navigation>
 
-    <div class="form" wire:key="{{ random_bytes(5) }}">
+    <div class="form" wire:key="{{ now() }}">
 
         @include('livewire.equipment.parts.main-data')
         @include('livewire.equipment.parts.additional-data', ['context' => 'create'])
@@ -21,17 +21,7 @@
                             class="button-primary-outline flex items-center gap-2 px-4 py-2"
                             wire:click="createLocally"
                     >
-                        <svg class="w-5 h-5"
-                             xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke="currentColor"
-                             stroke-width="2"
-                        >
-                            <path stroke-linejoin="round"
-                                  d="M10 12v1h4v-1m4 7H6a1 1 0 0 1-1-1V9h14v9a1 1 0 0 1-1 1ZM4 5h16a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"
-                            />
-                        </svg>
+                        @icon('archive', 'w-4 h-4')
                         {{ __('forms.save') }}
                     </button>
                 @endif

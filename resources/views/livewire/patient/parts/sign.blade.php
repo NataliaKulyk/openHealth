@@ -1,7 +1,7 @@
 <fieldset class="fieldset">
     @if(!empty($uploadedDocuments))
         <legend class="legend">
-            {{ __('patients.uploading_documents') }}
+            {{ __('forms.uploading_documents') }}
         </legend>
 
         @foreach($uploadedDocuments as $key => $document)

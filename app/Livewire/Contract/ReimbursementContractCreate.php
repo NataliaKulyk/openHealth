@@ -23,19 +23,13 @@ class ReimbursementContractCreate extends ContractComponent
     public bool $showSignatureModal = false;
 
     protected array $dictionaryNames = [
-        'CONTRACT_TYPE',
         'REIMBURSEMENT_CONTRACT_TYPE',
-        'CAPITATION_CONTRACT_CONSENT_TEXT'
+        'REIMBURSEMENT_CONTRACT_CONSENT_TEXT'
     ];
 
     public function mount(LegalEntity $legalEntity): void
     {
         $this->baseMount($legalEntity);
-    }
-
-    public function openModalSigned(): void
-    {
-        $this->showSignatureModal = true;
     }
 
     public function create(): void
