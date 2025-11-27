@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Casts\EHealthDateCast;
 use Illuminate\Database\Eloquent\Model;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -31,8 +32,8 @@ class Qualification extends Model
     ];
 
     protected $casts = [
-        'issued_date' => 'date',
-        'valid_to' => 'date',
+        'issued_date' => EHealthDateCast::class,
+        'valid_to' => EHealthDateCast::class,
     ];
 
     public function qualificationable(): MorphTo

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Casts\EHealthDateCast;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Model;
@@ -33,8 +34,8 @@ class Speciality extends Model
     ];
 
     protected $casts = [
-        'attestation_date' => 'date',
-        'valid_to_date' => 'date',
+        'attestation_date' => EHealthDateCast::class,
+        'valid_to_date' => EHealthDateCast::class,
     ];
 
     public function specialityable(): MorphTo

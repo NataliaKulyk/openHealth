@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Casts\EHealthDateCast;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -31,7 +32,7 @@ class ScienceDegree extends Model
     ];
 
     protected $casts = [
-        'issued_date' => 'date',
+        'issued_date' => EHealthDateCast::class,
     ];
 
     public function science_degreeable(): MorphTo
