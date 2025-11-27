@@ -32,14 +32,14 @@ class TestUserMigrate extends Seeder
                     'client_secret' => config('ehealth.test.client_secret'),
                     'accreditation' => json_encode([
                         'category' => 'SECOND',
-                        'expiry_date' => new Carbon('2027-02-28'),
-                        'issued_date' => new Carbon('2017-02-28'),
-                        'order_date' => new Carbon('2017-02-28'),
+                        'expiry_date' => convertToISO8601('2027-02-28'),
+                        'issued_date' => convertToISO8601('2017-02-28'),
+                        'order_date' => convertToISO8601('2017-02-28'),
                         'order_no' => 'fd123443',
                     ]),
                     'archive' => json_encode([
                         [
-                            'date' => new Carbon('2017-02-28'),
+                            'date' => convertToISO8601('2017-02-28'),
                             'place' => 'вул. Грушевського 15'
                         ]
                     ]),
@@ -145,9 +145,9 @@ class TestUserMigrate extends Seeder
                     'legal_entity_type_id' => $legalEntityType->id,
                     'updated_by' => '4261eacf-8008-4e62-899f-de1e2f7065f0',
                     'website' => 'www.openhealths.com',
-                    'inserted_at' => new Carbon('2024-06-06T12:41:30.000000Z'),
-                    'created_at' => new Carbon('2024-10-17T13:29:18.000000Z'),
-                    'updated_at' => new Carbon('2024-10-17T13:29:24.000000Z'),
+                    'inserted_at' => convertToISO8601('2024-06-06T12:41:30.000000Z'),
+                    'created_at' => convertToISO8601('2024-10-17T13:29:18.000000Z'),
+                    'updated_at' => convertToISO8601('2024-10-17T13:29:24.000000Z'),
                 ]);
 
                 $this->command->info("\n\tINFO: A new LegalEntity entry has been successfully inserted into the database");
@@ -167,8 +167,8 @@ class TestUserMigrate extends Seeder
                     'zip' => '02000',
                     'addressable_type' => 'App\Models\LegalEntity',
                     'addressable_id' => $legalEntityId,
-                    'created_at' => new Carbon('2025-03-06T15:41:30Z'),
-                    'updated_at' => new Carbon('2025-03-10T13:40:10Z'),
+                    'created_at' => convertToISO8601('2025-03-06T15:41:30Z'),
+                    'updated_at' => convertToISO8601('2025-03-10T13:40:10Z'),
                 ]);
 
                 $this->command->info("\tINFO: A new Address entry has been successfully inserted into the database");
@@ -179,15 +179,15 @@ class TestUserMigrate extends Seeder
                     'is_active' => true,
                     'legal_entity_id' => $legalEntityId,
                     'issued_by' => 'Кваліфікаційна комісія',
-                    'issued_date' => new Carbon('2017-02-28'),
-                    'active_from_date' => new Carbon('2017-02-28'),
+                    'issued_date' => convertToISO8601('2017-02-28'),
+                    'active_from_date' => convertToISO8601('2017-02-28'),
                     'order_no' => 'ВА43234',
                     'license_number' => 'fd123443',
-                    'expiry_date' => new Carbon('2027-02-28'),
+                    'expiry_date' => convertToISO8601('2027-02-28'),
                     'what_licensed' => 'реалізація наркотичних засобів',
                     'is_primary' => true,
-                    'created_at' => new Carbon('2024-06-06T15:41:30Z'),
-                    'updated_at' => new Carbon('2024-09-10T13:40:10Z'),
+                    'created_at' => convertToISO8601('2024-06-06T15:41:30Z'),
+                    'updated_at' => convertToISO8601('2024-09-10T13:40:10Z'),
                 ]);
 
                 $this->command->info("\tINFO: A new License entry has been successfully inserted into the database");
@@ -198,7 +198,7 @@ class TestUserMigrate extends Seeder
                         'last_name' => 'Безшейко',
                         'first_name' => 'Віталій',
                         'second_name' => 'Григорович',
-                        'birth_date' => new Carbon('1987-10-02'),
+                        'birth_date' => convertToISO8601('1987-10-02'),
                         'gender' => 'MALE',
                         'tax_id' => '3139821559',
                         'no_tax_id' => false,
@@ -255,8 +255,8 @@ class TestUserMigrate extends Seeder
                         'is_blocked' => null,
                         'block_reason' => null,
                         'person_id' => null,
-                        'created_at' => new Carbon('2024-09-11T10:00:52.000000Z'),
-                        'updated_at' => new Carbon('2024-09-11T10:03:10.000000Z'),
+                        'created_at' => convertToISO8601('2024-09-11T10:00:52.000000Z'),
+                        'updated_at' => convertToISO8601('2024-09-11T10:03:10.000000Z'),
                         'two_factor_confirmed_at' => null,
                     ]
                 );
@@ -279,7 +279,7 @@ class TestUserMigrate extends Seeder
                     'division_uuid' => null,
                     'legal_entity_uuid' => config('ehealth.test.client_id'),
                     'position' => 'P2',
-                    'start_date' => new Carbon('2024-09-05T21:00:00.000000Z'),
+                    'start_date' => convertToISO8601('2024-09-05T21:00:00.000000Z'),
                     'end_date' => null,
                     'employee_type' => 'OWNER',
                     'inserted_at' => null,
@@ -288,8 +288,8 @@ class TestUserMigrate extends Seeder
                     'division_id' => null,
                     'user_id' => $ownerUserId,
                     'party_id' => $partyId,
-                    'created_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
-                    'updated_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
+                    'created_at' => convertToISO8601('2024-11-14T10:37:35.000000Z'),
+                    'updated_at' => convertToISO8601('2024-11-14T10:37:35.000000Z'),
                 ]);
 
                 $this->command->info("\tINFO: A new Employee entry has been successfully inserted into the database");
@@ -299,10 +299,10 @@ class TestUserMigrate extends Seeder
                     'division_uuid' => null,
                     'legal_entity_uuid' => config('ehealth.test.client_id'),
                     'position' => 'P2',
-                    'start_date' => new Carbon('2024-09-04T21:00:00.000000Z'),
+                    'start_date' => convertToISO8601('2024-09-04T21:00:00.000000Z'),
                     'end_date' => null,
                     'employee_type' => 'OWNER',
-                    'inserted_at' => new Carbon('2024-09-05T18:56:03.427768Z'),
+                    'inserted_at' => convertToISO8601('2024-09-05T18:56:03.427768Z'),
                     'status' => 'APPROVED',
                     'employee_id' => $employeeId,
                     'legal_entity_id' => $legalEntityId,
@@ -310,9 +310,9 @@ class TestUserMigrate extends Seeder
                     'division_id' => null,
                     'user_id' => $ownerUserId,
                     'party_id' => $partyId,
-                    'applied_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
-                    'created_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
-                    'updated_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
+                    'applied_at' => convertToISO8601('2024-11-14T10:37:35.000000Z'),
+                    'created_at' => convertToISO8601('2024-11-14T10:37:35.000000Z'),
+                    'updated_at' => convertToISO8601('2024-11-14T10:37:35.000000Z'),
                 ]);
 
                 $this->command->info("\tINFO: A new EmployeeRequest entry has been successfully inserted into the database\n");
@@ -323,7 +323,7 @@ class TestUserMigrate extends Seeder
                     'first_name' => 'Михайло',
                     'last_name' => 'Грушевський',
                     'second_name' => 'Сергійович',
-                    'birth_date' => new Carbon('1985-01-07'),
+                    'birth_date' => convertToISO8601('1985-01-07'),
                     'birth_country' => 'Україна',
                     'birth_settlement' => 'Київ',
                     'gender' => 'MALE',

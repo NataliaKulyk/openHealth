@@ -55,6 +55,12 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
         $preparedData = $this->form->getPreparedData();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
+        // ---Ensure employee_uuid is present if linked to an employee ---
+        if ($this->employeeRequest->employee_id && $this->employeeRequest->employee) {
+            $nestedDataForRevision['employee_uuid'] = $this->employeeRequest->employee->uuid;
+        }
+        // --------------------------------------------------------------------
+
         // If it's a SIGNED request being corrected -> Create NEW Draft (Standard logic)
         if (!is_null($this->employeeRequest->uuid)) {
             $employeeRequestData = Arr::only($preparedData, ['position', 'start_date', 'end_date', 'employee_type', 'division_id', 'email']);

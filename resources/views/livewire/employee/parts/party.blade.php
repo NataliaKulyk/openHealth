@@ -41,7 +41,14 @@
         </div>
         <div class="form-row-3 items-start">
             <div class="form-group datepicker-wrapper relative w-full">
-                <input wire:model="form.party.birthDate" type="text" name="birthDate" id="birthDate" class="peer input pl-10 ..." placeholder=" " required ...
+                <input wire:model="form.party.birthDate"
+                       datepicker-format="{{ frontendDateFormat() }}"
+                       type="text"
+                       name="birthDate"
+                       id="birthDate"
+                       class="peer input pl-10 appearance-none datepicker-input text-gray-500 dark:text-gray-400"
+                       placeholder=" "
+                       required
                        :disabled="$wire.isPersonalDataLocked || $wire.isPartyDataPartiallyLocked"/>
                 <label for="birthDate" class="wrapped-label">{{__('forms.birth_date')}}</label>
                 @error('form.party.birthDate') <p class="text-error">{{$message}}</p> @enderror

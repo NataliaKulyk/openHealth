@@ -161,7 +161,12 @@
                                                 <path fill-rule="evenodd" d="M6 5V4a1 1 0 1 1 2 0v1h3V4a1 1 0 1 1 2 0v1h3V4a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v2H3V7a2 2 0 0 1 2-2h1ZM3 19v-8h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm5-6a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2H8Z" clip-rule="evenodd"/>
                                             </svg>
                                         <label for="documentIssuedAt" class="label-modal">{{__('forms.issued_at')}}<span class="text-red-600"> *</span></label>
-                                        <input x-model="modalDocument.issuedAt" type="text" name="documentIssuedAt" id="documentIssuedAt" class="input-modal datepicker-input" autocomplete="off">
+                                        <input x-model="modalDocument.issuedAt"
+                                               datepicker-format="{{ frontendDateFormat() }}"
+                                               type="text" name="documentIssuedAt"
+                                               id="documentIssuedAt"
+                                               class="input-modal datepicker-input"
+                                               autocomplete="off">
                                     </div>
                                 </div>
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>

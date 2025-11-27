@@ -82,6 +82,7 @@ class PartyEdit extends AbstractEmployeeFormManager
 
         $preparedData = $this->form->getPreparedData();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
+        $nestedDataForRevision['employee_uuid'] = $employee->uuid;
 
         // Data for Request Model (System fields)
         // Since PartyEdit view blocks position fields, preparedData has them from hydrate (which got them from Draft or Employee)

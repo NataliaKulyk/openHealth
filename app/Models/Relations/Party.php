@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Casts\EHealthDateCast;
 use App\Models\User;
 use App\Models\Employee\Employee;
 use App\Traits\SyncsMorphManyRelations;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee\EmployeeRequest;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Party extends Model
@@ -36,7 +36,7 @@ class Party extends Model
     ];
 
     protected $casts = [
-        'birth_date' => 'date:Y-m-d',
+        'birth_date' => EHealthDateCast::class,
     ];
 
     public $timestamps = false;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Employee;
 
+use App\Casts\EHealthDateCast;
 use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Models\Declaration;
@@ -26,8 +27,8 @@ class Employee extends BaseEmployee
      */
     protected $casts = [
         'status' => Status::class,
-        'start_date' => 'date:Y-m-d',
-        'end_date' => 'date:Y-m-d',
+        'start_date' => EHealthDateCast::class,
+        'end_date' => EHealthDateCast::class,
     ];
 
     // --- EMPLOYEE-SPECIFIC RELATIONS ---

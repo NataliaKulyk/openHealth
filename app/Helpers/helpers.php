@@ -49,7 +49,7 @@ if (!function_exists('convertToISO8601')) {
 }
 
 if (!function_exists('convertToAppDateFormat')) {
-    function convertToAppDateFormat(string $dateString): string
+    function convertToAppDateFormat(?string $dateString): string
     {
         if (empty($dateString)) {
             return '';

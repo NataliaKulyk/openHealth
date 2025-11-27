@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Employee;
 
+use App\Casts\EHealthDateCast;
 use App\Enums\Employee\RequestStatus;
 use App\Models\Revision;
 use App\Models\Relations\ScienceDegree;
@@ -52,8 +53,8 @@ class EmployeeRequest extends BaseEmployee
      */
     protected $casts = [
         'status' => RequestStatus::class,
-        'start_date' => 'date:Y-m-d',
-        'end_date' => 'date:Y-m-d',
+        'start_date' => EHealthDateCast::class,
+        'end_date' => EHealthDateCast::class,
         'applied_at' => 'datetime',
     ];
 

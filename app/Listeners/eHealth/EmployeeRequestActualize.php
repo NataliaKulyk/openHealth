@@ -8,7 +8,6 @@ use App\Events\EHealthUserLogin;
 use App\Jobs\EmployeeRequestsSyncAll;
 use App\Notifications\SyncNotification;
 use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +30,7 @@ class EmployeeRequestActualize
 
         $cacheKey = 'employee_request_sync_ran_for_' . $legalEntity->id . '_' . now()->toDateString();
 
-        if (Cache::has($cacheKey) && !App::isLocal()) {
+        if (Cache::has($cacheKey)) {
             Log::info(self::LOG_PREFIX . " Sync already ran today. Skipping.");
 
             return;
@@ -52,7 +51,7 @@ class EmployeeRequestActualize
                 ->name('Full Employee Requests Sync for LE: ' . $legalEntity->id)
                 ->withOption('legal_entity_id', $legalEntity->id)
                 ->withOption('token', $encryptedToken)
-                ->withOption('user', $user) // FIX: Passing User for EHealthJob middleware
+                ->withOption('user', $user)
                 ->then(function () use ($user) {
                     $user->notify(new SyncNotification('employee_request_full_sync', 'completed'));
                 })

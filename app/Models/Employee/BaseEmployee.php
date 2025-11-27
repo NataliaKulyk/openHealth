@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Employee;
 
+use App\Casts\EHealthDateCast;
 use App\Models\User;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
@@ -48,8 +49,8 @@ abstract class BaseEmployee extends Model
      * Common casts.
      */
     protected $casts = [
-        'start_date' => 'date:Y-m-d',
-        'end_date' => 'date:Y-m-d',
+        'start_date' => EHealthDateCast::class,
+        'end_date' => EHealthDateCast::class,
     ];
 
     // --- COMMON ACCESSORS ---
