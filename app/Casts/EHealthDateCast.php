@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Casts;
 
 use Carbon\Carbon;
@@ -15,7 +17,7 @@ class EHealthDateCast implements CastsAttributes
      */
     public function get(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        if(!$value) {
+        if (!$value) {
             return null;
         }
 
@@ -31,7 +33,7 @@ class EHealthDateCast implements CastsAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        if(!$value) {
+        if (!$value) {
             return null;
         }
 
@@ -42,6 +44,6 @@ class EHealthDateCast implements CastsAttributes
 
         $format = config('app.date_format');
 
-        return Carbon::createFromFormat($format, $value)->format('Y-m-d');
+        return Carbon::createFromFormat($format, $value)?->format('Y-m-d');
     }
 }

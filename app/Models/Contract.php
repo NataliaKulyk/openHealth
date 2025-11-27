@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\EHealthDateCast;
 use App\Enums\Contract\Status;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
@@ -58,8 +59,8 @@ class Contract extends Model
     protected $casts = [
         'contractor_payment_details' => 'array',
         'external_contractors' => 'array',
-        'start_date' => 'date:d.m.Y',
-        'end_date' => 'date:d.m.Y',
+        'start_date' => EHealthDateCast::class,
+        'end_date' => EHealthDateCast::class,
         'status' => Status::class
     ];
 

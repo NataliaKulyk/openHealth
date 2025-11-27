@@ -27,7 +27,7 @@
         </div>
     </x-header-navigation>
 
-    <div class="flow-root mt-4 shift-content pl-3.5">
+    <div class="flow-root mt-4 shift-content pl-3.5" wire:key="{{ now() }}">
         <div class="max-w-screen-xl">
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                 <table class="w-full min-w-[1100px] text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -48,10 +48,10 @@
                                 {{ $license->type->label() }}
                             </td>
                             <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                {{ $license->activeFromDate->format('d.m.Y') }}
+                                {{ $license->activeFromDate }}
                             </td>
                             <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                {{ $license->expiryDate->format('d.m.Y') }}
+                                {{ $license->expiryDate }}
                             </td>
                             <td class="px-6 py-4 break-words whitespace-normal align-top">
                                 {{ $license->whatLicensed }}

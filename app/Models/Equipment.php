@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\EHealthDateCast;
 use App\Enums\Equipment\AvailabilityStatus;
 use App\Enums\Equipment\Status;
 use App\Models\Employee\Employee;
@@ -51,8 +52,8 @@ class Equipment extends Model
     protected $casts = [
         'status' => Status::class,
         'availability_status' => AvailabilityStatus::class,
-        'manufacture_date' => 'date:d.m.Y',
-        'expiration_date' => 'date:d.m.Y',
+        'manufacture_date' => EHealthDateCast::class,
+        'expiration_date' => EHealthDateCast::class,
         'ehealth_inserted_at' => 'date:d.m.Y',
         'created_at' => 'date:d.m.Y'
     ];

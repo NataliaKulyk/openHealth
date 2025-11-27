@@ -76,7 +76,7 @@
         </template>
     </div>
 
-    <div class="form-row-2">
+    <div class="form-row-2 mt-6">
         <div class="form-group group">
             <select wire:model="form.type"
                     name="typeMedicalDevice"

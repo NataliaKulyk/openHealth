@@ -74,22 +74,20 @@ class EquipmentCreate extends EquipmentComponent
             return;
         }
 
-        $apiPayload = $this->form->formatForApi($validated);
+        $validated['legalEntityId'] = legalEntity()->id;
+        $validated['status'] = Status::DRAFT;
+        $validated['recorder'] = Employee::whereUuid($validated['recorder'])->value('id');
 
-        $apiPayload['legalEntityId'] = legalEntity()->id;
-        $apiPayload['status'] = Status::DRAFT;
-        $apiPayload['recorder'] = Employee::whereUuid($apiPayload['recorder'])->value('id');
-
-        if (!empty($apiPayload['division_id'])) {
-            $apiPayload['division_id'] = Division::whereUuid($apiPayload['division_id'])->value('id');
+        if (!empty($validated['divisionId'])) {
+            $validated['divisionId'] = Division::whereUuid($validated['divisionId'])->value('id');
         }
 
-        if (!empty($apiPayload['parent_id'])) {
-            $apiPayload['parent_id'] = Equipment::whereUuid($apiPayload['parent_id'])->value('id');
+        if (!empty($validated['parentId'])) {
+            $validated['parentId'] = Equipment::whereUuid($validated['parentId'])->value('id');
         }
 
         try {
-            Repository::equipment()->store(Arr::toSnakeCase($apiPayload));
+            Repository::equipment()->store(removeEmptyKeys(Arr::toSnakeCase($validated)));
 
             Session::flash('success', __('equipments.success.draft_created'));
             $this->redirectRoute('equipment.index', [legalEntity()], navigate: true);

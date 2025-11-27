@@ -127,10 +127,10 @@
                                     {{ $contract->contractNumber }}
                                 </td>
                                 <td class="td-input">
-                                    {{ $contract->startDate->format('d.m.Y') }}
+                                    {{ $contract->startDate }}
                                 </td>
                                 <td class="td-input">
-                                    {{ $contract->endDate->format('d.m.Y') }}
+                                    {{ $contract->endDate }}
                                 </td>
                                 <td class="td-input">
                                     <span class="{{ $contract->status->color() }}">

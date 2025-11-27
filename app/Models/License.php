@@ -41,8 +41,8 @@ class License extends Model
     protected $casts = [
         'type' => Type::class,
         'issued_date' => EHealthDateCast::class,
-        'active_from_date' => EhealthDateCast::class,
-        'expiry_date' => EhealthDateCast::class
+        'active_from_date' => EHealthDateCast::class,
+        'expiry_date' => EHealthDateCast::class
     ];
 
     public function legalEntity(): BelongsTo
