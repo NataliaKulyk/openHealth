@@ -274,23 +274,25 @@ class TestUserMigrate extends Seeder
                     );
                 }
 
-                $employeeId = DB::table('employees')->insertGetId([
-                                                                      'uuid' => '85b30921-bcef-4a27-8997-5ef11290fbe6',
-                                                                      'division_uuid' => null,
-                                                                      'legal_entity_uuid' => config('ehealth.test.client_id'),
-                                                                      'position' => 'P2',
-                                                                      'start_date' => new Carbon('2024-09-04T21:00:00.000000Z')->format('Y-m-d'),
-                                                                      'end_date' => null,
-                                                                      'employee_type' => 'OWNER',
-                                                                      'inserted_at' => null,
-                                                                      'status' => 'APPROVED',
-                                                                      'legal_entity_id' => $legalEntityId,
-                                                                      'division_id' => null,
-                                                                      'user_id' => $ownerUserId,
-                                                                      'party_id' => $partyId,
-                                                                      'created_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
-                                                                      'updated_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
-                ]);
+                $employeeId = DB::table('employees')->insertGetId(
+                    [
+                        'uuid'              => '85b30921-bcef-4a27-8997-5ef11290fbe6',
+                        'division_uuid'     => null,
+                        'legal_entity_uuid' => config('ehealth.test.client_id'),
+                        'position'          => 'P2',
+                        'start_date'        => new Carbon('2024-09-04T21:00:00.000000Z')->format('Y-m-d'),
+                        'end_date'          => null,
+                        'employee_type'     => 'OWNER',
+                        'inserted_at'       => null,
+                        'status'            => 'APPROVED',
+                        'legal_entity_id'   => $legalEntityId,
+                        'division_id'       => null,
+                        'user_id'           => $ownerUserId,
+                        'party_id'          => $partyId,
+                        'created_at'        => new Carbon('2024-11-14T10:37:35.000000Z'),
+                        'updated_at'        => new Carbon('2024-11-14T10:37:35.000000Z'),
+                    ]
+                );
 
                 $this->command->info("\tINFO: A new Employee entry has been successfully inserted into the database");
 
