@@ -132,7 +132,7 @@ class EquipmentForm extends Form
             ->only(['manufactureDate', 'expirationDate'])
             ->filter()
             ->each(static function (string $value, string $key) use (&$data) {
-                $data[$key] = convertToISO8601($value);
+                $data[$key] = convertToYmd($value);
             });
 
         return removeEmptyKeys(Arr::toSnakeCase($data));

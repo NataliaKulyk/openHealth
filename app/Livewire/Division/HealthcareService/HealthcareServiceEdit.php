@@ -30,7 +30,7 @@ class HealthcareServiceEdit extends HealthcareServiceComponent
     public function create(): void
     {
         $healthcareService = HealthcareService::find($this->healthcareServiceId);
-        if (Auth::user()?->cannot('edit', $healthcareService)) {
+        if (Auth::user()->cannot('edit', $healthcareService)) {
             Session::flash('error', 'У вас немає дозволу на редагування цієї послуги');
 
             return;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division\Forms;
 
+use App\Core\Arr;
 use App\Enums\License\Type;
 use App\Enums\Status;
 use App\Models\Division;
@@ -116,9 +117,14 @@ class HealthcareServiceForm extends Form
                 'after:availableTime.*.availableStartTime'
             ],
             'notAvailable' => ['array', 'nullable'],
-            'notAvailable.*.during' => ['required', 'array'],
-            'notAvailable.*.during.start' => ['required', 'date'],
-            'notAvailable.*.during.end' => ['required', 'date', 'after:notAvailable.*.during.start'],
+            'notAvailable.*.during.startDate' => ['required', 'date_format:d.m.Y'],
+            'notAvailable.*.during.startTime' => ['required', 'date_format:H:i'],
+            'notAvailable.*.during.endDate' => [
+                'required',
+                'date_format:d.m.Y',
+                'after_or_equal:notAvailable.*.during.startDate'
+            ],
+            'notAvailable.*.during.endTime' => ['required', 'date_format:H:i'],
             'notAvailable.*.description' => ['required', 'string']
         ];
     }
@@ -152,6 +158,32 @@ class HealthcareServiceForm extends Form
         }
 
         return $validated;
+    }
+
+    /**
+     * Convert date to ISO 8601 and format to snake case.
+     */
+    public function formatForApi(array $data): array
+    {
+        // format notAvailable
+        if (isset($data['notAvailable'])) {
+            $data['notAvailable'] = collect($data['notAvailable'])
+                ->map(static function (array $item) {
+                    if (isset($item['during'])) {
+                        $during = $item['during'];
+
+                        $item['during'] = [
+                            'start' => convertToISO8601("{$during['startDate']} {$during['startTime']}"),
+                            'end' => convertToISO8601("{$during['endDate']} {$during['endTime']}")
+                        ];
+                    }
+
+                    return $item;
+                })
+                ->all();
+        }
+
+        return removeEmptyKeys(Arr::toSnakeCase($data));
     }
 
     /**

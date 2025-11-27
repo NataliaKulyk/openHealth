@@ -385,8 +385,10 @@ return [
         'providingCondition' => 'Умови надання послуг',
         'licenseId' => 'ліцензія закладу',
         'comment' => 'коментар',
-        'notAvailable.*.during.start' => 'початок робочого часу',
-        'notAvailable.*.during.end' => 'кінець робочого часу',
+        'notAvailable.*.during.startDate' => 'початок робочого часу',
+        'notAvailable.*.during.startTime' => 'початок робочого часу',
+        'notAvailable.*.during.endDate' => 'кінець робочого часу',
+        'notAvailable.*.during.endTime' => 'кінець робочого часу',
         'notAvailable.*.description' => 'коментар до неробочого часу',
 
         'healthcareService' => [

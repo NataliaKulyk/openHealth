@@ -6,7 +6,6 @@ namespace App\Livewire\Division\HealthcareService;
 
 use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\EHealthResponse;
-use App\Core\Arr;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Division\Forms\HealthcareServiceForm as Form;
@@ -33,6 +32,8 @@ class HealthcareServiceComponent extends Component
     public int $divisionId;
 
     public array $licenses;
+
+    public bool $working = false;
 
     /**
      * Used to indicate is it edit page, if so update DB row instead of create new one.
@@ -102,7 +103,7 @@ class HealthcareServiceComponent extends Component
     protected function createInEHealth(array $validated): EHealthResponse|PromiseInterface|null
     {
         try {
-            return EHealth::healthcareService()->create(removeEmptyKeys(Arr::toSnakeCase($validated)));
+            return EHealth::healthcareService()->create($this->form->formatForApi($validated));
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a healthcare service');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");

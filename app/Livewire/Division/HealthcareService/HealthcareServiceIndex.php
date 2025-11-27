@@ -86,7 +86,7 @@ class HealthcareServiceIndex extends Component
 
     public function activate(HealthcareService $healthcareService): void
     {
-        if (Auth::user()?->cannot('activate', $healthcareService)) {
+        if (Auth::user()->cannot('activate', $healthcareService)) {
             Session::flash('error', 'У вас немає дозволу на активування послуги');
 
             return;
@@ -125,7 +125,7 @@ class HealthcareServiceIndex extends Component
 
     public function deactivate(HealthcareService $healthcareService): void
     {
-        if (Auth::user()?->cannot('deactivate', $healthcareService)) {
+        if (Auth::user()->cannot('deactivate', $healthcareService)) {
             Session::flash('error', 'У вас немає дозволу на деактивування послуги');
 
             return;
@@ -164,7 +164,7 @@ class HealthcareServiceIndex extends Component
 
     public function delete(HealthcareService $healthcareService): void
     {
-        if (Auth::user()?->cannot('delete', $healthcareService)) {
+        if (Auth::user()->cannot('delete', $healthcareService)) {
             Session::flash('error', 'У вас немає дозволу на видалення заявки на створення послуги');
 
             return;
@@ -184,7 +184,7 @@ class HealthcareServiceIndex extends Component
 
     public function sync(): void
     {
-        if (Auth::user()?->cannot('sync', HealthcareService::class)) {
+        if (Auth::user()->cannot('sync', HealthcareService::class)) {
             Session::flash('error', 'У вас немає дозволу на синхронізацію послуг');
 
             return;

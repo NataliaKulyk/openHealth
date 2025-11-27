@@ -8,7 +8,7 @@ use App\Services\SignatureService;
 use Carbon\CarbonImmutable;
 use App\Models\LegalEntity;
 
-if (!function_exists("removeEmptyKeys")) {
+if (!function_exists('removeEmptyKeys')) {
     function removeEmptyKeys(array $array): array
     {
         foreach ($array as $key => $value) {
@@ -26,6 +26,17 @@ if (!function_exists("removeEmptyKeys")) {
     }
 }
 
+if (!function_exists('convertToYmd')) {
+    function convertToYmd(string $dateString): string
+    {
+        if (empty($dateString)) {
+            return '';
+        }
+
+        return CarbonImmutable::parse($dateString)->format('Y-m-d');
+    }
+}
+
 if (!function_exists('convertToISO8601')) {
     function convertToISO8601(?string $dateString): string
     {
@@ -33,7 +44,7 @@ if (!function_exists('convertToISO8601')) {
             return '';
         }
 
-        return CarbonImmutable::parse($dateString)->format('Y-m-d');
+        return CarbonImmutable::parse($dateString)->toIso8601String();
     }
 }
 

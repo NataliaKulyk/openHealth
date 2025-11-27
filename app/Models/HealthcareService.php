@@ -9,8 +9,10 @@ use App\Models\MedicalEvents\Sql\CodeableConcept;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class HealthcareService extends Model
 {
@@ -45,6 +47,38 @@ class HealthcareService extends Model
         'ehealth_inserted_at' => 'datetime',
         'created_at' => 'datetime'
     ];
+
+    protected function notAvailable(): Attribute
+    {
+        return Attribute::make(
+            get: static function ($value) {
+                if (is_null($value)) {
+                    return null;
+                }
+
+                $data = is_string($value) ? json_decode($value, true, 512, JSON_THROW_ON_ERROR) : $value;
+
+                return collect($data)
+                    ->map(function ($item) {
+                        if (isset($item['during']['start'], $item['during']['end'])) {
+                            // parse utc, add timezone
+                            $start = Carbon::parse($item['during']['start'])->setTimezone(config('app.timezone'));
+                            $end = Carbon::parse($item['during']['end'])->setTimezone(config('app.timezone'));
+
+                            $item['during'] = [
+                                'startDate' => $start->format('d.m.Y'),
+                                'startTime' => $start->format('H:i'),
+                                'endDate' => $end->format('d.m.Y'),
+                                'endTime' => $end->format('H:i')
+                            ];
+                        }
+
+                        return $item;
+                    })
+                    ->all();
+            },
+        );
+    }
 
     public function division(): BelongsTo
     {

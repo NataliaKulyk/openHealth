@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division\HealthcareService;
 
-use App\Core\Arr;
 use App\Enums\Status;
 use App\Models\Division;
 use App\Models\HealthcareService;
@@ -25,7 +24,7 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
 
     public function createLocally(): void
     {
-        if (Auth::user()?->cannot('create', HealthcareService::class)) {
+        if (Auth::user()->cannot('create', HealthcareService::class)) {
             Session::flash('error', 'У вас немає дозволу на створення послуги');
 
             return;
@@ -46,7 +45,7 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
             $validated['legalEntityId'] = legalEntity()->id;
             $validated['status'] = Status::DRAFT;
 
-            Repository::healthcareService()->store(Arr::toSnakeCase($validated));
+            Repository::healthcareService()->store($this->form->formatForApi($validated));
 
             Session::flash('success', 'Чернетку послуги успішно створено.');
             $this->redirectRoute('healthcare-service.index', [legalEntity(), $this->divisionId], navigate: true);
@@ -60,7 +59,7 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
 
     public function create(): void
     {
-        if (Auth::user()?->cannot('create', HealthcareService::class)) {
+        if (Auth::user()->cannot('create', HealthcareService::class)) {
             Session::flash('error', 'У вас немає дозволу на створення послуги');
 
             return;
@@ -78,7 +77,7 @@ class HealthcareServiceCreate extends HealthcareServiceComponent
 
         try {
             $validated = $response->validate();
-            Repository::healthcareService()->store($response->map($validated));
+            Repository::healthcareService()->store($response->map($this->form->formatForApi($validated)));
 
             Session::flash('success', 'Послугу успішно створено.');
             $this->redirectRoute('healthcare-service.index', [legalEntity(), $this->divisionId], navigate: true);

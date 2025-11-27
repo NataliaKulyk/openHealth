@@ -1,27 +1,17 @@
 <fieldset class="fieldset shift-content"
           x-data="{
-              working: false,
+              working: $wire.entangle('working'),
               localAvailableTime: [],
               isDisabled: $wire.entangle('isDisabled'),
               weekdaysKeys: {{ json_encode(array_keys($weekdays)) }},
-              notAvailable: $wire.form.notAvailable,
+              notAvailable: [],
               init() {
-                  // Flatten notAvailable if it's in nested format (for edit mode)
-                  if (this.notAvailable.length > 0 && this.notAvailable[0].during) {
-                      this.notAvailable = this.notAvailable.map(item => {
-                          const startDateTime = new Date(item.during.start);
-                          const endDateTime = new Date(item.during.end);
+                  this.notAvailable = $wire.form.notAvailable || [];
 
-                          return {
-                              frontendId: Date.now() + Math.random(),
-                              startDate: startDateTime.toISOString().split('T')[0],
-                              startTime: startDateTime.toISOString().split('T')[1].slice(0, 5),
-                              endDate: endDateTime.toISOString().split('T')[0],
-                              endTime: endDateTime.toISOString().split('T')[1].slice(0, 5),
-                              description: item.description
-                          };
-                      });
-                  }
+                  this.notAvailable = this.notAvailable.map(item => ({
+                      ...item,
+                      frontendId: item.frontendId || Date.now() + Math.random()
+                  }));
 
                   // Create default structure for all days
                   const defaultTimes = this.weekdaysKeys.map(key => ({
@@ -65,35 +55,20 @@
                       $wire.form.availableTime = filtered;
                   }, { deep: true });
 
-                  // Watch and sync transformed notAvailable to Livewire
+                  // sync
                   this.$watch('notAvailable', (value) => {
-                      const transformed = value.map(period => {
-                          const startTime = period.startTime && period.startTime.length > 0
-                              ? (period.startTime.length === 5 ? `${period.startTime}:00` : period.startTime)
-                              : '00:00:00';
-                          const endTime = period.endTime && period.endTime.length > 0
-                              ? (period.endTime.length === 5 ? `${period.endTime}:00` : period.endTime)
-                              : '23:59:59';
-
-                          return {
-                              description: period.description,
-                              during: {
-                                  start: `${period.startDate}T${startTime}Z`,
-                                  end: `${period.endDate}T${endTime}Z`
-                              }
-                          };
-                      });
-
-                      $wire.form.notAvailable = transformed;
+                      $wire.form.notAvailable = value;
                   }, { deep: true });
               },
               addNotAvailable() {
                   this.notAvailable.push({
-                      frontendId: Date.now(),
-                      startDate: null,
-                      startTime: null,
-                      endDate: null,
-                      endTime: null,
+                      frontendId: Date.now() + Math.random(),
+                      during: {
+                          startDate: null,
+                          startTime: null,
+                          endDate: null,
+                          endTime: null
+                      },
                       description: null
                   });
               }
@@ -272,7 +247,7 @@
 
                     <div class="form-row-3 mt-5">
                         <div class="form-group datepicker-wrapper relative w-full">
-                            <input x-model="period.startDate"
+                            <input x-model="period.during.startDate"
                                    type="text"
                                    name="start"
                                    :id="'startDate-'+idx"
@@ -280,7 +255,7 @@
                                    placeholder=" "
                                    required
                                    datepicker-autohide
-                                   datepicker-format="yyyy-mm-dd"
+                                   datepicker-format="dd.mm.yyyy"
                                    datepicker-button="false"
                                    x-bind:disabled="isDisabled"
                             />
@@ -317,7 +292,7 @@
                                        class="input timepicker-uk text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 dark:border-gray-700 focus:ring-0 px-0 ps-8"
                                        placeholder="00:00"
                                        :id="'startTime-'+idx"
-                                       x-model="period.startTime"
+                                       x-model="period.during.startTime"
                                        x-bind:disabled="isDisabled"
                                 />
                             </div>
@@ -326,7 +301,7 @@
 
                     <div class="form-row-3">
                         <div class="form-group datepicker-wrapper relative w-full">
-                            <input x-model="period.endDate"
+                            <input x-model="period.during.endDate"
                                    type="text"
                                    name="end"
                                    :id="'endDate-'+idx"
@@ -334,7 +309,7 @@
                                    placeholder=" "
                                    required
                                    datepicker-autohide
-                                   datepicker-format="yyyy-mm-dd"
+                                   datepicker-format="dd.mm.yyyy"
                                    datepicker-button="false"
                                    x-bind:disabled="isDisabled"
                             />
@@ -371,7 +346,7 @@
                                        class="input timepicker-uk text-gray-900 dark:text-white border-t-0 border-r-0 border-l-0 border-b border-gray-300 dark:border-gray-700 focus:ring-0 px-0 ps-8"
                                        placeholder="00:00"
                                        :id="'endTime-'+idx"
-                                       x-model="period.endTime"
+                                       x-model="period.during.endTime"
                                        x-bind:disabled="isDisabled"
                                 />
                             </div>

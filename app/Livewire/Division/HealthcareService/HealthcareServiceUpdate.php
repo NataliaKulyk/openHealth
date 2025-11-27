@@ -37,6 +37,8 @@ class HealthcareServiceUpdate extends Component
      */
     public bool $canUpdate;
 
+    public bool $working = true;
+
     public bool $isDisabled = false;
 
     public int $healthcareServiceId;
@@ -51,7 +53,7 @@ class HealthcareServiceUpdate extends Component
         $this->form->fill($healthcareService->only(['comment', 'availableTime', 'notAvailable']));
         $this->form->availableTime = Arr::toCamelCase($this->form->availableTime);
 
-        $this->canUpdate = Auth::user()?->can('update', $healthcareService);
+        $this->canUpdate = Auth::user()->can('update', $healthcareService);
     }
 
     public function update(): void
@@ -74,7 +76,7 @@ class HealthcareServiceUpdate extends Component
         try {
             $response = EHealth::healthcareService()->update(
                 $this->healthcareServiceUuid,
-                Arr::toSnakeCase($validated)
+                $this->form->formatForApi($validated)
             );
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when updating a healthcare service');
@@ -96,7 +98,7 @@ class HealthcareServiceUpdate extends Component
         try {
             $validated = $response->validate();
 
-            $validated = Arr::only($validated, ['comment', 'coverage_area', 'available_time', 'not_available']);
+            $validated = Arr::only($validated, ['comment', 'coverage_area', 'available_time', 'not_available', 'ehealth_updated_at', 'ehealth_updated_by']);
             $validated['id'] = $this->healthcareServiceId;
 
             Repository::healthcareService()->update($validated, false);
