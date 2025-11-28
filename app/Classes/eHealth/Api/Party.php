@@ -72,7 +72,7 @@ class Party extends EHealthRequest
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException
      */
-    public function getDetails(string $uuid, array $query = null): PromiseInterface|EHealthResponse
+    public function getDetails(string $uuid, ?array $query = null): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateDetails(...));
 
