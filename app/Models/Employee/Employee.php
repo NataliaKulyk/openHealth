@@ -116,16 +116,20 @@ class Employee extends BaseEmployee
     }
 
     #[Scope]
-    protected function activeRecorders(Builder $query, int $legalEntityId): Builder
+    protected function activeRecorders(Builder $query, int $legalEntityId, bool $skipVerificationCheck = false): Builder
     {
-        return $query->whereLegalEntityId($legalEntityId)
+        $query->whereLegalEntityId($legalEntityId)
             ->whereStatus(Status::APPROVED)
-            ->whereIsActive(true)
-            ->whereHas(
+            ->whereIsActive(true);
+
+        if (!$skipVerificationCheck) {
+            $query->whereHas(
                 'party',
                 static fn (Builder $query) => $query->select('id')
                     ->whereNot('verification_status', VerificationStatus::NOT_VERIFIED)
-            )
-            ->with('party:id,first_name,last_name,second_name');
+            );
+        }
+
+        return $query->with('party:id,first_name,last_name,second_name');
     }
 }
