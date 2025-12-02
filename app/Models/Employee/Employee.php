@@ -103,6 +103,12 @@ class Employee extends BaseEmployee
     }
 
     #[Scope]
+    public function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
+    {
+        return $query->where('legal_entity_id', $legalEntityId);
+    }
+
+    #[Scope]
     protected function activeSpecialists(Builder $query, int $legalEntityId): Builder
     {
         return $query->whereLegalEntityId($legalEntityId)
