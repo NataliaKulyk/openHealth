@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Equipment\Forms;
 
 use App\Core\Arr;
-use App\Enums\Equipment\AvailabilityStatus;
-use App\Enums\Equipment\Status;
+use App\Enums\Equipment\{AvailabilityStatus, Status};
 use App\Rules\InDictionary;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Fluent;
@@ -69,7 +68,7 @@ class EquipmentForm extends Form
             'divisionId' => [
                 'nullable',
                 'uuid',
-                Rule::exists('divisions', 'uuid')->where('is_active', true)->where('status', \App\Enums\Status::ACTIVE)
+                Rule::exists('divisions', 'uuid')->where('status', Status::ACTIVE)
             ],
             'availabilityStatus' => ['required', 'string', Rule::in(AvailabilityStatus::AVAILABLE)],
             'inventoryNumber' => [
