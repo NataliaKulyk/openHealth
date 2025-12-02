@@ -78,10 +78,18 @@ class EquipmentComponent extends Component
             ])
             ->toArray();
 
+        // Skip check for verified party, if user has any of that role
+        $skip = Auth::user()->hasAnyRole(['Owner', 'HR', 'Admin']);
+
         $recorderData = Auth::user()->employees()
-            ->activeRecorders($legalEntity->id)
+            ->activeRecorders($legalEntity->id, $skip)
             ->get(['uuid', 'party_id'])
-            ->firstOrFail();
+            ->first();
+
+        if (empty($recorderData)) {
+            abort(403, __('Співробітника з відповідними доступами не знайдено.'));
+        }
+
         $this->recorderFullName = $recorderData->fullName;
         $this->form->recorder = $recorderData->uuid;
     }
