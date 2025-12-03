@@ -66,7 +66,7 @@ class Division extends Model
     {
         $legalEntityType = legalEntity()?->type->name;
 
-        if (! $legalEntityType) {
+        if (!$legalEntityType) {
             return [];
         }
 
@@ -198,6 +198,6 @@ class Division extends Model
     #[Scope]
     public function active(Builder $query): Builder
     {
-        return $query->whereIsActive(true)->whereStatus(Status::ACTIVE);
+        return $query->whereStatus(Status::ACTIVE);
     }
 }

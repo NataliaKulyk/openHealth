@@ -181,7 +181,10 @@ trait BatchLegalEntityQueries
         // The incoming $nextEntity will be executed after the whole chain
         $previousJob = $nextEntity;
 
-        $models = Employee::with('party')->filterBySyncStatus(JobStatus::PARTIAL)->get();
+        $models = Employee::with('party')
+            ->filterByLegalEntityId($legalEntity->id)
+            ->filterBySyncStatus(JobStatus::PARTIAL)
+            ->get();
 
         foreach ($models->reverse() as $index => $model) {
             $job = new EmployeeDetailsUpsert(

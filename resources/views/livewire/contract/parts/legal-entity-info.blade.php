@@ -7,13 +7,14 @@
 
     <div class="form-row-2">
         <div class="form-group">
-            <input wire:model="form.contractorLegalEntityId"
-                type="text"
+            <input value="{{ $legalEntityName }}"
+                   type="text"
                    name="legalEntityName"
                    id="legalEntityName"
                    class="peer input"
                    placeholder=" "
                    required
+                   disabled
             />
             <label for="legalEntityName" class="label">{{ __('contracts.legal_entity') }}</label>
 
@@ -21,17 +22,20 @@
         </div>
 
         <div class="form-group">
-            <input wire:model="form.contractorOwnerId"
-                type="text"
+            <input value="{{ $contractorFullName }}"
+                   type="text"
                    name="legalEntityOwner"
                    id="legalEntityOwner"
                    class="peer input"
                    placeholder=" "
                    required
+                   disabled
             />
             <label for="legalEntityOwner" class="label">{{ __('contracts.contractor_owner')}}</label>
 
-            @error('form.') <p class="text-error">{{ $message }}</p> @enderror
+            @error('form.contractorOwnerId')
+            <p class="text-error">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 

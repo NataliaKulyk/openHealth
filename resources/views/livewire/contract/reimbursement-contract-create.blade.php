@@ -3,8 +3,8 @@
         <x-slot name="title">{{ __('contracts.new') }}</x-slot>
     </x-section-navigation>
 
-    <x-forms.loading/>
-    <x-messages/>
+    <x-forms.loading />
+    <x-messages />
 
     <div class="form" wire:key="{{ time() }}">
         @include('livewire.contract.parts.legal-entity-info')
@@ -27,10 +27,12 @@
                     {{ __('forms.save') }}
                 </button>
 
-                <button type="button" wire:click="create" class="button-primary">
+                <button type="button" wire:click="openSignatureModal" class="button-primary">
                     {{ __('forms.save_and_send') }}
                 </button>
             </div>
         </div>
     </div>
+
+    <x-signature-modal wire:model="showSignatureModal" />
 </div>

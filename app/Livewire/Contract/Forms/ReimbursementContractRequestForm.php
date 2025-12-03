@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire\Contract\Forms;
 
+use App\Rules\InDictionary;
+use Carbon\CarbonImmutable;
+
 class ReimbursementContractRequestForm extends BaseContractRequestForm
 {
-    public string $contractorOwnerId;
-
-    public string $contractorBase;
+    protected const int REIMBURSEMENT_CONTRACT_MAX_PERIOD_DAY = 1096;
 
     public string $previousRequestId;
 
@@ -18,8 +19,22 @@ class ReimbursementContractRequestForm extends BaseContractRequestForm
 
     public function rules(): array
     {
-        return array_merge(parent::rules(), [
-            'contractorBase' => ['required', 'string', 'max:255'],
+        $parentRules = parent::rules();
+
+        $parentRules['endDate'][] = function ($attribute, $value, $fail) {
+            $startDate = CarbonImmutable::parse($this->startDate);
+            $endDate = CarbonImmutable::parse($value);
+
+            if ($startDate->diffInDays($endDate) > self::REIMBURSEMENT_CONTRACT_MAX_PERIOD_DAY) {
+                $fail(
+                    'різниця між датою закінчення договору та датою початку договору '
+                    . 'не повинна перевищувати ' . self::REIMBURSEMENT_CONTRACT_MAX_PERIOD_DAY . ' днів'
+                );
+            }
+        };
+
+        return array_merge($parentRules, [
+            'idForm' => ['required', new InDictionary('REIMBURSEMENT_CONTRACT_TYPE')],
             'previousRequestId' => ['required', 'uuid', 'exists:contracts,uuid'],
             'medicalPrograms' => ['required', 'array'],
             'consentText' => ['required', 'in:true']

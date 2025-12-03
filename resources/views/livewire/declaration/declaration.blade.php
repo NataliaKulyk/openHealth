@@ -7,7 +7,7 @@
         </x-slot>
     </x-header-navigation>
 
-    <form class="form shift-content" wire:key="{{ now() }}">
+    <form class="form shift-content" wire:key="{{ time() }}">
         @include('livewire.declaration.parts.main-information')
         @include('livewire.declaration.parts.authentication')
 

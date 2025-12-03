@@ -27,6 +27,7 @@ return [
     'view' => 'Переглянути',
     'enter' => 'Вхід',
     'go_to_edit' => 'Перейти до редагування',
+    'go_to_party_profile' => 'Перейти до профіля співробітника',
     'next' => 'Далі',
     'previous' => 'Попередня',
     'open' => 'Відкрити',
@@ -208,6 +209,7 @@ return [
     'save_and_send' => 'Зберегти та надіслати',
     'cyrillic_with_spaces_and_dots' => ':Attribute має містити лише кириличні символи, пробіли та крапки.',
     'update_verification_status_dracs' => 'Оновити статус верифікації співробітника в ДРАЦС',
+    'no_positions_found' => 'Посади відсутні',
 
     // Documents
     'documents' => 'Документи',
@@ -373,6 +375,7 @@ return [
         'rejected' => 'Відхилено',
         'signed' => 'Підписано',
         'dismissed' => 'Звільнено',
+        'stopped' => 'Призупинено',
         'active' => 'Активний',
         'non_active' => 'Не активний',
         'suspended' => 'Призупинено',

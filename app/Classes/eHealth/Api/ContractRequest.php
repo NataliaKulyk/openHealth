@@ -94,7 +94,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  array  $payload  Payload with 'assignee_id'.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function assign(string $uuid, array $payload): PromiseInterface|EHealthResponse
     {
@@ -110,7 +110,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  array  $payload  Payload with 'nhs_signer_id', etc.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function approve(string $uuid, array $payload): PromiseInterface|EHealthResponse
     {
@@ -126,7 +126,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  array  $payload  Payload with 'status_reason'.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function decline(string $uuid, array $payload): PromiseInterface|EHealthResponse
     {
@@ -143,7 +143,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $contractType  'capitation' or 'reimbursement'.
      * @param  array  $payload  Signed payload.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function approveMsp(string $uuid, string $contractType, array $payload): PromiseInterface|EHealthResponse
     {
@@ -160,7 +160,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $contractType  'capitation' or 'reimbursement'.
      * @param  array  $payload  Signed payload with reason.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function terminate(string $uuid, string $contractType, array $payload): PromiseInterface|EHealthResponse
     {
@@ -176,7 +176,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  string  $contractType  'capitation' or 'reimbursement'.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function getPrintoutContent(string $uuid, string $contractType): PromiseInterface|EHealthResponse
     {
@@ -192,7 +192,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  array  $payload  Signed payload.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function signNhs(string $uuid, array $payload): PromiseInterface|EHealthResponse
     {
@@ -209,7 +209,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $contractType  'capitation' or 'reimbursement'.
      * @param  array  $payload  Signed payload.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function signMsp(string $uuid, string $contractType, array $payload): PromiseInterface|EHealthResponse
     {

@@ -43,8 +43,9 @@
 
                     {{-- Remove button --}}
                     <button wire:click="markAsRead('{{ $notification->id }}')"
+                            wire:loading.attr="disabled"
                             type="button"
-                            class="cursor-pointer ml-2 text-xs text-blue-600 hover:underline"
+                            class="cursor-pointer ml-2 text-xs text-blue-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {{ __('forms.mark_as_read') }}
                     </button>

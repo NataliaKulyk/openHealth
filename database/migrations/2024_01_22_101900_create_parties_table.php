@@ -21,8 +21,8 @@ return new class extends Migration
             $table->string('tax_id')->nullable()->index();
             $table->boolean('no_tax_id')->nullable()->default(false);
             $table->text('about_myself')->nullable();
+            $table->string('verification_status')->nullable()->comment('Overall verification status');
             $table->integer('working_experience')->nullable();
-            $table->string('verification_status')->nullable(); // TODO - make enum
             $table->integer('declaration_count')->nullable();
             $table->integer('declaration_limit')->nullable();
         });

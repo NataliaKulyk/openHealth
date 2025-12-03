@@ -33,7 +33,7 @@
                     </h2>
 
                     <form @submit.prevent="$wire.updateAvailabilityStatus(equipmentUuid)"
-                          wire:key="{{ now() }}"
+                          wire:key="{{ time() }}"
                     >
                         <div class="mb-6 text-left">
                             <label for="availabilityStatus"

@@ -33,6 +33,7 @@ class Party extends Model
         'declaration_count',
         'declaration_limit',
         'verification_status',
+        'verification_status',
     ];
 
     protected $casts = [

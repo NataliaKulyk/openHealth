@@ -10,7 +10,7 @@
         <x-slot name="title">{{ __('forms.medical_service') }}</x-slot>
     </x-header-navigation>
 
-    <div class="form" wire:key="{{ now() }}">
+    <div class="form" wire:key="{{ time() }}">
         <fieldset class="fieldset shift-content" x-data="{ isDisabled: $wire.entangle('isDisabled') }">
             <legend class="legend">{{ __('forms.main_information') }}</legend>
 

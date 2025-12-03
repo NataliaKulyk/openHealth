@@ -5,7 +5,7 @@
              x-show="open"
              x-cloak
              x-transition.opacity
-             wire:key="{{ now() }}"
+             wire:key="{{ time() }}"
              x-init="setTimeout(() => { open = false }, 30000)"
         >
             <div class="relative flex-grow">

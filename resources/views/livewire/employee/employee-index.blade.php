@@ -269,16 +269,30 @@
                                 @endif
 
                                 {{-- Verification Status --}}
-                                @if ($party->verification_status && is_numeric($party->id))
-                                    <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="flex items-center gap-1.5 group">
-                                        <span class="font-semibold text-gray-700 dark:text-gray-300 group-hover:underline">@lang('general.verification'):</span>
-                                        @if ($party->verification_status === 'VERIFIED')
-                                            <span class="badge-green">@lang('general.verified')</span>
-                                        @else
-                                            <span class="badge-red">@lang('general.' . strtolower($party->verification_status))</span>
-                                        @endif
-                                    </a>
-                                @endif
+                                @php
+                                    // Fallback to NOT_VERIFIED if null (common for drafts or fresh imports)
+                                    $verStatus = $party->verification_status ?? 'NOT_VERIFIED';
+                                    $isRealParty = is_numeric($party->id);
+                                @endphp
+
+                                <span class="flex items-center gap-1.5 group">
+                                    <span class="font-semibold text-gray-700 dark:text-gray-300"> {{ __('party_verification.label') }}:</span>
+
+                                    {{-- If it is a real party, make it a link. Otherwise, just text --}}
+                                    @if($isRealParty)
+                                        <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="hover:underline flex items-center gap-1.5">
+                                    @endif
+
+                                            @if ($verStatus === 'VERIFIED')
+                                                <span class="badge-green">{{ __('party_verification.verified') }}</span>
+                                            @else
+                                                <span class="badge-red">{{ __('party_verification.' . strtolower($verStatus)) }}</span>
+                                            @endif
+
+                                            @if($isRealParty)
+                                        </a>
+                                    @endif
+                                </span>
                             </div>
 
                             <div class="flex items-center gap-4">
@@ -293,7 +307,7 @@
 
                                             <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
                                                class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                            <span class="text-xl leading-none">+</span>
+                                                <span class="text-xl leading-none">+</span>
                                                 <span>{{ __('forms.add_position') }}</span>
                                             </a>
                                         @endif
@@ -392,6 +406,6 @@
         </div>
     </x-section>
 
-@include('livewire.employee.parts.modals.deactivate-modal')
-@include('livewire.employee.parts.modals.delete-draft-modal')
+    @include('livewire.employee.parts.modals.deactivate-modal')
+    @include('livewire.employee.parts.modals.delete-draft-modal')
 </div>

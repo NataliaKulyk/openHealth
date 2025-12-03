@@ -5,7 +5,7 @@
         <x-slot name="title">{{ __('equipments.new') }}</x-slot>
     </x-header-navigation>
 
-    <div class="form" wire:key="{{ now() }}">
+    <div class="form" wire:key="{{ time() }}">
 
         @include('livewire.equipment.parts.main-data')
         @include('livewire.equipment.parts.additional-data', ['context' => 'create'])

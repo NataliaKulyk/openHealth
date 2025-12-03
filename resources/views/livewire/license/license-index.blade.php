@@ -27,7 +27,7 @@
         </div>
     </x-header-navigation>
 
-    <div class="flow-root mt-4 shift-content pl-3.5" wire:key="{{ now() }}">
+    <div class="flow-root mt-4 shift-content pl-3.5" wire:key="{{ time() }}">
         <div class="max-w-screen-xl">
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                 <table class="w-full min-w-[1100px] text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

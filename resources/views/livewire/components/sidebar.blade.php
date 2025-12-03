@@ -110,27 +110,68 @@
                     </li>
                 @endcan
 
-                @if(Auth::user()->can('viewAny', Employee::class) || Auth::user()->can('viewAny', EmployeeRequest::class))
-                    <li>
-                        <a href="{{ route('employee.index', [legalEntity()]) }}"
-                           class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-                        >
-                            @icon('employees', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
-                            <span class="ml-3">{{ __('forms.employees') }}</span>
-                        </a>
-                    </li>
-                @endif
+                    @if(Auth::user()->can('viewAny', Employee::class) || Auth::user()->can('viewAny', EmployeeRequest::class))
+                        <li x-data="{ open: {{ (request()->routeIs('employee.*') || request()->routeIs('party.verification.*')) ? 'true' : 'false' }} }" class="space-y-2">
+                            <button @click="open = !open"
+                                    type="button"
+                                    class="cursor-pointer flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                    aria-controls="dropdown-employees"
+                                    :aria-expanded="open"
+                            >
+                                @icon('employees', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
+                                <span class="flex-1 ml-3 text-left whitespace-nowrap">{{ __('forms.employees') }}</span>
 
-                @can('viewAny', EmployeeRole::class)
-                    <li>
-                        <a href="{{ route('employee-role.index', [legalEntity()]) }}"
-                           class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-                        >
-                            @icon('users-roles', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
-                            <span class="ml-3">{{ __('employee-roles.label') }}</span>
-                        </a>
-                    </li>
-                @endif
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     :class="{ 'rotate-180': open, 'rotate-0': !open }"
+                                >
+                                    <path fill-rule="evenodd"
+                                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                          clip-rule="evenodd"
+                                    ></path>
+                                </svg>
+                            </button>
+
+                            <ul id="dropdown-employees"
+                                x-cloak
+                                class="py-2 space-y-2"
+                                x-show="open"
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95"
+                            >
+                                <li>
+                                    <a href="{{ route('employee.index', [legalEntity()]) }}"
+                                       class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                    >
+                                        @icon('positions', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
+                                        <span class="ml-3">{{ __('forms.positions') }}</span>
+                                    </a>
+                                </li>
+
+                                    <li>
+                                        <a href="{{ route('employee-role.index', [legalEntity()]) }}"
+                                           class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                        >
+                                            @icon('users-roles', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
+                                            <span class="ml-3">{{ __('employee-roles.label') }}</span>
+                                        </a>
+                                    </li>
+
+                                <li>
+                                    <a href="{{ route('party.verification.index', [legalEntity()]) }}"
+                                       class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                    >
+                                        @icon('verifications', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
+                                        <span class="ml-3">{{ __('forms.verifications') }}</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    @endif
 
                 @can('viewAny', Contract::class)
                     <li>

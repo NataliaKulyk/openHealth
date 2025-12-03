@@ -6,6 +6,7 @@ namespace App\Models\Employee;
 
 use App\Casts\EHealthDateCast;
 use App\Enums\JobStatus;
+use App\Enums\Party\VerificationStatus;
 use App\Enums\Status;
 use App\Models\Declaration;
 use App\Models\Relations\Education;
@@ -102,12 +103,18 @@ class Employee extends BaseEmployee
     }
 
     #[Scope]
+    public function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
+    {
+        return $query->where('legal_entity_id', $legalEntityId);
+    }
+
+    #[Scope]
     protected function activeSpecialists(Builder $query, int $legalEntityId): Builder
     {
         return $query->whereLegalEntityId($legalEntityId)
             ->whereStatus(Status::APPROVED)
             ->whereIsActive(true)
-            ->whereHas('specialities', function (Builder $query) {
+            ->whereHas('specialities', static function (Builder $query) {
                 $query->select('id')->whereSpecialityOfficio(true);
             })
             ->select(['id', 'uuid', 'party_id', 'position'])
@@ -115,15 +122,30 @@ class Employee extends BaseEmployee
     }
 
     #[Scope]
-    protected function activeRecorders(Builder $query, int $legalEntityId): Builder
+    protected function activeRecorders(Builder $query, int $legalEntityId, bool $skipVerificationCheck = false): Builder
+    {
+        $query->whereLegalEntityId($legalEntityId)
+            ->whereStatus(Status::APPROVED)
+            ->whereIsActive(true);
+
+        if (!$skipVerificationCheck) {
+            $query->whereHas(
+                'party',
+                static fn (Builder $query) => $query->select('id')
+                    ->whereNot('verification_status', VerificationStatus::NOT_VERIFIED)
+            );
+        }
+
+        return $query->with('party:id,first_name,last_name,second_name');
+    }
+
+    #[Scope]
+    protected function contractors(Builder $query, int $legalEntityId): Builder
     {
         return $query->whereLegalEntityId($legalEntityId)
+            ->whereIn('employee_type', ['OWNER', 'ADMIN'])
             ->whereStatus(Status::APPROVED)
             ->whereIsActive(true)
-            ->whereHas(
-                'party',
-                fn (Builder $query) => $query->select('id')->whereNot('verification_status', '=', 'NOT_VERIFIED')
-            )
             ->with('party:id,first_name,last_name,second_name');
     }
 }

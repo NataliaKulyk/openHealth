@@ -1,4 +1,4 @@
-<div x-show="showFilter" wire:key="{{ now() }}">
+<div x-show="showFilter" wire:key="{{ time() }}">
     <div class="form-row-3">
         <div class="form-group group">
             <input wire:model="form.patientsFilter.firstName"

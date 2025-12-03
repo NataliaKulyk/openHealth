@@ -9,25 +9,104 @@ use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Log;
 
 class PartyVerify extends Component
 {
     public Party $party;
     public LegalEntity $legalEntity;
     public array $verificationDetails = [];
+    public string $stream = 'dracs_death';
 
+    // Modal state
     public bool $showUpdateModal = false;
+
+    // Form fields
     public string $status = '';
     public string $reason = '';
     public string $comment = '';
+    public string $backUrl = '';
 
     public function mount(LegalEntity $legalEntity, Party $party): void
     {
         $this->legalEntity = $legalEntity;
         $this->party = $party;
         $this->loadVerificationDetails();
+
+        $nameChangeStatus = data_get($this->verificationDetails, 'details.dracs_name_change.verification_status');
+
+        if ($nameChangeStatus === 'NOT_VERIFIED') {
+            $this->stream = 'dracs_name_change';
+        } else {
+            $this->stream = 'dracs_death';
+        }
+
+        $previous = url()->previous();
+        $current = request()->url();
+
+        if ($previous !== $current && str_contains($previous, config('app.url'))) {
+            $this->backUrl = $previous;
+        } else {
+            $this->backUrl = route('party.verification.index', ['legalEntity' => $legalEntity->id]);
+        }
+    }
+
+    /**
+     * Determines if there is any problem that can be solved manually.
+     * If so, the button will be active.
+     */
+    #[Computed]
+    public function canUpdateVerification(): bool
+    {
+        $deathStatus = data_get($this->verificationDetails, 'details.dracs_death.verification_status');
+        $nameChangeStatus = data_get($this->verificationDetails, 'details.dracs_name_change.verification_status');
+
+        return $deathStatus === 'NOT_VERIFIED' || $nameChangeStatus === 'NOT_VERIFIED';
+    }
+
+    #[Computed]
+    public function drfoNotVerified(): bool
+    {
+        return data_get($this->verificationDetails, 'details.drfo.verification_status') === 'NOT_VERIFIED';
+    }
+
+    #[Computed]
+    public function dracsDeathNotVerified(): bool
+    {
+        return data_get($this->verificationDetails, 'details.dracs_death.verification_status') === 'NOT_VERIFIED';
+    }
+
+    #[Computed]
+    public function hasVerificationWarnings(): bool
+    {
+        return $this->drfoNotVerified || $this->dracsDeathNotVerified;
+    }
+
+    /**
+     * This method is automatically called by Livewire when the $stream changes.
+     * We need to clear $reason so as not to send "Confirmed death" for "Name change".
+     */
+    public function updatedStream(): void
+    {
+        $this->reason = '';
+    }
+
+    /**
+     * Returns a list of available reasons depending on the thread selected.
+     */
+    #[Computed]
+    public function availableReasons(): array
+    {
+        if ($this->stream === 'dracs_name_change') {
+            return ['MANUAL'];
+        }
+
+        return [
+            'MANUAL_CONFIRMED',
+            'MANUAL_NOT_CONFIRMED',
+        ];
     }
 
     public function loadVerificationDetails(): void
@@ -35,9 +114,12 @@ class PartyVerify extends Component
         try {
             $response = EHealth::party()->getDetails($this->party->uuid);
             $this->verificationDetails = $response->validate();
-
         } catch (\Exception $e) {
-            session()->flash('error', 'Не вдалося завантажити деталі верифікації.');
+            $this->dispatch('flashMessage', [
+                'message' => __('forms.verification_data_upload_error'),
+                'type' => 'error'
+            ]);
+            Log::error('Failed to load verification details', ['error' => $e->getMessage()]);
         }
     }
 
@@ -48,14 +130,15 @@ class PartyVerify extends Component
     {
         $this->validate(
             [
-                'status'  => 'required|string',
-                'reason'  => 'required|string',
-                'comment' => 'nullable|string',
+                'stream' => 'required|string|in:dracs_death,dracs_name_change',
+                'status' => 'required|string',
+                'reason' => 'required|string',
+                'comment' => 'required|string|min:5',
             ]
         );
 
         $payload = [
-            'dracs_death' => [
+            $this->stream => [
                 'verification_status' => $this->status,
                 'verification_reason' => $this->reason,
                 'verification_comment' => $this->comment,
@@ -64,31 +147,51 @@ class PartyVerify extends Component
 
         try {
             EHealth::party()->update($this->party->uuid, $payload);
-            session()->flash('success', 'Статус успішно оновлено.');
-            $this->loadVerificationDetails();
 
-            Log::info('Dispatching status-updated-close-modal event after success.');
+            $this->dispatch('flashMessage', [
+                'message' => __('party_verification.messages.update_success') ?? 'Статус успішно оновлено.',
+                'type' => 'success'
+            ]);
+
+            $this->loadVerificationDetails();
             $this->dispatch('status-updated-close-modal');
 
         } catch (EHealthValidationException $e) {
             Log::error('[PARTY UPDATE DEBUG] eHealth API returned a validation error.', [
-                'party_uuid' => $this->party->uuid, 'payload_sent' => $payload, 'validation_errors' => $e->getErrors(),
+                'party_uuid' => $this->party->uuid,
+                'payload_sent' => $payload,
+                'validation_errors' => $e->getErrors(),
             ]);
-            session()->flash('error', 'Помилка валідації від ЕСОЗ: ' . $e->getTranslatedMessage());
+
+            $this->dispatch('flashMessage', [
+                'message' => 'Помилка валідації від ЕСОЗ: ' . $e->getTranslatedMessage(),
+                'type' => 'error'
+            ]);
 
         } catch (EHealthResponseException $e) {
             Log::error('[PARTY UPDATE DEBUG] eHealth API returned an error response.', [
-                'party_uuid' => $this->party->uuid, 'status_code' => $e->getCode(), 'error_message' => $e->getMessage(),
+                'party_uuid' => $this->party->uuid,
+                'status_code' => $e->getCode(),
+                'error_message' => $e->getMessage(),
             ]);
-            $this->dispatch('flashMessage', ['message' => 'Помилка від ЕСОЗ: ' . $e->getMessage(), 'type' => 'error', 'persistent' => true]);
-            Log::info('Dispatching status-updated-close-modal event after EHealthResponseException.');
+
+            $this->dispatch('flashMessage', [
+                'message' => 'Помилка від ЕСОЗ: ' . $e->getMessage(),
+                'type' => 'error',
+                'persistent' => true
+            ]);
             $this->dispatch('status-updated-close-modal');
+
         } catch (\Exception $e) {
             Log::error('[PARTY UPDATE DEBUG] Request failed with a generic error.', [
-                'party_uuid' => $this->party->uuid, 'error_message' => $e->getMessage(),
+                'party_uuid' => $this->party->uuid,
+                'error_message' => $e->getMessage(),
             ]);
-            session()->flash('error', 'Виникла неочікувана помилка: ' . $e->getMessage());
-            Log::info('Dispatching status-updated-close-modal event after generic Exception.');
+
+            $this->dispatch('flashMessage', [
+                'message' => 'Виникла неочікувана помилка: ' . $e->getMessage(),
+                'type' => 'error'
+            ]);
             $this->dispatch('status-updated-close-modal');
         }
     }

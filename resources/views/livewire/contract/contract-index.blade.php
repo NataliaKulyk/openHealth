@@ -1,18 +1,25 @@
-@use('App\Enums\Contract\Type')
-@use('App\Models\ContractRequest')
+@php
+    use App\Enums\Contract\Type;
+    use App\Models\{LegalEntity, ContractRequest};
+
+    $route = '';
+    if (legalEntity()->type->name === LegalEntity::TYPE_PHARMACY) {
+        $route = route('contract-reimbursement.create', legalEntity());
+    } elseif (legalEntity()->type->name === LegalEntity::TYPE_MSP) {
+        $route = route('contract-capitation.create', legalEntity());
+    }
+@endphp
 
 <div>
     <x-messages/>
     <x-forms.loading/>
 
     <x-header-navigation class="items-start">
-        <x-slot name="title">
-            {{ __('forms.contracts') }}
-        </x-slot>
+        <x-slot name="title">{{ __('forms.contracts') }}</x-slot>
 
         <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start">
             @can('create', ContractRequest::class)
-                <a href="#" class="button-primary flex items-center gap-2">
+                <a href="{{ $route }}" class="button-primary flex items-center gap-2">
                     @icon('plus', 'w-4 h-4')
                     {{ __('contracts.new') }}
                 </a>
