@@ -57,12 +57,13 @@ use App\Livewire\License\LicenseView;
 use App\Livewire\Party\PartyEdit;
 use App\Livewire\Party\PartyVerify;
 use App\Livewire\Party\PartyVerificationIndex;
-use App\Livewire\Patient\PatientCreate;
-use App\Livewire\Patient\PatientEdit;
-use App\Livewire\Patient\PatientIndex;
-use App\Livewire\Patient\Records\PatientData;
-use App\Livewire\Patient\Records\PatientEpisodes;
-use App\Livewire\Patient\Records\PatientSummary;
+use App\Livewire\Person\PersonCreate;
+use App\Livewire\Person\PersonUpdate;
+use App\Livewire\Person\PersonRequestEdit;
+use App\Livewire\Person\PersonIndex;
+use App\Livewire\Person\Records\PatientData;
+use App\Livewire\Person\Records\PatientEpisodes;
+use App\Livewire\Person\Records\PatientSummary;
 use App\Livewire\Procedure\ProcedureCreate;
 use App\Models\Declaration;
 use App\Models\DeclarationRequest;
@@ -236,11 +237,12 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 ->name('declaration.index')
                 ->can('viewAny', Declaration::class);
 
-            Route::prefix('patient')->group(static function () {
-                Route::name('patient.')->group(static function () {
-                    Route::get('/', PatientIndex::class)->can('viewAny', Person::class)->name('index');
-                    Route::get('/create', PatientCreate::class)->can('create', PersonRequest::class)->name('create');
-                    Route::get('/edit/{id}', PatientEdit::class)->can('create', PersonRequest::class)->name('edit');
+            Route::prefix('persons')->group(static function () {
+                Route::name('persons.')->group(static function () {
+                    Route::get('/', PersonIndex::class)->can('viewAny', Person::class)->name('index');
+                    Route::get('/create', PersonCreate::class)->can('create', PersonRequest::class)->name('create');
+                    Route::get('/edit/{personRequest}', PersonRequestEdit::class)->can('create', PersonRequest::class)->name('edit');
+                    Route::get('/update/{person}', PersonUpdate::class)->can('create', PersonRequest::class)->name('update');
 
                     Route::middleware('can:view,' . Person::class)->group(function () {
                         Route::get('/{patientId}/patient-data', PatientData::class)->name('patient-data');

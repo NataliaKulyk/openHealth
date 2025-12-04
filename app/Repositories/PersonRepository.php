@@ -36,12 +36,12 @@ class PersonRepository
                 Repository::address()->addAddresses($personRequest, $addresses);
             }
 
-            $phones = $response['person']['phones'] ?? $response['patient']['phones'] ?? null;
+            $phones = $response['person']['phones'] ?? null;
             if ($phones) {
-                Repository::phone()->addPhones($personRequest, $phones);
+                Repository::phone()->syncPhones($personRequest, $phones);
             }
 
-            $authenticationMethods = $response['person']['authentication_methods'] ?? $response['patient']['authentication_methods'] ?? null;
+            $authenticationMethods = $response['person']['authentication_methods'] ?? null;
             if ($authenticationMethods) {
                 Repository::authenticationMethod()->addAuthenticationMethod($personRequest, $authenticationMethods);
             }
@@ -77,10 +77,6 @@ class PersonRepository
         string $modelClass,
         ?string $personUuid = null
     ): PersonRequest|Person {
-        if (isset($data['patient'])) {
-            $data['person'] = $data['patient'];
-        }
-
         $personData = [
             'uuid' => $personUuid ?? $data['id'] ?? null,
             'first_name' => $data['person']['first_name'],
@@ -101,11 +97,14 @@ class PersonRepository
         ];
 
         if ($modelClass === PersonRequest::class) {
-            $personData['status'] = $data['status'] ?? 'APPLICATION';
+            $personData['status'] = $data['status'] ?? 'DRAFT';
         }
 
         // Update or create data based on email
-        return $modelClass::updateOrCreate(['email' => $personData['email'] ?? null], $personData);
+        return $modelClass::updateOrCreate(
+            ['tax_id' => $personData['tax_id'] ?? null, 'email' => $personData['email'] ?? null],
+            $personData
+        );
     }
 
     /**

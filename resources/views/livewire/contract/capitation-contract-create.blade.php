@@ -36,5 +36,5 @@
         </div>
     </div>
 
-    <x-signature-modal wire:model="showSignatureModal" />
+    <x-signature-modal method="create" />
 </div>

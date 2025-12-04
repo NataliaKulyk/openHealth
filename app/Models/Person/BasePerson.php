@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models\Person;
 
+use App\Casts\EHealthDateCast;
 use App\Models\Relations\Address;
 use App\Models\Relations\AuthenticationMethod;
 use App\Models\Relations\ConfidantPerson;
 use App\Models\Relations\Document;
 use App\Models\Relations\Phone;
 use Carbon\CarbonImmutable;
+use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 abstract class BasePerson extends Model
 {
+    use HasCamelCasing;
+
     protected $hidden = [
         'created_at',
         'updated_at'
@@ -42,7 +46,8 @@ abstract class BasePerson extends Model
     ];
 
     protected $casts = [
-        'emergency_contact' => 'array'
+        'emergency_contact' => 'array',
+        'birth_date' => EHealthDateCast::class
     ];
 
     /**

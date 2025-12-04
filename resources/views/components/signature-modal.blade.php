@@ -1,3 +1,5 @@
+@props(['method'])
+
 <template x-teleport="body">
     <div x-data="{ showSignatureModal: $wire.entangle('showSignatureModal') }"
          x-show="showSignatureModal"
@@ -84,15 +86,15 @@
                     <button type="button" @click="showSignatureModal = false" class="button-minor">
                         {{ __('forms.cancel') }}
                     </button>
-                    <button wire:click="create"
+                    <button wire:click="{{ $method }}"
                             type="button"
                             class="button-primary"
                             wire:loading.attr="disabled"
                             wire:loading.class="opacity-50 cursor-not-allowed"
-                            wire:target="create"
+                            wire:target="{{ $method }}"
                     >
-                        <span wire:loading.remove wire:target="create">{{ __('forms.sign') }}</span>
-                        <span wire:loading wire:target="create">{{ __('forms.signature') }}...</span>
+                        <span wire:loading.remove wire:target="{{ $method }}">{{ __('forms.sign') }}</span>
+                        <span wire:loading wire:target="{{ $method }}">{{ __('forms.signature') }}...</span>
                     </button>
                 </div>
             </div>

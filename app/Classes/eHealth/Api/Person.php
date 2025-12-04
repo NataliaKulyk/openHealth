@@ -8,23 +8,59 @@ use App\Classes\eHealth\EHealthRequest as Request;
 use App\Classes\eHealth\EHealthResponse;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
+use App\Rules\InDictionary;
+use App\Rules\PhoneNumber;
+use App\Rules\TaxId;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class Person extends Request
 {
     protected const string URL = '/api/persons';
+    protected const string URL_V2 = '/api/v2/persons';
 
     /**
      * Search for a person by parameters.
      *
-     * @param  array  $query
+     * @param  array  $params
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function searchForPersonByParams(array $query): PromiseInterface|EHealthResponse
+    public function searchForPersonByParams(array $params): PromiseInterface|EHealthResponse
     {
-        return $this->get(self::URL, $query);
+        $this->setValidator($this->validateSearch(...));
+
+        return $this->get(self::URL, $params);
+    }
+
+    /**
+     * This method allows to find all persons, which were merged with this person.
+     * Also, this endpoint shows all the persons who enter the whole chain of merges to this person.
+     *
+     * @param  string  $uuid
+     * @param  array  $params
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     */
+    public function searchPersonsMergedPersons(string $uuid, array $params = []): PromiseInterface|EHealthResponse
+    {
+        $this->setDefaultPageSize();
+
+        return $this->get(self::URL . "/$uuid/merged_persons", $params);
+    }
+
+    /**
+     * This method is used to obtain full information about person by ID. This method is applicable only if there is an active approval of type 'person'.
+     *
+     * @param  string  $uuid
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     */
+    public function getPersonalData(string $uuid): PromiseInterface|EHealthResponse
+    {
+        return $this->get(self::URL . '/' . $uuid . '/personal_data');
     }
 
     /**
@@ -102,5 +138,31 @@ class Person extends Request
     public function resendAuthOtp(string $id, string $requestId, array $query = []): PromiseInterface|EHealthResponse
     {
         return $this->post(self::URL . "/$id/authentication_method_requests/$requestId/actions/resend_otp", $query);
+    }
+
+    protected function validateSearch(EHealthResponse $response): array
+    {
+        $data = $response->getData();
+
+        $validator = Validator::make($data, [
+            '*.birth_country' => ['required', 'string', 'max:255'],
+            '*.birth_date' => ['required', 'date'],
+            '*.birth_settlement' => ['required', 'string', 'max:255'],
+            '*.first_name' => ['required', 'string', 'max:255'],
+            '*.gender' => ['required', new InDictionary('GENDER')],
+            '*.id' => ['required', 'uuid'],
+            '*.last_name' => ['required', 'string', 'max:255'],
+            '*.second_name' => ['nullable', 'string', 'max:255'],
+            '*.phones' => ['nullable', 'array'],
+            '*.phones.*.number' => ['required', new PhoneNumber()],
+            '*.phones.*.type' => ['required', new InDictionary('PHONE_TYPE')],
+            '*.tax_id' => ['nullable', new TaxId()]
+        ]);
+
+        if ($validator->fails()) {
+            Log::channel('e_health_errors')->error('Validation failed: ' . implode(', ', $validator->errors()->all()));
+        }
+
+        return $validator->validate();
     }
 }

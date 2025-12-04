@@ -59,7 +59,7 @@ class ProcedureCreate extends ProcedureComponent
         }
 
         Session::flash('success', 'Чернетку на створення процедури успішно збережено.');
-        $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
+        $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
     }
 
     /**
@@ -111,7 +111,7 @@ class ProcedureCreate extends ProcedureComponent
             EHealth::procedure()->create($this->patientUuid, ['signed_data' => $signedContent]);
 
             Session::flash('success', 'Заявку на створення процедури успішно відправлено.');
-            $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
+            $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a procedure');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
