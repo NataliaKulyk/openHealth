@@ -10,7 +10,7 @@
         </x-slot>
     </x-header-navigation>
 
-    <div class="form space-y-8">
+    <div class="form shift-content space-y-8">
         {{-- The fieldset is always disabled in a "show" view --}}
         <fieldset disabled class="space-y-8">
             @include('livewire.employee.parts.party')

@@ -44,7 +44,8 @@
                 </thead>
                 <tbody>
                 @forelse($verifications as $item)
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700" wire:key="verif-{{ $item['party_id'] }}">
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
+                        wire:key="verif-{{ $item['party_id'] }}">
 
                         {{-- 1. Name --}}
                         <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">

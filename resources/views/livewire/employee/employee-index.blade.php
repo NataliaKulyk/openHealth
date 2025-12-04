@@ -363,7 +363,7 @@
                                                 @endif
                                             </td>
 
-                                            <td class="td-input break-words whitespace-nowrap align-top">
+                                            <td class="td-input break-words whitespace-nowrap align-middle">
                                                 @php $isEmployee = $position instanceof \App\Models\Employee\Employee; @endphp
                                                 @if($isEmployee)
                                                     @if($position->status?->value === 'APPROVED')
