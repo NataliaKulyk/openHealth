@@ -15,18 +15,18 @@ class PersonRequest extends Request
 {
     protected const string URL = '/api/person_requests';
     protected const string URL_V2 = '/api/v2/person_requests';
+    protected const string URL_V3 = '/api/v3/person_requests';
 
     /**
      * Create Person Request v2 (as part of Person creation w/o declaration process).
      *
-     * @param  string  $url
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function create(string $url = self::URL_V2, array $data = []): PromiseInterface|EHealthResponse
+    public function create(array $data): PromiseInterface|EHealthResponse
     {
-        return $this->post($url, $data);
+        return $this->post(self::URL_V2, $data);
     }
 
     /**
@@ -83,14 +83,15 @@ class PersonRequest extends Request
     /**
      * Obtains details by setting parameters like status, page, and page size.
      *
-     * @param  string  $url
      * @param  null  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function getList(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
+    public function getList($query = null): PromiseInterface|EHealthResponse
     {
-        return $this->get($url, $query);
+        $this->setDefaultPageSize();
+
+        return $this->get(self::URL, $query);
     }
 
     /**

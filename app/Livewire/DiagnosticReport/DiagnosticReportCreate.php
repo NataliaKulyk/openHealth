@@ -57,7 +57,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
         }
 
         Session::flash('success', 'Чернетку на створення діагностичного звіту успішно збережено.');
-        $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
+        $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
     }
 
     /**
@@ -109,7 +109,7 @@ class DiagnosticReportCreate extends DiagnosticReportComponent
             EHealth::diagnosticReport()->create($this->patientUuid, ['signed_data' => $signedContent]);
 
             Session::flash('success', 'Заявку на створення діагностичного звіту успішно відправлено.');
-            $this->redirectRoute('patient.index', [legalEntity()], navigate: true);
+            $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a diagnostic report');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");

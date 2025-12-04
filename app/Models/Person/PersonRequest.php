@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Person;
 
+use App\Enums\Person\Status;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,7 @@ class PersonRequest extends BasePerson
     {
         parent::__construct();
         $this->mergeFillable(['status', 'person_id', 'authorize_with']);
+        $this->mergeCasts(['status' => Status::class]);
     }
 
     protected static function boot(): void
@@ -38,6 +40,6 @@ class PersonRequest extends BasePerson
     protected function showPersonRequest(Builder $query, int $id): Builder
     {
         return $query->with(['phones', 'authenticationMethods', 'documents', 'addresses', 'confidantPerson'])
-            ->where('id', $id);
+            ->whereId($id);
     }
 }

@@ -40,7 +40,7 @@
             </div>
         </div>
 
-        <a href="{{ route('patient.patient-data', [legalEntity(), $patientId]) }}"
+        <a href="{{ route('persons.patient-data', [legalEntity(), $patientId]) }}"
            class="button-primary gap-2"
         >
             @icon('plus', 'w-4 h-4')

@@ -15,22 +15,22 @@
 
                     <h2 class="mb-8 text-2xl font-semibold text-gray-900 dark:text-white text-center">
                         {{ __('forms.uploading_documents') }}
-
                     </h2>
 
                     @foreach($uploadedDocuments as $key => $document)
                         <div class="pb-4 flex" wire:key="{{ $key }}">
                             <div class="flex-grow">
                                 <label class="block mb-3 text-sm font-medium text-gray-900 dark:text-white"
-                                       for="file_input_{{ $key }}"
+                                       for="fileInput-{{ $key }}"
                                 >
                                     {{ __('patients.documents.' . Str::lower(Str::afterLast($document['type'], '.'))) }}
                                 </label>
                                 <div class="flex items-center gap-4">
                                     <input type="file"
                                            class="xl:w-1/2 block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                                           id="file_input_{{ $key }}"
+                                           id="fileInput-{{ $key }}"
                                            wire:model.live="form.uploadedDocuments.{{ $key }}"
+                                           accept=".jpeg,.jpg"
                                     >
                                 </div>
 

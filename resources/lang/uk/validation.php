@@ -153,7 +153,7 @@ return [
             'kepTimeExpired' => 'Термін дії ключа електронного підпису закінчився',
             'kepNotValid' => 'Завантажений ключ не може використовуватись для електронного підпису'
         ],
-        'patient' => [
+        'person' => [
             'confidantPersonRequiredForChildren' => "Довірена особа є обов'язковою для дітей.",
             'confidantPersonRequiredForMinor' => "Довірена особа є обов'язковою для неповнолітніх пацієнтів.",
             'confidantPersonMustBeCapable' => 'Довіреною особою не може бути особа, яка має документ, що підтверджує її дієздатність.',
@@ -261,8 +261,13 @@ return [
         'doctor.scienceDegrees' => __('forms.science_degree'),
 
         'divisionId' => __('forms.division'),
-        'patient' => [
-            'firstName' => 'ім’я',
+
+        'firstName' => "ім'я",
+        'lastName' => 'прізвище',
+        'birthDate' => 'дата народження',
+
+        'person' => [
+            'firstName' => "ім'я",
             'lastName' => 'прізвище',
             'secondName' => 'по батькові',
             'birthDate' => 'дата народження',
@@ -281,11 +286,11 @@ return [
                 'secondName' => 'по батькові'
             ],
         ],
-        'patient.phones.*.type' => 'тип телефону',
-        'patient.phones.*.number' => 'номер телефону',
-        'patient.emergencyContact.phones.*.type' => 'тип телефону',
-        'patient.emergencyContact.phones.*.number' => 'номер телефону',
-        'patient.authenticationMethods.*' => [
+        'person.phones.*.type' => 'тип телефону',
+        'person.phones.*.number' => 'номер телефону',
+        'person.emergencyContact.phones.*.type' => 'тип телефону',
+        'person.emergencyContact.phones.*.number' => 'номер телефону',
+        'person.authenticationMethods.*' => [
             'type' => 'метод автентифікації',
             'phoneNumber' => 'номер телефону',
             'value' => 'законний представник пацієнта',
