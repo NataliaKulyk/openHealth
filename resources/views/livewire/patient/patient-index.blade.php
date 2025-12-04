@@ -13,7 +13,8 @@
 
                 <div class="justify-end block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-8">
                     @can('create', PersonRequest::class)
-                        <a href="{{ route('patient.create', [legalEntity()]) }}" class="button-primary">
+                        <a href="{{ route('patient.create', [legalEntity()]) }}" class="button-primary flex items-center gap-2">
+                            @icon('plus', 'w-4 h-4')
                             {{ __('patients.add_patient') }}
                         </a>
                     @endcan
@@ -102,33 +103,33 @@
                     </div>
                     <div class="flow-root mt-4">
                         <div class="max-w-screen-xl">
-                            <table class="table-input w-full table-fixed">
+                            <table class="table-input w-full table-auto">
                                 <thead class="thead-input">
                                 <tr>
-                                    <th scope="col" class="th-input w-[20%]">{{ __('forms.phone') }}</th>
-                                    <th scope="col" class="th-input w-[15%]">{{ __('forms.birth_date') }}</th>
-                                    <th scope="col" class="th-input w-[20%]">{{ __('forms.rnokpp') }}</th>
-                                    <th scope="col" class="th-input w-[20%]">{{ __('patients.birth_certificate') }}</th>
-                                    <th scope="col" class="th-input w-[15%]">{{ __('forms.status.label') }}</th>
-                                    <th scope="col" class="th-input w-[10%] text-center">{{ __('forms.actions') }}</th>
+                                    <th scope="col" class="th-input">{{ __('forms.phone') }}</th>
+                                    <th scope="col" class="th-input">{{ __('forms.birth_date') }}</th>
+                                    <th scope="col" class="th-input">{{ __('forms.rnokpp') }}</th>
+                                    <th scope="col" class="th-input">{{ __('patients.birth_certificate') }}</th>
+                                    <th scope="col" class="th-input">{{ __('forms.status.label') }}</th>
+                                    <th scope="col" class="th-input text-center">{{ __('forms.actions') }}</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td class="td-input break-words whitespace-normal align-top">
+                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
                                         {{ isset($patient['phones'][0]['number']) ? $patient['phones'][0]['number'] : '-' }}
                                     </td>
-                                    <td class="td-input break-words whitespace-normal align-top">
+                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
                                         {{ $patient['birth_date'] }}
                                     </td>
-                                    <td class="td-input break-words whitespace-normal align-top">
+                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
                                         {{ $patient['tax_id'] ?? '-' }}
                                     </td>
-                                    <td class="td-input break-words whitespace-normal align-top">
+                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
                                         {{ $patient['birth_certificate'] ?? '-' }}
                                     </td>
 
-                                    <td class="td-input whitespace-normal align-top">
+                                    <td class="td-input whitespace-nowrap align-top">
                                         @php
                                             $statusEnum = VerificationStatus::tryFrom($patient['status']);
 
@@ -172,13 +173,13 @@
 
                                             <div x-show="openDropdown"
                                                  x-transition
-                                                 class="absolute right-0 z-10 w-48 bg-white rounded shadow dark:bg-gray-700"
+                                                 class="absolute right-0 z-10 w-64 bg-white rounded shadow dark:bg-gray-700 whitespace-nowrap"
                                                  style="display: none;"
                                             >
                                                 @if($patient['status'] === 'APPLICATION')
                                                     <div class="py-1" @click="openDropdown = false">
                                                         <button wire:click="removeApplication({{ $patient['id'] }})"
-                                                                class="dropdown-button !flex gap-2 text-sm text-red-600 hover:bg-red-50"
+                                                                class="dropdown-button !flex gap-2 text-sm text-red-600 hover:bg-red-50 w-full"
                                                                 type="button"
                                                         >
                                                             @icon('delete', 'w-5 h-5 text-red-600')
@@ -189,17 +190,17 @@
                                                     <div class="py-1">
                                                         @can('create', DeclarationRequest::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'declaration.create')"
-                                                               class="dropdown-button !flex gap-2 !text-blue-800 border-b border-gray-100 dark:border-gray-600"
+                                                               class="dropdown-button !flex gap-2 border-b border-gray-100 dark:border-gray-600 w-full"
                                                                @click="openDropdown = false"
                                                             >
-                                                                @icon('file-text', 'w-4 h-4 text-blue-800 dark:text-white')
+                                                                @icon('file-text', 'w-4 h-4')
                                                                 {{ __('patients.sign_declaration') }}
                                                             </a>
                                                         @endcan
 
                                                         @can('create', DiagnosticReport::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'diagnostic-report.create')"
-                                                               class="dropdown-button !flex gap-2 !text-blue-800 border-b border-gray-100 dark:border-gray-600"
+                                                               class="dropdown-button !flex gap-2 border-b border-gray-100 dark:border-gray-600 w-full"
                                                                @click="openDropdown = false"
                                                             >
                                                                 @icon('activity', 'w-4 h-4')
@@ -209,10 +210,10 @@
 
                                                         @can('create', Procedure::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'procedure.create')"
-                                                               class="dropdown-button !flex gap-2 !text-blue-800"
+                                                               class="dropdown-button !flex gap-2 w-full"
                                                                @click="openDropdown = false"
                                                             >
-                                                                @icon('settings', 'w-4 h-4 text-blue-800 dark:text-white')
+                                                                @icon('settings', 'w-4 h-4')
                                                                 {{ __('patients.create_procedure') }}
                                                             </a>
                                                         @endcan

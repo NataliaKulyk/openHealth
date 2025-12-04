@@ -17,7 +17,7 @@ return [
     // Used not once.
     'patients' => 'Пацієнти',
     'patient_legal_representative' => 'Законний представник пацієнта',
-    'add_patient' => 'Додати пацієнта',
+    'add_patient' => 'Новий пацієнт',
     'start_interacting' => 'Розпочати взаємодію',
     'nobody_found' => 'Нікого не знайдено',
     'try_change_search_parameters' => 'Спробуйте змінити параметри пошуку',
