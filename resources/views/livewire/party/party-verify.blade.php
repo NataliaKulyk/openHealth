@@ -112,7 +112,7 @@
 
             {{-- Update Data (Modal Trigger) --}}
             <button type="button"
-                    @click="showUpdateModal = true"
+                    wire:click="checkAndOpenModal"
                     class="button-primary-outline"
             >
                 {{ __('forms.update_data') }}
@@ -169,7 +169,7 @@
                             <option value="dracs_name_change">{{ __('party_verification.types.dracs_name_change') }}</option>
                         </select>
 
-                        <label for="stream" class="label">{{ __('forms.subject_verification') }}</label>
+                        <label for="stream" class="label">{{ __('party_verification.subject_verification') }}</label>
                     </div>
 
                     {{-- 2. Status (Always VERIFIED for manual update) --}}
@@ -216,11 +216,10 @@
                     <button type="button" @click="showUpdateModal = false" class="button-minor">
                         {{ __('forms.cancel') }}
                     </button>
-                    <button type="button"
-                            @click="{{ $this->canUpdateVerification ? 'showUpdateModal = true' : '' }}"
-                            class="button-primary-outline {{ !$this->canUpdateVerification ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            :disabled="{{ !$this->canUpdateVerification ? 'true' : 'false' }}"
-                            title="{{ !$this->canUpdateVerification ? __('party_verification.update_unavailable_reason') : '' }}"
+
+                    <button type="submit"
+                            class="button-primary-outline"
+                            wire:loading.attr="disabled"
                     >
                         {{ __('forms.update_data') }}
                     </button>

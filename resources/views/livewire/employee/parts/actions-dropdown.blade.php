@@ -129,21 +129,21 @@
                                 </a>
                             </li>
                         @endcan
-                        @can('delete', $position)
-                            <li>
-                                <button
-                                    wire:click="$dispatch('openModal', { component: 'employee.delete-draft-modal', arguments: { requestId: {{ $position->id }} }})"
-                                    class="flex items-center gap-2 py-2 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-600 dark:text-red-500 w-full">
-                                    <svg class="w-5 h-5 text-red-600" aria-hidden="true"
-                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                              stroke-width="2"
-                                              d="m15 9-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                    </svg>
-                                    <span>{{ __('forms.delete') }}</span>
-                                </button>
-                            </li>
-                        @endcan
+                            @can('delete', $position)
+                                <li>
+                                    <button
+                                        type="button"
+                                        wire:click="confirmRequestDeletion({{ $position->id }})"
+                                        wire:loading.attr="disabled"
+                                        class="flex items-center gap-2 py-2 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-600 dark:text-red-500 w-full text-left"
+                                    >
+                                        <svg class="w-5 h-5 text-red-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 9-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                        </svg>
+                                        <span>{{ __('forms.delete') }}</span>
+                                    </button>
+                                </li>
+                            @endcan
 
                     @elseif($status === 'SIGNED')
                         @can('view', $position)
@@ -168,6 +168,5 @@
         </div>
     </div>
 @else
-    {{--     Optional: Debug output to see why actions are hidden--}}
-    {{--     <div style="display:none">Actions hidden for {{ $position->id }}. isEmployee: {{ $isEmployee ? 'Y' : 'N' }}. Status: {{ $status }}. Can View: {{ $user->can('view', $position) ? 'Y' : 'N' }}</div>--}}
+
 @endif

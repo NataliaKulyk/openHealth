@@ -196,6 +196,26 @@ class PartyVerify extends Component
         }
     }
 
+    /**
+     * Checks if verification update is allowed.
+     * If yes - opens the modal.
+     * If no - shows an error message explanation.
+     */
+    public function checkAndOpenModal(): void
+    {
+        if ($this->canUpdateVerification) {
+            $this->showUpdateModal = true;
+        } else {
+            $message = __('party_verification.update_unavailable_reason')
+                ?? 'Оновлення даних наразі неможливе, оскільки статус не потребує верифікації.';
+
+            $this->dispatch('flashMessage', [
+                'message' => $message,
+                'type' => 'error'
+            ]);
+        }
+    }
+
     public function render()
     {
         return view('livewire.party.party-verify');
