@@ -120,10 +120,12 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
     Route::get('/select-legal-entity', SelectLegalEntity::class)->name('legalEntity.select');
 
     Route::prefix('/dashboard')->group(function () {
-        Route::get('/', Dashboard::class)->name('dashboard.index');
+        Route::get('/', Dashboard::class)
+            ->can('limitedAction', LegalEntity::class)
+            ->name('dashboard.index');
 
         Route::get('/legal-entities/create', CreateLegalEntity::class)
-            ->can('create', LegalEntity::class)
+            ->can('limitedAction', LegalEntity::class)
             ->name('legal-entity.new.create');
     });
 

@@ -33,7 +33,7 @@ class LegalEntityPolicy
     }
 
     /**
-     * User allowed to view the list of divisions
+     * User allowed to view the details of legal entities
      */
     public function viewAny(User $user): Response
     {
@@ -45,19 +45,26 @@ class LegalEntityPolicy
     }
 
     /**
+     * Available for all unconnected users (to the LegalEntity)
+     */
+    public function limitedAction(User $user): Response
+    {
+        if ($user?->accessibleLegalEntities()->isEmpty()) {
+            return Response::allow();
+        }
+
+        return Response::denyWithStatus(404);
+    }
+
+    /**
      * Determine if the user can create a legal entities
      *
      * @param  User  $user
      *
      * @return true|Response
      */
-    public function create(User $user): true|Response
+    public function create(User $user): Response
     {
-        // Temporarily. Available for all unconnected users (to the LegalEntity). Until change for real logic
-        if ($user->roles->isEmpty()) {
-            return true;
-        }
-
         if ($user->hasAnyRole(['OWNER', 'ADMIN', 'HR'])) {
             return Response::allow();
         }

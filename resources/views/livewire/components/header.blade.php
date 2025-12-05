@@ -38,7 +38,7 @@
             </button>
 
             {{-- Logo --}}
-            <a href="{{ url('/dashboard') }}" class="flex items-center justify-between mr-4">
+            <a href="{{ legalEntity() ? route('dashboard', [legalEntity()]) : url('/dashboard') }}" class="flex items-center justify-between mr-4">
                 <img src="{{ Vite::asset('resources/images/logo-180x180.png') }}"
                      class="mr-3 h-8"
                      alt="Open Health logo"

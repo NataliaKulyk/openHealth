@@ -12,7 +12,7 @@
     <div class="overflow-y-auto py-5 px-3 h-full bg-white dark:bg-gray-800">
         <ul class="space-y-2">
 
-            @if(Auth::user()->can('create', LegalEntity::class) || legalEntity())
+            @if(Auth::user()->can('create', LegalEntity::class) || Auth::user()->can('limitedAction', LegalEntity::class)  || legalEntity())
                 <li x-data="{ open: false }" class="space-y-2">
                     <button @click="open = !open"
                             type="button"
@@ -71,7 +71,7 @@
                             @endcan
                         @endif
 
-                        @can('create', LegalEntity::class)
+                        @canany(['create', 'limitedAction'], LegalEntity::class)
                             <li>
                                 <a href="{{ legalEntity()
                                     ? route('legal-entity.create', [legalEntity()->id])
@@ -82,7 +82,7 @@
                                     <span class="ml-3">{{ __('forms.create_legal_entity') }}</span>
                                 </a>
                             </li>
-                        @endcan
+                        @endcanany
                     </ul>
                 </li>
             @endif

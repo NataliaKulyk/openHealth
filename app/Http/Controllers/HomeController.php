@@ -20,7 +20,7 @@ class HomeController extends Controller
     protected const array SCOPE_REDIRECT_MAP = [
         // 1. Priority: Doctor / Specialist
         // If user can create person requests (e.g., register patients) -> redirect to patient list.
-        'person_request:write' => 'patient.index',
+        'person_request:write' => 'persons.index',
 
 
         // 2. Priority: HR
