@@ -130,7 +130,7 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
     Route::middleware(['can:access,legalEntity'])->prefix('/dashboard/{legalEntity}')
         ->whereNumber('legalEntity')
         ->group(function () {
-            Route::get('/', Dashboard::class)->name('dashboard');
+            Route::get('/', [HomeController::class, 'dashboard'])->name('dashboard');
 
             Route::get('/edit', EditLegalEntity::class)
                 ->can('edit', 'legalEntity')
