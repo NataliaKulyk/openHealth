@@ -21,6 +21,8 @@ enum Status: string
     case DRAFT = 'DRAFT';
     case UNSYNCED = 'UNSYNCED';
 
+    case REORGANIZED = 'REORGANIZED';
+
     public function label(): string
     {
         return match ($this) {
@@ -32,9 +34,9 @@ enum Status: string
             self::ACTIVE => __('forms.status.active'),
             self::INACTIVE => __('forms.status.non_active'),
             self::DRAFT => __('forms.status.draft'),
-            self::STOPPED => __('forms.status.draft'),
             self::UNSYNCED => __('forms.status.unsynced'),
             self::STOPPED => __('forms.status.stopped'),
+            self::REORGANIZED => __('forms.status.reorganized'),
         };
     }
 

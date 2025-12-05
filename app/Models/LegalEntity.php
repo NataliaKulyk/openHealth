@@ -26,6 +26,7 @@ class LegalEntity extends Model
     use HasCamelCasing;
 
     public const string TYPE_MSP = 'MSP';
+    public const string TYPE_MSP_LIMITED = 'MSP_LIMITED';
     public const string TYPE_MIS = 'MIS';
     public const string TYPE_NHS = 'NHS';
     public const string TYPE_PHARMACY = 'PHARMACY';
@@ -203,7 +204,7 @@ class LegalEntity extends Model
     protected function listByFields(Builder $query, array $fields = []): void
     {
         if (empty($fields)) {
-            $query->select(['id', 'uuid', 'edr', 'legal_entity_type_id'])->orderBy('id');
+            $query->select(['id', 'uuid', 'status', 'edr', 'legal_entity_type_id'])->orderBy('id');
         } else {
             $query->select($fields)->orderBy('id');
         }

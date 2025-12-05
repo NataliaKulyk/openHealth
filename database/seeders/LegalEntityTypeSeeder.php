@@ -29,6 +29,7 @@ class LegalEntityTypeSeeder extends Seeder
             ['name' => LegalEntity::TYPE_OUTPATIENT, 'localized_name' => 'legal-entity.types.outpatient'],
             ['name' => LegalEntity::TYPE_PHARMACY, 'localized_name' => 'legal-entity.types.pharmacy'],
             ['name' => LegalEntity::TYPE_PRIMARY_CARE, 'localized_name' => 'legal-entity.types.primary_care'],
+            ['name' => LegalEntity::TYPE_MSP_LIMITED, 'localized_name' => 'legal-entity.types.msp_limited']
         ];
 
         foreach ($availableTypes as $typeRecord) {

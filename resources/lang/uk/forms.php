@@ -375,7 +375,7 @@ return [
         'rejected' => 'Відхилено',
         'signed' => 'Підписано',
         'dismissed' => 'Звільнено',
-        'stopped' => 'Призупинено',
+        'reorganized' => 'Реорганізовано',
         'active' => 'Активний',
         'non_active' => 'Не активний',
         'suspended' => 'Призупинено',

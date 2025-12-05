@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\Status;
 use App\Models\LegalEntity;
 use App\Models\LegalEntityType;
 
@@ -43,6 +44,10 @@ class LegalEntityRepository
                 // If there are multiple Legal Entities with the same name - add Legal Entity Type to distinguish them
                 if ($legalEntitiesCount > 1) {
                     $name .= " <{$legalEntityTypeName}>";
+                }
+
+                if ($data['status'] === Status::REORGANIZED->value) {
+                    $name .= " <" . LegalEntity::TYPE_MSP_LIMITED . ">";
                 }
 
                 $result[] = ['id' => $data['id'], 'uuid' => $data['uuid'], 'name' => $name];
