@@ -849,5 +849,18 @@ return [
         'd.m.Y' => 'dd.mm.yyyy',
         'd/m/Y' => 'dd/mm/yyyy',
         'Y-m-d' => 'yyyy-mm-dd',
+    ],
+
+    'migrations' => [
+        'install' => [
+            'path' => 'database/migrations/install'
+        ],
+        'update' => [
+            'version' => [
+                'prev' => '',
+                'curr' => env('APP_VERSION', '0.1')
+            ],
+            'path' => 'database/migrations/update'
+        ]
     ]
 ];
