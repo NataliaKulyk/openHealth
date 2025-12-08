@@ -9,6 +9,7 @@
     <div class="form" wire:key="{{ time() }}">
         @include('livewire.contract.parts.legal-entity-info')
         @include('livewire.contract.parts.basic-data')
+        @include('livewire.contract.parts.medical-programs')
         @include('livewire.contract.parts.payment-details')
         @include('livewire.contract.parts.documents')
         @include('livewire.contract.parts.consent-text')

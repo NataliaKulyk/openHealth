@@ -105,4 +105,9 @@ final class Repository
     {
         return app(LegalEntityRepository::class);
     }
+
+    public static function contract()
+    {
+        return app(ContractRepository::class);
+    }
 }

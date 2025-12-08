@@ -2,7 +2,8 @@
     use App\Enums\Contract\Type;
     use App\Models\{LegalEntity, ContractRequest};
 
-    $route = '';
+    // Dynamic route generation based on Legal Entity Type
+    $route = '#';
     if (legalEntity()->type->name === LegalEntity::TYPE_PHARMACY) {
         $route = route('contract-reimbursement.create', legalEntity());
     } elseif (legalEntity()->type->name === LegalEntity::TYPE_MSP) {
@@ -19,7 +20,8 @@
 
         <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start">
             @can('create', ContractRequest::class)
-                <a href="{{ $route }}" class="button-primary flex items-center gap-2">
+                {{-- Button now uses the dynamic $route variable --}}
+                <a href="{{ $route }}" class="button-primary flex items-center gap-2" wire:navigate>
                     @icon('plus', 'w-4 h-4')
                     {{ __('contracts.new') }}
                 </a>
@@ -121,83 +123,70 @@
                             <th class="px-6 py-3 w-[6%] text-center">{{ __('forms.action') }}</th>
                         </tr>
                         </thead>
-
                         <tbody>
                         @foreach ($contracts as $contract)
-                            <tr wire:key=contract-{{ $contract->id }}"
-                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
+                            <tr wire:key="contract-{{ $contract->id }}"
+                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150"
                             >
-                                <td class="td-input">
-                                    {{ __('Заявка') }}
-                                </td>
-                                <td class="td-input">
-                                    {{ $contract->contractNumber }}
-                                </td>
-                                <td class="td-input">
-                                    {{ $contract->startDate }}
-                                </td>
-                                <td class="td-input">
-                                    {{ $contract->endDate }}
-                                </td>
-                                <td class="td-input">
-                                    <span class="{{ $contract->status->color() }}">
-                                        {{ $contract->status->label() }}
-                                    </span>
-                                </td>
-                                <td class="td-input">
-                                    <div class="flex justify-center relative">
-                                        <div x-data="{
-                                                 open: false,
-                                                 toggle() { this.open ? this.close() : (this.$refs.button.focus(), this.open = true) },
-                                                 close(focusAfter) { if (!this.open) return; this.open = false; focusAfter && focusAfter.focus() }
-                                             }"
-                                             @keydown.escape.prevent.stop="close($refs.button)"
-                                             @focusin.window="!$refs.panel.contains($event.target) && close()"
-                                             x-id="['dropdown-button']"
-                                             class="relative"
-                                        >
-                                            <button @click="toggle()"
-                                                    x-ref="button"
-                                                    :aria-expanded="open"
-                                                    :aria-controls="$id('dropdown-button')"
-                                                    type="button"
-                                                    class="hover:text-primary cursor-pointer"
-                                            >
-                                                @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-white')
-                                            </button>
-
-                                            <div x-show="open"
-                                                 wire:key="dropdown-{{ $contract->id }}-{{ $contract->status->value }}"
-                                                 x-cloak
-                                                 x-ref="panel"
-                                                 x-transition.origin.top.left
-                                                 @click.outside="close($refs.button)"
-                                                 :id="$id('dropdown-button')"
-                                                 class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white shadow-md z-50"
-                                            >
-                                                <a href="#"
-                                                   class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                >
-                                                    @icon('eye', 'w-5 h-5 text-gray-600')
-                                                    {{ __('forms.view') }}
-                                                </a>
-
-                                                <a href="#"
-                                                   class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                >
-                                                    @icon('edit', 'w-5 h-5 text-gray-600')
-                                                    {{ __('forms.edit') }}
-                                                </a>
-
-                                                <a href="#"
-                                                   class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
-                                                >
-                                                    @icon('eye', 'w-5 h-5 text-gray-600')
-                                                    {{ __('forms.delete') }}
-                                                </a>
-                                            </div>
-                                        </div>
+                                {{-- TYPE --}}
+                                <td class="td-input align-middle text-sm text-gray-900 dark:text-white">
+                                    <div class="flex flex-col">
+                <span class="font-medium">
+                    @if($contract->type === 'REIMBURSEMENT')
+                        {{ __('Реімбурсація') }}
+                    @elseif($contract->type === 'CAPITATION')
+                        {{ __('ПМД (Капітація)') }}
+                    @else
+                        {{ $contract->type }}
+                    @endif
+                </span>
+                                        <span class="text-xs text-gray-500">
+                    {{ $contract->id_form ?? '' }}
+                </span>
                                     </div>
+                                </td>
+
+                                {{-- NUMBER --}}
+                                <td class="td-input align-middle font-medium text-gray-900 dark:text-white">
+                                    @if($contract->contract_number)
+                                        {{ $contract->contract_number }}
+                                    @else
+                                        <span class="text-gray-400 italic">{{ __('Чернетка') }}</span>
+                                    @endif
+                                </td>
+
+                                {{-- START DATE --}}
+                                <td class="td-input align-middle">
+                                    {{ $contract->start_date ? \Carbon\Carbon::parse($contract->start_date)->format('d.m.Y') : '---' }}
+                                </td>
+
+                                {{-- END DATE --}}
+                                <td class="td-input align-middle">
+                                    {{ $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->format('d.m.Y') : '---' }}
+                                </td>
+
+                                {{-- STATUS --}}
+                                <td class="td-input align-middle">
+                                    <div class="flex flex-col items-start gap-1">
+                                        {{-- Ensure your Enum has label() and color() methods --}}
+                                        <span
+                                            class="{{ $contract->status->color() }} px-2.5 py-0.5 rounded text-xs font-medium">
+                    {{ $contract->status->label() }}
+                </span>
+
+                                        @if($contract->status_reason)
+                                            <div class="flex items-center gap-1 text-xs text-red-500 max-w-[150px]"
+                                                 title="{{ $contract->status_reason }}">
+                                                @icon('exclamation-circle', 'w-3 h-3 flex-shrink-0')
+                                                <span class="truncate">{{ $contract->status_reason }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </td>
+
+                                {{-- ACTIONS --}}
+                                <td class="td-input align-middle text-center px-2">
+                                    @include('livewire.contract.parts.actions', ['contract' => $contract])
                                 </td>
                             </tr>
                         @endforeach

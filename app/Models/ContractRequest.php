@@ -45,4 +45,14 @@ class ContractRequest extends Model
         'type',
         'contractor_signed'
     ];
+
+    protected $casts = [
+        'contractor_payment_details' => 'array',
+        'external_contractors' => 'array',
+        'contractor_employee_divisions' => 'array',
+        'data' => 'array',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'contractor_signed' => 'boolean',
+    ];
 }

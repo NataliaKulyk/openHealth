@@ -18,6 +18,7 @@ use App\Classes\eHealth\Api\Job;
 use App\Classes\eHealth\Api\Division;
 use App\Classes\eHealth\Api\HealthcareService;
 use App\Classes\eHealth\Api\LegalEntity;
+use App\Classes\eHealth\Api\MedicalProgram;
 use App\Classes\eHealth\Api\Party;
 use App\Classes\eHealth\Api\Patient;
 use App\Classes\eHealth\Api\Person;
@@ -155,5 +156,10 @@ final class EHealth
     public static function auth(): Auth
     {
         return app(Auth::class);
+    }
+
+    public static function medicalProgram(): MedicalProgram
+    {
+        return app(MedicalProgram::class);
     }
 }
