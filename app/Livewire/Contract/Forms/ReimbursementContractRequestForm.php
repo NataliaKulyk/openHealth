@@ -11,9 +11,9 @@ class ReimbursementContractRequestForm extends BaseContractRequestForm
 {
     protected const int REIMBURSEMENT_CONTRACT_MAX_PERIOD_DAY = 1096;
 
-    public string $previousRequestId;
+    public ?string $previousRequestId = null;
 
-    public array $medicalPrograms;
+    public ?array $medicalPrograms;
 
     public bool $consentText;
 
@@ -35,9 +35,11 @@ class ReimbursementContractRequestForm extends BaseContractRequestForm
 
         return array_merge($parentRules, [
             'idForm' => ['required', new InDictionary('REIMBURSEMENT_CONTRACT_TYPE')],
-            'previousRequestId' => ['required', 'uuid', 'exists:contracts,uuid'],
-            'medicalPrograms' => ['required', 'array'],
-            'consentText' => ['required', 'in:true']
+
+            'previousRequestId' => ['nullable', 'uuid', 'exists:contracts,uuid'],
+
+            'medicalPrograms' => ['nullable', 'array'],
+            'consentText' => ['accepted']
         ]);
     }
 }

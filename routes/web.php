@@ -17,6 +17,7 @@ use App\Livewire\Auth\VerifyEmail;
 use App\Livewire\Auth\VerifyPersonality;
 use App\Livewire\Contract\CapitationContractCreate;
 use App\Livewire\Contract\ContractIndex;
+use App\Livewire\Contract\ContractShow;
 use App\Livewire\Contract\ReimbursementContractCreate;
 use App\Livewire\Dashboard;
 use App\Livewire\Declaration\DeclarationCreate;
@@ -222,6 +223,9 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 ->name('contract-capitation.create');
             Route::get('contract/reimbursement/create', ReimbursementContractCreate::class)
                 ->name('contract-reimbursement.create');
+            Route::get('contract/{contract}', ContractShow::class)
+                ->name('contract.show')
+                ->middleware('can:view,contract');
 
             // Routes related to legal entity licenses; primary license can't be edited
             Route::prefix('license')->middleware(['permission:license:read|license:write'])

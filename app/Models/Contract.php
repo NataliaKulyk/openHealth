@@ -54,11 +54,17 @@ class Contract extends Model
         'statute_md5',
         'additional_document_md5',
         'legal_entity_id',
+        'nhs_legal_entity_id',
+        'previous_request_id',
+        'medical_programs',
+        'data'
     ];
 
     protected $casts = [
         'contractor_payment_details' => 'array',
         'external_contractors' => 'array',
+        'medical_programs' => 'array',
+        'data' => 'array',
         'start_date' => EHealthDateCast::class,
         'end_date' => EHealthDateCast::class,
         'status' => Status::class

@@ -17,18 +17,13 @@ use Illuminate\Validation\ValidationException;
 class ContractRequest extends EHealthRequest
 {
     /**
-     * The main endpoint for Contract Requests.
+     * RETURN the api.
+     * We use the relative path without the initial slash so that Guzzle correctly glues it to the Base URI.
      */
     protected const string URL = '/api/contract_requests';
 
     /**
      * Gets a list of contract requests from E-Health.
-     * Corresponds to: GET /api/contract_requests/{contract_type}/?{filters...}
-     *
-     * @param  string  $contractType  'capitation' or 'reimbursement'.
-     * @param  null  $query
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function getMany(string $contractType, $query = null): PromiseInterface|EHealthResponse
     {
@@ -41,12 +36,71 @@ class ContractRequest extends EHealthRequest
     }
 
     /**
-     * Gets the details of a single contract request from E-Health.
-     * Corresponds to: GET /api/contract_requests/{id}
+     * Maps the API response data to the Database Model structure.
      *
-     * @param  string  $uuid  The UUID of the contract request.
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException
+     * @param  array  $data  Raw data from eHealth API
+     * @return array
+     */
+    public function mapCreate(array $data): array
+    {
+        // Helper function to safely extract ID/UUID from array or string
+        $extractId = static function ($value) {
+            if (is_array($value)) {
+                return $value['id'] ?? $value['uuid'] ?? null;
+            }
+
+            return $value;
+        };
+
+        return [
+            // Primary identifiers (API returns 'id', we store as 'uuid')
+            'uuid' => $data['id'] ?? $data['uuid'],
+
+            // Contractor Relations (can be object or ID)
+            'contractor_legal_entity_id' => $extractId($data['contractor_legal_entity'] ?? null)
+                ?? $data['contractor_legal_entity_id'] ?? null,
+
+            'contractor_owner_id' => $extractId($data['contractor_owner'] ?? null)
+                ?? $data['contractor_owner_id'] ?? null,
+
+            // Core Data
+            'contract_number' => $data['contract_number'] ?? null,
+            'status' => $data['status'],
+            'status_reason' => $data['status_reason'] ?? null,
+            'type' => $data['type'] ?? 'REIMBURSEMENT', // Default if missing
+            'id_form' => $data['id_form'] ?? null,
+
+            // Dates
+            'start_date' => $data['start_date'] ?? null,
+            'end_date' => $data['end_date'] ?? null,
+            'inserted_at' => $data['inserted_at'] ?? now(),
+            'updated_at' => $data['updated_at'] ?? now(),
+
+            // Signer details and addresses
+            'contractor_base' => $data['contractor_base'] ?? null,
+            'contractor_payment_details' => $data['contractor_payment_details'] ?? [],
+            'contractor_rmsp_amount' => $data['contractor_rmsp_amount'] ?? null,
+
+            // NHS fields (nullable for NEW requests)
+            'nhs_signer_id' => $extractId($data['nhs_signer'] ?? null) ?? $data['nhs_signer_id'] ?? null,
+            'nhs_legal_entity_id' => $extractId($data['nhs_legal_entity'] ?? null) ?? $data['nhs_legal_entity_id'] ?? null,
+            'nhs_signer_base' => $data['nhs_signer_base'] ?? null,
+            'nhs_payment_method' => $data['nhs_payment_method'] ?? null,
+            'nhs_contract_price' => $data['nhs_contract_price'] ?? null,
+            'issue_city' => $data['issue_city'] ?? null,
+
+            // Relations & Meta
+            'contract_id' => $data['contract_id'] ?? null, // Link to active contract
+            'previous_request_id' => $data['previous_request_id'] ?? null,
+            'medical_programs' => $data['medical_programs'] ?? [],
+
+            // Store full dump for debugging or extra fields
+            'data' => $data,
+        ];
+    }
+
+    /**
+     * Gets the details of a single contract request from E-Health.
      */
     public function getDetails(string $uuid): PromiseInterface|EHealthResponse
     {
@@ -58,33 +112,27 @@ class ContractRequest extends EHealthRequest
     /**
      * Initializes a contract request (Step 1).
      * Corresponds to: POST /api/contract_requests/{contract_type}
-     *
-     * @param  string  $contractType  'capitation' or 'reimbursement'.
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function initialize(string $contractType): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateInitialize(...));
 
-        return $this->post(self::URL . '/' . $contractType);
+        $url = self::URL . '/' . $contractType;
+
+        return $this->post($url);
     }
 
     /**
      * Sends the signed contract request (Step 2).
-     * Corresponds to: POST /api/contract_requests/{contract_type}/{id}
-     *
-     * @param  string  $uuid  The request UUID (from initializeRequest).
-     * @param  string  $contractType  'capitation' or 'reimbursement'.
-     * @param  array  $payload  The body with 'signed_content'.
-     * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     * Corresponds to: PUT /api/contract_requests/{contract_type}/{id}
      */
     public function create(string $uuid, string $contractType, array $payload): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateCreate(...));
 
-        return $this->post(self::URL . '/' . $contractType . '/' . $uuid, $payload);
+        $url = self::URL . '/' . $contractType . '/' . $uuid;
+
+        return $this->post($url, $payload);
     }
 
     /**
@@ -94,7 +142,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  array  $payload  Payload with 'assignee_id'.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     * @throws ConnectionException
      */
     public function assign(string $uuid, array $payload): PromiseInterface|EHealthResponse
     {
@@ -110,7 +158,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  array  $payload  Payload with 'nhs_signer_id', etc.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     * @throws ConnectionException
      */
     public function approve(string $uuid, array $payload): PromiseInterface|EHealthResponse
     {
@@ -160,7 +208,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $contractType  'capitation' or 'reimbursement'.
      * @param  array  $payload  Signed payload with reason.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     * @throws ConnectionException
      */
     public function terminate(string $uuid, string $contractType, array $payload): PromiseInterface|EHealthResponse
     {
@@ -176,7 +224,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  string  $contractType  'capitation' or 'reimbursement'.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     * @throws ConnectionException
      */
     public function getPrintoutContent(string $uuid, string $contractType): PromiseInterface|EHealthResponse
     {
@@ -192,7 +240,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $uuid  The UUID of the contract request.
      * @param  array  $payload  Signed payload.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     * @throws ConnectionException
      */
     public function signNhs(string $uuid, array $payload): PromiseInterface|EHealthResponse
     {
@@ -209,7 +257,7 @@ class ContractRequest extends EHealthRequest
      * @param  string  $contractType  'capitation' or 'reimbursement'.
      * @param  array  $payload  Signed payload.
      * @return PromiseInterface|EHealthResponse
-     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     * @throws ConnectionException
      */
     public function signMsp(string $uuid, string $contractType, array $payload): PromiseInterface|EHealthResponse
     {

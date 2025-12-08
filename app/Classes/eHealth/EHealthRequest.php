@@ -135,4 +135,30 @@ abstract class EHealthRequest extends PendingRequest
                 : $laravelResponse->truncateExceptionsAt($this->truncateExceptionsAt);
         });
     }
+
+    public function asMis(): self
+    {
+        $misToken = config('ehealth.api.mis_token');
+        $misApiKey = config('ehealth.api.mis_api_key');
+
+        if (empty($misApiKey)) {
+            throw new \RuntimeException('CRITICAL: MIS API Key is missing!');
+        }
+
+        if (empty($misToken)) {
+            throw new \RuntimeException('CRITICAL: MIS Token is missing! Check if it is expired.');
+        }
+
+        // 1. We forcibly replace the Bearer Token with the MIS token
+        $this->withToken($misToken);
+
+        // 2. Update the API-key and add a User-Agent to bypass WAF (Cloudflare)
+        $this->withHeaders([
+                               'API-key'    => $misApiKey,
+                               'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                               'Accept'     => 'application/json',
+                           ]);
+
+        return $this;
+    }
 }

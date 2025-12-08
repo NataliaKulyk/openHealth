@@ -23,7 +23,7 @@ class EHealthResponseException extends Exception
      */
     public function getDetails(): array
     {
-        return $this->response->json();
+        return $this->details ?? [];
     }
 
     /**

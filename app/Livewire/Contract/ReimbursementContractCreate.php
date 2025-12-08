@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace App\Livewire\Contract;
 
-use App\Classes\eHealth\EHealth;
-use App\Exceptions\EHealth\EHealthResponseException;
-use App\Exceptions\EHealth\EHealthValidationException;
+use App\Classes\eHealth\Api\MedicalProgram;
 use App\Livewire\Contract\Forms\ReimbursementContractRequestForm as Form;
-use App\Models\ContractRequest;
 use App\Models\LegalEntity;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Log;
 
 class ReimbursementContractCreate extends ContractComponent
 {
     public Form $form;
+    public array $medicalProgramsList = [];
 
     protected array $dictionaryNames = [
         'REIMBURSEMENT_CONTRACT_TYPE',
@@ -28,83 +25,101 @@ class ReimbursementContractCreate extends ContractComponent
     public function mount(LegalEntity $legalEntity): void
     {
         $this->baseMount($legalEntity);
+        $this->loadMedicalPrograms();
     }
 
-    public function create(): void
+
+    protected function loadMedicalPrograms(): void
     {
-        if (Auth::user()->cannot('initialize', ContractRequest::class)) {
-            Session::flash('error', 'У вас немає дозволу на ініціалізацію запиту на створення контракту');
 
-            return;
-        }
+         Cache::forget('ehealth_medical_programs_reimbursement');
 
-        try {
-            $validated = $this->form->validate($this->form->signingRules());
-        } catch (ValidationException $exception) {
-            Session::flash('error', $exception->validator->errors()->first());
-            $this->setErrorBag($exception->validator->getMessageBag());
+        $programs = Cache::remember('ehealth_medical_programs_reimbursement', 3600, function () { //Cache for 1 hour is enough
+            try {
+                // Create a new instance of the request right here
+                $request = new MedicalProgram();
 
-            return;
-        }
+                // Switching to the context of MIS
+                $response = $request->asMis()->getMany(
+                    [
+                        'page_size' => 100,
+                    ]
+                );
 
-        try {
-            $response = EHealth::contractRequest()->initialize('reimbursement');
-        } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error connecting when initializing contract request');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
+                return $response->getData();
 
-            return;
-        } catch (EHealthValidationException|EHealthResponseException $exception) {
-            $this->logEHealthException($exception, 'Error when initializing contract request');
-
-            if ($exception instanceof EHealthValidationException) {
-                Session::flash('error', $exception->getFormattedMessage());
-            } else {
-                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            } catch (\Exception $e) {
+                Log::error('Medical Programs Fetch Error: ' . $e->getMessage());
+                return [];
             }
+        });
 
-            return;
+
+        $formattedList = [];
+        foreach ($programs as $item) {
+            $formattedList[] = [
+                'id' => $item['id'],
+                'name' => $item['name'] . ' (' . ($item['type'] ?? 'N/A') . ')',
+            ];
         }
 
-        try {
-            $validated = $this->form->validate();
-        } catch (ValidationException $exception) {
-            Session::flash('error', $exception->validator->errors()->first());
-            $this->setErrorBag($exception->validator->getMessageBag());
+        $this->medicalProgramsList = $formattedList;
+    }
 
-            return;
+    protected function getContractType(): string
+    {
+        return 'reimbursement';
+    }
+
+    protected function collectPayload(array $data): array
+    {
+        $consentTextString = $this->dictionaries['REIMBURSEMENT_CONTRACT_CONSENT_TEXT']['APPROVED']
+            ?? 'Я підтверджую достовірність наданих даних...';
+
+        $payerAccount = str_replace(' ', '', $data['contractorPaymentDetails']['payerAccount'] ?? '');
+
+        $insulinProgramId = ['1a227396-a0e4-4c4f-a0a9-6b358c8929d2'];
+
+        $idForm = 'GENERAL';
+
+        $payload = [
+            'contractor_owner_id' => $this->form->contractorOwnerId,
+            'contractor_base'     => $data['contractorBase'],
+            'contractor_payment_details' => [
+                'payer_account' => $payerAccount,
+                'bank_name'     => $data['contractorPaymentDetails']['bankName'] ?? '',
+            ],
+            'start_date'      => Carbon::now()->addDay()->format('Y-m-d'),
+            'end_date'        => Carbon::parse($data['endDate'])->format('Y-m-d'),
+
+            'id_form'         => $idForm,
+
+            'statute_md5'             => $data['statuteMd5'] ?? null,
+            'additional_document_md5' => $data['additionalDocumentMd5'] ?? null,
+
+            'consent_text'    => $consentTextString,
+
+            'medical_programs' => $insulinProgramId,
+        ];
+
+        if (!empty($data['previousRequestId'])) {
+            $payload['previous_request_id'] = $data['previousRequestId'];
         }
 
-        $signedContent = signatureService()->signData(
-            $validated,
-            $validated['password'],
-            $validated['knedp'],
-            $validated['keyContainerUpload'],
-            Auth::user()->party->taxId
+        return $payload;
+    }
+
+    /** Helper to generate a dummy number if NULL is rejected.
+     *  Pattern: 4 digits - 4 letters - 4 digits
+     */
+    private function generateContractNumber(): string
+    {
+        return sprintf(
+            '%04d-%s-%04d',
+            rand(1000, 9999),
+            strtoupper(\Illuminate\Support\Str::random(4)),
+            rand(1000, 9999)
         );
-
-        try {
-            EHealth::contractRequest()->create(
-                $response->validate()['id'],
-                'reimbursement',
-                ['signed_content' => $signedContent, 'signed_content_encoding' => 'base64']
-            );
-        } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error connecting when creating a contract');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ.");
-
-            return;
-        } catch (EHealthValidationException|EHealthResponseException $exception) {
-            $this->logEHealthException($exception, 'Error when creating a contract');
-
-            if ($exception instanceof EHealthValidationException) {
-                Session::flash('error', $exception->getFormattedMessage());
-            } else {
-                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
-            }
-
-            return;
-        }
     }
 
     public function render(): View
