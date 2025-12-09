@@ -8,6 +8,7 @@ use App\Classes\eHealth\EHealth;
 use App\Enums\Employee\RequestStatus;
 use App\Enums\Employee\RevisionStatus;
 use App\Enums\Status;
+use App\Livewire\Employee\Forms\EmployeeForm;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
@@ -15,6 +16,7 @@ use App\Repositories\Repository;
 use App\Traits\FormTrait;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 abstract class EmployeeComponent extends Component
@@ -23,7 +25,7 @@ abstract class EmployeeComponent extends Component
         getDictionary as traitGetDictionary;
     }
 
-    public Form $form;
+    public EmployeeForm $form;
     public bool $isPersonalDataLocked = false;
     public bool $isPositionDataLocked = false;
 
