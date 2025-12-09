@@ -104,7 +104,7 @@ class EmployeeIndex extends EmployeeComponent
                     ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
             )
             ->with([
-                       'phones',
+                     'phones',
                      'employees' => fn ($q) => $q
                          ->where('legal_entity_id', $this->legalEntity->id)
                          ->with(['division', 'user']),

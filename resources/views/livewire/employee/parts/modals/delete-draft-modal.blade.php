@@ -1,11 +1,13 @@
-<div x-data="{ show: $wire.entangle('showDeleteModal') }">
+<div x-data="{ show: false }"
+     x-effect="show = $wire.showDeleteModal">
+
     <template x-teleport="body">
         <div x-show="show"
              class="fixed inset-0 z-50 overflow-y-auto"
              role="dialog"
              aria-modal="true"
              style="display: none;"
-             @keydown.escape.prevent.stop="show = false">
+             @keydown.escape.prevent.stop="$wire.closeDeleteModal()">
 
             <div x-show="show"
                  x-transition.opacity
@@ -13,7 +15,7 @@
 
             <div x-show="show"
                  x-transition
-                 @click="show = false"
+                 @click="$wire.closeDeleteModal()"
                  class="relative flex min-h-screen items-center justify-center p-4">
 
                 <div @click.stop
@@ -32,7 +34,7 @@
 
                         <div class="mt-6 flex justify-center gap-4">
                             <button type="button"
-                                    @click="show = false"
+                                    @click="$wire.closeDeleteModal()"
                                     class="button-secondary">
                                 {{ __('forms.cancel') }}
                             </button>
