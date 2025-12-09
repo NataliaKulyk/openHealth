@@ -20,7 +20,7 @@ class EmployeePolicy
 
     public function view(User $user, Employee $employee): Response
     {
-        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+        if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -35,7 +35,7 @@ class EmployeePolicy
             return Response::deny(__('employees.policy.emp.dismissed_no_edit'));
         }
 
-        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+        if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -46,7 +46,7 @@ class EmployeePolicy
 
     public function deactivate(User $user, Employee $employee): Response
     {
-        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+        if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -60,14 +60,17 @@ class EmployeePolicy
      */
     public function sync(User $user, Employee $employee): Response
     {
-        if ((int)$employee->legal_entity_id !== (int)legalEntity()->id) {
+        // 1. Verification of affiliation with the current institution
+        if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
-        if (!$employee->user_id || !$employee->party_id || !$employee->uuid) {
+        // 2. State Check
+        if (!$employee->userId || !$employee->partyId || !$employee->uuid) {
             return Response::deny(__('employees.policy.sync_missing_data'));
         }
 
+        // 3. PERMISSIONS
         return $user->can('employee:write')
             ? Response::allow()
             : Response::deny(__('employees.policy.emp.update_denied'));

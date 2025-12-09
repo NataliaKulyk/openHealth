@@ -15,11 +15,7 @@ use App\Repositories\Repository;
 use App\Traits\FormTrait;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Locked;
 use Livewire\Component;
-use App\Livewire\Employee\Forms\EmployeeForm as Form;
-use Throwable;
 
 abstract class EmployeeComponent extends Component
 {
@@ -130,27 +126,17 @@ abstract class EmployeeComponent extends Component
 
     /**
      * Core logic to synchronize a single employee with eHealth.
-     * The EHealth client handles authentication context automatically.
-     *
-     * @param Employee $employee
-     *
-     * @return bool Returns true on success, false on failure
-     * @throws Throwable
      */
     protected function syncEmployeeData(Employee $employee): bool
     {
         // 1. Validation via Policy
         if (Gate::denies('sync', $employee)) {
-            $this->dispatch('flashMessage', [
-                'message' => 'Синхронізація недоступна для цього співробітника.',
-                'type' => 'error'
-            ]);
+            session()?->flash('error', 'Синхронізація недоступна для цього співробітника.');
             return false;
         }
 
         try {
-
-            // 2. API Request
+            // 2. API Request (Token is handled automatically by EHealth client)
             $response = EHealth::employee()
                 ->getDetails($employee->uuid, groupByEntities: true);
 
@@ -171,10 +157,7 @@ abstract class EmployeeComponent extends Component
             // 4. Close/Actualize Pending Requests
             $this->actualizePendingRequests($employee);
 
-            $this->dispatch('flashMessage', [
-                'message' => 'Дані співробітника успішно оновлено з ЕСОЗ',
-                'type' => 'success'
-            ]);
+            session()?->flash('success', 'Дані співробітника успішно оновлено з ЕСОЗ');
 
             return true;
 
@@ -184,10 +167,7 @@ abstract class EmployeeComponent extends Component
                 'error' => $e->getMessage()
             ]);
 
-            $this->dispatch('flashMessage', [
-                'message' => 'Помилка синхронізації: ' . $e->getMessage(),
-                'type' => 'error'
-            ]);
+            session()->flash('error', 'Помилка синхронізації: ' . $e->getMessage());
 
             return false;
         }
@@ -195,12 +175,11 @@ abstract class EmployeeComponent extends Component
 
     /**
      * Checks "hanging" requests (SIGNED) for this employee in eHealth.
-     *
-     * @param  Employee  $employee
-     * @return void
+     * Refactored to batch process requests and avoid N+1 queries.
      */
     protected function actualizePendingRequests(Employee $employee): void
     {
+        // Fetch local requests that need verification
         $pendingRequests = EmployeeRequest::where('employee_id', $employee->id)
             ->where('status', RequestStatus::SIGNED)
             ->whereNull('applied_at')
@@ -210,14 +189,21 @@ abstract class EmployeeComponent extends Component
             return;
         }
 
-        foreach ($pendingRequests as $request) {
-            try {
-                // Fetch specific request status via API
-                $response = EHealth::employeeRequest()
-                    ->getMany(['id' => $request->uuid]);
+        try {
+            // Batch API Request: Get all requests for this employee by UUID
+            $response = EHealth::employeeRequest()
+                ->getMany(
+                    [
+                        'employee_id' => $employee->uuid,
+                    ]
+                );
 
-                $data = $response->validate();
-                $remoteRequestData = $data[0] ?? null;
+            // Map response by UUID for O(1) lookup
+            $remoteRequests = collect($response->validate())->keyBy('uuid');
+
+            foreach ($pendingRequests as $localRequest) {
+                // Find matching remote request
+                $remoteRequestData = $remoteRequests->get($localRequest->uuid);
 
                 if (!$remoteRequestData) {
                     continue;
@@ -227,27 +213,27 @@ abstract class EmployeeComponent extends Component
 
                 // Update local status based on remote status
                 if ($remoteStatus === 'APPROVED') {
-                    $request->update(
+                    $localRequest->update(
                         [
-                            'status' => RequestStatus::APPROVED,
+                            'status'     => RequestStatus::APPROVED,
                             'applied_at' => now(),
                         ]
                     );
-                    $request->revision?->update(['status' => RevisionStatus::APPLIED]);
+                    $localRequest->revision?->update(['status' => RevisionStatus::APPLIED]);
 
                 } else if (in_array($remoteStatus, ['REJECTED', 'EXPIRED'])) {
                     $newStatus = ($remoteStatus === 'REJECTED') ? RequestStatus::REJECTED : RequestStatus::EXPIRED;
-                    $request->update(
+                    $localRequest->update(
                         [
-                            'status' => $newStatus,
+                            'status'     => $newStatus,
                             'applied_at' => now(),
                         ]
                     );
                 }
-
-            } catch (\Exception $e) {
-                Log::warning("Failed to check status for request {$request->uuid}: " . $e->getMessage());
             }
+
+        } catch (\Exception $e) {
+            Log::warning("Failed to batch check status for requests of employee {$employee->id}: " . $e->getMessage());
         }
     }
 }
