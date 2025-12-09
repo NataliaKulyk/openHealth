@@ -1,4 +1,6 @@
 @php
+    use App\Models\LegalEntity;
+
     $hasEdrpouError = $errors->has('legalEntityForm.edrpou');
 @endphp
 
@@ -63,6 +65,10 @@
                 @endif
 
                 @foreach($legalEntityTypes as $k => $legalEntityType)
+                    @if ($k === LegalEntity::TYPE_MSP_LIMITED)
+                        @continue
+                    @endif
+
                     @if(legalEntity()?->type->name !== $k)
                         <option value="{{ $k }}" {{ $k === $legalEntityForm->type ? 'selected' : ''}}>
                             {{ $legalEntityType }}

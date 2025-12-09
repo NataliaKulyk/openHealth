@@ -136,6 +136,9 @@ return [
         'MSP' => [
             'OWNER', 'HR', 'DOCTOR', 'ADMIN', 'RECEPTIONIST', 'LABORANT'
         ],
+        'MSP_LIMITED' => [
+            'OWNER', 'ADMIN', 'DOCTOR'
+        ],
         'PRIMARY_CARE' => [
             'OWNER', 'HR', 'DOCTOR', 'ASSISTANT', 'ADMIN', 'RECEPTIONIST', 'MED_ADMIN', 'LABORANT'
         ],

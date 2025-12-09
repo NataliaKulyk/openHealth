@@ -242,7 +242,7 @@ class LegalEntity extends Model
     protected static function booted(): void
     {
         static::updated(function (LegalEntity $entity): void {
-            if ($entity->wasChanged('legal_entity_type_id')) {
+            if ($entity->wasChanged('legal_entity_type_id') || $entity->wasChanged('status')) {
                 cache()->forget('le_type:' . $entity->getKey());
             }
         });

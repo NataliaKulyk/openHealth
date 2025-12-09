@@ -106,7 +106,8 @@ abstract class LegalEntity extends Component
         LegalEntityModel::TYPE_PRIMARY_CARE,
         LegalEntityModel::TYPE_OUTPATIENT,
         LegalEntityModel::TYPE_EMERGENCY,
-        LegalEntityModel::TYPE_PHARMACY
+        LegalEntityModel::TYPE_PHARMACY,
+        LegalEntityModel::TYPE_MSP_LIMITED
     ];
 
     /**

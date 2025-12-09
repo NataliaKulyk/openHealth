@@ -7,7 +7,8 @@
     $leStatusMap = [
         'ACTIVE' => [__('forms.status.active'), 'status-alert-green'],
         'SUSPENDED' => [__('forms.status.suspended'), 'status-alert-red'],
-        'CLOSED' => [__('forms.status.inactive'), 'status-alert-red']
+        'CLOSED' => [__('forms.status.inactive'), 'status-alert-red'],
+        'REORGANIZED' => [__('forms.status.reorganized'), 'status-alert-red'],
     ];
 
     $edrStatus = (string)$le->edr['state'];

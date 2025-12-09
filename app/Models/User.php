@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Exception;
+use App\Enums\Status;
 use App\Models\Permission;
+use App\Models\LegalEntity;
 use InvalidArgumentException;
 use App\Models\Person\Person;
+use App\Models\LegalEntityType;
 use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Collection;
@@ -28,14 +31,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use Notifiable;
-    use TwoFactorAuthenticatable;
-    use HasRoles {
-        HasRoles::syncPermissions as syncPermissionsParent;      // Aliasing original syncPermissions
-        HasRoles::givePermissionTo as givePermissionToParent;    // Aliasing original givePermissionTo
-        HasRoles::assignRole as assignRoleParent;                // Aliasing original assignRole
-    }
-    use HasCamelCasing;
+    use Notifiable,
+        TwoFactorAuthenticatable,
+        HasCamelCasing,
+        HasRoles {
+            HasRoles::assignRole as assignRoleParent;                // Aliasing original assignRole
+            HasRoles::syncPermissions as syncPermissionsParent;      // Aliasing original syncPermissions
+            HasRoles::givePermissionTo as givePermissionToParent;    // Aliasing original givePermissionTo
+            HasRoles::getAllPermissions as getAllPermissionsParent;  // Alias original getAllPermissions
+        }
 
     /**
      * Track if email verification was already sent
@@ -184,7 +188,51 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getScopes(): string
     {
+        // Collect all permissions (direct + via roles)
         return $this->getAllPermissions()->pluck('name')->unique()->join(' ');
+    }
+
+    /**
+     * Override: return all permissions filtered by current team's LegalEntity type
+     * (MSP_LIMITED when status is REORGANIZED). This wraps the original
+     * HasRoles::getAllPermissions and applies a type whitelist intersection.
+     */
+    public function getAllPermissions(): Collection
+    {
+        // Base union of direct + role permissions from Spatie
+        $all = $this->getAllPermissionsParent();
+
+        if (! config('permission.teams')) {
+            return $all;
+        }
+
+        $teamId = getPermissionsTeamId();
+
+        if (! $teamId) {
+            return $all;
+        }
+
+        // $status = LegalEntity::whereKey($teamId)->value('status');
+
+        // $typeId = $status === Status::REORGANIZED->value
+            // ? LegalEntityType::where('name', 'MSP_LIMITED')->value('id')
+            // : LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
+
+        $typeId = LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
+
+        if (! $typeId) {
+            return $all->where(fn() => false); // empty collection
+        }
+
+        $guard = Auth::getDefaultDriver();
+
+        // Permission names allowed for the current team’s LegalEntity type (MSP_LIMITED if REORGANIZED or assigned) and current guard
+        $allowedNames = Permission::where('guard_name', $guard)
+            ->whereHas('legalEntityTypes', fn($q) => $q->where('legal_entity_type_id', $typeId))
+            ->pluck('name')
+            ->unique();
+
+        return $all->filter(fn($perm) => $allowedNames->contains($perm->name))->values();
     }
 
     /**
