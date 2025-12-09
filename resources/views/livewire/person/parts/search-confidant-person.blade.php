@@ -1,24 +1,21 @@
 @use('Carbon\CarbonImmutable')
 
 <div x-data="{ showFilter: true }">
-    <x-header-navigation class="!p-0">
-        <x-slot name="navigation">
-            <!-- Search input fields -->
-            <div class="text-gray-900 dark:text-white text-xl leading-normal mb-6">
-                {{ __('patients.patient_legal_representative') }}
-            </div>
-            @include('livewire.person.parts.search-filter', ['context' => 'confidantPerson'])
+    <section>
+        <div class="text-gray-900 dark:text-white text-xl leading-normal mb-6">
+            {{ __('patients.patient_legal_representative') }}
+        </div>
+        @include('livewire.person.parts.search-filter', ['context' => 'confidantPerson'])
 
-            @empty($selectedConfidantPatientId)
-                <div class="py-4">
-                    <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
-                        @icon('search', 'w-4 h-4')
-                        <span>{{ __('patients.search_for_confidant') }}</span>
-                    </button>
-                </div>
-            @endempty
-        </x-slot>
-    </x-header-navigation>
+        @empty($selectedConfidantPatientId)
+            <div class="py-4">
+                <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
+                    @icon('search', 'w-4 h-4')
+                    <span>{{ __('patients.search_for_confidant') }}</span>
+                </button>
+            </div>
+        @endempty
+    </section>
 
     <!-- Patient list -->
     <div class="my-6">
@@ -92,8 +89,4 @@
         @endif
     </div>
 </div>
-<style>
-    .breadcrumbs, nav.breadcrumb, [class*="breadcrumb"] {
-        display: none !important;
-    }
-</style>
+
