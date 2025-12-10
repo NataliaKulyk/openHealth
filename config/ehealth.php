@@ -76,7 +76,8 @@ return [
             'medical_event_context:read', 'party_verification:read', 'party_verification:details', 'party_verification:write', 'person_verification:read', 'person_verification:details',
             'person_verification:write', 'device_definition:read', 'device_request:write', 'device_request:read', 'device_request:resend', 'device_request:revoke', 'specimen:write', 'specimen:read',
             'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate', 'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete',
-            'device_dispense:read', 'device_association:read', 'detected_issue:read', 'confidant_person_relationship_request:write', 'confidant_person_relationship:read', 'personal_data:read'
+            'device_dispense:read', 'device_association:read', 'detected_issue:read', 'confidant_person_relationship_request:write', 'confidant_person_relationship:read', 'personal_data:read',
+            'person_request:sign'
         ],
         'PHARMACY' => [
             'employee_role:write', 'employee_role:read', 'healthcare_service:write', 'healthcare_service:read', 'division:activate', 'division:deactivate', 'division:details', 'division:read',
@@ -108,7 +109,7 @@ return [
             'party_verification:details', 'party_verification:write', 'person_verification:details', 'person_verification:write', 'device_definition:read', 'device_request:write', 'device_request:read',
             'device_request:resend', 'device_request:revoke', 'specimen:write', 'specimen:read', 'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate',
             'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete', 'device_dispense:read', 'device_association:read', 'detected_issue:read',
-            'confidant_person_relationship_request:write', 'confidant_person_relationship:read', 'personal_data:read'
+            'confidant_person_relationship_request:write', 'confidant_person_relationship:read', 'personal_data:read', 'person_request:sign'
         ],
         'EMERGENCY' => [
             'capitation_report:read', 'contract_request:sign', 'division:activate', 'division:deactivate', 'division:details', 'division:read', 'division:write', 'drugs:read', 'employee:deactivate',
@@ -126,7 +127,7 @@ return [
             'license:details', 'license:read', 'license:write', 'clinical_impression:read', 'clinical_impression:write', 'rule_engine_rule:read', 'medical_event_context:read',
             'person_emergency_contact:read', 'party_verification:details', 'party_verification:write', 'person_verification:details', 'person_verification:write', 'specimen:write', 'specimen:read',
             'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate', 'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete',
-            'device_dispense:read', 'party_verification:read'
+            'device_dispense:read', 'party_verification:read', 'person_request:sign'
         ]
     ],
 
