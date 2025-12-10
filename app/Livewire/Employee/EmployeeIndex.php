@@ -97,7 +97,6 @@ class EmployeeIndex extends EmployeeComponent
         // === Step 1: Eager load existing Parties that have any relevant positions ===
         $realParties = Party::query()
             ->whereHas('employees', fn ($sub) => $sub->where('legal_entity_id', $this->legalEntity->id))
-            // ...or have pending/signed requests.
             ->orWhereHas(
                 'employeeRequests',
                 fn ($sub) => $sub
@@ -105,14 +104,16 @@ class EmployeeIndex extends EmployeeComponent
                     ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
             )
             ->with([
-                       'phones',
-                       'employees.division',
-                       'employees.user',
-                       'employeeRequests' => fn ($query) => $query
-                           ->whereIn('status', [Status::NEW->value, Status::SIGNED->value]),
+                     'phones',
+                     'employees' => fn ($q) => $q
+                         ->where('legal_entity_id', $this->legalEntity->id)
+                         ->with(['division', 'user']),
 
-                       'employeeRequests.revision',
-                       'employeeRequests.division',
+                       'employeeRequests' => fn ($query) => $query
+                           ->where('legal_entity_id', $this->legalEntity->id)
+                           ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
+                           ->with(['revision', 'division']), // Eager load nested relations here
+
                        'users'
                    ])
             ->get();
@@ -250,6 +251,9 @@ class EmployeeIndex extends EmployeeComponent
      */
     private function positionMatchesFilters($position): bool
     {
+        if ($position->legal_entity_id !== $this->legalEntity->id) {
+            return false;
+        }
         // --- 1. Filter by Status ---
         $currentStatuses = $this->status;
         if (!empty($currentStatuses)) {
@@ -466,23 +470,40 @@ class EmployeeIndex extends EmployeeComponent
     public function confirmRequestDeletion(int $id): void
     {
         $request = EmployeeRequest::with('party')->find($id);
-        if (!$request || $request->uuid) {
+
+        if (!$request) {
             return;
         }
+
         $this->requestToDeleteId = $id;
-        $this->deleteRequestName = $request->party->fullName ?? __('employees.modals.delete_draft.default_name');
+        $this->deleteRequestName = $request->party?->fullName ?? __('employees.modals.delete_draft.default_name');
+
         $this->showDeleteModal = true;
     }
 
+    /**
+     * This method is triggered by the "Delete" button in the modal window.
+     * It retrieves the stored ID and executes the deletion logic.
+     */
     public function deleteRequest(): void
     {
-        $request = EmployeeRequest::find($this->requestToDeleteId);
-        if ($request && !$request->uuid) {
-            $request->delete();
-            $this->dispatch('flashMessage', ['message' => __('employees.draft.delete_success'), 'type' => 'success']);
+        if ($this->requestToDeleteId) {
+            $request = EmployeeRequest::find($this->requestToDeleteId);
+
+            // Ensure the request exists and is a local draft (no UUID) before deleting
+            if ($request && !$request->uuid) {
+                $request->delete();
+                $this->dispatch('flashMessage', ['message' => __('employees.draft.delete_success'), 'type' => 'success']);
+            }
+
+            // Close the modal after deletion
+            $this->showDeleteModal = false;
+            $this->requestToDeleteId = null;
+
+            // Dispatch a success message (optional, requires a listener)
+            // Note: You have two dispatches here, ensure you don't show double notifications
+            $this->dispatch('flashMessage', ['message' => 'Request deleted successfully', 'type' => 'success']);
         }
-        $this->showDeleteModal = false;
-        $this->requestToDeleteId = null;
     }
 
     /**

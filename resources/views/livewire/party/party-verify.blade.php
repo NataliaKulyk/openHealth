@@ -1,5 +1,5 @@
-<div x-data="{ showUpdateModal: @entangle('showUpdateModal') }"
-     x-on:status-updated-close-modal.window="showUpdateModal = false">
+<div x-data="{ showUpdateModal: false }"
+     x-effect="showUpdateModal = $wire.showUpdateModal">
 
     {{-- Breadcrumb Navigation --}}
     <x-header-navigation>
@@ -112,7 +112,7 @@
 
             {{-- Update Data (Modal Trigger) --}}
             <button type="button"
-                    @click="showUpdateModal = true"
+                    wire:click="checkAndOpenModal"
                     class="button-primary-outline"
             >
                 {{ __('forms.update_data') }}
@@ -135,7 +135,7 @@
         <div x-show="showUpdateModal"
              x-transition.opacity
              class="fixed inset-0 bg-black/75"
-             @click="showUpdateModal = false">
+             @click="$wire.closeUpdateModal()">
         </div>
 
         {{-- Modal Body --}}
@@ -154,12 +154,15 @@
                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
                         {{ __('forms.update_verification_status_dracs') }}
                     </h3>
-                    <button type="button" @click="showUpdateModal = false" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
+
+                    <button type="button"
+                            @click="$wire.closeUpdateModal()"
+                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                     </button>
                 </div>
 
-                {{-- Modal Content --}}
+                {{-- Modal Content (без змін) --}}
                 <div class="p-6 space-y-6">
 
                     {{-- 1. Subject of verification --}}
@@ -169,7 +172,7 @@
                             <option value="dracs_name_change">{{ __('party_verification.types.dracs_name_change') }}</option>
                         </select>
 
-                        <label for="stream" class="label">{{ __('forms.subject_verification') }}</label>
+                        <label for="stream" class="label">{{ __('party_verification.subject_verification') }}</label>
                     </div>
 
                     {{-- 2. Status (Always VERIFIED for manual update) --}}
@@ -213,15 +216,16 @@
 
                 {{-- Modal Footer --}}
                 <div class="flex items-center justify-start gap-4 p-6 border-t border-gray-200 dark:border-gray-600">
-                    <button type="button" @click="showUpdateModal = false" class="button-minor">
+
+                    <button type="button"
+                            @click="$wire.closeUpdateModal()"
+                            class="button-minor">
                         {{ __('forms.cancel') }}
                     </button>
-                    <button type="button"
-                            @click="{{ $this->canUpdateVerification ? 'showUpdateModal = true' : '' }}"
-                            class="button-primary-outline {{ !$this->canUpdateVerification ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            :disabled="{{ !$this->canUpdateVerification ? 'true' : 'false' }}"
-                            title="{{ !$this->canUpdateVerification ? __('party_verification.update_unavailable_reason') : '' }}"
-                    >
+
+                    <button type="submit"
+                            class="button-primary-outline"
+                            wire:loading.attr="disabled">
                         {{ __('forms.update_data') }}
                     </button>
                 </div>

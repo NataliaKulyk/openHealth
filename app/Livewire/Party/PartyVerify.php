@@ -11,16 +11,19 @@ use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class PartyVerify extends Component
 {
     public Party $party;
     public LegalEntity $legalEntity;
+    #[Locked]
     public array $verificationDetails = [];
+
     public string $stream = 'dracs_death';
 
-    // Modal state
+    #[Locked]
     public bool $showUpdateModal = false;
 
     // Form fields
@@ -82,6 +85,15 @@ class PartyVerify extends Component
     public function hasVerificationWarnings(): bool
     {
         return $this->drfoNotVerified || $this->dracsDeathNotVerified;
+    }
+
+    /**
+     * Since showUpdateModal is now Locked, we cannot modify it from JS.
+     * We need a method to close.
+     */
+    public function closeUpdateModal(): void
+    {
+        $this->showUpdateModal = false;
     }
 
     /**
@@ -154,7 +166,7 @@ class PartyVerify extends Component
             ]);
 
             $this->loadVerificationDetails();
-            $this->dispatch('status-updated-close-modal');
+            $this->closeUpdateModal();
 
         } catch (EHealthValidationException $e) {
             Log::error('[PARTY UPDATE DEBUG] eHealth API returned a validation error.', [
@@ -193,6 +205,24 @@ class PartyVerify extends Component
                 'type' => 'error'
             ]);
             $this->dispatch('status-updated-close-modal');
+        }
+    }
+
+    /**
+     * Checks if verification update is allowed.
+     */
+    public function checkAndOpenModal(): void
+    {
+        if ($this->canUpdateVerification) {
+            $this->showUpdateModal = true;
+        } else {
+            $message = __('party_verification.update_unavailable_reason')
+                ?? 'Оновлення даних наразі неможливе, оскільки статус не потребує верифікації.';
+
+            $this->dispatch('flashMessage', [
+                'message' => $message,
+                'type' => 'error'
+            ]);
         }
     }
 
