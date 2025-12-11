@@ -11,7 +11,7 @@
             <x-slot name="title">{{ __('patients.patients') }}</x-slot>
             <x-slot name="navigation">
 
-                <div class="justify-end block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-8">
+                <div class="justify-end block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-4">
                     @can('create', PersonRequest::class)
                         <a href="{{ route('persons.create', [legalEntity()]) }}"
                            class="button-primary flex items-center gap-2">
@@ -21,14 +21,14 @@
                     @endcan
                 </div>
 
-                <div class="mb-8 flex items-center gap-1 font-semibold text-gray-900 dark:text-white">
+                <div class="mb-4 flex items-center gap-1 font-semibold text-gray-900 dark:text-white">
                     @icon('search-outline', 'w-4.5 h-4.5')
                     <p>{{ __('patients.patient_search') }}</p>
                 </div>
 
                 @include('livewire.person.parts.search-filter', ['context' => 'index'])
 
-                <div class="mb-9 mt-6 flex gap-2">
+                <div class="mb-4 mt-6 flex gap-2">
                     @can('viewAny', Person::class)
                         <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
                             @icon('search', 'w-4 h-4')
@@ -42,7 +42,7 @@
             </x-slot>
         </x-header-navigation>
 
-        <div class="space-y-6" wire:key="patients-{{ $paginatedPatients->total() }}">
+        <div class="space-y-6 shift-content pl-3.5" wire:key="patients-{{ $paginatedPatients->total() }}">
             @forelse($paginatedPatients->items() as $patient)
                 <fieldset wire:key="patient-{{ $patient['id'] }}"
                           class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]">
@@ -245,10 +245,26 @@
                         </div>
                     </div>
                 </fieldset>
+
             @empty
-                <div class="text-center py-16">
-                    <p class="text-gray-500 dark:text-gray-400 text-lg">{{ __('forms.nothing_found') }}</p>
-                </div>
+               <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1120px]">
+                   <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                            <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 mt-0.5">
+                                        @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-bold text-blue-800">
+                                            Нічого не знайдено
+                                        </p>
+                                        <p class="text-sm text-blue-600">
+                                            Спробуйте змінити параметри пошуку.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+               </fieldset>
             @endforelse
         </div>
 

@@ -42,13 +42,17 @@ class BladeServiceProvider extends ServiceProvider
                 \$iconClass = \$iconArgs[1] ?? '';
                 \$iconFile = resource_path('icons/' . \$iconName . '.svg');
                 \$svgContent = file_exists(\$iconFile) ? file_get_contents(\$iconFile) : '';
-                if (\$iconClass && \$svgContent) {
-                    // Inject class attribute into SVG tag
-                    \$svgContent = preg_replace(
-                        '/<svg(.*?)(class=\".*?\")?(.*?)>/',
-                        '<svg$1 class=\"' . e(\$iconClass) . '\"$3>',
-                        \$svgContent
-                    );
+                if (\$svgContent) {
+                    \$svgContent = str_replace(['fill=\"white\"', 'fill=\'white\'', 'stroke=\"white\"', 'stroke=\'white\'', 'fill=\"#ffffff\"', 'fill=\'#ffffff\'', 'stroke=\"#ffffff\"', 'stroke=\'#ffffff\''], ['fill=\"currentColor\"', 'fill=\"currentColor\"', 'stroke=\"currentColor\"', 'stroke=\"currentColor\"', 'fill=\"currentColor\"', 'fill=\"currentColor\"', 'stroke=\"currentColor\"', 'stroke=\"currentColor\"'], \$svgContent);
+                    if (\$iconClass) {
+                        \$svgContent = preg_replace('/\\s*class=[\"\\'][^\"\\']*[\"\\']/i', '', \$svgContent);
+                        \$svgContent = preg_replace(
+                            '/<svg([^>]*)>/i',
+                            '<svg$1 class=\"' . e(\$iconClass) . '\">',
+                            \$svgContent,
+                            1
+                        );
+                    }
                 }
                 echo \$svgContent;
             ?>";

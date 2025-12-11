@@ -70,7 +70,7 @@
 
     <div x-data="{ showAdditionalParams: $wire.entangle('showAdditionalParams') }">
         <button type="button"
-                class="flex items-center gap-2 button-minor mb-4"
+                class="flex items-center gap-2 button-minor mb-2"
                 @click.prevent="showAdditionalParams = !showAdditionalParams"
         >
             @icon('adjustments', 'w-4 h-4')
