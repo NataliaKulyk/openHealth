@@ -8,6 +8,7 @@ use App\Classes\eHealth\EHealthRequest;
 use App\Classes\eHealth\EHealthResponse;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use App\Models\Division;
 use Log;
@@ -96,6 +97,24 @@ class EmployeeRequest extends EHealthRequest
         );
 
         return $this->get($getEndpoint, $query);
+    }
+
+    /**
+     * Retrieves full details of a specific Employee Request by UUID.
+     * Essential for obtaining the 'employee_id' field after approval.
+     *
+     * @param string $uuid
+     *
+     * @return Response|PromiseInterface
+     * @throws ConnectionException
+     */
+    public function getDetails(string $uuid): PromiseInterface|Response
+    {
+        $getEndpoint = '/api/employee_requests';
+        $url = $getEndpoint . '/' . $uuid;
+
+
+        return $this->get($url);
     }
 
     /**

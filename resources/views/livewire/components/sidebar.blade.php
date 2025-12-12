@@ -154,6 +154,18 @@
                                     </a>
                                 </li>
 
+                                {{-- Register of applications --}}
+                                @can('viewAny', \App\Models\Employee\EmployeeRequest::class)
+                                    <li>
+                                        <a href="{{ route('employee-request.index', [legalEntity()]) }}"
+                                           class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                                        >
+                                            @icon('clipboard-list', 'w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white')
+                                            <span class="ml-3">Реєстр заявок</span>
+                                        </a>
+                                    </li>
+                                @endcan
+
                                     <li>
                                         <a href="{{ route('employee-role.index', [legalEntity()]) }}"
                                            class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
