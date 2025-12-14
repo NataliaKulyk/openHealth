@@ -46,10 +46,6 @@ class LegalEntityRepository
                     $name .= " <{$legalEntityTypeName}>";
                 }
 
-                if ($data['status'] === Status::REORGANIZED->value) {
-                    $name .= " <" . LegalEntity::TYPE_MSP_LIMITED . ">";
-                }
-
                 $result[] = ['id' => $data['id'], 'uuid' => $data['uuid'], 'name' => $name];
             }
         }

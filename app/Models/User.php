@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Exception;
-use App\Enums\Status;
 use App\Models\Permission;
 use App\Models\LegalEntity;
 use InvalidArgumentException;
 use App\Models\Person\Person;
-use App\Models\LegalEntityType;
 use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Collection;
@@ -28,6 +26,7 @@ use Spatie\Permission\Models\Role as SpatieRole;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -534,5 +533,36 @@ class User extends Authenticatable implements MustVerifyEmail
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return $result;
+    }
+
+    /**
+     * Determine if the model may perform the given permission.
+     *
+     * @param  string|int|Permission|\BackedEnum  $permission
+     * @param  string|null  $guardName
+     *
+     * @throws PermissionDoesNotExist
+     */
+    public function hasPermissionTo(string|int|Permission|\BackedEnum $permission, ?string $guardName = null): bool
+    {
+        $guardName = $guardName ?: $this->getDefaultGuardName();
+
+        // If wildcard support is configured, delegate to wildcard check
+        if ($this->getWildcardClass()) {
+            return $this->hasWildcardPermission($permission, $guardName);
+        }
+
+        // Normalize to Permission model via Spatie filterPermission().
+        // If permission does not exist, just return false.
+        try {
+            $permModel = $this->filterPermission($permission, $guardName);
+            $name = $permModel->name;
+        } catch (PermissionDoesNotExist) {
+            return false;
+        }
+
+        // Check against filtered union of user's permissions (direct + via roles),
+        // already constrained by LegalEntity type and current guard in getAllPermissions()
+        return $this->getAllPermissions()->pluck('name')->unique()->contains($name);
     }
 }
