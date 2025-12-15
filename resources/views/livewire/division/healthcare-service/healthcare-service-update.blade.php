@@ -37,5 +37,5 @@
     </div>
 
     <x-forms.loading/>
-    <x-messages/>
+    <livewire:components.x-message :key="now()->timestamp"/>
 </section>

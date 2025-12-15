@@ -1,4 +1,6 @@
 @php
+    use App\Models\LegalEntity;
+
     $readonly = $action === 'show';
 
     // Determine an appropriate HTTP-method
@@ -343,7 +345,7 @@
                                 <h2>{{ __('forms.address') }}</h2>
                             </legend>
 
-                            <div class="form">
+                            <div class="form" x-data="{ showReceptionAddress: $wire.entangle('divisionForm.showReceptionAddress') }">
                                 <x-forms.addresses-search
                                     :address="$address"
                                     :districts="$districts"
@@ -353,22 +355,50 @@
                                     class="mt-8 form-row-3"
                                 />
 
-                                <div class="form-group checkbox-group"
-                                    x-data="{ isMountainGroup: @js($this->divisionForm->division['mountainGroup'] ?? false) }"
-                                >
-                                    <input id="mountain_group"
-                                        type="checkbox"
-                                        :checked="isMountainGroup"
-                                        class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                        disabled
-                                    />
+                                @if(legalEntity()->type->name === LegalEntity::TYPE_OUTPATIENT)
+                                    <div class='form-row-3'>
+                                        <div class="form-group group">
+                                            <input
+                                                type="checkbox"
+                                                id="showReception"
+                                                class="default-checkbox text-blue-500 focus:ring-blue-300"
+                                                x-model="showReceptionAddress"
+                                                :checked="showReceptionAddress"
+                                                :disabled="isDisabled"
+                                            >
 
-                                    <label for="mountain_group"
-                                        class="checkbox-label text-gray-500 dark:text-gray-300 ms-2"
+                                            <label for="showReception" class="ms-2 text-sm font-medium text-gray-500 dark:text-gray-300">{{ __('divisions.receptionShow') }}</label>
+                                        </div>
+                                    </div>
+
+                                    <div x-show="showReceptionAddress" x-cloak>
+                                        <x-forms.addresses-reception
+                                            :address="$receptionAddress"
+                                            :districts="$receptionDistricts"
+                                            :settlements="$receptionSettlements"
+                                            :streets="$receptionStreets"
+                                            :readonly="$readonly"
+                                            class="mt-8 form-row-3"
+                                        />
+                                    </div>
+
+                                    <div class="form-group checkbox-group"
+                                        x-data="{ isMountainGroup: @js($this->divisionForm->division['mountainGroup'] ?? false) }"
                                     >
-                                        {{__('forms.mountainous_status')}}
-                                    </label>
-                                </div>
+                                        <input id="mountain_group"
+                                            type="checkbox"
+                                            :checked="isMountainGroup"
+                                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                            disabled
+                                        />
+
+                                        <label for="mountain_group"
+                                            class="checkbox-label text-gray-500 dark:text-gray-300 ms-2"
+                                        >
+                                            {{__('forms.mountainous_status')}}
+                                        </label>
+                                    </div>
+                                @endif
                             </div>
                         </fieldset>
 

@@ -8,7 +8,6 @@ use Exception;
 use Throwable;
 use App\Models\Division;
 use App\Models\LegalEntity;
-use App\Traits\AddressSearch;
 use App\Models\Relations\Phone;
 use App\Classes\eHealth\EHealth;
 use App\Repositories\Repository;
@@ -16,15 +15,18 @@ use App\Traits\WorkTimeUtilities;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use App\Traits\Addresses\AddressSearch;
 use Illuminate\Support\Facades\Redirect;
+use App\Traits\Addresses\ReceptionAddressSearch;
 use Livewire\Features\SupportRedirects\Redirector;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 
 class DivisionCreate extends DivisionComponent
 {
-    use WorkTimeUtilities;
-    use AddressSearch;
+    use WorkTimeUtilities,
+        AddressSearch,
+        ReceptionAddressSearch;
 
     /**
      * Array containing dictionary names only used within the component.
@@ -94,8 +96,9 @@ class DivisionCreate extends DivisionComponent
             return null;
         }
 
-        // TODO: this will remove when multiaddress input on the form will create
-        $this->divisionForm->division['addresses'] = [$this->address];
+        $this->divisionForm->division['addresses'] = $this->divisionForm->showReceptionAddress
+            ? ['residence' => $this->address, 'reception' => $this->receptionAddress]
+            : ['residence' => $this->address];
 
         if ($this->validateDivision()) {
             try {

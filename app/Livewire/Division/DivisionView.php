@@ -6,13 +6,15 @@ namespace App\Livewire\Division;
 
 use App\Models\Division;
 use App\Models\LegalEntity;
-use App\Traits\AddressSearch;
 use App\Traits\WorkTimeUtilities;
+use App\Traits\Addresses\AddressSearch;
 use App\Livewire\Division\Trait\HasAction;
+use App\Traits\Addresses\ReceptionAddressSearch;
 
 class DivisionView extends DivisionComponent
 {
     use WorkTimeUtilities,
+        ReceptionAddressSearch,
         AddressSearch,
         HasAction;
 
@@ -42,10 +44,25 @@ class DivisionView extends DivisionComponent
     {
         $this->divisionForm->setDivision($division->toArray());
 
-        // TODO: This need to be refactored after teh multiaddress will works
         $this->divisionForm->division['addresses'] = $division->addresses->toArray();
 
-        $this->address = data_get($this->divisionForm->division, 'addresses.0');
+        if (!empty($this->divisionForm->division['addresses'])) {
+            foreach ( $this->divisionForm->division['addresses'] as $address ) {
+                $addressType = strtolower($address['type']);
+
+                switch ($addressType) {
+                    case 'residence':
+                        $this->address = $address;
+                        break;
+                    case 'reception':
+                        $this->receptionAddress = $address;
+                        $this->divisionForm->showReceptionAddress = true;
+                        break;
+                    default:
+                        continue 2;
+                }
+            }
+        }
 
         $this->divisionForm->division['phones'] = $division->phones->toArray();
 

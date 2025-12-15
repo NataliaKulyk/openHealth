@@ -4,27 +4,28 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
-use Arr;
 use Exception;
 use Throwable;
 use App\Models\Division;
 use App\Models\LegalEntity;
-use App\Traits\AddressSearch;
 use App\Models\Relations\Phone;
 use App\Classes\eHealth\EHealth;
 use App\Repositories\Repository;
 use App\Traits\WorkTimeUtilities;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\Addresses\AddressSearch;
 use App\Livewire\Division\Trait\HasAction;
+use App\Traits\Addresses\ReceptionAddressSearch;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 
 class DivisionEdit extends DivisionComponent
 {
-    use WorkTimeUtilities;
-    use AddressSearch;
-    use HasAction;
+    use WorkTimeUtilities,
+        ReceptionAddressSearch,
+        AddressSearch,
+        HasAction;
 
     /**
      * Array containing dictionary names only used within the component.
@@ -97,10 +98,25 @@ class DivisionEdit extends DivisionComponent
     {
         $this->divisionForm->setDivision($division->toArray());
 
-        // TODO: This need to be refactored after the multiaddress will works
         $this->divisionForm->division['addresses'] = $division->addresses->toArray();
 
-        $this->address = data_get($this->divisionForm->division, 'addresses.0');
+        if (!empty($this->divisionForm->division['addresses'])) {
+            foreach ( $this->divisionForm->division['addresses'] as $address ) {
+                $addressType = strtolower($address['type']);
+
+                switch ($addressType) {
+                    case 'residence':
+                        $this->address = $address;
+                        break;
+                    case 'reception':
+                        $this->receptionAddress = $address;
+                        $this->divisionForm->showReceptionAddress = true;
+                        break;
+                    default:
+                        continue 2;
+                }
+            }
+        }
 
         $this->divisionForm->division['phones'] = $division->phones->toArray();
     }
@@ -119,8 +135,9 @@ class DivisionEdit extends DivisionComponent
             return null;
         }
 
-        // TODO: this will remove when multiaddress input on the form will create
-        $this->divisionForm->division['addresses'] = [$this->address];
+        $this->divisionForm->division['addresses'] = $this->divisionForm->showReceptionAddress
+            ? ['residence' => $this->address, 'reception' => $this->receptionAddress]
+            : ['residence' => $this->address];
 
         if ($this->validateDivision()) {
             try {
@@ -225,9 +242,6 @@ class DivisionEdit extends DivisionComponent
 
         // If location is not set, then use the original location cause the 0 value has been removed by removeEmptyKeys method
         $division['location'] ??= $this->divisionForm->division['location'];
-
-        // TODO: Remove this line if multiaddress support is implemented
-        $division['addresses'] = Arr::where($division['addresses'], fn ($value) => $value['type'] === 'RESIDENCE');
 
         // If working_hours is not set, then use the original working_hours value cause the '[]' value has been removed by removeEmptyKeys method
         $division['working_hours'] = $this->prepareTimeToRequest($this->divisionForm->division['workingHours'], false);

@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
-
 use Arr;
 use App\Enums\Status;
 use Livewire\Component;
-use App\Traits\FormTrait;
-use App\Livewire\Division\Forms\DivisionForm;
 use App\Models\Division;
+use App\Traits\FormTrait;
 use App\Repositories\Repository;
 use App\Traits\WorkTimeUtilities;
+use App\Livewire\Division\Forms\DivisionForm;
 use App\Classes\eHealth\Api\Division as DivisionApi;
 
 class DivisionComponent extends Component
@@ -110,6 +109,8 @@ class DivisionComponent extends Component
         // This key as is don't need here. But schema has the same key means the legalEntity_uuid
         Arr::forget($this->divisionForm->division, 'legal_entity_id');
 
+        $this->divisionForm->division['addresses'] = array_values($this->divisionForm->division['addresses']);
+
         $divisionData = schemaService()
                     ->setDataSchema($this->divisionForm->division, app(DivisionApi::class))
                     ->requestSchemaNormalize('schemaRequest')
@@ -153,8 +154,8 @@ class DivisionComponent extends Component
 
         foreach ($source as $key => $dictionary) {
 
-            if (in_array($key, array_keys($allowedItems))) {
-                $arr[$key] = array_filter($dictionary, fn($item) => in_array($item, $allowedItems[$key]), ARRAY_FILTER_USE_KEY);
+            if (\in_array($key, array_keys($allowedItems))) {
+                $arr[$key] = array_filter($dictionary, fn($item) => \in_array($item, $allowedItems[$key]), ARRAY_FILTER_USE_KEY);
 
                 continue;
             }

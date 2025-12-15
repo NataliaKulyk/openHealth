@@ -29,6 +29,13 @@ class DivisionForm extends Form
 
     protected ?AddressRepository $addressRepository;
 
+    /**
+     * Indicates whether the reception address functionality is enabled for the division.
+     *
+     * @var bool
+     */
+    public bool $showReceptionAddress = false;
+
     #[Validate([
         'division.name' => 'required|min:6|max:255',
         'division.type' => 'required',
@@ -94,8 +101,15 @@ class DivisionForm extends Form
 
         $errors = [];
 
+        $this->checkDefaultAddress();
+
         try {
             $errors = $this->component->addressValidation();
+
+            if ($this->showReceptionAddress) {
+                $errors1 = $this->component->receptionAddressValidation();
+                $errors = \array_merge( $errors, $errors1 );
+            }
 
             $this->validate();
 
@@ -103,7 +117,7 @@ class DivisionForm extends Form
                 throw ValidationException::withMessages($errors);
             }
         } catch (ValidationException $err) {
-            $errors = array_merge($err->errors(), $errors);
+            $errors = \array_merge($err->errors(), $errors);
 
             // Throw an validation error from Division's side
             throw ValidationException::withMessages($errors);
@@ -186,5 +200,20 @@ class DivisionForm extends Form
         }
 
         return '';
+    }
+
+    /**
+     * Checks and validates the default address for the division.
+     * For Division addresses where the area is 'М.КИЇВ' and the street type must be set as mandatory.
+     *
+     * @return void
+     */
+    protected function checkDefaultAddress(): void
+    {
+       foreach ($this->division['addresses'] as &$address) {
+           if (isset($address['area']) && $address['area'] === 'М.КИЇВ' && empty($address['streetType'])) {
+               $address['streetType'] = 'STREET';
+           }
+       }
     }
 }

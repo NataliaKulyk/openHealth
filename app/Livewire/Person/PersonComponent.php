@@ -13,7 +13,7 @@ use App\Livewire\Person\Forms\PersonForm as Form;
 use App\Models\Person\Person;
 use App\Models\Person\PersonRequest;
 use App\Repositories\Repository;
-use App\Traits\AddressSearch;
+use App\Traits\Addresses\AddressSearch;
 use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;

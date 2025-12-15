@@ -5,48 +5,18 @@ declare(strict_types=1);
 namespace App\View\Components\Forms;
 
 use App\Rules\Zip;
-use Illuminate\View\Component;
 use Illuminate\Validation\Rule;
 use Illuminate\Contracts\View\View;
-use App\Classes\eHealth\Api\AdressesApi;
+use App\View\Components\Forms\Addresses;
 
-class AddressesSearch extends Component
+class AddressesSearch extends Addresses
 {
-    public bool $readonly;
-    public array $address = [];
-
-    public ?array $regions = [];
-
-    public array $districts = [];
-
-    public ?array $settlements = [];
-
-    public ?array $streets = [];
-
-    public string $class = '';
-
-    public ?array $dictionaries;
-
     /**
      * Create a new component instance.
      */
     public function __construct($address, $districts, $settlements, $streets, $class, $readonly = false)
     {
-        $this->readonly = $readonly;
-
-        $this->address = $address;
-
-        $this->regions = AdressesApi::_regions()['data'] ?? [];
-
-        $this->districts = $districts;
-
-        $this->settlements = $settlements;
-
-        $this->streets = $streets;
-
-        $this->class = $class;
-
-        $this->dictionaries = dictionary()->getDictionaries(['SETTLEMENT_TYPE', 'STREET_TYPE']);
+        parent::__construct($address, $districts, $settlements, $streets, $class, $readonly);
     }
 
     public static function getAddressRules(array $address): array
@@ -78,6 +48,7 @@ class AddressesSearch extends Component
     {
         return [
             'address.area' => __("Поле 'Область' є обов’язковим"),
+            'address.region.required' => __("Поле 'Район' є обов’язковим"),
             'address.settlementType' => __("Поле 'Тип населеного пункту' є обов’язковим"),
             'address.settlement' => __("Поле 'Населений пункт' є обов’язковим"),
             'address.building' => __("Неправильний формат номеру будинка"),

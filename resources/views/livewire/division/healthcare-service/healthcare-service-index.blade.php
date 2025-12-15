@@ -1,8 +1,16 @@
 @use('App\Enums\Status')
 @use('App\Models\HealthcareService')
 
-<div>
-    <x-messages/>
+<div
+    x-data="{
+         serviceId: 0,
+         textConfirmation: '',
+         actionType: '',
+         actionTitle: '',
+         actionButtonText: ''
+     }"
+>
+    <livewire:components.x-message :key="now()->timestamp"/>
     <x-forms.loading/>
 
     <x-header-navigation x-data="{ showFilter: false }">
@@ -206,7 +214,15 @@
 
                                                         @can('deactivate', $service)
                                                             <button type="button"
-                                                                    wire:click="deactivate('{{ $service->getKey() }}'); toggle()"
+                                                                    wire:key="deactivate-{{ $service->id }}"
+                                                                    @click.prevent="
+                                                                        serviceId= {{ $service->getKey() }};
+                                                                        textConfirmation = @js(__('healthcare-services.modals.deactivate.confirmation_text'));
+                                                                        actionType = 'deactivate';
+                                                                        actionTitle = @js(__('healthcare-services.modals.deactivate.title'));
+                                                                        actionButtonText = @js(__('forms.deactivate'));
+                                                                        open = !open;
+                                                                    "
                                                                     class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
                                                             >
                                                                 @icon('delete', 'w-5 h-5 text-red-600')
@@ -236,7 +252,15 @@
                                                     @else
                                                         @can('activate', $service)
                                                             <button type="button"
-                                                                    wire:click="activate('{{ $service->getKey() }}'); toggle()"
+                                                                    wire:key="activate-{{ $service->id }}"
+                                                                    @click.prevent="
+                                                                        serviceId= {{ $service->getKey() }};
+                                                                        textConfirmation = @js(__('healthcare-services.modals.activate.confirmation_text'));
+                                                                        actionType = 'activate';
+                                                                        actionTitle = @js(__('healthcare-services.modals.activate.title'));
+                                                                        actionButtonText = @js(__('forms.activate'));
+                                                                        open = !open;
+                                                                    "
                                                                     class="cursor-pointer flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 hover:bg-green-50"
                                                             >
                                                                 @icon('check-circle', 'w-5 h-5 text-green-600')
@@ -272,4 +296,6 @@
             {{ __('forms.back') }}
         </a>
     </div>
+
+    @include('livewire.division.healthcare-service.modal.confirmation-modal')
 </div>

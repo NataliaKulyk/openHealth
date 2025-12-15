@@ -20,7 +20,7 @@ class WorkingHoursRule implements ValidationRule
     {
         $this->division = $division;
 
-        $this->message = __('validation.attributes.healthcareService.error.division.workingHours.commonError');
+        $this->message = __('divisions.errors.workingHours.commonError');
     }
 
     /**
@@ -142,7 +142,7 @@ class WorkingHoursRule implements ValidationRule
         $endTime = Carbon::createFromFormat('H:i', $shift[1]);
 
         if ($startTime->gte($endTime)) {
-            $this->setMessage(__('validation.attributes.healthcareService.error.division.workingHours.wrongRange')) ;
+            $this->setMessage(__('divisions.errors.workingHours.wrongRange')) ;
 
             return false;
         }
@@ -164,7 +164,7 @@ class WorkingHoursRule implements ValidationRule
         $endTime = Carbon::createFromFormat('H:i', $prevShiftEnd);
 
         if ($startTime->lt($endTime)) {
-            $this->setMessage(__('validation.attributes.healthcareService.error.division.workingHours.wrongShiftStart'));
+            $this->setMessage(__('divisions.errors.workingHours.wrongShiftStart'));
 
             return true;
         }
