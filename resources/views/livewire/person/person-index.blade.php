@@ -247,7 +247,7 @@
                 </fieldset>
 
             @empty
-               <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1120px]">
+               <fieldset class="fieldset max-w-[1120px]">
                    <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
                             <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
                                 <div class="flex items-start gap-3">
@@ -256,10 +256,10 @@
                                     </div>
                                     <div class="flex-1">
                                         <p class="font-bold text-blue-800">
-                                            Нічого не знайдено
+                                           {{ __('forms.nothing_found') }}
                                         </p>
                                         <p class="text-sm text-blue-600">
-                                            Спробуйте змінити параметри пошуку.
+                                            {{ __('forms.changing_search_parameters') }}
                                         </p>
                                     </div>
                                 </div>
