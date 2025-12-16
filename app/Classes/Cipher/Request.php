@@ -30,7 +30,10 @@ class Request
      */
     public function sendRequest()
     {
-        $url = env('CIPHER_API_URL') . $this->url;
+        $apiBase = config('cipher.api.domain');
+
+        $url = $apiBase . $this->url;
+
         $response = Http::acceptJson()
             ->withBody($this->params )
             ->{$this->method}($url);
