@@ -51,6 +51,7 @@ return [
     'info' => 'Детальна інформація',
     'write_comment_here' => 'Напишіть коментар тут',
     'nothing_found' => 'Нічого не знайдено',
+    'changing_search_parameters' => 'Спробуйте змінити параметри пошуку.',
     'number' => 'Номер',
     'update_info' => 'Оновити інформацію',
     'update_successful' => 'Дані оновлено успішно',
