@@ -16,7 +16,7 @@ class NotificationsDropdown extends Component
 
     public function mount(): void
     {
-        $this->notifications = Auth::user()->unreadNotifications;
+        $this->notifications = Auth::user()->unreadNotifications->take(4);
     }
 
     /**
@@ -30,10 +30,75 @@ class NotificationsDropdown extends Component
         $notification = Auth::user()?->unreadNotifications()->findOrFail($id);
         if ($notification) {
             $notification->markAsRead();
-            $this->notifications = $this->notifications->reject(
-                static fn (DatabaseNotification $notificationItem) => $notificationItem->id === $id
-            );
+            $this->notifications = Auth::user()->unreadNotifications->take(4);
         }
+    }
+    public function getTotalUnreadCountProperty(): int
+    {
+        return Auth::user()->unreadNotifications->count();
+    }
+
+    public function getNotificationIconType($notification): string
+    {
+        $data = $notification->data;
+        $message = mb_strtolower($data['message'] ?? '');
+
+        if (isset($data['action'])) {
+            $action = $data['action'] ?? '';
+
+            if ($action === 'completed') {
+                return 'success';
+            }
+
+            if ($action === 'failed') {
+                return 'error';
+            }
+
+            if (in_array($action, ['started', 'paused', 'resumed'])) {
+                return 'sync';
+            }
+        }
+
+        if (stripos($message, 'синхронізація') !== false || stripos($message, 'синхронізаці') !== false) {
+
+            if (stripos($message, 'не вдалася') !== false ||
+                stripos($message, 'не вдалась') !== false ||
+                stripos($message, 'не вдалося') !== false) {
+                return 'error';
+            }
+
+            if (stripos($message, 'розпочата') !== false ||
+                stripos($message, 'розпочато') !== false ||
+                stripos($message, 'призупинена') !== false ||
+                stripos($message, 'призупинено') !== false ||
+                stripos($message, 'відновлена') !== false ||
+                stripos($message, 'відновлено') !== false) {
+                return 'sync';
+            }
+
+            if (stripos($message, 'завершена') !== false ||
+                stripos($message, 'завершено') !== false ||
+                stripos($message, 'завершена.') !== false) {
+                return 'success';
+            }
+        }
+
+        if (stripos($message, 'помилка') !== false || stripos($message, 'помилк') !== false) {
+            return 'error';
+        }
+
+        if (stripos($message, 'підписано') !== false) {
+            return 'success';
+        }
+
+        if (stripos($message, 'зміни') !== false ||
+            stripos($message, 'договор') !== false ||
+            stripos($message, 'договор') !== false ||
+            stripos($message, 'зауваження') !== false) {
+            return 'info';
+        }
+
+        return 'default';
     }
 
     public function render(): View
