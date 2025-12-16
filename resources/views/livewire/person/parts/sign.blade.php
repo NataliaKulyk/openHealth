@@ -54,25 +54,27 @@
             </div>
         @endforeach
 
-        <div class="form-row-3">
-            <div class="form-group group">
-                <button wire:click.prevent="sendFiles"
-                        class="button-primary mt-8 gap-2"
-                        type="button"
-                >
-                    {{ __('forms.send_files') }}
-                    @icon('arrow-right', 'w-4 h-4')
-                </button>
+        @if(!$selectedConfidantPersonId)
+            <div class="form-row-3">
+                <div class="form-group group">
+                    <button wire:click.prevent="sendFiles"
+                            class="button-primary mt-8 gap-2"
+                            type="button"
+                    >
+                        {{ __('forms.send_files') }}
+                        @icon('arrow-right', 'w-4 h-4')
+                    </button>
+                </div>
             </div>
-        </div>
+        @endif
     @endif
 
-    @empty($uploadedDocuments)
+    @if($selectedConfidantPersonId)
         <h2 class="mb-8 text-2xl font-semibold text-gray-900 dark:text-white">
             {{ __('forms.confirmation_code_from_SMS') }}
         </h2>
 
-        <div class="flex flex-col md:flex-row gap-4 md:gap-6 {{ empty($uploadedDocuments) ? 'mt-0' : 'mt-8' }} mb-14">
+        <div class="flex flex-col md:flex-row gap-4 md:gap-6 {{ empty($uploadedDocuments) ? 'mt-2' : 'mt-8' }} mb-14">
             <div class="relative z-0 md:min-w-[33%] md:max-w-[33%]">
                 <input wire:model="form.verificationCode"
                        type="text"
@@ -88,11 +90,7 @@
                     {{ __('forms.confirmation_code_from_SMS') }}
                 </label>
 
-                @error('form.verificationCode')
-                <p class="text-error">
-                    {{ $message }}
-                </p>
-                @enderror
+                @error('form.verificationCode') <p class="text-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
@@ -140,5 +138,5 @@
                 </button>
             </div>
         </div>
-    @endempty
+    @endif
 </fieldset>

@@ -49,11 +49,8 @@
             </button>
         </div>
 
-        @if($showModal === 'signedContent')
-            @include('livewire.encounter.parts.modals.modal-signed-content')
-        @endif
     </form>
 
-    <x-messages/>
-    <x-forms.loading/>
+    <x-messages />
+    <x-forms.loading />
 </section>

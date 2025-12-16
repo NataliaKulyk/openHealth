@@ -4,7 +4,7 @@
               {{-- Binding documents to Alpine, it will be re-used in the modal.
                 Note that it's necessary for modal to work properly --}}
               x-data="{
-                  documents: $wire.entangle('form.documents'),
+                  documents: $wire.entangle('form.person.documents'),
                   openModal: false,
                   modalDocument: new Document(),
                   newDocument: false,
@@ -124,7 +124,7 @@
             {{-- Modal --}}
             <template x-teleport="body"> {{-- This moves the modal at the end of the body tag --}}
                 <div x-show="openModal"
-                     style="display: none"
+                     x-cloak
                      @keydown.escape.prevent.stop="openModal = false"
                      role="dialog"
                      aria-modal="true"
@@ -168,7 +168,6 @@
                                                 <option value="{{ $key }}">{{ $documentType }}</option>
                                             @endforeach
                                         </select>
-
                                     </div>
 
                                     {{-- Issue number --}}
@@ -185,7 +184,6 @@
                                                autocomplete="off"
                                                required
                                         >
-
                                     </div>
 
                                     {{-- Authority which issued --}}
@@ -201,7 +199,6 @@
                                                class="input-modal"
                                                autocomplete="off"
                                         >
-
                                     </div>
 
                                     {{-- The date when was issued --}}
@@ -221,7 +218,6 @@
                                                class="input-modal datepicker-input"
                                                autocomplete="off"
                                         >
-
                                     </div>
 
                                     {{-- The date when expired --}}

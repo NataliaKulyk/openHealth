@@ -46,6 +46,6 @@
         @endif
     </form>
 
-    <x-messages/>
-    <x-forms.loading/>
+    <x-messages />
+    <x-forms.loading />
 </section>

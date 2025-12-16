@@ -281,11 +281,18 @@ return [
             'secret' => 'кодове слово',
 
             'emergencyContact' => [
-                'firstName' => 'ім’я',
+                'firstName' => "ім'я",
                 'lastName' => 'прізвище',
                 'secondName' => 'по батькові'
-            ],
+            ]
         ],
+        'person.documents' => 'документ, що засвідчує особу',
+        'person.documents.*.issuedAt' => 'дата видачі документа',
+        'person.documents.*.type' => 'тип документа',
+        'person.documents.*.number' => 'серія/номер документа',
+        'person.documents.*.issuedBy' => 'орган, що видав документ',
+        'person.documents.*.expirationDate' => 'дійсний до',
+
         'person.phones.*.type' => 'тип телефону',
         'person.phones.*.number' => 'номер телефону',
         'person.emergencyContact.phones.*.type' => 'тип телефону',
@@ -296,6 +303,13 @@ return [
             'value' => 'законний представник пацієнта',
             'alias' => 'роль'
         ],
+
+        'person.confidantPerson.documentsRelationship' => 'документи, що підтверджують законність представництва',
+        'person.confidantPerson.documentsRelationship.*.type' => 'тип документа',
+        'person.confidantPerson.documentsRelationship.*.number' => 'серія/номер документа',
+        'person.confidantPerson.documentsRelationship.*.issuedBy' => 'орган яким виданий документ',
+        'person.confidantPerson.documentsRelationship.*.issuedAt' => 'дата видачі документа',
+        'person.confidantPerson.documentsRelationship.*.activeTo' => 'дійсний до',
 
         'authenticationMethod.type' => 'тип автентифікації',
 
@@ -308,30 +322,16 @@ return [
             'apartment' => 'квартира',
             'zip' => 'поштовий індекс'
         ],
-        'documentsRelationship.*' => [
-            'type' => 'тип документа',
-            'number' => 'серія/номер документа',
-            'issuedBy' => 'орган яким виданий документ',
-            'issuedAt' => 'дата видачі документа',
-            'activeTo' => 'дійсний до'
-        ],
-        'documents' => 'документ, що засвідчує особу',
-        'documents.*' => [
-            'type' => 'тип документа',
-            'number' => 'серія/номер документа',
-            'issuedBy' => 'орган яким виданий документ',
-            'issuedAt' => 'дата видачі документа',
-            'expirationDate' => 'дійсний до'
-        ],
-        'patientsFilter' => [
-            'firstName' => 'ім’я',
-            'lastName' => 'прізвище',
-            'birthDate' => 'дата народження',
-            'secondName' => 'по батькові',
-            'taxId' => 'РНОКПП(ІПН)',
-            'phoneNumber' => 'номер телефону',
-            'birthCertificate' => 'свідоцтво про народження'
-        ],
+
+//        'patientsFilter' => [
+//            'firstName' => 'ім’я',
+//            'lastName' => 'прізвище',
+//            'birthDate' => 'дата народження',
+//            'secondName' => 'по батькові',
+//            'taxId' => 'РНОКПП(ІПН)',
+//            'phoneNumber' => 'номер телефону',
+//            'birthCertificate' => 'свідоцтво про народження'
+//        ],
         'document' => [
             'type' => 'Тип документа',
             'number' => 'Серія/номер документа',

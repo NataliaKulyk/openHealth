@@ -80,6 +80,8 @@ return [
     'patient_search' => 'Пошук пацієнта',
     'patient_filter' => 'Фільтр пацієнтів',
     'search' => 'Шукати',
+    'male' => 'Чоловік',
+    'female' => 'Жінка',
     'all' => 'Всі',
     'birth_certificate' => 'Свідоцтво',
     'applications' => 'Заявки',

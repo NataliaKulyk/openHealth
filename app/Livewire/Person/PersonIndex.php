@@ -64,19 +64,6 @@ class PersonIndex extends Component
     }
 
     /**
-     * Reset pagination when filters are updated.
-     *
-     * @param  string  $property
-     * @return void
-     */
-    public function updated(string $property): void
-    {
-        if ($property === 'activeFilter') {
-            $this->resetPage();
-        }
-    }
-
-    /**
      * Reset all filters to default values.
      *
      * @return void
@@ -98,16 +85,17 @@ class PersonIndex extends Component
         $collection = collect($this->patients);
 
         // Filter by active filter
-        if ($this->activeFilter !== 'all') {
-            $collection = $collection->filter(function (array $patient) {
-                return $patient['status'] === $this->activeFilter;
-            });
-        }
+        $collection = match ($this->activeFilter) {
+            'all' => $collection,
+            'DRAFT' => $collection->where('status', 'DRAFT'),
+            'eHEALTH' => $collection->where('status', '!=', 'DRAFT'),
+            default => $collection->where('status', $this->activeFilter)
+        };
 
         return new LengthAwarePaginator(
-            $collection->forPage($this->getPage(), 10),
+            $collection->forPage($this->getPage(), config('pagination.per_page')),
             $collection->count(),
-            10,
+            config('pagination.per_page'),
             $this->getPage()
         );
     }
@@ -141,7 +129,7 @@ class PersonIndex extends Component
                     $query->whereNumber($phoneNumber);
                 });
             })
-            ->get(['id', 'uuid', 'first_name', 'last_name', 'second_name', 'birth_date', 'tax_id', 'verification_status'])
+            ->get(['id', 'uuid', 'gender', 'birth_settlement', 'first_name', 'last_name', 'second_name', 'birth_date', 'tax_id', 'verification_status'])
             ->toArray();
 
         // Search for drafts (person_requests)
@@ -153,7 +141,7 @@ class PersonIndex extends Component
                     $query->whereNumber($phoneNumber);
                 });
             })
-            ->get(['id', 'status', 'first_name', 'last_name', 'second_name', 'birth_date', 'tax_id'])
+            ->get(['id', 'status', 'gender', 'birth_settlement', 'first_name', 'last_name', 'second_name', 'birth_date', 'tax_id'])
             ->toArray();
 
         // If found in our DB, show that result

@@ -89,7 +89,7 @@ class DeclarationIndex extends Component
 
         $this->employeeIds = $user?->employees()->pluck('id')->all();
 
-        if ($user?->hasRole('OWNER')) {
+        if ($user->hasRole('OWNER')) {
             $this->doctors = $this->getDoctors();
         } else {
             $this->countActive = Declaration::whereIn('employee_id', $this->employeeIds)->count();
@@ -112,7 +112,7 @@ class DeclarationIndex extends Component
                     fn (Builder $query) => $query->whereIn('employee_id', $this->employeeIds)
                 )->with([
                     'person:id,first_name,last_name,second_name,birth_date',
-                    'employee:id,party_id',
+                    'employee:id,uuid,party_id',
                     'employee.party:id,first_name,last_name,second_name'
                 ])
                 ->get()
@@ -275,7 +275,7 @@ class DeclarationIndex extends Component
      */
     public function delete(DeclarationRequest $declarationRequest): void
     {
-        if (Auth::user()?->cannot('delete', $declarationRequest)) {
+        if (Auth::user()->cannot('delete', $declarationRequest)) {
             Session::flash('error', 'У вас немає дозволу на видалення заявки на подання декларації');
 
             return;

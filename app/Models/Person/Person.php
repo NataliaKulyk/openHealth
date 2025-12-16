@@ -6,6 +6,7 @@ namespace App\Models\Person;
 
 use App\Models\Employee\Employee;
 use App\Models\MedicalEvents\Sql\Encounter;
+use App\Models\Relations\ConfidantPerson;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -18,6 +19,13 @@ class Person extends BasePerson
     }
 
     protected $table = 'persons';
+
+    protected $hidden = [
+        'patient_signed',
+        'process_disclosure_data_consent',
+        'created_at',
+        'updated_at'
+    ];
 
     public function encounters(): HasMany
     {
@@ -32,5 +40,17 @@ class Person extends BasePerson
     public function personRequest(): HasOne
     {
         return $this->hasOne(PersonRequest::class);
+    }
+
+    // Для скількох людей Я є довіреною особою
+    public function confidantFor(): HasMany
+    {
+        return $this->hasMany(ConfidantPerson::class, 'person_id');
+    }
+
+    // Хто є МОЄЮ довіреною особою
+    public function confidantPerson(): HasOne
+    {
+        return $this->hasOne(ConfidantPerson::class, 'subject_person_id');
     }
 }

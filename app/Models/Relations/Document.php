@@ -28,12 +28,14 @@ class Document extends Model
         'number',
         'issued_by',
         'issued_at',
-        'expiration_date'
+        'expiration_date',
+        'active_to'
     ];
 
     protected $casts = [
         'issued_at' => EHealthDateCast::class,
         'expiration_date' => EHealthDateCast::class,
+        'active_to' => EHealthDateCast::class
     ];
 
     public function documentable(): MorphTo

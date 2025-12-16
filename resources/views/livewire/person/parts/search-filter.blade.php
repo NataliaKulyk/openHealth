@@ -192,45 +192,32 @@
                                  x-transition:leave-end="transform opacity-0 scale-95"
                                  class="absolute z-10 mt-2 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg"
                             >
+                                @php
+                                    $filters = [
+                                        'all' => __('patients.all'),
+                                        'eHEALTH' => __('patients.patients'),
+                                        'DRAFT' => __('patients.applications')
+                                    ];
+                                @endphp
                                 <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                    <li>
-                                        <label class="flex items-center space-x-2 cursor-pointer" @click="open = false">
-                                            <input type="radio"
-                                                   value="all"
-                                                   wire:model.live="activeFilter"
-                                                   class="sr-only"
-                                            />
-                                            <span class="{{ $activeFilter === 'all' ? 'text-blue-600' : '' }}">
-                                                {{ __('patients.all') }}
-                                            </span>
-                                        </label>
-                                    </li>
-                                    <li>
-                                        <label class="flex items-center space-x-2 cursor-pointer" @click="open = false">
-                                            <input type="radio"
-                                                   value="eHEALTH"
-                                                   wire:model.live="activeFilter"
-                                                   class="sr-only"
-                                            />
-                                            <span class="{{ $activeFilter === 'eHEALTH' ? 'text-blue-600' : '' }}">
-                                                {{ __('patients.patients') }}
-                                            </span>
-                                        </label>
-                                    </li>
-                                    <li>
-                                        <label class="flex items-center space-x-2 cursor-pointer"
-                                               @click=" open = false"
-                                        >
-                                            <input type="radio"
-                                                   value="DRAFT"
-                                                   wire:model.live="activeFilter"
-                                                   class="sr-only"
-                                            />
-                                            <span class="{{ $activeFilter === 'DRAFT' ? 'text-blue-600' : '' }}">
-                                                {{ __('patients.applications') }}
-                                            </span>
-                                        </label>
-                                    </li>
+                                    @foreach ($filters as $value => $label)
+                                        <li>
+                                            <label
+                                                class="flex items-center space-x-2 cursor-pointer"
+                                                @click="open = false"
+                                            >
+                                                <input type="radio"
+                                                       value="{{ $value }}"
+                                                       wire:model="activeFilter"
+                                                       class="sr-only"
+                                                />
+
+                                                <span class="{{ $activeFilter === $value ? 'text-blue-600' : '' }}">
+                                                    {{ $label }}
+                                                </span>
+                                            </label>
+                                        </li>
+                                    @endforeach
                                 </ul>
                             </div>
                         </div>

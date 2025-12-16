@@ -2,7 +2,7 @@
     use App\Models\MedicalEvents\Sql\{DiagnosticReport, Encounter, Procedure};
     use App\Models\DeclarationRequest;
     use App\Models\Person\{Person, PersonRequest};
-    use App\Enums\Person\VerificationStatus;
+    use App\Enums\Person\{VerificationStatus, Status, Gender};
 @endphp
 
 <div>
@@ -14,7 +14,8 @@
                 <div class="justify-end block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700 mb-8">
                     @can('create', PersonRequest::class)
                         <a href="{{ route('persons.create', [legalEntity()]) }}"
-                           class="button-primary flex items-center gap-2">
+                           class="button-primary flex items-center gap-2"
+                        >
                             @icon('plus', 'w-4 h-4')
                             {{ __('patients.add_patient') }}
                         </a>
@@ -45,9 +46,11 @@
         <div class="space-y-6" wire:key="patients-{{ $paginatedPatients->total() }}">
             @forelse($paginatedPatients->items() as $patient)
                 <fieldset wire:key="patient-{{ $patient['id'] }}"
-                          class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]">
-                    <legend
-                        class="legend">{{ $patient['lastName'] }} {{ $patient['firstName'] }} {{ $patient['secondName'] ?? '' }}</legend>
+                          class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]"
+                >
+                    <legend class="legend">
+                        {{ $patient['lastName'] }} {{ $patient['firstName'] }} {{ $patient['secondName'] ?? '' }}
+                    </legend>
                     <div
                         class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                         <div class="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mt-2">
@@ -69,27 +72,30 @@
                             @if(isset($patient['phones'][0]['number']))
                                 <span class="flex items-center gap-1.5 min-w-0">
                                     @icon('tabler-phone', 'w-6 h-6 text-gray-800 dark:text-white')
-                                    <a href="tel:{{ $patient['phones'][0]['number'] }}" class="truncate hover:underline"
-                                       title="{{ $patient['phones'][0]['number'] }}">{{ $patient['phones'][0]['number'] }}</a>
+                                    <a href="tel:{{ $patient['phones'][0]['number'] }}"
+                                       class="truncate hover:underline"
+                                       title="{{ $patient['phones'][0]['number'] }}"
+                                    >
+                                        {{ $patient['phones'][0]['number'] }}
+                                    </a>
                                 </span>
                             @endif
 
                             @if(isset($patient['gender']))
                                 <span class="flex items-center gap-1.5">
-                                    @if(strtolower($patient['gender']) === 'male')
+                                    @if($patient['gender'] === Gender::MALE->value)
                                         @icon('men', 'w-6 h-6 text-gray-800 dark:text-white')
-                                        <span>Чоловік</span>
-                                    @elseif(strtolower($patient['gender']) === 'female')
+                                        <span>{{ __('patients.male') }}</span>
+                                    @elseif($patient['gender'] === Gender::FEMALE->value)
                                         @icon('women', 'w-6 h-6 text-gray-800 dark:text-white')
-                                        <span>Жінка</span>
+                                        <span>{{ __('patients.female') }}</span>
                                     @endif
                                 </span>
                             @endif
-
                         </div>
 
                         <div class="flex items-center space-x-3">
-                            @if($patient['status'] === 'DRAFT')
+                            @if($patient['status'] === Status::DRAFT->value)
                                 <a href="{{ route('persons.edit', [legalEntity(), $patient['id']]) }}"
                                    class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                 >
@@ -131,6 +137,7 @@
                                     <th scope="col" class="th-input text-center">{{ __('forms.actions') }}</th>
                                 </tr>
                                 </thead>
+
                                 <tbody>
                                 <tr>
                                     <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
@@ -257,6 +264,6 @@
         </div>
     </section>
 
-    <x-forms.loading/>
-    <x-messages/>
+    <x-forms.loading />
+    <x-messages />
 </div>
