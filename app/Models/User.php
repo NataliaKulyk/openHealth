@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Exception;
+use App\Enums\Status;
 use App\Models\Permission;
 use App\Models\LegalEntity;
 use InvalidArgumentException;
@@ -211,13 +212,11 @@ class User extends Authenticatable implements MustVerifyEmail
             return $all;
         }
 
-        // $status = LegalEntity::whereKey($teamId)->value('status');
+        $status = LegalEntity::whereKey($teamId)->value('status');
 
-        // $typeId = $status === Status::REORGANIZED->value
-            // ? LegalEntityType::where('name', 'MSP_LIMITED')->value('id')
-            // : LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
-
-        $typeId = LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
+        $typeId = $status === Status::REORGANIZED->value
+            ? LegalEntityType::where('name', 'MSP_LIMITED')->value('id')
+            : LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
 
         if (! $typeId) {
             return $all->where(fn() => false); // empty collection

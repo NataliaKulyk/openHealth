@@ -46,6 +46,10 @@ class LegalEntityRepository
                     $name .= " <{$legalEntityTypeName}>";
                 }
 
+                if ($data['status'] === Status::REORGANIZED->value) {
+                    $name .= " (" . Status::REORGANIZED->value . ")";
+                }
+
                 $result[] = ['id' => $data['id'], 'uuid' => $data['uuid'], 'name' => $name];
             }
         }
