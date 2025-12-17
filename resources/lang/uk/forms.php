@@ -96,6 +96,7 @@ return [
     'search' => 'Шукати',
     'no_tax_id_document_required' => 'Будь ласка, заповніть номер одного з документів: Паспорт, ID-картка або Посвідчення біженця.',
     'created_at' => 'Дата створення',
+    'search_name' => 'Пошук за ПІБ',
 
     // Legal Entity
     'institution' => 'Заклад',
@@ -211,6 +212,8 @@ return [
     'cyrillic_with_spaces_and_dots' => ':Attribute має містити лише кириличні символи, пробіли та крапки.',
     'update_verification_status_dracs' => 'Оновити статус верифікації співробітника в ДРАЦС',
     'no_positions_found' => 'Посади відсутні',
+    'application_register' => 'Реєстр заявок співробітників',
+    'sync_all' => 'Синхронізувати всі',
 
     // Documents
     'documents' => 'Документи',
