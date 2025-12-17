@@ -47,7 +47,8 @@
                                     </x-slot>
                                 </x-forms.form-group>
                             </div>
-                            <button class="button-minor flex items-center justify-center gap-2 w-full lg:w-auto self-stretch lg:self-auto lg:-translate-y-[9px]"
+                            <button type="button"
+                                    class="button-minor flex items-center justify-center gap-2 w-full lg:w-auto self-stretch lg:self-auto lg:-translate-y-[9px]"
                                     @click="showFilter = !showFilter">
                                 @icon('adjustments', 'w-4 h-4')
                                 <span>{{ __('forms.additional_search_parameters') }}</span>
@@ -212,6 +213,27 @@
         <div class="space-y-6 employee-section-no-left-padding mt-6">
             <div class="table-container-responsive overflow-x-auto" style="max-width:100%;" wire:key="{{ $filterKey }}">
                 @forelse($parties as $party)
+                    @php
+                        $drafts = $party->employeeRequests;
+                        $employees = $party->employees;
+                        $positions = $drafts->merge($employees);
+
+                        // Check if there is at least one action available for any position in this table
+                        $user = auth()->user();
+                        $hasAnyActionInTable = $positions->contains(function ($pos) use ($user) {
+                            $isEmp = $pos instanceof \App\Models\Employee\Employee;
+                            $status = $pos->status?->value ?? null;
+
+                            if ($isEmp) {
+                                return $user->can('view', $pos) ||
+                                       $user->can('update', $pos) ||
+                                       ($status === 'APPROVED' && $user->can('deactivate', $pos)) ||
+                                       $user->can('sync', $pos);
+                            }
+                            return $user->can('view', $pos) ||
+                                   ($status === 'NEW' && ($user->can('update', $pos) || $user->can('delete', $pos)));
+                        });
+                    @endphp
                     <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]" wire:key="party-{{ $party->id }}">
                         <legend class="legend">{{ $party->fullName }}</legend>
 
@@ -269,30 +291,30 @@
                                 @endif
 
                                 {{-- Verification Status --}}
-                                @php
-                                    // Fallback to NOT_VERIFIED if null (common for drafts or fresh imports)
-                                    $verStatus = $party->verification_status ?? 'NOT_VERIFIED';
-                                    $isRealParty = is_numeric($party->id);
-                                @endphp
+{{--                                @php--}}
+{{--                                    // Fallback to NOT_VERIFIED if null (common for drafts or fresh imports)--}}
+{{--                                    $verStatus = $party->verification_status ?? 'NOT_VERIFIED';--}}
+{{--                                    $isRealParty = is_numeric($party->id);--}}
+{{--                                @endphp--}}
 
-                                <span class="flex items-center gap-1.5 group">
-                                    <span class="font-semibold text-gray-700 dark:text-gray-300"> {{ __('party_verification.label') }}:</span>
+{{--                                <span class="flex items-center gap-1.5 group">--}}
+{{--                                    <span class="font-semibold text-gray-700 dark:text-gray-300"> {{ __('party_verification.label') }}:</span>--}}
 
-                                    {{-- If it is a real party, make it a link. Otherwise, just text --}}
-                                    @if($isRealParty)
-                                        <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="hover:underline flex items-center gap-1.5">
-                                    @endif
+{{--                                    --}}{{-- If it is a real party, make it a link. Otherwise, just text --}}
+{{--                                    @if($isRealParty)--}}
+{{--                                        <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="hover:underline flex items-center gap-1.5">--}}
+{{--                                    @endif--}}
 
-                                            @if ($verStatus === 'VERIFIED')
-                                                <span class="badge-green">{{ __('party_verification.verified') }}</span>
-                                            @else
-                                                <span class="badge-red">{{ __('party_verification.' . strtolower($verStatus)) }}</span>
-                                            @endif
+{{--                                            @if ($verStatus === 'VERIFIED')--}}
+{{--                                                <span class="badge-green">{{ __('party_verification.verified') }}</span>--}}
+{{--                                            @else--}}
+{{--                                                <span class="badge-red">{{ __('party_verification.' . strtolower($verStatus)) }}</span>--}}
+{{--                                            @endif--}}
 
-                                            @if($isRealParty)
-                                        </a>
-                                    @endif
-                                </span>
+{{--                                            @if($isRealParty)--}}
+{{--                                        </a>--}}
+{{--                                    @endif--}}
+{{--                                </span>--}}
                             </div>
 
                             <div class="flex items-center gap-4">
@@ -326,7 +348,10 @@
                                         <th scope="col" class="th-input w-[15%]">{{ __('forms.division') }}</th>
                                         <th scope="col" class="th-input w-[24%]">{{ __('forms.email') }}</th>
                                         <th scope="col" class="th-input w-[10%]">{{ __('forms.status.label') }}</th>
-                                        <th scope="col" class="th-input w-[7%] text-center"></th>
+                                        {{-- Only show header if actions exist --}}
+                                        @if($hasAnyActionInTable)
+                                            <th scope="col" class="th-input w-[7%] text-center">{{ __('forms.actions') }}</th>
+                                        @endif
                                     </tr>
                                     </thead>
                                     <tbody>

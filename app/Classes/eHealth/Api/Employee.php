@@ -68,7 +68,7 @@ class Employee extends EHealthRequest
     public static function deactivate(string $id, string $endDate): array
     {
         $payload = [
-            'status' => 'DISMISSED',
+            'status' => 'STOPPED',
             'end_date' => $endDate,
         ];
 
