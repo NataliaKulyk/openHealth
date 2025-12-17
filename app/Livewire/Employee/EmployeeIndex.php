@@ -256,18 +256,24 @@ class EmployeeIndex extends EmployeeComponent
         if ($position->legal_entity_id !== $this->legalEntity->id) {
             return false;
         }
-        // --- 1. Filter by Status ---
-        $currentStatuses = $this->status;
-        if (!empty($currentStatuses)) {
-            // 1.1. Basic check: is the position's status in the selected filter array?
-            $statusMatch = $position->status && in_array($position->status->value, $currentStatuses, true);
 
-            if (!$statusMatch) {
+        if (!empty($this->status)) {
+            // Get the current status value (handle both Enum and string)
+            $actualStatus = $position->status instanceof \UnitEnum
+                ? $position->status->value
+                : $position->status;
+
+            // Map UI 'DISMISSED' to DB 'STOPPED'
+            $mappedStatuses = array_map(function ($s) {
+                return $s === 'DISMISSED' ? 'STOPPED' : $s;
+            }, $this->status);
+
+            if (!in_array($actualStatus, $mappedStatuses, true)) {
                 return false;
             }
         }
 
-        // --- 2. Filter by other position attributes ---
+        // Filter by division, role, position
         if (!empty($this->filter['division_id']) && $position->division_id !== $this->filter['division_id']) {
             return false;
         }
@@ -278,7 +284,7 @@ class EmployeeIndex extends EmployeeComponent
             return false;
         }
 
-        return true; // This position matches all criteria
+        return true;
     }
 
     public function showModalDeactivate(int $id): void
@@ -337,7 +343,7 @@ class EmployeeIndex extends EmployeeComponent
             if (!empty($response)) {
                 $employee->update(
                     [
-                        'status' => Status::DISMISSED->value,
+                        'status' => Status::STOPPED->value,
                         'end_date' => $endDate,
                     ]
                 );
@@ -487,9 +493,6 @@ class EmployeeIndex extends EmployeeComponent
         $success = $this->syncEmployeeData($employee);
 
         if ($success) {
-            // [NEW] Increment the trigger to change the filterKey
-            // This forces Livewire to discard the old DOM list and render a fresh one,
-            // removing the visual artifact of duplicate entries (draft + real employee).
             $this->refreshTrigger++;
         }
     }

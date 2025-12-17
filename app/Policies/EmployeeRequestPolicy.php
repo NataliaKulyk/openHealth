@@ -24,7 +24,7 @@ class EmployeeRequestPolicy
             return Response::denyWithStatus(404);
         }
 
-        return $user->can('employee_request:read')
+        return $user->can('employee_request:details')
             ? Response::allow()
             : Response::deny(__('employees.policy.req.view_denied'));
     }

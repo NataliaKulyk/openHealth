@@ -51,12 +51,14 @@ class EmployeeRequestIndex extends Component
 
         if (!$localRequest || !$localRequest->uuid) {
             $this->dispatch('flashMessage', ['message' => 'Request has no UUID.', 'type' => 'error']);
+
             return;
         }
 
         $token = session()->get(config('ehealth.api.oauth.bearer_token'));
         if (!$token) {
             $this->dispatch('flashMessage', ['message' => 'Session token missing. Please re-login.', 'type' => 'error']);
+
             return;
         }
 
@@ -73,6 +75,7 @@ class EmployeeRequestIndex extends Component
 
             if (!$remoteData) {
                 $this->dispatch('flashMessage', ['message' => 'eHealth returned empty data.', 'type' => 'warning']);
+
                 return;
             }
 
@@ -84,7 +87,7 @@ class EmployeeRequestIndex extends Component
                 $processor->applyApprovedRequest($localRequest, $remoteData);
 
                 $this->dispatch('flashMessage', [
-                    'message' => 'Success! Employee synchronized.',
+                    'message' => __('employees.sync.employee_request_success'),
                     'type' => 'success'
                 ]);
 
@@ -116,7 +119,7 @@ class EmployeeRequestIndex extends Component
 
         // Notify start
         $this->dispatch('flashMessage', [
-            'message' => __('employees.sync.started'), // Assuming translation key exists or use 'Розпочато синхронізацію'
+            'message' => __('employees.sync.started'),
             'type' => 'success'
         ]);
 
@@ -127,14 +130,17 @@ class EmployeeRequestIndex extends Component
         } catch (ConnectionException $e) {
             Log::error('Employee Request sync failed: No connection.', ['error' => $e->getMessage()]);
             $this->dispatch('flashMessage', ['message' => 'Немає зв\'язку з ЕСОЗ', 'type' => 'error']);
+
             return;
         } catch (EHealthResponseException $e) {
             Log::error('Employee Request sync failed: API error.', ['error' => $e->getMessage()]);
             $this->dispatch('flashMessage', ['message' => 'Помилка API ЕСОЗ: ' . $e->getMessage(), 'type' => 'error']);
+
             return;
         } catch (\Exception $e) {
             Log::error('Employee Request sync failed: Unexpected error.', ['error' => $e->getMessage()]);
             $this->dispatch('flashMessage', ['message' => 'Виникла помилка при ініціалізації синхронізації', 'type' => 'error']);
+
             return;
         }
 
@@ -167,7 +173,7 @@ class EmployeeRequestIndex extends Component
     public function requests(): LengthAwarePaginator
     {
         return EmployeeRequest::query()
-            ->with(['party', 'division'])
+            ->with(['party', 'division', 'revision'])
             ->where('legal_entity_id', legalEntity()->id)
             ->when($this->search, function ($q) {
                 $q->whereHas('party', function ($subQ) {
@@ -179,6 +185,7 @@ class EmployeeRequestIndex extends Component
             })
             ->orderByDesc('created_at')
             ->paginate(20);
+
     }
 
     public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\View\View
