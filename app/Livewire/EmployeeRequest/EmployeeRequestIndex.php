@@ -197,6 +197,7 @@ class EmployeeRequestIndex extends EmployeeComponent
             })
             ->orderByDesc('created_at')
             ->paginate(20);
+
     }
 
     public function render(): object
