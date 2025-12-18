@@ -16,20 +16,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Artisan::call('cache:clear');
-
-        $this->call([
-            /*
-             * populates permissions and roles tables, see spaties laravel-permissions docs
-             * https://spatie.be/docs/laravel-permission/v6/introduction
-             */
-            LegalEntityTypeSeeder::class,
-            LegalEntityRoleSeeder::class,
-            PermissionsSeeder::class,
-            RolePermissionsSeeder::class,
-            TypePermissionsSeeder::class,
-            LegalEntityTypeAndRoleSeeder::class
-        ]);
 
         if (app()->isLocal()) {
             // Populates following tables legal_entities, users and model has roles with test data

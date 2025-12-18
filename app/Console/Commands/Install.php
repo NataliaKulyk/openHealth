@@ -69,7 +69,7 @@ class Install extends MigrationsCommand
         if ($this->options['key']) {
             $this->info('Generating new application key...');
 
-            $this->call('key:generate');
+            $this->call('key:generate',  ['--force' => true]);
         }
     }
 

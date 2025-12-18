@@ -22,9 +22,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('first-run', function () {
-    $this->call('key:generate');
-    $this->call('migrate');
+    $this->call('install', ['--clear' => true, '--wipe' => true,'--key' => true]);
     $this->call('db:seed', ['--class' => 'DatabaseSeeder']);
-    UpdateICD10TableJob::dispatchSync();
-    //    $this->call('permission:create-role', ['name' => 'Owner']);
 })->purpose('Completes the first run of the application');
