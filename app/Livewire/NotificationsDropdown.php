@@ -30,24 +30,16 @@ class NotificationsDropdown extends Component
         $notification = Auth::user()?->unreadNotifications()->findOrFail($id);
         if ($notification) {
             $notification->markAsRead();
-            // Refresh notifications list to show next ones if there are more than 4
             $this->notifications = Auth::user()->unreadNotifications->take(4);
         }
     }
 
-    /**
-     * Get total unread notifications count.
-     */
     public function getTotalUnreadCountProperty(): int
     {
         return Auth::user()->unreadNotifications->count();
     }
 
 
-    /**
-     * Determine notification icon type based on notification data.
-     * Returns: 'success', 'error', 'info', 'sync', or 'default'
-     */
     public function getNotificationIconType($notification): string
     {
         $data = $notification->data;
@@ -93,17 +85,14 @@ class NotificationsDropdown extends Component
             }
         }
 
-        // Check for error/warning in message
         if (stripos($message, 'помилка') !== false || stripos($message, 'помилк') !== false) {
             return 'error';
         }
 
-        // Check for success in message (підписано)
         if (stripos($message, 'підписано') !== false) {
             return 'success';
         }
 
-        // Check for info/contract changes
         if (stripos($message, 'зміни') !== false ||
             stripos($message, 'договор') !== false ||
             stripos($message, 'договор') !== false ||

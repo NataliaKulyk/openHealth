@@ -255,6 +255,7 @@
                     </table>
 
                 @else
+                    <div class="p-12">
                     <fieldset class="fieldset !mx-auto">
                         <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
                         <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
@@ -273,6 +274,7 @@
                             </div>
                         </div>
                     </fieldset>
+                    </div>
                 @endif
             </div>
 
