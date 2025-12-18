@@ -58,24 +58,6 @@ return new class extends Migration
 
             $table->timestamps();
         });
-
-        Schema::create('contract_request_division', static function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('contract_request_id')->constrained();
-            $table->foreignId('division_id')->constrained();
-            $table->timestamps();
-        });
-
-        Schema::create('medical_programs', static function (Blueprint $table) {
-            $table->id();
-            $table->uuid();
-            $table->foreignId('contract_request_id');
-            $table->uuid('ehealth_inserted_by')->nullable();
-            $table->uuid('ehealth_updated_by')->nullable();
-            $table->timestamp('ehealth_inserted_at')->nullable();
-            $table->timestamp('ehealth_updated_at')->nullable();
-            $table->timestamps();
-        });
     }
 
     public function down(): void
