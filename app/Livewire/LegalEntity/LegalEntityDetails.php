@@ -217,7 +217,7 @@ class LegalEntityDetails extends LegalEntityComponent
             return;
         }
 
-        $oldType = $this->legalEntity->type->name;
+        $oldStatus = $this->legalEntity->status;
 
         try {
             $response = EHealth::legalEntity()->getDetails();
@@ -248,19 +248,21 @@ class LegalEntityDetails extends LegalEntityComponent
             return;
         }
 
-        if ($legalEntityData['data']['type'] !== $oldType) {
+        if ($legalEntityData['data']['status'] !== $oldStatus) {
             Log::channel('e_health_warnings')->warning(
                 static::class . ': [syncLegalEntity]: Legal Entity type changed',
                 [
                     'legal_entity_uuid' => $this->legalEntity->uuid,
-                    'old_type' => $oldType,
-                    'new_type' => $legalEntityData['data']['type'],
+                    'old_status' => $oldStatus,
+                    'new_status' => $legalEntityData['data']['status'],
                 ]
             );
 
             app(PermissionRegistrar::class)->forgetCachedPermissions();
 
             Auth::user()->unsetRelation('roles')->unsetRelation('permissions');
+
+            Auth::user()->syncPermissions(Auth::user()->getAllPermissions()->pluck('name')->toArray());
         }
 
         $this->redirect(route('legal-entity.details', [legalEntity()]), navigate: true);
