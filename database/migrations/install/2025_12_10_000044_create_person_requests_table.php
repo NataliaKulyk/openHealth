@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\Person\Status;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('person_requests', static function (Blueprint $table) {
             $table->id();
-            $table->uuid()->unique()->nullable();
-            $table->enum('status', Status::values());
+            $table->uuid()->nullable();
+            $table->enum('status', ['APPLICATION', 'NEW', 'APPROVED', 'SIGNED', 'REJECTED', 'CANCELLED']);
             $table->foreignId('person_id')->nullable()->constrained('persons');
             $table->string('first_name');
             $table->string('last_name');
@@ -26,7 +25,7 @@ return new class extends Migration
             $table->string('birth_country');
             $table->string('birth_settlement');
             $table->enum('gender', ['MALE', 'FEMALE']);
-            $table->string('email')->nullable();
+            $table->string('email')->unique()->nullable();
             $table->boolean('no_tax_id');
             $table->string('tax_id')->nullable();
             $table->string('secret');

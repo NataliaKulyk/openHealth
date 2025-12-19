@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\Person\Gender;
-use App\Enums\Person\VerificationStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,19 +15,18 @@ return new class extends Migration
     {
         Schema::create('persons', static function (Blueprint $table) {
             $table->id();
-            $table->uuid()->unique();
-            $table->enum('verification_status', VerificationStatus::values())
-                ->default(VerificationStatus::IN_REVIEW->value);
+            $table->uuid();
+            $table->enum('verification_status', ['CHANGES_NEEDED', 'IN_REVIEW', 'NOT_VERIFIED', 'VERIFICATION_NEEDED', 'VERIFICATION_NOT_NEEDED', 'VERIFIED'])->default('IN_REVIEW');
             $table->string('first_name');
             $table->string('last_name');
             $table->string('second_name')->nullable();
-            $table->date('birth_date')->nullable();
+            $table->date('birth_date');
             $table->string('birth_country')->nullable();
             $table->string('birth_settlement')->nullable();
-            $table->enum('gender', Gender::values());
+            $table->enum('gender', ['MALE', 'FEMALE']);
             $table->string('email')->unique()->nullable();
             $table->boolean('no_tax_id')->nullable();
-            $table->string('tax_id')->nullable();
+            $table->string('tax_id')->unique()->nullable();
             $table->string('secret')->nullable();
             $table->string('unzr')->unique()->nullable();
             $table->jsonb('emergency_contact')->nullable();
