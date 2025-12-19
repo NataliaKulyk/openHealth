@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -51,12 +51,11 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-
     /**
      * Resets the sequence for a given table to the current maximum ID.
      * This version is more robust and handles empty tables correctly.
      *
-     * @param string $tableName
+     * @param  string  $tableName
      * @return void
      */
     protected function fixPostgresSequence(string $tableName): void
@@ -66,7 +65,7 @@ class DatabaseSeeder extends Seeder
             DB::statement(
                 "SELECT setval(pg_get_serial_sequence('{$tableName}', 'id'), COALESCE((SELECT MAX(id) FROM \"{$tableName}\"), 0));"
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning("Could not reset sequence for table '{$tableName}': " . $e->getMessage());
         }
     }
