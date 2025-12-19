@@ -292,7 +292,7 @@ class PersonForm extends BaseForm
             }
         }
 
-        if (!empty($validatedData['person']['confidantPerson']['documentsRelationship'])) {
+        if (!empty(Arr::get($validatedData, 'person.confidantPerson.documentsRelationship'))) {
             foreach ($validatedData['person']['confidantPerson']['documentsRelationship'] as $key => $documentRelationship) {
                 $validatedData['person']['confidantPerson']['documentsRelationship'][$key]['issuedAt'] =
                     convertToYmd($documentRelationship['issuedAt']);
