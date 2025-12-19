@@ -16,7 +16,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
         if (app()->isLocal()) {
             // Populates following tables legal_entities, users and model has roles with test data
             $this->call(TestUserMigrate::class);
@@ -61,7 +60,6 @@ class DatabaseSeeder extends Seeder
     protected function fixPostgresSequence(string $tableName): void
     {
         try {
-
             DB::statement(
                 "SELECT setval(pg_get_serial_sequence('{$tableName}', 'id'), COALESCE((SELECT MAX(id) FROM \"{$tableName}\"), 0));"
             );

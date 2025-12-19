@@ -21,6 +21,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('first-run', function () {
-    $this->call('install', ['--clear' => true, '--wipe' => true,'--key' => true]);
+    $this->call('install', ['--clear' => true, '--wipe' => true, '--key' => true]);
     $this->call('db:seed', ['--class' => 'DatabaseSeeder']);
 })->purpose('Completes the first run of the application');
