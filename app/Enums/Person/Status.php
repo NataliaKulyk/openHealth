@@ -28,4 +28,16 @@ enum Status: string
             self::CANCELLED => __('patients.status.cancelled')
         };
     }
+
+    /**
+     * Gets the color class for UI badges.
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::DRAFT => 'badge-purple',
+            self::NEW, self::APPROVED, self::SIGNED => 'badge-green',
+            self::REJECTED, self::CANCELLED => 'badge-red'
+        };
+    }
 }

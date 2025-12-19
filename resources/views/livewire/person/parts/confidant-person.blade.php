@@ -3,7 +3,7 @@
               {{-- Binding documentsRelationshimto Alpine, it will be re-used in the modal.
                 Note that it's necessary for modal to work properly --}}
               x-data="{
-                  documentsRelationship: $wire.entangle('form.documentsRelationship'),
+                  documentsRelationship: $wire.entangle('form.person.confidantPerson.documentsRelationship'),
                   openModal: false,
                   modalDocument: new DocRelationship(),
                   newDocument: false,
@@ -110,7 +110,6 @@
         </table>
 
         <div>
-
             {{-- Button to trigger the modal --}}
             <button @click.prevent="
                         openModal = true; {{-- Open the Modal --}}
@@ -125,7 +124,7 @@
             {{-- Modal --}}
             <template x-teleport="body"> {{-- This moves the modal at the end of the body tag --}}
                 <div x-show="openModal"
-                     style="display: none"
+                     x-cloak
                      @keydown.escape.prevent.stop="openModal = false"
                      role="dialog"
                      aria-modal="true"
@@ -154,11 +153,12 @@
                             <form>
                                 <div class="form-row-modal">
                                     <div>
-                                        <label for="documentType" class="label-modal">{{ __('forms.document_type') }}
+                                        <label for="confDocumentType" class="label-modal">{{ __('forms.document_type') }}
                                             <span class="text-red-600"> *</span>
                                         </label>
                                         <select x-model="modalDocument.type"
-                                                id="documentType"
+                                                id="confDocumentType"
+                                                name="confDocumentType"
                                                 class="input-modal"
                                                 type="text"
                                                 required
@@ -172,14 +172,14 @@
                                     </div>
 
                                     <div>
-                                        <label for="documentNumber" class="label-modal">
+                                        <label for="confDocumentNumber" class="label-modal">
                                             {{ __('forms.document_number') }}
                                             <span class="text-red-600"> *</span>
                                         </label>
                                         <input x-model="modalDocument.number"
                                                type="text"
-                                               name="documentNumber"
-                                               id="documentNumber"
+                                               name="confDocumentNumber"
+                                               id="confDocumentNumber"
                                                class="input-modal"
                                                autocomplete="off"
                                                required
@@ -187,14 +187,14 @@
                                     </div>
 
                                     <div>
-                                        <label for="documentIssuedBy" class="label-modal">
+                                        <label for="confDocumentIssuedBy" class="label-modal">
                                             {{ __('forms.document_issued_by') }}
                                             <span class="text-red-600"> *</span>
                                         </label>
                                         <input x-model="modalDocument.issuedBy"
                                                type="text"
-                                               name="documentIssuedBy"
-                                               id="documentIssuedBy"
+                                               name="confDocumentIssuedBy"
+                                               id="confDocumentIssuedBy"
                                                class="input-modal"
                                                autocomplete="off"
                                         >
@@ -203,15 +203,16 @@
                                     <div class="relative">
                                         @icon('calendar-month', 'w-5 h-5 svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none')
 
-                                        <label for="documentIssuedAt" class="label-modal">
+                                        <label for="confDocumentIssuedAt" class="label-modal">
                                             {{ __('forms.document_issued_at') }}
                                             <span class="text-red-600"> *</span>
                                         </label>
                                         <input x-model="modalDocument.issuedAt"
-                                               datepicker-max-date="{{ now()->format('Y-m-d') }}"
+                                               datepicker-max-date="{{ now()->format('d.m.Y') }}"
+                                               datepicker-format="dd.mm.yyyy"
                                                type="text"
-                                               name="documentIssuedAt"
-                                               id="documentIssuedAt"
+                                               name="confDocumentIssuedAt"
+                                               id="confDocumentIssuedAt"
                                                class="input-modal datepicker-input"
                                                autocomplete="off"
                                         >
@@ -220,21 +221,24 @@
                                     <div class="relative">
                                         @icon('calendar-month', 'w-5 h-5 svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none')
 
-                                        <label for="documentExpirationDate" class="label-modal">
+                                        <label for="confDocumentExpirationDate" class="label-modal">
                                             {{ __('forms.valid_until') }}
                                             <span class="text-red-600"> *</span>
                                         </label>
                                         <input x-model="modalDocument.activeTo"
-                                               datepicker-min-date="{{ now()->format('Y-m-d') }}"
+                                               datepicker-min-date="{{ now()->format('d.m.Y') }}"
+                                               datepicker-format="dd.mm.yyyy"
                                                type="text"
-                                               name="documentExpirationDate"
-                                               id="documentExpirationDate"
+                                               name="confDocumentExpirationDate"
+                                               id="confDocumentExpirationDate"
                                                class="input-modal datepicker-input"
                                                autocomplete="off"
                                         >
                                     </div>
                                 </div>
+
                                 <p class="text-sm text-gray-400 mb-2">{{ __('forms.form_required_note') }}</p>
+
                                 <div class="mt-6 flex justify-between space-x-2">
                                     <button type="button"
                                             @click="openModal = false"
@@ -249,7 +253,7 @@
                                                     ? documentsRelationship.push(modalDocument)
                                                     : documentsRelationship[item] = modalDocument;
 
-                                                openModal = false
+                                                openModal = false;
                                             "
                                             :disabled="!(
                                                 modalDocument.type.trim() &&

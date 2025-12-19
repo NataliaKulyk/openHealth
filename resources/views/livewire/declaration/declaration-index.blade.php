@@ -64,7 +64,7 @@
         </x-slot>
     </x-header-navigation>
 
-    <div class="flow-root mt-8 shift-content pl-3.5">
+    <div class="flow-root mt-14 shift-content pl-3.5">
         <div class="max-w-screen-xl">
             <div class="relative shadow-md sm:rounded-lg">
                 <div wire:key="declarations-table-{{ $declarations->total() }}-{{ $declarations->currentPage() }}">

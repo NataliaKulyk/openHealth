@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\Person\Status;
+use App\Models\Person\PersonRequest;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -39,6 +41,23 @@ class PersonRequestPolicy
     public function create(User $user): Response
     {
         if ($user->cannot('person_request:write')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
+
+    /**
+     * Determine whether the user can reject person request.
+     */
+    public function reject(User $user, PersonRequest $personRequest): Response
+    {
+        if ($user->cannot('person_request:write')) {
+            return Response::denyWithStatus(404);
+        }
+
+        // New and Approved person request can be rejected
+        if (!in_array($personRequest->status, [Status::NEW, Status::APPROVED], true)) {
             return Response::denyWithStatus(404);
         }
 

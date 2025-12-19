@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,13 +13,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('documents', function (Blueprint $table) {
+        Schema::create('documents', static function (Blueprint $table) {
             $table->id();
             $table->string('type');
             $table->string('number');
             $table->string('issued_by')->nullable();
             $table->date('issued_at')->nullable();
             $table->date('expiration_date')->nullable();
+            $table->date('active_to')->nullable();
             $table->morphs('documentable');
             $table->timestamps();
         });

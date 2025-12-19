@@ -28,9 +28,7 @@
               }
           }"
 >
-    <legend class="legend">
-        {{ __('forms.authentication') }}
-    </legend>
+    <legend class="legend">{{ __('forms.authentication') }}</legend>
 
     <div class="form-row-3">
         <div class="form-group group">
@@ -38,6 +36,7 @@
                 {{ __('forms.authentication') }}
             </label>
             <select x-model="authenticationMethods[0].type"
+                    x-init="$nextTick(() => authenticationMethods = JSON.parse(JSON.stringify(authenticationMethods)))"
                     id="relationType"
                     class="input-select peer @error('form.person.authenticationMethods.*.type') input-error @enderror"
                     required
@@ -71,7 +70,9 @@
                     {{ __('forms.phone_number') }}
                 </label>
 
-                @error('form.person.authenticationMethods.*.phoneNumber') <p class="text-error">{{ $message }}</p> @enderror
+                @error('form.person.authenticationMethods.*.phoneNumber')
+                <p class="text-error">{{ $message }}</p>
+                @enderror
             </div>
         </div>
     </template>

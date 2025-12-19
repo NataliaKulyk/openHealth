@@ -7,14 +7,12 @@
         </div>
         @include('livewire.person.parts.search-filter', ['context' => 'confidantPerson'])
 
-        @empty($selectedConfidantPatientId)
-            <div class="py-4">
-                <button wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
-                    @icon('search', 'w-4 h-4')
-                    <span>{{ __('patients.search_for_confidant') }}</span>
-                </button>
-            </div>
-        @endempty
+        <div class="py-4">
+            <button type="button" wire:click.prevent="searchForPerson" class="flex items-center gap-2 button-primary">
+                @icon('search', 'w-4 h-4')
+                <span>{{ __('patients.search_for_confidant') }}</span>
+            </button>
+        </div>
     </section>
 
     <!-- Patient list -->
@@ -43,7 +41,9 @@
                                         </td>
                                         <td class="p-4 text-sm font-semibold text-gray-900 whitespace-nowrap dark:text-gray-400">
                                             <p class="text-base dark:text-white">
-                                                {{ CarbonImmutable::parse($confidantPatient['birthDate'])->format('j.m.Y') }}
+                                                {{ data_get($confidantPatient, 'birthDate')
+                                                    ? CarbonImmutable::parse(data_get($confidantPatient, 'birthDate'))->format('j.m.Y')
+                                                    : '' }}
                                             </p>
                                         </td>
                                         <td class="p-4 text-sm font-semibold text-gray-500 whitespace-nowrap dark:text-gray-400">
@@ -52,8 +52,8 @@
                                             </p>
                                         </td>
                                         <td>
-                                            @if(($selectedConfidantPatientId === ($confidantPatient['id'] ?? ''))
-                                                || ($selectedConfidantPatientId === ($confidantPatient['personUuid'] ?? '')))
+                                            @if(($selectedConfidantPersonId === ($confidantPatient['id'] ?? ''))
+                                                || ($selectedConfidantPersonId === ($confidantPatient['personUuid'] ?? '')))
                                                 <button type="button"
                                                         class="cursor-pointer flex items-center gap-1 text-red-600"
                                                         wire:click.prevent="removeConfidantPerson"

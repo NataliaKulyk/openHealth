@@ -19,7 +19,7 @@ class Declaration extends Request
      * Get shortened details about declarations.
      *
      * @param  string  $url
-     * @param $query
+     * @param  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
@@ -27,14 +27,16 @@ class Declaration extends Request
     {
         $this->setDefaultPageSize();
 
-        return parent::get($url, $query);
+        $mergedQuery = array_merge($this->options['query'], $query ?? []);
+
+        return parent::get($url, $mergedQuery);
     }
 
     /**
      * Receive detailed information about person Declaration by declaration ID.
      *
      * @param  string  $url  Request identifier
-     * @param $query
+     * @param  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */

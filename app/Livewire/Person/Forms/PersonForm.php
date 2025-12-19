@@ -7,18 +7,15 @@ namespace App\Livewire\Person\Forms;
 use App\Core\Arr;
 use App\Core\BaseForm;
 use App\Rules\AlphaNumericWithSymbols;
-use App\Rules\Cyrillic;
 use App\Rules\InDictionary;
+use App\Rules\NameFields;
 use App\Rules\TwoLettersFourToSixDigitsOrComplex;
 use App\Rules\TwoLettersSixDigits;
 use App\Rules\EightDigitsHyphenFiveDigits;
+use App\Rules\Zip;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\MessageBag;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\Validate;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PersonForm extends BaseForm
 {
@@ -36,76 +33,60 @@ class PersonForm extends BaseForm
     public string $birthCertificate;
 
     public array $person = [
-        'phones' => [
-            ['type' => null, 'number' => null]
-        ],
+        'documents' => [],
+        'phones' => [['type' => null, 'number' => null]],
         'emergencyContact' => [
-            'phones' => [
-                ['type' => null, 'number' => null]
-            ]
+            'phones' => [['type' => null, 'number' => null]]
         ],
-        'authenticationMethods' => [
-            ['type' => null]
-        ]
+        'confidantPerson' => ['documentsRelationship' => []],
+        'authenticationMethods' => [['type' => null]]
     ];
-
-    public array $documents = [];
 
     public array $addresses = [];
 
-    public array $documentsRelationship = [];
+    public bool $processDisclosureDataConsent = true;
 
-    public array $confidantPerson = [];
+    /**
+     * Mark 'information from the leaflet was communicated to the patient'
+     *
+     * @var bool
+     */
+    public bool $patientSigned = false;
+
+    public string $authorizeWith;
 
     public int $verificationCode;
 
     public array $uploadedDocuments;
 
-    public string $knedp;
+    private int $personAge;
 
-    public TemporaryUploadedFile $keyContainerUpload;
-
-    public string $password;
-
-    public function rules(): array
+    public function rulesForCreate(): array
     {
-        return [
-            'person.firstName' => ['required', 'min:3', new Cyrillic()],
-            'person.lastName' => ['required', 'min:3', new Cyrillic()],
-            'person.secondName' => ['nullable', 'min:3', new Cyrillic()],
-            'person.birthDate' => ['required', 'date'],
-            'person.birthCountry' => ['required', 'string'],
-            'person.birthSettlement' => ['required', 'string'],
-            'person.gender' => ['required', 'string', new InDictionary('GENDER')],
-            'person.unzr' => [
+        $createRules = [
+            'person.confidantPerson' => ['nullable', 'array'],
+            'person.confidantPerson.personId' => [
                 'nullable',
-                new EightDigitsHyphenFiveDigits(),
-                Rule::requiredIf(function () {
-                    return collect($this->documents)
-                        ->contains(static fn (array $document) => $document['type'] === 'NATIONAL_ID');
-                }),
+                'uuid',
+                'required_with:person.confidantPerson.documentsRelationship'
             ],
-            'person.noTaxId' => ['nullable', 'boolean'],
-            'person.taxId' => ['nullable', 'required_if:person.noTaxId,false', 'numeric', 'digits:10'],
-            'person.secret' => ['required', 'string', 'min:6'],
-            'person.email' => ['nullable', 'email', 'string'],
-
-            'person.phones.*.type' => ['nullable', 'string', 'distinct', 'required_with:person.phones.*.number'],
-            'person.phones.*.number' => [
-                'nullable',
+            'person.confidantPerson.documentsRelationship.*.type' => [
+                'required',
                 'string',
-                'regex:/^\+38[0-9]{10}$/',
-                'distinct',
-                'required_with:person.phones.*.type'
+                new InDictionary('DOCUMENT_RELATIONSHIP_TYPE')
             ],
+            'person.confidantPerson.documentsRelationship.*.number' => ['required', 'string', 'max:255'],
+            'person.confidantPerson.documentsRelationship.*.issuedBy' => ['required', 'string', 'max:255'],
+            'person.confidantPerson.documentsRelationship.*.issuedAt' => [
+                'required',
+                'date',
+                'before:today',
+                'after:person.birthDate'
+            ],
+            'person.confidantPerson.documentsRelationship.*.activeTo' => ['nullable', 'date', 'after:tomorrow'],
 
-            'person.emergencyContact.firstName' => ['required', 'min:3', new Cyrillic()],
-            'person.emergencyContact.lastName' => ['required', 'min:3', new Cyrillic()],
-            'person.emergencyContact.secondName' => ['nullable', 'min:3', new Cyrillic()],
-            'person.emergencyContact.phones.*.type' => ['required', 'string', 'distinct'],
-            'person.emergencyContact.phones.*.number' => ['required', 'string', 'regex:/^\+38[0-9]{10}$/', 'distinct'],
-
-            'person.authenticationMethods.*.type' => ['required', 'string', new InDictionary('AUTHENTICATION_METHOD')],
+            'person.authenticationMethods' => ['required', 'array'],
+            'person.authenticationMethods.*.type' => ['required', new InDictionary('AUTHENTICATION_METHOD')],
             'person.authenticationMethods.*.phoneNumber' => [
                 'nullable',
                 'required_if:person.authenticationMethods.*.type,OTP',
@@ -120,21 +101,126 @@ class PersonForm extends BaseForm
                 'nullable',
                 'required_if:person.authenticationMethods.*.type,THIRD_PERSON',
                 'string'
+            ]
+        ];
+
+        if (!empty($this->person['documentsRelationship'])) {
+            $this->addNumberDocumentsRelationshipValidation($createRules);
+        }
+
+        if (!empty($this->person['birthDate'])) {
+            $this->personAge = CarbonImmutable::parse($this->person['birthDate'])->age;
+
+            $this->validateNecessityOfConfidantPerson();
+        }
+
+        return array_merge($this->basicRules(), $createRules);
+    }
+
+    /**
+     * List of rules that used when updating person data.
+     *
+     * @return array
+     */
+    public function rulesForUpdate(): array
+    {
+        $updateRules = [
+            'authorizeWith' => ['nullable', 'uuid']
+        ];
+
+        return array_merge($this->basicRules(), $updateRules);
+    }
+
+    /**
+     * Rules that used for create and update.
+     *
+     * @return array
+     */
+    protected function basicRules(): array
+    {
+        $rules = [
+            'person.firstName' => ['required', 'min:3', new NameFields()],
+            'person.lastName' => ['required', 'min:3', new NameFields()],
+            'person.secondName' => ['nullable', 'min:3', new NameFields()],
+            'person.birthDate' => ['required', 'date_format:d.m.Y'],
+            'person.birthCountry' => ['required', 'string'],
+            'person.birthSettlement' => ['required', 'string'],
+            'person.gender' => ['required', 'string', new InDictionary('GENDER')],
+            'person.unzr' => [
+                'nullable',
+                new EightDigitsHyphenFiveDigits(),
+                Rule::requiredIf(function () {
+                    return collect($this->person['documents'])
+                        ->contains(static fn (array $document) => $document['type'] === 'NATIONAL_ID');
+                }),
             ],
 
-            'documents' => ['required', 'array'],
-            'documents.*.type' => ['required', 'string', new InDictionary('DOCUMENT_TYPE')],
-            'documents.*.number' => ['required', 'string', 'max:255'],
-            'documents.*.issuedBy' => ['required', 'string', 'max:255'],
-            'documents.*.issuedAt' => ['required', 'date', 'before:today', 'after:person.birthDate'],
-            'documents.*.expirationDate' => ['nullable', 'date', 'after:today'],
+            'person.documents' => ['required', 'array'],
+            'person.documents.*.type' => ['required', 'string', new InDictionary('DOCUMENT_TYPE')],
+            'person.documents.*.number' => ['required', 'string', 'max:255'],
+            'person.documents.*.issuedBy' => ['required', 'string', 'max:255'],
+            'person.documents.*.issuedAt' => [
+                'required',
+                'date_format:d.m.Y',
+                'before:today',
+                'after:person.birthDate'
+            ],
+            'person.documents.*.expirationDate' => ['nullable', 'date_format:d.m.Y', 'after:today'],
 
-            'documentsRelationship.*.type' => ['required', 'string', new InDictionary('DOCUMENT_RELATIONSHIP_TYPE')],
-            'documentsRelationship.*.number' => ['required', 'string', 'max:255'],
-            'documentsRelationship.*.issuedBy' => ['required', 'string', 'max:255'],
-            'documentsRelationship.*.issuedAt' => ['required', 'date', 'before:today', 'after:person.birthDate'],
-            'documentsRelationship.*.activeTo' => ['nullable', 'date', 'after:tomorrow']
+            'person.noTaxId' => ['nullable', 'boolean'],
+            'person.taxId' => ['nullable', 'required_if:person.noTaxId,false', 'numeric', 'digits:10'],
+            'person.secret' => ['required', 'string', 'min:6'],
+            'person.email' => ['nullable', 'email', 'string'],
+
+            'person.phones.*.type' => ['nullable', 'string', 'distinct', 'required_with:person.phones.*.number'],
+            'person.phones.*.number' => [
+                'nullable',
+                'string',
+                'regex:/^\+38[0-9]{10}$/',
+                'distinct',
+                'required_with:person.phones.*.type'
+            ],
+
+            'person.addresses.*.type' => ['required', new InDictionary('ADDRESS_TYPE')],
+            'person.addresses.*.country' => ['required', new InDictionary('COUNTRY')],
+            'person.addresses.*.area' => ['required', 'string', 'max:255'],
+            'person.addresses.*.region' => ['sometimes', 'required_unless:person.addresses.*.area,М.КИЇВ'],
+            'person.addresses.*.settlement' => ['required', 'string', 'max:255'],
+            'person.addresses.*.settlementType' => ['required', new InDictionary('SETTLEMENT_TYPE')],
+            'person.addresses.*.settlementId' => ['required', 'uuid'],
+            'person.addresses.*.streetType' => ['nullable', new InDictionary('STREET_TYPE')],
+            'person.addresses.*.street' => ['nullable', 'string', 'max:255'],
+            'person.addresses.*.building' => ['nullable', 'string', 'max:255'],
+            'person.addresses.*.apartment' => ['nullable', 'string', 'max:255'],
+            'person.addresses.*.zip' => ['nullable', 'string', new Zip()],
+
+            'person.emergencyContact.firstName' => ['required', 'min:3', new NameFields()],
+            'person.emergencyContact.lastName' => ['required', 'min:3', new NameFields()],
+            'person.emergencyContact.secondName' => ['nullable', 'min:3', new NameFields()],
+            'person.emergencyContact.phones.*.type' => ['required', 'string', 'distinct'],
+            'person.emergencyContact.phones.*.number' => ['required', 'string', 'regex:/^\+38[0-9]{10}$/', 'distinct'],
+
+            'processDisclosureDataConsent' => ['required', 'boolean:strict', Rule::in([true])],
+            'patientSigned' => ['required', 'boolean:strict', Rule::in([false])]
         ];
+
+        $this->addNoTaxIdValidation($rules);
+
+        if (!empty($this->person['documents'])) {
+            $this->addExpirationDateRuleIfRequired($rules);
+            $this->addNumberDocumentsValidation($rules);
+        }
+
+        if (!empty($this->person['birthDate'])) {
+            $this->personAge = CarbonImmutable::parse($this->person['birthDate'])->age;
+
+            if (!empty($this->person['documents'])) {
+                $this->validateDocumentsForMinorPerson();
+                $this->validatePersonDocuments();
+            }
+        }
+
+        return $rules;
     }
 
     public function rulesForSearch(): array
@@ -164,112 +250,59 @@ class PersonForm extends BaseForm
     {
         return [
             'person.unzr.required' => "Поле УНЗР є обов’язковим, якщо вибрано документ типу 'Біометричний паспорт громадянина України'.",
-            'documents.*.expirationDate' => "Поле 'дійсний до' в документі має містити дату не раніше сьогоднішньої."
+            'person.documents.*.expirationDate' => "Поле 'дійсний до' в документі має містити дату не раніше сьогоднішньої."
         ];
     }
 
     /**
-     * Validate data for chosen model.
-     *
-     * @param  array  $fields
-     * @return array
-     * @throws ValidationException
-     */
-    public function rulesForModelValidate(array $fields): array
-    {
-        $rules = [];
-
-        foreach ($fields as $model) {
-            $rules += $this->rulesForModel($model)->toArray();
-        }
-
-        if (in_array('person', $fields, true)) {
-            $this->addNoTaxIdValidation($rules);
-            $this->validateAddressees();
-        }
-
-        if (!empty($this->documents) && in_array('documents', $fields, true)) {
-            $this->addExpirationDateRuleIfRequired($rules);
-            $this->addNumberDocumentsValidation($rules);
-        }
-
-        if (!empty($this->documentsRelationship) && in_array('documentsRelationship', $fields, true)) {
-            $this->addNumberDocumentsRelationshipValidation($rules);
-        }
-
-        return $this->validate($rules);
-    }
-
-    /**
-     * Validate data before sending API request.
-     *
-     * @return void
-     * @throws ValidationException
-     */
-    public function validateBeforeSendApi(): void
-    {
-        $errors = new MessageBag();
-
-        // Validate documents for minor persons
-        $minorPersonValidation = $this->validateDocumentsForMinorPerson();
-        if ($minorPersonValidation['error']) {
-            $errors->add('minor_person', $minorPersonValidation['message']);
-        }
-
-        // Validate necessity of confidant person
-        $confidantPersonValidation = $this->validateNecessityOfConfidantPerson();
-        if ($confidantPersonValidation['error']) {
-            $errors->add('confidant_person', $confidantPersonValidation['message']);
-        }
-
-        // Validate person's documents
-        $documentValidation = $this->validatePersonDocuments();
-        if ($documentValidation['error']) {
-            $errors->add('documents', $documentValidation['message']);
-        }
-
-        if ($errors->isNotEmpty()) {
-            $validator = Validator::make([], []); // Empty validator
-            $validator->errors()->merge($errors);
-
-            throw new ValidationException($validator);
-        }
-    }
-
-    /**
-     * Build API request for create person.
+     * Format API request for search confidant person.
      *
      * @param  array  $validatedData
      * @return array
      */
-    public function formatForApi(array $validatedData): array
+    public function formatForConfidantSearchApi(array $validatedData): array
+    {
+        collect($validatedData)
+            ->only(['birthDate'])
+            ->filter()
+            ->each(static function (string $value, string $key) use (&$validatedData) {
+                $validatedData[$key] = convertToYmd($value);
+            });
+
+        return removeEmptyKeys(Arr::toSnakeCase($validatedData));
+    }
+
+    /**
+     * Format API request for create person.
+     *
+     * @param  array  $validatedData
+     * @return array
+     */
+    public function formatForPersonCreationApi(array $validatedData): array
     {
         $validatedData['person']['birthDate'] = convertToYmd($validatedData['person']['birthDate']);
 
-        // change format in array
-        foreach ($validatedData['documents'] as $key => $document) {
-            if (!empty($document['issuedAt'])) {
-                $validatedData['documents'][$key]['issuedAt'] = convertToYmd($document['issuedAt']);
-            }
+        // change date format in array
+        foreach ($validatedData['person']['documents'] as $key => $document) {
+            $validatedData['person']['documents'][$key]['issuedAt'] = convertToYmd($document['issuedAt']);
 
             if (!empty($document['expirationDate'])) {
-                $validatedData['documents'][$key]['expirationDate'] = convertToYmd($document['expirationDate']);
+                $validatedData['person']['documents'][$key]['expirationDate'] =
+                    convertToYmd($document['expirationDate']);
             }
         }
 
-        $validatedData['person']['documents'] = $validatedData['documents'];
-        unset($validatedData['documents']);
+        if (!empty(Arr::get($validatedData, 'person.confidantPerson.documentsRelationship'))) {
+            foreach ($validatedData['person']['confidantPerson']['documentsRelationship'] as $key => $documentRelationship) {
+                $validatedData['person']['confidantPerson']['documentsRelationship'][$key]['issuedAt'] =
+                    convertToYmd($documentRelationship['issuedAt']);
 
-        $validatedData['person']['addresses'][0] = $validatedData['addresses'];
-        unset($validatedData['addresses']);
-
-        if (!empty($validatedData['confidantPerson'])) {
-            $validatedData['person']['confidantPerson']['personId'] = $validatedData['confidantPerson'][0]['personUuid'] ?? $validatedData['confidantPerson'][0]['id'];
-            $validatedData['person']['confidantPerson']['documentsRelationship'] = $validatedData['documentsRelationship'];
+                if (!empty($documentRelationship['activeTo'])) {
+                    $validatedData['person']['confidantPerson']['documentsRelationship'][$key]['activeTo'] =
+                        convertToYmd($documentRelationship['activeTo']);
+                }
+            }
         }
-
-        $validatedData['patientSigned'] = false;
-        $validatedData['processDisclosureDataConsent'] = true;
 
         return removeEmptyKeys(Arr::toSnakeCase($validatedData));
     }
@@ -284,9 +317,9 @@ class PersonForm extends BaseForm
     {
         $requiredTypes = config('ehealth.expiration_date_exists');
 
-        foreach ($this->documents as $document) {
+        foreach ($this->person['documents'] as $document) {
             if (empty($document['expirationDate']) && in_array($document['type'], $requiredTypes, true)) {
-                $rules['documents.expirationDate'][] = 'required';
+                $rules['person.documents.*.expirationDate'][] = 'required';
             }
         }
     }
@@ -299,12 +332,11 @@ class PersonForm extends BaseForm
      */
     private function addNumberDocumentsValidation(array &$rules): void
     {
-        foreach ($this->documents as $key => $document) {
-            $rules["documents.$key.number"][] = match ($document['type']) {
+        foreach ($this->person['documents'] as $key => $document) {
+            $rules["person.documents.$key.number"][] = match ($document['type']) {
                 'PASSPORT', 'REFUGEE_CERTIFICATE', 'COMPLEMENTARY_PROTECTION_CERTIFICATE' => new TwoLettersSixDigits(),
                 'NATIONAL_ID' => 'digits:9',
-                'BIRTH_CERTIFICATE', 'TEMPORARY_PASSPORT', 'CHILD_BIRTH_CERTIFICATE', 'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE' => new AlphaNumericWithSymbols(
-                ),
+                'BIRTH_CERTIFICATE', 'TEMPORARY_PASSPORT', 'CHILD_BIRTH_CERTIFICATE', 'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE' => new AlphaNumericWithSymbols(),
                 'TEMPORARY_CERTIFICATE' => new TwoLettersFourToSixDigitsOrComplex(),
                 'BIRTH_CERTIFICATE_FOREIGN', 'PERMANENT_RESIDENCE_PERMIT' => 'string',
                 default => null
@@ -320,9 +352,9 @@ class PersonForm extends BaseForm
      */
     private function addNumberDocumentsRelationshipValidation(array &$rules): void
     {
-        foreach ($this->documentsRelationship as $key => $document) {
+        foreach ($this->person['documentsRelationship'] as $key => $document) {
             if ($document['type'] === 'BIRTH_CERTIFICATE') {
-                $rules["documentsRelationship.$key.number"][] = new AlphaNumericWithSymbols();
+                $rules["person.documentsRelationship.$key.number"][] = new AlphaNumericWithSymbols();
             }
         }
     }
@@ -343,27 +375,23 @@ class PersonForm extends BaseForm
     /**
      * Validate necessity of confidant person.
      *
-     * @return array
+     * @return void
      */
-    private function validateNecessityOfConfidantPerson(): array
+    private function validateNecessityOfConfidantPerson(): void
     {
-        $personAge = CarbonImmutable::parse($this->person['birthDate'])->age;
-
         // If age less than 18 then check that confidant_person is submitted
-        if ($personAge < self::NO_SELF_REGISTRATION_AGE && empty($this->confidantPerson[0]['id'])) {
-            return [
-                'error' => true,
-                'message' => __('validation.custom.person.confidantPersonRequiredForChildren')
-            ];
+        if ($this->personAge < self::NO_SELF_REGISTRATION_AGE && empty($this->person['confidantPerson']['personId'])) {
+            throw ValidationException::withMessages([
+                'person.confidantPerson' => __('validation.custom.person.confidantPersonRequiredForChildren')
+            ]);
         }
 
         // If age between 14 and 18 then
-        if ($personAge > self::NO_SELF_REGISTRATION_AGE && $personAge < self::PERSON_FULL_LEGAL_CAPACITY_AGE) {
+        if ($this->personAge > self::NO_SELF_REGISTRATION_AGE && $this->personAge < self::PERSON_FULL_LEGAL_CAPACITY_AGE) {
             $personLegalCapacityDocumentTypes = config('ehealth.person_legal_capacity_document_types');
-
             $hasLegalCapacityDocument = false;
 
-            foreach ($this->documents as $document) {
+            foreach ($this->person['documents'] as $document) {
                 if (in_array($document['type'], $personLegalCapacityDocumentTypes, true)) {
                     $hasLegalCapacityDocument = true;
                     break;
@@ -371,72 +399,54 @@ class PersonForm extends BaseForm
             }
 
             // if none of persons documents has type from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter - check that confidant_person is submitted
-            if (!$hasLegalCapacityDocument && empty($this->confidantPerson[0]['id'])) {
-                return [
-                    'error' => true,
-                    'message' => __('validation.custom.personperson.confidantPersonRequiredForMinor')
-                ];
+            if (!$hasLegalCapacityDocument && empty($this->person['confidantPerson']['personId'])) {
+                throw ValidationException::withMessages([
+                    'person.confidantPerson' => __('validation.custom.person.confidantPersonRequiredForMinor')
+                ]);
             }
 
             // Else if at least one of submitted person document types exist in PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter - check that confidant_person is not submitted
-            if ($hasLegalCapacityDocument && !empty($this->confidantPerson[0]['id'])) {
-                return [
-                    'error' => true,
-                    'message' => __('validation.custom.person.confidantPersonMustBeCapable')
-                ];
+            if ($hasLegalCapacityDocument && !empty($this->person['confidantPerson']['personId'])) {
+                throw ValidationException::withMessages([
+                    'person.confidantPerson' => __('validation.custom.person.confidantPersonMustBeCapable')
+                ]);
             }
         }
-
-        return [
-            'error' => false,
-            'message' => ''
-        ];
     }
 
     /**
      * Check that document types BIRTH_CERTIFICATE or BIRTH_CERTIFICATE_FOREIGN are submitted if person age < NO_SELF_AUTH_AGE.
      *
-     * @return array
+     * @return void
      */
-    private function validateDocumentsForMinorPerson(): array
+    private function validateDocumentsForMinorPerson(): void
     {
-        $personAge = CarbonImmutable::parse($this->person['birthDate'])->age;
-
-        if ($personAge < self::NO_SELF_AUTH_AGE) {
+        if ($this->personAge < self::NO_SELF_AUTH_AGE) {
             $requiredDocumentTypes = ['BIRTH_CERTIFICATE', 'BIRTH_CERTIFICATE_FOREIGN'];
             $hasRequiredDocument = false;
 
-            if (isset($this->documents)) {
-                foreach ($this->documents as $document) {
-                    if (in_array($document['type'], $requiredDocumentTypes, true)) {
-                        $hasRequiredDocument = true;
-                        break;
-                    }
+            foreach ($this->person['documents'] as $document) {
+                if (in_array($document['type'], $requiredDocumentTypes, true)) {
+                    $hasRequiredDocument = true;
+                    break;
                 }
             }
 
             if (!$hasRequiredDocument) {
-                return [
-                    'error' => true,
-                    'message' => __('validation.custom.person.birthDocumentsRequired')
-                ];
+                throw ValidationException::withMessages([
+                    'person.documents' => __('validation.custom.person.birthDocumentsRequired')
+                ]);
             }
         }
-
-        return [
-            'error' => false,
-            'message' => ''
-        ];
     }
 
     /**
      * Validate person documents.
      *
-     * @return array
+     * @return void
      */
-    private function validatePersonDocuments(): array
+    private function validatePersonDocuments(): void
     {
-        $personAge = CarbonImmutable::parse($this->person['birthDate'])->age;
         $personLegalCapacityDocumentTypes = config('ehealth.person_legal_capacity_document_types');
         $personRegistrationDocumentTypes = config('ehealth.person_registration_document_types');
         $selfAuthAgeDocumentTypes = config('ehealth.self_auth_age_document_types');
@@ -445,26 +455,22 @@ class PersonForm extends BaseForm
         // that contains values from DOCUMENT_TYPE dictionary
         $allAllowedTypes = array_merge($personLegalCapacityDocumentTypes, $personRegistrationDocumentTypes);
 
-        foreach ($this->documents as $document) {
+        foreach ($this->person['documents'] as $document) {
             if (!in_array($document['type'], (array)$allAllowedTypes, true)) {
-                return [
-                    'error' => true,
-                    'message' => __("Submitted document type is not allowed: {$document['type']}.")
-                ];
+                throw ValidationException::withMessages([
+                    'person.documents' => "Submitted document type is not allowed: {$document['type']}."
+                ]);
             }
         }
 
         // Check document types from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter (that prove persons legal capacity) are not submitted
         // if persons age is less than no_self_registration_age global parameter or greater than person_full_legal_capacity_age global parameter
-        if ($personAge < self::NO_SELF_REGISTRATION_AGE || $personAge > self::PERSON_FULL_LEGAL_CAPACITY_AGE) {
-            if (!empty($this->documents)) {
-                foreach ($this->documents as $document) {
-                    if (in_array($document['type'], $personLegalCapacityDocumentTypes, true)) {
-                        return [
-                            'error' => true,
-                            'message' => __("{$document['type']} не може бути подана для цієї особи.")
-                        ];
-                    }
+        if ($this->personAge < self::NO_SELF_REGISTRATION_AGE || $this->personAge > self::PERSON_FULL_LEGAL_CAPACITY_AGE) {
+            foreach ($this->person['documents'] as $document) {
+                if (in_array($document['type'], $personLegalCapacityDocumentTypes, true)) {
+                    throw ValidationException::withMessages([
+                        'person.documents' => "{$document['type']} не може бути подана для цієї особи."
+                    ]);
                 }
             }
         }
@@ -472,65 +478,43 @@ class PersonForm extends BaseForm
         // If at least one document type from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter is submitted,
         // check that at least one document type from PERSON_REGISTRATION_DOCUMENT_TYPES is submitted
         $submittedLegalCapacityDocuments = array_intersect(
-            array_column($this->documents, 'type'),
+            array_column($this->person['documents'], 'type'),
             $personLegalCapacityDocumentTypes
         );
+
         if (!empty($submittedLegalCapacityDocuments)) {
             $submittedRegistrationDocuments = array_intersect(
-                array_column($this->documents, 'type'),
+                array_column($this->person['documents'], 'type'),
                 $personRegistrationDocumentTypes
             );
 
             if (empty($submittedRegistrationDocuments)) {
-                return [
-                    'error' => true,
-                    'message' => __('Документ, що підтверджує особисті дані, повинен бути поданий.')
-                ];
+                throw ValidationException::withMessages([
+                    'person.documents' => 'Документ, що підтверджує особисті дані, повинен бути поданий.'
+                ]);
             }
 
             // If at least one document type from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter is submitted,
             // check that at least one document type from PERSON_REGISTRATION_DOCUMENT_TYPES is submitted
             if (count($submittedLegalCapacityDocuments) > 1) {
-                return [
-                    'error' => true,
-                    'message' => __('Only one legal capacity document must be submitted.')
-                ];
+                throw ValidationException::withMessages([
+                    'person.documents' => 'Only one legal capacity document must be submitted.'
+                ]);
             }
         }
 
         // Check if person age > prm.global_parameters.no_self_auth_age check existence SELF_AUTH_AGE_DOCUMENT_TYPES
-        if ($personAge > self::NO_SELF_AUTH_AGE) {
-            $submittedTypes = array_column($this->documents, 'type');
+        if ($this->personAge > self::NO_SELF_AUTH_AGE) {
+            $submittedTypes = array_column($this->person['documents'], 'type');
             $hasSelfAuthType = (bool)array_intersect($submittedTypes, $selfAuthAgeDocumentTypes);
 
             if (!$hasSelfAuthType) {
                 $allowedTypesList = implode(', ', $selfAuthAgeDocumentTypes);
 
-                return [
-                    'error' => true,
-                    'message' => __("Не можна створити з таким типом документів, оберіть один із: $allowedTypesList")
-                ];
+                throw ValidationException::withMessages([
+                    'person.documents' => "Не можна створити з таким типом документів, оберіть один із: $allowedTypesList"
+                ]);
             }
-        }
-
-        return [
-            'error' => false,
-            'message' => ''
-        ];
-    }
-
-    /**
-     * Validate addressees.
-     *
-     * @return void
-     * @throws ValidationException
-     */
-    private function validateAddressees(): void
-    {
-        $errors = $this->component->addressValidation();
-
-        if (!empty($errors)) {
-            throw ValidationException::withMessages($errors);
         }
     }
 }

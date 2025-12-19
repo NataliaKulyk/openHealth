@@ -80,6 +80,8 @@ return [
     'patient_search' => 'Пошук пацієнта',
     'patient_filter' => 'Фільтр пацієнтів',
     'search' => 'Шукати',
+    'male' => 'Чоловік',
+    'female' => 'Жінка',
     'all' => 'Всі',
     'birth_certificate' => 'Свідоцтво',
     'applications' => 'Заявки',
@@ -101,6 +103,7 @@ return [
     'confidant_person_documents_relationship' => 'Документи, що підтверджують законність представництва',
     'alias' => 'Роль',
     'leaflet' => "Пам’ятка",
+    'reject' => 'Відхилити заявку',
     'print_leaflet_for_patient' => "Роздрукувати пам’ятку для ознайомлення пацієнтом",
 
     'status' => [
@@ -120,6 +123,11 @@ return [
         'cancelled' => 'Скасований',
         'expired' => 'Прострочений',
         'rejected' => 'Відхилений'
+    ],
+
+    'source' => [
+        'local' => 'Локальні',
+        'ehealth' => 'ЕСОЗ'
     ],
 
     // patient-data

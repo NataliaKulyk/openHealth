@@ -7,14 +7,12 @@ namespace App\Models\Person;
 use App\Casts\EHealthDateCast;
 use App\Models\Relations\Address;
 use App\Models\Relations\AuthenticationMethod;
-use App\Models\Relations\ConfidantPerson;
 use App\Models\Relations\Document;
 use App\Models\Relations\Phone;
 use Carbon\CarbonImmutable;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 abstract class BasePerson extends Model
@@ -87,10 +85,5 @@ abstract class BasePerson extends Model
     public function authenticationMethods(): MorphMany
     {
         return $this->morphMany(AuthenticationMethod::class, 'authenticatable');
-    }
-
-    public function confidantPerson(): HasOne
-    {
-        return $this->hasOne(ConfidantPerson::class);
     }
 }

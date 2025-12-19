@@ -6,6 +6,7 @@ namespace App\Livewire\Person;
 
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
+use App\Enums\Person\AuthenticationMethod;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\LegalEntity;
@@ -32,11 +33,67 @@ class PersonUpdate extends PersonComponent
     {
         $this->personId = $person->id;
         $this->uuid = $person->uuid;
-        $this->isIncapacitated = Person::whereId($this->personId)->whereHas('confidantPerson')->exists();
         $this->baseMount();
-        $this->getPatient();
+
+        $this->form->person = Arr::toCamelCase($person->load(['addresses', 'documents', 'phones'])->toArray());
+
+        $this->address = $this->form->person['addresses'][0];
+
+        if (empty($this->form->person['phones'])) {
+            $this->form->person['phones'] = [['type' => null, 'number' => null]];
+        }
+
+        if ($person->confidantPerson) {
+            $this->selectedConfidantPersonId = $person->confidantPerson->person->uuid;
+
+            $authorizeWith = $person->authenticationMethods
+                ->where('type', AuthenticationMethod::THIRD_PERSON)
+                ->first()
+                ?->uuid;
+
+            // If uuid isn't found, do request and save it in DB
+            if (!$authorizeWith) {
+                try {
+                    $response = EHealth::person()->getAuthMethods($this->uuid);
+
+                    $newAuthMethods = $response->validate();
+
+                    // Update by type
+                    foreach ($newAuthMethods as $method) {
+                        $person->authenticationMethods()->updateOrCreate(
+                            ['type' => $method['type']],
+                            $method
+                        );
+                    }
+
+                    $this->form->authorizeWith = $newAuthMethods[0]['uuid'];
+                } catch (ConnectionException $exception) {
+                    $this->logConnectionError($exception, 'Error connecting when getting auth methods');
+                    Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+                    return;
+                } catch (EHealthValidationException|EHealthResponseException $exception) {
+                    $this->logEHealthException($exception, 'Error when getting auth methods');
+
+                    if ($exception instanceof EHealthValidationException) {
+                        Session::flash('error', $exception->getFormattedMessage());
+                    } else {
+                        Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+                    }
+
+                    return;
+                }
+            } else {
+                $this->form->authorizeWith = $authorizeWith;
+            }
+        }
     }
 
+    /**
+     * Update data for created person.
+     *
+     * @return void
+     */
     public function update(): void
     {
         if (Auth::user()->cannot('create', PersonRequest::class)) {
@@ -45,35 +102,39 @@ class PersonUpdate extends PersonComponent
             return;
         }
 
-        $this->form->addresses = $this->address;
-        $this->form->confidantPerson = $this->confidantPerson;
+        $this->form->person['addresses'] = [$this->address]; // must be multiple
 
         try {
-            $validated = $this->form->rulesForModelValidate(['person', 'documents', 'documentsRelationship']);
+            $addressErrors = $this->addressValidation();
+            if (!empty($addressErrors)) {
+                throw ValidationException::withMessages($addressErrors);
+            }
+
+            $validated = $this->form->validate($this->form->rulesForUpdate());
+            $this->formKey++;
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
             $this->setErrorBag($exception->validator->getMessageBag());
+            $this->formKey++;
 
             return;
         }
-        unset($validated['person']['authenticationMethods'], $validated['person']['confidantPerson']);
 
-        $formatted = $this->form->formatForApi(array_merge($validated, ['addresses' => $this->form->addresses]));
+        $formatted = $this->form->formatForPersonCreationApi(
+            array_merge($validated, ['addresses' => $this->form->addresses])
+        );
         $formatted['person']['id'] = $this->uuid;
 
         try {
             // update
             $response = EHealth::personRequest()->create($formatted);
-
-            $responseData = $response->getData();
-            $responseStatusCode = $response->getStatusCode();
         } catch (ConnectionException $exception) {
-            $this->logConnectionError($exception, 'Error connecting when creating person request');
+            $this->logConnectionError($exception, 'Error connecting when updating person request');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
-            $this->logEHealthException($exception, 'Error when creating a person request');
+            $this->logEHealthException($exception, 'Error when updating a person request');
 
             if ($exception instanceof EHealthValidationException) {
                 Session::flash('error', $exception->getFormattedMessage());
@@ -84,63 +145,21 @@ class PersonUpdate extends PersonComponent
             return;
         }
 
-        if ($responseStatusCode === 201) {
-            if (isset($this->personId)) {
-                $responseData['dbId'] = $this->personId;
-            }
-
-            if (isset($responseData['person']['confidant_person'])) {
-                $responseData['person']['confidant_person']['confidantPersonInfo'] = Arr::toSnakeCase(
-                    $this->confidantPerson[0]
-                );
-            }
-
+        if ($response->successful()) {
             // save in DB
             try {
-                Repository::person()->savePersonResponseData($responseData, PersonRequest::class);
+                Repository::personRequest()->update(removeEmptyKeys($response->map($response->validate())));
             } catch (Throwable $exception) {
-                $this->logDatabaseErrors($exception, 'Failed to store person request');
+                $this->logDatabaseErrors($exception, 'Failed to update person request');
                 Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
 
                 return;
             }
 
-            $this->form->person['id'] = $responseData['id'];
+            $this->form->person['id'] = $response->getData()['id'];
             $this->uploadedDocuments = $response->getUrgent()['documents'];
             $this->viewState = 'new';
         }
-    }
-
-    /**
-     * Get all data about the patient from the DB.
-     *
-     * @return void
-     */
-    protected function getPatient(): void
-    {
-        $patientData = Person::whereId($this->personId)->firstOrFail();
-
-        // Format data
-        $result = [
-            'person' => array_merge($patientData->toArray(), [
-                'phones' => count($patientData->phones) === 0
-                    ? [['type' => null, 'number' => null]]
-                    : $patientData->phones->toArray(),
-                'authentication_methods' => $patientData->authenticationMethods->toArray()
-            ]),
-            'documents' => $patientData->documents->toArray(),
-            'address' => $patientData->addresses->toArray(),
-            'confidantPerson' => $patientData->confidantPerson?->toArray() ?? []
-        ];
-
-        $result = Arr::toCamelCase($result);
-        $this->form->fill($result);
-        $this->address = $result['address'][0];
-        $this->confidantPerson = !empty($result['confidantPerson'])
-            ? [$result['confidantPerson']]
-            : [];
-        $this->selectedConfidantPersonId = $result['confidantPerson']['personUuid'] ?? null;
-        $this->form->documentsRelationship = $result['confidantPerson']['documentsRelationship'] ?? [];
     }
 
     public function render(): View

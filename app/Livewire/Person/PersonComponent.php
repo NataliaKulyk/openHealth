@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Person;
 
-use App\Classes\eHealth\Api\PersonRequestApi;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
+use App\Enums\Person\Status;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Livewire\Person\Forms\PersonForm as Form;
@@ -18,6 +18,7 @@ use App\Traits\FormTrait;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -39,6 +40,8 @@ class PersonComponent extends Component
     public string $mode = 'create';
 
     public Form $form;
+
+    public int $formKey = 1;
 
     /**
      * List of founded confidant person.
@@ -92,13 +95,6 @@ class PersonComponent extends Component
     public array $uploadedFiles = [];
 
     /**
-     * Mark 'information from the leaflet was communicated to the patient'.
-     *
-     * @var bool
-     */
-    public bool $isInformed = false;
-
-    /**
      * Is patient incapable or child less than 14 y.o.
      *
      * @var bool
@@ -118,6 +114,8 @@ class PersonComponent extends Component
      * @var int
      */
     public int $resendCooldown = 60;
+
+    public bool $showInformationMessageModal = false;
 
     public bool $showSignatureModal = false;
 
@@ -147,7 +145,7 @@ class PersonComponent extends Component
 
         if ($personData) {
             $this->selectedConfidantPersonId = $id;
-            $this->confidantPerson = [$personData];
+            $this->form->person['confidantPerson']['personId'] = $personData['id'];
             $this->form->person['authenticationMethods'][0]['value'] = $personData['id'];
         }
 
@@ -163,7 +161,7 @@ class PersonComponent extends Component
     {
         $this->form->person['authenticationMethods'][0]['value'] = null;
 
-        $this->confidantPerson = [];
+        $this->form->person['confidantPerson']['personId'] = '';
         $this->selectedConfidantPersonId = null;
         $this->searchPerformed = false;
     }
@@ -190,10 +188,11 @@ class PersonComponent extends Component
             return;
         }
 
-        $buildSearchRequest = removeEmptyKeys(Arr::toSnakeCase($validated));
         try {
             $this->confidantPerson = Arr::toCamelCase(
-                EHealth::person()->searchForPersonByParams($buildSearchRequest)->getData()
+                EHealth::person()
+                    ->searchForPersonByParams($this->form->formatForConfidantSearchApi($validated))
+                    ->getData()
             );
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error when searching for person');
@@ -202,7 +201,12 @@ class PersonComponent extends Component
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
             $this->logEHealthException($exception, 'Error when searching for person');
-            Session::flash('error', 'Виникла помилка. Спробуйте пізніше.');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
 
             return;
         }
@@ -223,26 +227,28 @@ class PersonComponent extends Component
             return;
         }
 
-        $this->form->addresses = $this->address;
-        $this->form->confidantPerson = $this->confidantPerson;
+        $this->form->person['addresses'] = [$this->address]; // must be multiple
 
         try {
-            $validated = $this->form->rulesForModelValidate(['person', 'documents', 'documentsRelationship']);
-            $this->form->validateBeforeSendApi();
+            $addressErrors = $this->addressValidation();
+            if (!empty($addressErrors)) {
+                throw ValidationException::withMessages($addressErrors);
+            }
+
+            $validated = $this->form->validate($this->form->rulesForCreate());
+            $this->formKey++;
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
             $this->setErrorBag($exception->validator->getMessageBag());
+            $this->formKey++;
 
             return;
         }
 
-        $formatted = $this->form->formatForApi(array_merge($validated, ['addresses' => $this->form->addresses], ['confidantPerson' => $this->form->confidantPerson]));
+        $formatted = $this->form->formatForPersonCreationApi($validated);
 
         try {
             $response = EHealth::personRequest()->create($formatted);
-
-            $responseData = $response->getData();
-            $responseStatusCode = $response->getStatusCode();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating person request');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
@@ -260,20 +266,26 @@ class PersonComponent extends Component
             return;
         }
 
-        if ($responseStatusCode === 201) {
-            if (isset($this->personId)) {
-                $responseData['dbId'] = $this->personId;
-            }
+        $selectedConfidantPersonData = null;
+        if (!empty($this->selectedConfidantPersonId)) {
+            $selectedConfidantPersonData = $this->getConfidantPersonData();
+        }
 
-            if (isset($responseData['person']['confidant_person'])) {
-                $responseData['person']['confidant_person']['confidantPersonInfo'] = Arr::toSnakeCase(
-                    $this->confidantPerson[0]
-                );
-            }
-
-            // save in DB
+        // Save in DB and show new frontend
+        if ($response->successful()) {
             try {
-                Repository::person()->savePersonResponseData($responseData, PersonRequest::class);
+                if ($this instanceof PersonRequestEdit) {
+                    Repository::personRequest()->updateDraft(
+                        $this->form->person['id'],
+                        removeEmptyKeys($response->map($response->validate())),
+                        $selectedConfidantPersonData
+                    );
+                } else {
+                    Repository::personRequest()->create(
+                        removeEmptyKeys($response->map($response->validate())),
+                        $selectedConfidantPersonData
+                    );
+                }
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to store person request');
                 Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
@@ -281,10 +293,16 @@ class PersonComponent extends Component
                 return;
             }
 
-            $this->form->person['id'] = $responseData['id'];
+            $this->form->person['id'] = $response->getData()['id'];
             $this->uploadedDocuments = $response->getUrgent()['documents'];
-            $this->viewState = 'new';
+            $this->showInformationMessageModal = true;
         }
+    }
+
+    public function openNewState(): void
+    {
+        $this->showInformationMessageModal = false;
+        $this->viewState = 'new';
     }
 
     /**
@@ -300,24 +318,40 @@ class PersonComponent extends Component
             return;
         }
 
-        $this->form->addresses = $this->address;
-        $this->form->confidantPerson = $this->confidantPerson;
+        $this->form->person['addresses'] = [$this->address]; // must be multiple
 
         try {
-            $this->form->rulesForModelValidate(['person', 'documents', 'documentsRelationship']);
-            $this->form->validateBeforeSendApi();
+            $validated = $this->form->validate($this->form->rulesForCreate());
+            $this->formKey++;
         } catch (ValidationException $exception) {
             Session::flash('error', $exception->validator->errors()->first());
             $this->setErrorBag($exception->validator->getMessageBag());
+            $this->formKey++;
 
             return;
         }
 
+        $selectedConfidantPersonData = null;
+        if (!empty($this->selectedConfidantPersonId)) {
+            $selectedConfidantPersonData = $this->getConfidantPersonData();
+        }
+
         try {
-            Repository::person()->savePersonResponseData(
-                removeEmptyKeys(Arr::toSnakeCase($this->form->toArray())),
-                PersonRequest::class
-            );
+            $validated['person']['status'] = Status::DRAFT;
+            if ($this instanceof PersonRequestEdit) {
+                Repository::personRequest()->updateDraft(
+                    $this->form->person['id'],
+                    removeEmptyKeys(Arr::toSnakeCase($validated)),
+                    $selectedConfidantPersonData
+                );
+                $successMessage = 'Заявка на створення пацієнта успішно оновлена.';
+            } else {
+                Repository::personRequest()->create(
+                    removeEmptyKeys(Arr::toSnakeCase($validated)),
+                    $selectedConfidantPersonData
+                );
+                $successMessage = 'Заявка на створення пацієнта успішно створена.';
+            }
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store person request');
             Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
@@ -325,7 +359,7 @@ class PersonComponent extends Component
             return;
         }
 
-        Session::flash('success', 'Заявка на створення пацієнта успішно створена.');
+        Session::flash('success', $successMessage);
         $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
     }
 
@@ -382,68 +416,28 @@ class PersonComponent extends Component
             return;
         }
 
-        $totalFiles = count($this->form->uploadedDocuments);
-        // Check that all provided files were uploaded
-        if ($totalFiles !== count($this->uploadedDocuments)) {
-            Session::flash('error', 'Будь ласка завантажте всі файли!');
+        if ($this->selectedConfidantPersonId || !empty($this->form->uploadedDocuments)) {
+            $this->uploadDocuments();
+        }
+
+        try {
+            $this->approvePersonRequest();
+            $this->showLeafletModal = true;
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when approving person request');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
             return;
-        }
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when approving person request');
 
-        $successCount = 0;
-        foreach ($this->form->uploadedDocuments as $key => $document) {
-            try {
-                $filePath = $document->getRealPath();
-                $fileMime = $document->getMimeType();
-                $fileContents = file_get_contents($filePath);
-                $uploadUrl = trim($this->uploadedDocuments[$key]['url']);
-
-                $uploadResponse = Http::withHeaders([
-                    'Content-Type' => $fileMime,
-                ])->withBody($fileContents, $fileMime)->put($uploadUrl);
-
-                if ($uploadResponse->getStatusCode() === 200) {
-                    $successCount++;
-
-                    $this->uploadedFiles[$key] = true;
-                } else {
-                    Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-
-                    $this->uploadedFiles[$key] = false;
-                }
-            } catch (Exception) {
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
-
-                $this->uploadedFiles[$key] = false;
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
             }
-        }
 
-        // Show final status message
-        if ($successCount === $totalFiles) {
-            Session::flash('success', 'Всі файли успішно завантажено');
-        }
-
-        // Approve if auth type method is offline
-        if ($this->form->person['authenticationMethods'][0]['type'] === 'OFFLINE') {
-            try {
-                $this->approvePersonRequest();
-                $this->showLeafletModal = true;
-            } catch (ConnectionException $exception) {
-                $this->logConnectionError($exception, 'Error connecting when approving person request');
-                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
-
-                return;
-            } catch (EHealthValidationException|EHealthResponseException $exception) {
-                $this->logEHealthException($exception, 'Error when approving person request');
-
-                if ($exception instanceof EHealthValidationException) {
-                    Session::flash('error', $exception->getFormattedMessage());
-                } else {
-                    Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
-                }
-
-                return;
-            }
+            return;
         }
     }
 
@@ -522,14 +516,12 @@ class PersonComponent extends Component
             return;
         }
 
-        $preRequest = ['verification_code' => $validated];
-        $requestData = schemaService()
-            ->setDataSchema($preRequest, app(PersonRequestApi::class))
-            ->requestSchemaNormalize('approveSchemaRequest')
-            ->getNormalizedData();
+        if ($this->selectedConfidantPersonId && $this->form->uploadedDocuments) {
+            $this->uploadDocuments();
+        }
 
         try {
-            $this->approvePersonRequest($requestData);
+            $this->approvePersonRequest(['verification_code' => $validated['verificationCode']]);
             $this->showLeafletModal = true;
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when approving person request');
@@ -557,8 +549,57 @@ class PersonComponent extends Component
     public function openSignatureModal(): void
     {
         $this->showLeafletModal = false;
-        $this->isInformed = true;
+        $this->form->patientSigned = true;
         $this->showSignatureModal = true;
+    }
+
+    /**
+     * Reject previously created request.
+     *
+     * @return void
+     */
+    public function reject(): void
+    {
+        $personRequest = PersonRequest::whereUuid($this->form->person['id'])->get()->firstOrFail();
+
+        if (Auth::user()->cannot('reject', [PersonRequest::class, $personRequest])) {
+            Session::flash('error', 'У вас немає дозволу на скасування заявки.');
+
+            return;
+        }
+
+        try {
+            $response = EHealth::personRequest()->reject($personRequest->uuid);
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting when rejecting person request');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error connecting when rejecting person request');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
+
+        if ($response->successful()) {
+            try {
+                Repository::personRequest()->updateStatusByUuid($response->getData());
+            } catch (Exception|Throwable $exception) {
+                $this->logDatabaseErrors($exception, $exception->getMessage());
+                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+                return;
+            }
+
+            Session::flash('success', 'Заявку успішно відхилено.');
+            $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
+        }
     }
 
     /**
@@ -569,7 +610,7 @@ class PersonComponent extends Component
     public function sign(): void
     {
         if (Auth::user()->cannot('create', PersonRequest::class)) {
-            Session::flash('error', 'У вас немає дозволу на створення підписаного пацієнта.');
+            Session::flash('error', 'У вас немає дозволу на підписання.');
 
             return;
         }
@@ -603,7 +644,7 @@ class PersonComponent extends Component
             return;
         }
 
-        $personRequestData['patient_signed'] = $this->isInformed;
+        $personRequestData['patient_signed'] = $this->form->patientSigned;
 
         $signedContent = signatureService()->signData(
             $personRequestData,
@@ -615,12 +656,9 @@ class PersonComponent extends Component
 
         try {
             $signResponse = EHealth::personRequest()
-                ->withHeaders([
-                    'msp_drfo' => Auth::user()->party->taxId
-                ])
+                ->withHeaders(['msp_drfo' => Auth::user()->party->taxId])
                 ->signed($this->form->person['id'], ['signed_content' => $signedContent]);
             $responseData = $signResponse->getData();
-            $responseStatus = $signResponse->getStatusCode();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when sign person request');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
@@ -638,16 +676,26 @@ class PersonComponent extends Component
             return;
         }
 
-        if ($responseStatus === 200) {
-            // create related person, update status
+        // Create/update person, update request status
+        if ($signResponse->successful()) {
             try {
-                Repository::person()->savePersonResponseData(
-                    $personRequestData,
-                    Person::class,
-                    $responseData['person_id']
-                );
-                Repository::personRequest()->updateStatusByUuid($responseData);
-                Repository::person()->createRelation($responseData);
+                DB::transaction(function () use ($responseData, $approvedPersonRequest, &$successMessage) {
+                    Repository::personRequest()->updateStatusByUuid($responseData);
+
+                    if ($this instanceof PersonUpdate) {
+                        Repository::person()->update(
+                            $approvedPersonRequest->map($approvedPersonRequest->validate()),
+                            $responseData['person_id']
+                        );
+                        $successMessage = 'Пацієнт успішно оновлений';
+                    } else {
+                        Repository::person()->create(
+                            $approvedPersonRequest->map($approvedPersonRequest->validate()),
+                            $responseData['person_id']
+                        );
+                        $successMessage = 'Пацієнт успішно створений';
+                    }
+                });
             } catch (Exception|Throwable $exception) {
                 $this->logDatabaseErrors($exception, $exception->getMessage());
                 Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
@@ -655,8 +703,74 @@ class PersonComponent extends Component
                 return;
             }
 
-            Session::flash('success', 'Пацієнт успішно створений');
+            Session::flash('success', $successMessage);
             $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
+        }
+    }
+
+    /**
+     * Get selected confidant person data.
+     *
+     * @return array
+     */
+    private function getConfidantPersonData(): array
+    {
+        return collect($this->confidantPerson)
+            ->where('id', $this->selectedConfidantPersonId)
+            // change id key to uuid
+            ->map(static fn (array $person) => array_merge(
+                Arr::except($person, 'id'),
+                ['uuid' => $person['id']]
+            ))
+            ->first();
+    }
+
+    /**
+     * Upload documents to URLs that EHealth provide.
+     *
+     * @return void
+     */
+    private function uploadDocuments(): void
+    {
+        $totalFiles = count($this->form->uploadedDocuments);
+        // Check that all provided files were uploaded
+        if ($totalFiles !== count($this->uploadedDocuments)) {
+            Session::flash('error', 'Будь ласка завантажте всі файли!');
+
+            return;
+        }
+
+        $successCount = 0;
+        foreach ($this->form->uploadedDocuments as $key => $document) {
+            try {
+                $filePath = $document->getRealPath();
+                $fileMime = $document->getMimeType();
+                $fileContents = file_get_contents($filePath);
+                $uploadUrl = trim($this->uploadedDocuments[$key]['url']);
+
+                $uploadResponse = Http::withHeaders([
+                    'Content-Type' => $fileMime,
+                ])->withBody($fileContents, $fileMime)->put($uploadUrl);
+
+                if ($uploadResponse->successful()) {
+                    $successCount++;
+
+                    $this->uploadedFiles[$key] = true;
+                } else {
+                    Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+                    $this->uploadedFiles[$key] = false;
+                }
+            } catch (Exception) {
+                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+                $this->uploadedFiles[$key] = false;
+            }
+        }
+
+        // Show final status message
+        if ($successCount === $totalFiles) {
+            Session::flash('success', 'Всі файли успішно завантажено');
         }
     }
 
@@ -672,7 +786,7 @@ class PersonComponent extends Component
         $response = EHealth::personRequest()->approve($this->form->person['id'], $requestData);
         $responseData = $response->getData();
 
-        if ($response->getStatusCode() === 200) {
+        if ($response->successful()) {
             try {
                 Repository::personRequest()->updateStatusByUuid($responseData);
             } catch (Exception $exception) {

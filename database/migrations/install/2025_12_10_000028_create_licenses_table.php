@@ -18,7 +18,7 @@ return new class extends Migration
     {
         Schema::create('licenses', static function (Blueprint $table) {
             $table->id();
-            $table->string('uuid')->unique()->nullable();
+            $table->uuid()->unique()->nullable();
             $table->foreignId('legal_entity_id')->constrained()->cascadeOnDelete();
             $table->enum('type', Type::values());
             $table->boolean('is_active')->nullable();

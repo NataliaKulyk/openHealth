@@ -73,6 +73,8 @@ class Person extends Request
      */
     public function getAuthMethods(string $id, array $query = []): PromiseInterface|EHealthResponse
     {
+        $this->setValidator($this->validateAuthMethods(...));
+
         return $this->get(self::URL . "/$id/authentication_methods", $query);
     }
 
@@ -164,5 +166,55 @@ class Person extends Request
         }
 
         return $validator->validate();
+    }
+
+    protected function validateAuthMethods(EHealthResponse $response): array
+    {
+        $data = $response->getData();
+
+        $replaced = self::replaceEHealthPropNames($data);
+
+        $validator = Validator::make($replaced, [
+            '*.alias' => ['nullable', 'string', 'max:255'],
+            '*.ehealth_ended_at' => ['nullable', 'date'],
+            '*.uuid' => ['required', 'uuid'],
+            '*.type' => ['nullable', 'string', 'max:255'],
+            '*.value' => ['nullable', 'uuid'],
+            '*.phone_number' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($validator->fails()) {
+            Log::channel('e_health_errors')->error('Validation failed: ' . implode(', ', $validator->errors()->all()));
+        }
+
+        return $validator->validate();
+    }
+
+    /**
+     * Replace eHealth property names with the ones used in the application.
+     * E.g., id => uuid.
+     */
+    protected static function replaceEHealthPropNames(array $properties): array
+    {
+        $replaced = [];
+
+        foreach ($properties as $index => $item) {
+            if (is_array($item)) {
+                $replacedItem = [];
+                foreach ($item as $key => $value) {
+                    $newKey = match ($key) {
+                        'id' => 'uuid',
+                        'ended_at' => 'ehealth_ended_at',
+                        default => $key
+                    };
+                    $replacedItem[$newKey] = $value;
+                }
+                $replaced[$index] = $replacedItem;
+            } else {
+                $replaced[$index] = $item;
+            }
+        }
+
+        return $replaced;
     }
 }

@@ -44,7 +44,7 @@
                     {{-- Action buttons --}}
                     <div class="flex justify-center gap-8.5 mt-16">
                         <button type="button" @click="showInformationMessageModal = false" class="button-minor">
-                            {{__('forms.cancel')}}
+                            {{ __('forms.cancel') }}
                         </button>
                         <button wire:click="openApproveModal"
                                 type="button"

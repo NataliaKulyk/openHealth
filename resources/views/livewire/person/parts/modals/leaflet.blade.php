@@ -31,13 +31,14 @@
                         </div>
 
                         <button @click="printContent"
-                                class="mb-6 underline font-medium text-sm cursor-pointer dark:text-white">
+                                class="mb-6 underline font-medium text-sm cursor-pointer dark:text-white"
+                        >
                             {{ __('patients.print_leaflet_for_patient') }}
                         </button>
 
                         <div class="mb-4.5 flex gap-6 xl:flex-row justify-center items-center">
-                            <button class="button-minor" @click="showLeafletModal = false">
-                                {{ __('forms.back') }}
+                            <button type="button" class="button-danger" wire:click="reject">
+                                {{ __('patients.reject') }}
                             </button>
                             @can('create', PersonRequest::class)
                                 <button wire:click="openSignatureModal" type="button" class="button-primary">

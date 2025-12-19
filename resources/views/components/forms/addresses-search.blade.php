@@ -40,29 +40,29 @@
         },
         init() {
             this.$watch('address.area', value => {
-                    this.clearArea();
+                this.clearArea();
             });
             this.$watch('address.region', value => {
-                    if (!this.selecting) {
-                        return;
-                    }
+                if (!this.selecting) {
+                    return;
+                }
 
-                    this.clearRegion();
+                this.clearRegion();
             });
             this.$watch('address.settlement', value => {
-                    if (this.address.area === 'М.КИЇВ') {
-                        this.address.settlementType = 'CITY';
-                        this.address.settlement = 'Київ';
-                        this.address.settlementId = 'adaa4abf-f530-461c-bcbf-a0ac210d955b';
+                if (this.address.area === 'М.КИЇВ') {
+                    this.address.settlementType = 'CITY';
+                    this.address.settlement = 'Київ';
+                    this.address.settlementId = 'adaa4abf-f530-461c-bcbf-a0ac210d955b';
 
-                        return;
-                    }
+                    return;
+                }
 
-                    if (!this.selecting) {
-                        return;
-                    }
+                if (!this.selecting) {
+                    return;
+                }
 
-                    this.clearSettlement();
+                this.clearSettlement();
             });
             this.$watch('address.street', value => {
                 if (!this.selecting) {
@@ -90,13 +90,12 @@
         >
             <option value="_placeholder_" hidden>-- {{ __('forms.select') }} --</option>
 
-                @forelse ($regions as $regionItem)
-                    <option value="{{ $regionItem['name'] }}">
-                        {{ $regionItem['name'] }}
-                    </option>
-                @empty
-                @endforelse
-
+            @forelse ($regions as $regionItem)
+                <option value="{{ $regionItem['name'] }}">
+                    {{ $regionItem['name'] }}
+                </option>
+            @empty
+            @endforelse
         </select>
 
         @if($hasAreaError)
@@ -281,7 +280,7 @@
         <input
             x-model.debounce.400ms="address.settlement"
             @keydown.escape="showTo = false"
-            @change="showTo = false; settlemets = []"
+            @change="showTo = false; settlements = []"
             @blur="selecting = false"
             required
             type="text"
@@ -411,41 +410,38 @@
         }"
         x-init="init()"
     >
-            <input
-                x-model.debounce.400ms="address.street"
-                @keydown.escape="showTo = false"
-                @change="showTo = false; streets = []"
-                @blur="selecting = false"
-                type="text"
-                placeholder=" "
-                id="addressStreet"
-                autocomplete="off"
-                aria-describedby="{{ $hasStreetError ? 'addressStreetErrorHelp' : '' }}"
-                class="input {{ $hasStreetError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-                :disabled="(!address.settlementType && !selecting) || readonly"
-            />
+        <input
+            x-model.debounce.400ms="address.street"
+            @keydown.escape="showTo = false"
+            @change="showTo = false; streets = []"
+            @blur="selecting = false"
+            type="text"
+            placeholder=" "
+            id="addressStreet"
+            autocomplete="off"
+            aria-describedby="{{ $hasStreetError ? 'addressStreetErrorHelp' : '' }}"
+            class="input {{ $hasStreetError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+            :disabled="(!address.settlementType && !selecting) || readonly"
+        />
 
-            <div x-cloak x-show="showTo"
-                @click.away="showTo = false"
-
-                x-transition
-
-                class="absolute left-0 right-0 top-full bg-white border border-gray-300 rounded-bl-md rounded-br-md shadow-lg dark:bg-gray-800 dark:border-gray-500"
-             >
-                <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownHoverButton">
-                    <template x-for="street in streets" :key="street.id">
-                        <li
-                            x-on:mousedown.stop="
-                                selecting = true;
-                                showTo = false;
-
-                                address.street = street.name.replace(/'/g, '\'');
-                            "
-                            class="cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-blue-800"
-                        >
-                            <span x-text="street.name"></span>
-                        </li>
-                    </template>
+        <div x-cloak x-show="showTo"
+             @click.away="showTo = false"
+             x-transition
+             class="absolute left-0 right-0 top-full bg-white border border-gray-300 rounded-bl-md rounded-br-md shadow-lg dark:bg-gray-800 dark:border-gray-500"
+        >
+            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownHoverButton">
+                <template x-for="street in streets" :key="street.id">
+                    <li
+                        x-on:mousedown.stop="
+                            selecting = true;
+                            showTo = false;
+                            address.street = street.name.replace(/'/g, '\'');
+                        "
+                        class="cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-blue-800"
+                    >
+                        <span x-text="street.name"></span>
+                    </li>
+                </template>
 
                     <div x-show="!streets || (Array.isArray(streets) && streets.length === 0)" x-cloak>
                         <li class="cursor-default px-4 py-2">
@@ -455,16 +451,15 @@
                 </ul>
             </div>
 
+        @if($hasStreetError)
+            <p id="addressStreetErrorHelp" class="text-error">
+                {{ $errors->first('address.street') }}
+            </p>
+        @endif
 
-            @if($hasStreetError)
-                <p id="addressStreetErrorHelp" class="text-error">
-                    {{ $errors->first('address.street') }}
-                </p>
-            @endif
-
-            <label for="addressStreet" class="label z-10">
-                {{ __('forms.street') }}
-            </label>
+        <label for="addressStreet" class="label z-10">
+            {{ __('forms.street') }}
+        </label>
     </div>
 
     {{-- BUILDING --}}

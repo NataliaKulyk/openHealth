@@ -173,15 +173,15 @@ class Equipment extends Request
     protected function mapCreate(array $validated): array
     {
         if (isset($validated['division_id'])) {
-            $validated['division_id'] = DivisionModel::where('uuid', $validated['division_id'])->value('id');
+            $validated['division_id'] = DivisionModel::whereUuid($validated['division_id'])->value('id');
         }
 
         if (isset($validated['parent_id'])) {
-            $validated['parent_id'] = EquipmentModel::where('uuid', $validated['parent_id'])->value('id');
+            $validated['parent_id'] = EquipmentModel::whereUuid($validated['parent_id'])->value('id');
         }
 
-        $validated['legal_entity_id'] = LegalEntityModel::where('uuid', $validated['legal_entity_id'])->value('id');
-        $validated['recorder'] = EmployeeModel::where('uuid', $validated['recorder'])->value('id');
+        $validated['legal_entity_id'] = LegalEntityModel::whereUuid($validated['legal_entity_id'])->value('id');
+        $validated['recorder'] = EmployeeModel::whereUuid($validated['recorder'])->value('id');
 
         return $validated;
     }

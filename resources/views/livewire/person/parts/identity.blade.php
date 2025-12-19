@@ -1,3 +1,5 @@
+@use('App\Livewire\Person\PersonUpdate')
+
 <fieldset class="fieldset"
           x-data="{
               noTaxId: $wire.form.person.noTaxId || false,
@@ -29,6 +31,7 @@
                name="noTaxId"
                id="noTaxId"
                class="default-checkbox mb-2"
+               @disabled($this instanceof PersonUpdate && $form->person['taxId'])
         />
     </div>
 
@@ -43,6 +46,7 @@
                    required
                    maxlength="10"
                    autocomplete="off"
+                   @disabled($this instanceof PersonUpdate && $form->person['taxId'])
             />
             <label for="taxId" class="label">
                 {{ __('forms.tax_id') }}

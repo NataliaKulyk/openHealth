@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Models\Person;
 
 use App\Enums\Person\Status;
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Relations\ConfidantPerson;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PersonRequest extends BasePerson
 {
@@ -24,6 +24,11 @@ class PersonRequest extends BasePerson
 
         // Cascade delete
         static::deleting(static function (PersonRequest $personRequest) {
+            if ($personRequest->confidantPerson) {
+                $personRequest->confidantPerson->documentsRelationship()->delete();
+                $personRequest->confidantPerson->delete();
+            }
+
             $personRequest->addresses()->delete();
             $personRequest->documents()->delete();
             $personRequest->phones()->delete();
@@ -36,10 +41,8 @@ class PersonRequest extends BasePerson
         return $this->belongsTo(Person::class);
     }
 
-    #[Scope]
-    protected function showPersonRequest(Builder $query, int $id): Builder
+    public function confidantPerson(): HasOne
     {
-        return $query->with(['phones', 'authenticationMethods', 'documents', 'addresses', 'confidantPerson'])
-            ->whereId($id);
+        return $this->hasOne(ConfidantPerson::class);
     }
 }

@@ -10,7 +10,7 @@
                 <div class="form-group group">
                     <label :for="'phoneType-' + index" class="sr-only">{{ __('forms.type_mobile') }}</label>
                     <select x-model="phone.type" :id="'phoneType-' + index" class="input-select peer">
-                        <option selected>{{ __('forms.type_mobile') }}</option>
+                        <option value="" selected>{{ __('forms.type_mobile') }}</option>
                         @foreach($this->dictionaries['PHONE_TYPE'] as $key => $phoneType)
                             <option value="{{ $key }}">{{ $phoneType }}</option>
                         @endforeach

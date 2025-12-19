@@ -17,35 +17,9 @@ use Throwable;
 trait FormTrait
 {
     /**
-     * @var bool|string
-     */
-    public bool|string $showModal = false;
-
-    /**
      * @var array|null
      */
     public ?array $dictionaries = [];
-
-    /**
-     * Opens a modal.
-     *
-     * @param  bool|string  $modal  Determines if the modal should be shown.
-     * @return void
-     */
-    public function openModal(bool|string $modal = true): void
-    {
-        $this->showModal = $modal;
-    }
-
-    /**
-     * Closes the modal by setting the $showModal property to false.
-     *
-     * @return void
-     */
-    public function closeModal(): void
-    {
-        $this->showModal = false;
-    }
 
     protected function &handleDynamicProperty(string $property): mixed
     {
