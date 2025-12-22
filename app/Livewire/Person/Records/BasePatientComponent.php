@@ -19,6 +19,7 @@ abstract class BasePatientComponent extends Component
 
     /**
      * Patient full name.
+     *
      * @var string
      */
     public string $patientFullName;
@@ -27,6 +28,7 @@ abstract class BasePatientComponent extends Component
 
     /**
      * Patient UUID.
+     *
      * @var string
      */
     protected string $uuid;
@@ -51,12 +53,12 @@ abstract class BasePatientComponent extends Component
      */
     protected function loadPatientData(): void
     {
-        $patient = Person::select(['uuid', 'first_name', 'last_name', 'second_name', 'verification_status'])
-            ->where('id', $this->patientId)
+        $patient = Person::whereId($this->patientId)
+            ->get(['uuid', 'first_name', 'last_name', 'second_name', 'verification_status'])
             ->firstOrFail();
 
         $this->patientFullName = $patient->fullName;
-        $this->verificationStatus = $patient->verification_status;
+        $this->verificationStatus = $patient->verificationStatus;
         $this->uuid = $patient->uuid;
     }
 

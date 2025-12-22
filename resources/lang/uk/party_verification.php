@@ -19,7 +19,6 @@ return [
     'subject_verification' => 'Предмет верифікації',
     'verification_list' => 'Список верифікацій співробітників',
 
-
     // General statuses
     'verified' => 'Верифіковано',
     'not_verified' => 'Не верифіковано',

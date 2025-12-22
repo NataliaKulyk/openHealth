@@ -180,7 +180,7 @@ class Person extends Request
             '*.uuid' => ['required', 'uuid'],
             '*.type' => ['nullable', 'string', 'max:255'],
             '*.value' => ['nullable', 'uuid'],
-            '*.phone_number' => ['nullable', 'string', 'max:255'],
+            '*.phone_number' => ['nullable', 'string', 'max:255']
         ]);
 
         if ($validator->fails()) {

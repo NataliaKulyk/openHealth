@@ -10,7 +10,7 @@ use App\Exceptions\EHealth\EHealthValidationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Client\ConnectionException;
 
-class PatientSummary extends BasePatientComponent
+class PersonSummary extends BasePatientComponent
 {
     public array $episodes;
 
