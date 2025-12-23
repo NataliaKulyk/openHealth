@@ -23,7 +23,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->string('employee_type');
-            $table->string('email');
+            $table->string('email')->nullable();
             $table->date('inserted_at')->nullable();
             $table->enum('status', array_column(RequestStatus::cases(), 'value'))->default(RequestStatus::NEW->value)->nullable();
             $table->foreignId('employee_id')->nullable()->constrained('employees')->onDelete('cascade');

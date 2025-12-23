@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Arr;
+use App\Enums\Status;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
 use App\Models\Employee\Employee;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Employee\RequestStatus;
 use App\Models\Employee\EmployeeRequest;
@@ -84,6 +86,68 @@ readonly class EmployeeRepository
         });
 
         return $model;
+    }
+
+    /**
+     * Returns a Party Query Builder sorted by the latest activity date.
+     * Activity is defined as the most recent 'updated_at' timestamp
+     * from either related Employee records or EmployeeRequest records.
+     *
+     * We use raw SQL subqueries in ORDER BY because standard SQL (Postgres)
+     * does not allow using SELECT aliases inside complex ORDER BY functions (COALESCE/GREATEST).
+     *
+     * @param int $legalEntityId
+     * @return Builder
+     */
+    public function getPartiesWithLatestActivityQuery(int $legalEntityId): Builder
+    {
+        // 1. Prepare safe integer ID for raw SQL insertion
+        $leId = (int) $legalEntityId;
+
+        // 2. Define Raw SQL for the latest Employee modification
+        $latestEmployeeSql = "
+            SELECT updated_at
+            FROM employees
+            WHERE party_id = parties.id
+            AND legal_entity_id = {$leId}
+            ORDER BY updated_at DESC
+            LIMIT 1
+        ";
+
+        // 3. Define Raw SQL for the latest EmployeeRequest modification
+        $latestRequestSql = "
+            SELECT updated_at
+            FROM employee_requests
+            WHERE party_id = parties.id
+            AND legal_entity_id = {$leId}
+            ORDER BY updated_at DESC
+            LIMIT 1
+        ";
+
+        // 4. Construct the main query
+        return Party::query()
+            ->select('parties.*')
+            // Inject subqueries as virtual columns for debugging/view usage
+            ->selectRaw("($latestEmployeeSql) as last_employee_activity")
+            ->selectRaw("($latestRequestSql) as last_request_activity")
+            ->with([
+                'phones',
+                'users',
+                // Sort children: recently updated employees first
+                'employees' => fn ($q) => $q
+                    ->where('legal_entity_id', $legalEntityId)
+                    ->orderByDesc('updated_at')
+                    ->with(['division', 'user']),
+                // Sort children: recently updated requests first
+                'employeeRequests' => fn ($q) => $q
+                    ->where('legal_entity_id', $legalEntityId)
+                    ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
+                    ->orderByDesc('updated_at')
+                    ->with(['revision', 'division'])
+            ])
+            // 5. SORTING: We repeat the subqueries inside the GREATEST function.
+            // This allows the DB to calculate the value on the fly for sorting purposes.
+            ->orderByRaw("GREATEST(COALESCE(($latestEmployeeSql), '1970-01-01'), COALESCE(($latestRequestSql), '1970-01-01')) DESC");
     }
 
     /**

@@ -1,4 +1,17 @@
 <div>
+    {{-- 1. DEFINE PERMISSIONS --}}
+    @php
+        $currentUser = auth()->user();
+
+       $permissions = [
+        'request_view'   => $currentUser->can('employee_request:details'),
+        'request_write'  => $currentUser->can('employee_request:write'),
+        'request_delete' => $currentUser->can('employee_request:write'),
+
+        'employee_view' => false, 'employee_write' => false, 'employee_deactivate' => false
+    ];
+    @endphp
+
     <x-header-navigation class="items-start">
         <x-slot name="title">
             {{ __('forms.application_register') }}
@@ -6,15 +19,14 @@
 
         <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start">
             <button wire:click="sync" wire:loading.attr="disabled" class="button-sync flex items-center gap-2">
-                <span wire:loading.remove wire:target="syncAll">@icon('refresh', 'w-4 h-4')</span>
-                <span wire:loading wire:target="syncAll" class="animate-spin">@icon('refresh', 'w-4 h-4')</span>
+                <span wire:loading.remove wire:target="sync">@icon('refresh', 'w-4 h-4')</span>
+                <span wire:loading wire:target="sync" class="animate-spin">@icon('refresh', 'w-4 h-4')</span>
                 <span>{{ __('forms.sync_all') }}</span>
             </button>
         </div>
 
         <x-slot name="navigation">
             <div class="flex flex-col -my-4">
-                {{-- Filters --}}
                 <div class="form-row-4">
                     <div class="form-group group">
                         <input type="text"
@@ -31,82 +43,102 @@
                                 <option value="{{ $st->value }}">{{ $st->label() }}</option>
                             @endforeach
                         </select>
-                        <label class="label">{{ __('forms.status.label') }}</label>
+                        <label class="label">Статус</label>
                     </div>
                 </div>
             </div>
-
         </x-slot>
     </x-header-navigation>
 
-    <div class="flow-root mt-8 shift-content pl-3.5">
-        <div class="max-w-screen-xl">
-            <div class="relative shadow-md sm:rounded-lg">
-                <table
-                    class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+    <div class="shift-content-table">
+        <div class="form-section-no-padding mt-6">
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-fixed">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
-                        <th class="px-6 py-3 w-[15%]">{{ __('forms.created_at') }}</th>
-                        <th class="px-6 py-3 w-[35%]">{{ __('forms.full_name') }}</th>
-                        <th class="px-6 py-3 w-[25%]">{{ __('forms.position') }}</th>
-                        <th class="px-6 py-3 w-[15%]">{{ __('forms.status.label') }}</th>
-                        <th class="px-6 py-3 w-[10%] whitespace-nowrap text-center">{{ __('forms.action') }}</th>
+                        <th scope="col" class="px-6 py-3 whitespace-nowrap w-[25%]">{{ __('forms.full_name') }}</th>
+                        <th scope="col" class="px-6 py-3 whitespace-nowrap w-[20%]">{{ __('forms.role') }}</th>
+                        <th scope="col" class="px-6 py-3 whitespace-nowrap w-[20%]">{{ __('forms.division') }}</th>
+                        <th scope="col" class="px-6 py-3 whitespace-nowrap w-[15%]">{{ __('forms.created_at') }}</th>
+                        <th scope="col" class="px-6 py-3 whitespace-nowrap text-center w-[15%]">{{ __('forms.status.label') }}</th>
+                        <th scope="col" class="px-6 py-3 whitespace-nowrap text-center w-[5%]">{{ __('forms.actions') }}</th>
                     </tr>
                     </thead>
                     <tbody>
                     @forelse($requests as $request)
-                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
+                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
 
-                            <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                {{ $request->created_at->format('d.m.Y H:i') }}
+                            {{-- Name --}}
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white truncate">
+                                @php
+                                    $data = $request->revision->data ?? [];
+                                    $partyData = $data['party'] ?? [];
+                                    $fullName = trim(($partyData['last_name'] ?? '') . ' ' . ($partyData['first_name'] ?? '') . ' ' . ($partyData['second_name'] ?? ''));
+                                @endphp
+                                <span title="{{ $fullName }}">{{ $fullName ?: 'N/A' }}</span>
                             </td>
 
-                            <th scope="row"
-                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white break-words whitespace-normal align-top"
-                            >
-                                <p>{{ $request->party->fullName ?? 'Невідома особа' }}</p>
-                            </th>
+                            <td class="px-6 py-4 whitespace-nowrap truncate">
+                                @php
+                                    // Based on your debug: data is inside 'employee_request_data'
+                                    $posCode = $data['employee_request_data']['position'] ?? ($data['position'] ?? null);
 
-                            <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                <p>{{ $dictionaries['POSITION'][$request->position] ?? $request->position }}</p>
-                                <p class="text-xs text-gray-500">{{ $request->division->name ?? '' }}</p>
+                                    // Use dictionary with fallback to code, exactly as in EmployeeIndex
+                                    $posName = $dictionaries['POSITION'][$posCode] ?? $posCode;
+                                @endphp
+                                <span title="{{ $posName }}">{{ $posName ?: 'N/A' }}</span>
                             </td>
 
-                            <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                @if($request->status == \App\Enums\Employee\RequestStatus::APPROVED)
-                                    <span class="badge-green">{{ $request->status->label() }}</span>
-                                @elseif($request->status == \App\Enums\Employee\RequestStatus::REJECTED)
+                            {{-- Division --}}
+                            <td class="px-6 py-4 whitespace-nowrap truncate">
+                                <span title="{{ $request->division->name ?? '' }}">
+                                    {{ $request->division->name ?? 'N/A' }}
+                                </span>
+                            </td>
+
+                            {{-- Date --}}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{ $request->created_at ? $request->created_at->format('d.m.Y H:i') : '-' }}
+                            </td>
+
+                            {{-- Status --}}
+                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                                @if($request->status == \App\Enums\Employee\RequestStatus::NEW)
                                     <span class="badge-red">{{ $request->status->label() }}</span>
                                 @elseif($request->status == \App\Enums\Employee\RequestStatus::SIGNED)
                                     <span class="badge-yellow">{{ $request->status->label() }}</span>
+                                @elseif($request->status == \App\Enums\Employee\RequestStatus::APPROVED)
+                                    <span class="badge-green">{{ $request->status->label() }}</span>
                                 @else
                                     <span class="badge-gray">{{ $request->status->label() }}</span>
                                 @endif
                             </td>
 
+                            {{-- Actions --}}
                             <td class="px-6 py-4 text-center align-top">
                                 @include('livewire.employee.parts.actions-dropdown', [
-                                    'position' => $request
+                                    'position' => $request,
+                                    'permissions' => $permissions
                                 ])
                             </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td class="text-black w-full p-4 border-gray-200 text-center dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                                colspan="5"
-                            >
-                                <p>{{ __('forms.nothing_found') }}</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
-                {{ $requests->links() }}
-            </div>
+                    </tr>
+                @empty
+                    <tr>
+                        <td class="text-black w-full p-4 border-gray-200 text-center dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                            colspan="6"
+                        >
+                            <p>{{ __('forms.nothing_found') }}</p>
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
         </div>
-        <x-forms.loading/>
+
+        <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
+            {{ $requests->links() }}
+        </div>
     </div>
+    <x-forms.loading/>
+</div>
 </div>
