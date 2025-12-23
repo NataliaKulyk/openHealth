@@ -10,6 +10,8 @@ use App\Models\Role;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Session;
@@ -45,14 +47,6 @@ class LoginDev extends Login
         }
 
         $user = User::where('email', $this->email)->first();
-        if(!$user || !$this->userHasRolesForLegalEntity($user)) {
-            $this->showRoleSelect = true;
-
-            if (empty($this->role)) {
-                $this->addError('role', __('Будь ласка, оберіть роль.'));
-                return Redirect::back()->withInput();
-            }
-        }
 
         try {
             $accessToken = EHealth::auth()->login($credentials['email'], $credentials['password']);
@@ -72,9 +66,18 @@ class LoginDev extends Login
             $scopes = $user->getScopes();
             Session::put(config('ehealth.api.auth_ehealth'), $user->id);
         } else {
+            if(empty($this->role)) {
+                $this->showRoleSelect = true;
+
+                $this->addError('role', __('Будь ласка, оберіть роль.'));
+
+                return Redirect::back()->withInput();
+            }
+
             $role = Role::findByName($this->role)->loadMissing('permissions', 'legalEntityTypes');
             $permissions = $role->permissions->pluck('name')->unique()->toArray();
             $scopes = implode(' ', $permissions);
+
             Session::put('first_login_role', $this->role);
         }
 

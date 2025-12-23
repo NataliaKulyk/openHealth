@@ -1,4 +1,6 @@
 <div>
+    <livewire:components.x-message :key="now()->timestamp"/>
+
     <img class="mx-auto" src="{{ Vite::asset('resources/images/logo.webp') }}" alt="OpenHealth Logo">
 
     <fieldset class="fieldset">

@@ -5,6 +5,7 @@
 @endphp
 
 <div class="fragment">
+    <livewire:components.x-message :key="now()->timestamp"/>
 
     <x-authentication-card>
 
