@@ -28,11 +28,11 @@
         <div class="form-group">
             <select name="position" id="position" class="peer input appearance-none bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400" required wire:model="form.position">
                 <option value="" disabled selected hidden>{{ __('forms.select_position') }}</option>
-                <template x-if="employeeType && employeeTypePosition[employeeType]">
+                <div x-show="employeeType && employeeTypePosition[employeeType]" x-cloak>
                     <template x-for="(positionName, positionKey) in employeeTypePosition[employeeType]" :key="positionKey">
                         <option :value="positionKey" x-text="positionName"></option>
                     </template>
-                </template>
+                </div>
             </select>
             <label for="position" class="label">{{ __('forms.position') }}</label>
             @error('form.position') <p class="text-error">{{ $message }}</p> @enderror
