@@ -8,29 +8,26 @@ use App\Classes\eHealth\EHealth;
 use App\Enums\Employee\RequestStatus;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Jobs\EmployeeRequestsSyncAll;
+use App\Livewire\Employee\EmployeeComponent;
 use App\Models\Employee\EmployeeRequest;
 use App\Services\Employee\EmployeeRequestProcessor;
 use Auth;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
-use Livewire\Component;
 use Livewire\WithPagination;
 
-class EmployeeRequestIndex extends Component
+class EmployeeRequestIndex extends EmployeeComponent
 {
     use WithPagination;
 
     public string $search = '';
-    public string $status = '';
-    public array $dictionaries = [];
+    public string $status       = '';
 
     public function mount(): void
     {
-        // Ideally, load dictionaries via trait or service. Keeping empty for now to avoid errors.
-        $this->dictionaries['POSITION'] = [];
+        $this->loadDictionaries();
     }
 
     public function updatedSearch(): void
@@ -169,30 +166,45 @@ class EmployeeRequestIndex extends Component
         $this->resetPage();
     }
 
+    /**
+     * Fetches the paginated list of all requests.
+     * English annotations used as requested.
+     */
     #[Computed]
     public function requests(): LengthAwarePaginator
     {
         return EmployeeRequest::query()
             ->with(['party', 'division', 'revision'])
             ->where('legal_entity_id', legalEntity()->id)
-            ->when($this->search, function ($q) {
-                $q->whereHas('party', function ($subQ) {
-                    $subQ->where(DB::raw("CONCAT(last_name, ' ', first_name, ' ', second_name)"), 'ilike', '%' . $this->search . '%');
+            ->when($this->search, function ($query) {
+                $searchTerm = '%' . $this->search . '%';
+
+                $query->where(function ($subQuery) use ($searchTerm) {
+                    $subQuery->whereHas('party', function ($q) use ($searchTerm) {
+                        $q->whereRaw("CONCAT(last_name, ' ', first_name, ' ', second_name) ILIKE ?", [$searchTerm]);
+                    })
+                        ->orWhereHas('revision', function ($q) use ($searchTerm) {
+                            $q->whereRaw("
+                        (data->'party'->>'last_name') ILIKE ? OR
+                        (data->'party'->>'first_name') ILIKE ? OR
+                        (data->'party'->>'second_name') ILIKE ?
+                    ", [$searchTerm, $searchTerm, $searchTerm]);
+                        });
                 });
             })
-            ->when($this->status, function ($q) {
-                $q->where('status', $this->status);
+            ->when($this->status, function ($query) {
+                $query->where('status', $this->status);
             })
             ->orderByDesc('created_at')
             ->paginate(20);
-
     }
 
-    public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\View\View
+    public function render(): object
     {
         return view('livewire.employee-request.employee-request-index', [
             'requests' => $this->requests,
             'statuses' => RequestStatus::cases(),
+            'dictionaries' => $this->dictionaries,
         ]);
     }
 }

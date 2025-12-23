@@ -1,4 +1,20 @@
 <div>
+    @php
+        $currentUser = auth()->user();
+        // We cache the hospital ID so as not to call the legalEntity() function 100 times in a loop
+        $currentLegalEntityId = legalEntity()->id;
+
+        // Cache access rights with an array
+       $permissions = [
+        'employee_view'       => $currentUser->can('employee:details'),
+        'employee_write'      => $currentUser->can('employee:write'),
+        'employee_deactivate' => $currentUser->can('employee:deactivate'),
+        'request_view'        => $currentUser->can('employee_request:details'),
+        'request_write'       => $currentUser->can('employee_request:write'),
+        'request_delete'      => $currentUser->can('employee_request:write'),
+    ];
+    @endphp
+
     <x-header-navigation class="items-start" x-data="{ showFilter: false }">
 
         <x-slot name="title">
@@ -7,7 +23,7 @@
 
         @can('create', \App\Models\Employee\EmployeeRequest::class)
             <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start">
-                <a href="{{ route('employee-request.create', ['legalEntity' => legalEntity()->id]) }}"
+                <a href="{{ route('employee-request.create', ['legalEntity' => $currentLegalEntityId]) }}"
                    class="button-primary">{{ __('forms.new_employee') }}</a>
                 <button wire:click="sync" type="button" class="button-sync flex items-center gap-2 whitespace-nowrap">
                     @icon('refresh', 'w-4 h-4')
@@ -124,8 +140,10 @@
                                                    if (s === 'NEW') return '{{ __('forms.draft') }}';
                                                    if (s === 'SIGNED') return '{{ __('forms.status.sent') }}';
                                                    if (s === 'DISMISSED') return '{{ __('forms.dismissed') }}';
-                                                   if (s === 'VERIFIED') return '{{ __('forms.verified') }}';
-                                                   if (s === 'NOT_VERIFIED') return '{{ __('forms.not_verified') }}';
+
+{{--                                                   if (s === 'VERIFIED') return '{{ __('forms.verified') ';--}}
+{{--                                                   if (s === 'NOT_VERIFIED') return '{{ __('forms.not_verified') ';--}}
+
                                                    return s;
                                                }).join(', ') : ''"
                                                readonly
@@ -216,24 +234,27 @@
                     @php
                         $drafts = $party->employeeRequests;
                         $employees = $party->employees;
-                        $positions = $drafts->merge($employees);
 
-                        // Check if there is at least one action available for any position in this table
-                        $user = auth()->user();
-                        $hasAnyActionInTable = $positions->contains(function ($pos) use ($user) {
+                        $positions = $drafts->merge($employees)->sortByDesc('updated_at');
+
+                        // Looking to see if there is at least one available action for the entire table (for the Actions column)
+                        // Here, too, we use optimized permission checks so as not to pull $user->can()
+                        $hasAnyActionInTable = $positions->contains(function ($pos) use ($permissions) {
                             $isEmp = $pos instanceof \App\Models\Employee\Employee;
                             $status = $pos->status?->value ?? null;
 
                             if ($isEmp) {
-                                return $user->can('view', $pos) ||
-                                       $user->can('update', $pos) ||
-                                       ($status === 'APPROVED' && $user->can('deactivate', $pos)) ||
-                                       $user->can('sync', $pos);
+                                return $permissions['employee_view'] ||
+                                       $permissions['employee_write'] ||
+                                       ($status === 'APPROVED' && $permissions['employee_deactivate']);
                             }
-                            return $user->can('view', $pos) ||
-                                   ($status === 'NEW' && ($user->can('update', $pos) || $user->can('delete', $pos)));
+                            // Request checks
+                             $isProcessed = !empty($pos->uuid);
+                             return $permissions['request_view'] ||
+                                    (!$isProcessed && $permissions['request_write']);
                         });
                     @endphp
+
                     <fieldset class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]" wire:key="party-{{ $party->id }}">
                         <legend class="legend">{{ $party->fullName }}</legend>
 
@@ -289,50 +310,22 @@
                                         @endif
                                     </span>
                                 @endif
-
-                                {{-- Verification Status --}}
-{{--                                @php--}}
-{{--                                    // Fallback to NOT_VERIFIED if null (common for drafts or fresh imports)--}}
-{{--                                    $verStatus = $party->verification_status ?? 'NOT_VERIFIED';--}}
-{{--                                    $isRealParty = is_numeric($party->id);--}}
-{{--                                @endphp--}}
-
-{{--                                <span class="flex items-center gap-1.5 group">--}}
-{{--                                    <span class="font-semibold text-gray-700 dark:text-gray-300"> {{ __('party_verification.label') }}:</span>--}}
-
-{{--                                    --}}{{-- If it is a real party, make it a link. Otherwise, just text --}}
-{{--                                    @if($isRealParty)--}}
-{{--                                        <a href="{{ route('party.verification.show', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}" class="hover:underline flex items-center gap-1.5">--}}
-{{--                                    @endif--}}
-
-{{--                                            @if ($verStatus === 'VERIFIED')--}}
-{{--                                                <span class="badge-green">{{ __('party_verification.verified') }}</span>--}}
-{{--                                            @else--}}
-{{--                                                <span class="badge-red">{{ __('party_verification.' . strtolower($verStatus)) }}</span>--}}
-{{--                                            @endif--}}
-
-{{--                                            @if($isRealParty)--}}
-{{--                                        </a>--}}
-{{--                                    @endif--}}
-{{--                                </span>--}}
                             </div>
 
                             <div class="flex items-center gap-4">
-                                @if(is_numeric($party->id))
-                                    @if($party->employees->isNotEmpty())
-                                        @can('create', \App\Models\Employee\EmployeeRequest::class)
-                                            <a href="{{ route('party.edit', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                                               class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                                @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
-                                                <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
-                                            </a>
+                                @if($party->employees->isNotEmpty())
+                                    @can('create', \App\Models\Employee\EmployeeRequest::class)
+                                        <a href="{{ route('party.edit', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
+                                           class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                            @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                            <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
+                                        </a>
 
-                                            <a href="{{ route('employee-request.position-add', ['legalEntity' => legalEntity()->id, 'party' => $party->id]) }}"
-                                               class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                                <span class="text-xl leading-none">+</span>
-                                                <span>{{ __('forms.add_position') }}</span>
-                                            </a>
-                                        @endif
+                                        <a href="{{ route('employee-request.position-add', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
+                                           class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                            <span class="text-xl leading-none">+</span>
+                                            <span>{{ __('forms.add_position') }}</span>
+                                        </a>
                                     @endcan
                                 @endif
                             </div>
@@ -348,18 +341,12 @@
                                         <th scope="col" class="th-input w-[15%]">{{ __('forms.division') }}</th>
                                         <th scope="col" class="th-input w-[24%]">{{ __('forms.email') }}</th>
                                         <th scope="col" class="th-input w-[10%]">{{ __('forms.status.label') }}</th>
-                                        {{-- Only show header if actions exist --}}
                                         @if($hasAnyActionInTable)
                                             <th scope="col" class="th-input w-[7%] text-center">{{ __('forms.actions') }}</th>
                                         @endif
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    @php
-                                        $drafts = $party->employeeRequests;
-                                        $employees = $party->employees;
-                                        $positions = $drafts->merge($employees);
-                                    @endphp
                                     @foreach($positions as $position)
                                         @php
                                             $positionEmail = null;
@@ -406,9 +393,7 @@
                                             </td>
                                             <td class="td-input text-center">
                                                 @if($position)
-                                                    @include('livewire.employee.parts.actions-dropdown', [
-                                                        'position' => $position
-                                                    ])
+                                                    @include('livewire.employee.parts.actions-dropdown', ['position' => $position])
                                                 @endif
                                             </td>
                                         </tr>
