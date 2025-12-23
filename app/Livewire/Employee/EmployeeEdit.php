@@ -33,7 +33,8 @@ class EmployeeEdit extends AbstractEmployeeFormManager
         $this->loadDictionaries();
         $this->employee = $employee;
         $this->employeeId = $employee->id;
-        $this->isPersonalDataLocked = true; // Still true for EmployeeEdit view logic
+        $this->isPersonalDataLocked = true;
+        $this->isPositionDataLocked = true;
         $this->loadDivisions($legalEntity);
 
         $positionName = $this->dictionaries['POSITION'][$employee->position] ?? $employee->position;
