@@ -94,7 +94,7 @@ class PartyEdit extends AbstractEmployeeFormManager
             'employee_type' => $preparedData['employee_type'] ?? $employee->employee_type,
             'start_date' => $preparedData['start_date'] ?? $employee->start_date?->format('Y-m-d'),
             'division_id' => $preparedData['division_id'] ?? $employee->division_id,
-            'email' => $employee->user?->email,
+            'email' => $preparedData['email']
         ];
 
         if ($this->employeeRequestId) {

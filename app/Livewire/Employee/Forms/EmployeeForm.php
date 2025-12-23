@@ -143,7 +143,7 @@ class EmployeeForm extends Form
             'party.phones.*.type' => ['required', 'string', Rule::in(array_keys($this->component->dictionaries['PHONE_TYPE'] ?? []))],
             'party.taxId' => ['required', 'string', new TaxId()],
             'party.noTaxId' => ['boolean'],
-            'party.email' => ['nullable', 'present', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
+            'party.email' => ['required', 'present', 'email', new UniqueEmailInLegalEntity($this->existingPartyId)],
             'party.workingExperience' => ['required', 'numeric', 'min:1'],
             'party.aboutMyself' => ['nullable', 'present', 'string'],
         ];
