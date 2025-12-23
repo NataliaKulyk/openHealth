@@ -89,65 +89,58 @@ readonly class EmployeeRepository
     }
 
     /**
-     * Returns a Party Query Builder sorted by the latest activity date.
-     * Activity is defined as the most recent 'updated_at' timestamp
-     * from either related Employee records or EmployeeRequest records.
+     * Returns a Query Builder for Parties, sorted by the latest activity date.
      *
-     * We use raw SQL subqueries in ORDER BY because standard SQL (Postgres)
-     * does not allow using SELECT aliases inside complex ORDER BY functions (COALESCE/GREATEST).
+     * Mechanism:
+     * 1. Aggregates the latest 'updated_at' timestamp from the 'employees' table grouped by party.
+     * 2. Aggregates the latest 'updated_at' timestamp from the 'employee_requests' table grouped by party.
+     * 3. Joins these aggregated subqueries to the main 'parties' query.
+     * 4. Sorts results by the greatest (most recent) timestamp found in either relation.
      *
      * @param int $legalEntityId
      * @return Builder
      */
     public function getPartiesWithLatestActivityQuery(int $legalEntityId): Builder
     {
-        // 1. Prepare safe integer ID for raw SQL insertion
-        $leId = (int) $legalEntityId;
+        // 1. Subquery: Get the latest update time for Employees grouped by Party
+        $employeesQuery = Employee::selectRaw('party_id, MAX(updated_at) as last_employee_at')
+            ->where('legal_entity_id', $legalEntityId)
+            ->groupBy('party_id');
 
-        // 2. Define Raw SQL for the latest Employee modification
-        $latestEmployeeSql = "
-            SELECT updated_at
-            FROM employees
-            WHERE party_id = parties.id
-            AND legal_entity_id = {$leId}
-            ORDER BY updated_at DESC
-            LIMIT 1
-        ";
+        // 2. Subquery: Get the latest update time for Employee Requests grouped by Party
+        $requestsQuery = EmployeeRequest::selectRaw('party_id, MAX(updated_at) as last_request_at')
+            ->where('legal_entity_id', $legalEntityId)
+            ->whereNotNull('party_id')
+            ->groupBy('party_id');
 
-        // 3. Define Raw SQL for the latest EmployeeRequest modification
-        $latestRequestSql = "
-            SELECT updated_at
-            FROM employee_requests
-            WHERE party_id = parties.id
-            AND legal_entity_id = {$leId}
-            ORDER BY updated_at DESC
-            LIMIT 1
-        ";
-
-        // 4. Construct the main query
         return Party::query()
             ->select('parties.*')
-            // Inject subqueries as virtual columns for debugging/view usage
-            ->selectRaw("($latestEmployeeSql) as last_employee_activity")
-            ->selectRaw("($latestRequestSql) as last_request_activity")
+            // Add virtual columns for debugging
+            ->addSelect([
+                'emp_stat.last_employee_at',
+                'req_stat.last_request_at'
+            ])
+            // 3. Join the subqueries
+            ->leftJoinSub($employeesQuery, 'emp_stat', 'parties.id', '=', 'emp_stat.party_id')
+            ->leftJoinSub($requestsQuery, 'req_stat', 'parties.id', '=', 'req_stat.party_id')
+
+            // 4. Eager load relations
             ->with([
                 'phones',
                 'users',
-                // Sort children: recently updated employees first
                 'employees' => fn ($q) => $q
                     ->where('legal_entity_id', $legalEntityId)
                     ->orderByDesc('updated_at')
                     ->with(['division', 'user']),
-                // Sort children: recently updated requests first
                 'employeeRequests' => fn ($q) => $q
                     ->where('legal_entity_id', $legalEntityId)
-                    ->whereIn('status', [Status::NEW->value, Status::SIGNED->value])
+                    ->whereIn('status', [Status::NEW->value, Status::SIGNED->value, Status::APPROVED->value])
                     ->orderByDesc('updated_at')
                     ->with(['revision', 'division'])
             ])
-            // 5. SORTING: We repeat the subqueries inside the GREATEST function.
-            // This allows the DB to calculate the value on the fly for sorting purposes.
-            ->orderByRaw("GREATEST(COALESCE(($latestEmployeeSql), '1970-01-01'), COALESCE(($latestRequestSql), '1970-01-01')) DESC");
+
+            // 5. Sorting: Compare dates and pick the most recent
+            ->orderByRaw("GREATEST(COALESCE(emp_stat.last_employee_at, '1970-01-01'), COALESCE(req_stat.last_request_at, '1970-01-01')) DESC");
     }
 
     /**

@@ -106,11 +106,11 @@ class EmployeeIndex extends EmployeeComponent
     }
 
     /**
-     * Apply all filters directly to the Eloquent Query Builder.
+     * Applies UI filters (Search, Email, Phone, Status) to the query builder.
      */
     private function applyDatabaseFilters(Builder $query): void
     {
-        // Filter: Existence of relevant children (Only show Parties linked to this LE)
+        // 1. Filter: Ensure Party is linked to this Legal Entity via Employee or Request
         $query->where(function (Builder $q) {
             $q->whereHas('employees', function ($sub) {
                 $sub->where('legal_entity_id', $this->legalEntity->id);
@@ -123,26 +123,25 @@ class EmployeeIndex extends EmployeeComponent
                 });
         });
 
-        // Filter: Search Text (Name)
+        // 2. Filter: Search Text (Full Name, Case-Insensitive)
         if (!empty($this->search)) {
-            $query->where(function (Builder $q) {
-                $q->where('last_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('first_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('second_name', 'like', '%' . $this->search . '%');
-            });
+            $searchTerm = '%' . $this->search . '%';
+            // PostgreSQL specific: ILIKE is case-insensitive
+            $query->whereRaw("CONCAT(last_name, ' ', first_name, ' ', second_name) ILIKE ?", [$searchTerm]);
         }
 
-        // Filter: Email (via Users)
+        // 3. Filter: Email (via Users)
         if (!empty($this->filter['email'])) {
-            $query->whereHas('users', fn ($q) => $q->where('email', 'like', '%' . $this->filter['email'] . '%'));
+            // ILIKE for emails too
+            $query->whereHas('users', fn ($q) => $q->where('email', 'ILIKE', '%' . $this->filter['email'] . '%'));
         }
 
-        // Filter: Phone
+        // 4. Filter: Phone
         if (!empty($this->filter['phone'])) {
             $query->whereHas('phones', fn ($q) => $q->where('number', 'like', '%' . $this->filter['phone'] . '%'));
         }
 
-        // Filter: Verification Status
+        // 5. Filter: Verification Status
         $showVerified = in_array('VERIFIED', $this->status, true);
         $showNotVerified = in_array('NOT_VERIFIED', $this->status, true);
 
