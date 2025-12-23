@@ -31,22 +31,22 @@ class EmployeePolicy
 
     public function update(User $user, Employee $employee): Response
     {
-        // 1. Status check
+        // 1. Prohibition of owner editing
+        if ($employee->employeeType === 'OWNER') {
+            return Response::deny(__('employees.policy.owner_no_edit'));
+        }
+
+        // 2. Checking for communication with the user (what you did before)
+        if (is_null($employee->userId)) {
+            return Response::deny(__('employees.policy.no_user_linked'));
+        }
+
+        // 3. Status check
         if ($employee->status === Status::DISMISSED) {
             return Response::deny(__('employees.policy.emp.dismissed_no_edit'));
         }
 
-        // 2. VERIFICATION: Whether the employee is related to the user
-        if (is_null($employee->user_id)) {
-            return Response::deny(__('employees.policy.no_user_linked'));
-        }
-
-        // 3. Verification of affiliation with the institution (already exists)
-        if ((int) $employee->legalEntityId !== (int) legalEntity()->id) {
-            return Response::denyWithStatus(404);
-        }
-
-        // 4. Checking user access rights
+        // 4. Verification of rights
         return $user->can('employee:write')
             ? Response::allow()
             : Response::deny(__('employees.policy.emp.update_denied'));

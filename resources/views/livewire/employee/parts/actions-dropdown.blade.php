@@ -3,25 +3,27 @@
     $isEmployee = $position instanceof \App\Models\Employee\Employee;
     $isRequest = $position instanceof \App\Models\Employee\EmployeeRequest;
     $status = $position->status?->value ?? null;
-    $isEmployeeIndex = request()->routeIs('employee.index');
+
+    // Checking if the employee is the owner
+    // We use the camelCase attribute employeeType, as in your models
+    $isOwner = $isEmployee && $position->employeeType === 'OWNER';
 
     // QUICK CHECKS
     $canView = $isEmployee ? ($permissions['employee_view'] ?? false) : ($permissions['request_view'] ?? false);
     $canWrite = $isEmployee ? ($permissions['employee_write'] ?? false) : ($permissions['request_write'] ?? false);
 
-    // Add a check for a user connection for Employee
-    // If it's Employee, check user_id. If it's EmployeeRequest — usually user_id should also be there,
-    // But according to the logic of your request, this applies specifically to existing employees.
+    // User availability condition
     $hasUserLinked = $isEmployee ? !empty($position->userId) : true;
 
     $showView = $canView;
 
-    // Updated logic for $showEdit: added $hasUserLinked
-    $showEdit = $canWrite && $hasUserLinked && ($isEmployee ? $status !== 'DISMISSED' : $status === 'NEW');
+    $showEdit = $canWrite && $hasUserLinked && !$isOwner && ($isEmployee ? $status !== 'DISMISSED' : $status === 'NEW');
 
     $showSync = $canWrite && ($isEmployee ? !empty($position->uuid) : in_array($status, ['NEW', 'SIGNED', 'APPROVED']));
     $showDelete = $isRequest && $canWrite && $status === 'NEW';
-    $showDismiss = $isEmployee && $status === 'APPROVED' && ($permissions['employee_deactivate'] ?? false);
+
+    // We also prohibit the dismissal of the owner through the interface, if necessary
+    $showDismiss = $isEmployee && !$isOwner && $status === 'APPROVED' && ($permissions['employee_deactivate'] ?? false);
 
     $hasActions = $showView || $showEdit || $showSync || $showDelete || $showDismiss;
 @endphp
