@@ -174,14 +174,6 @@
                                             <span class="ml-3">{{ __('employee-roles.label') }}</span>
                                         </a>
                                     </li>
-                            <li>
-                                <a href="{{ route('employee-role.index', [legalEntity()]) }}"
-                                   class="submenu-item"
-                                >
-                                    @icon('users-roles')
-                                    <span>{{ __('employee-roles.label') }}</span>
-                                </a>
-                            </li>
 
                             <li>
                                 <a href="{{ route('party.verification.index', [legalEntity()]) }}"
