@@ -32,6 +32,8 @@ class PersonRequest extends Request
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/person-requests/create/update-person-request-v2
      */
     public function create(array $data): PromiseInterface|EHealthResponse
     {
@@ -48,6 +50,8 @@ class PersonRequest extends Request
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/person-requests/approve-person-request-v2
      */
     public function approve(string $id, array $data = []): PromiseInterface|EHealthResponse
     {
@@ -60,6 +64,8 @@ class PersonRequest extends Request
      * @param  string  $id
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/person-requests/reject-person-request-v2
      */
     public function reject(string $id): PromiseInterface|EHealthResponse
     {
@@ -73,6 +79,8 @@ class PersonRequest extends Request
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/person-requests/sign-person-request-v2
      */
     public function signed(string $id, array $data): PromiseInterface|EHealthResponse
     {
@@ -83,11 +91,13 @@ class PersonRequest extends Request
      * Obtains details by ID.
      *
      * @param  string  $id
-     * @param  array|null  $query
+     * @param  array  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/person-requests/get-person-request-by-id-v2
      */
-    public function getById(string $id, ?array $query = null): PromiseInterface|EHealthResponse
+    public function getById(string $id, array $query = []): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateResponse(...));
         $this->setMapper($this->mapResponseById(...));
@@ -98,15 +108,17 @@ class PersonRequest extends Request
     /**
      * Obtains details by setting parameters like status, page, and page size.
      *
-     * @param  null  $query
+     * @param  array{status?: 'NEW'|'APPROVED'|'SIGNED'|'REJECTED'|'CANCELLED', page?: int, page_size?: int}  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/person-requests/get-person-requests-list
      */
-    public function getList($query = null): PromiseInterface|EHealthResponse
+    public function getList(array $query = []): PromiseInterface|EHealthResponse
     {
         $this->setDefaultPageSize();
 
-        $mergedQuery = array_merge($this->options['query'], $query ?? []);
+        $mergedQuery = array_merge($this->options['query'], $query);
 
         return $this->get(self::URL, $mergedQuery);
     }
@@ -118,6 +130,8 @@ class PersonRequest extends Request
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/person-requests/resend-authorization-otp-on-person-request
      */
     public function resendAuthOtp(string $id, array $data = []): PromiseInterface|EHealthResponse
     {

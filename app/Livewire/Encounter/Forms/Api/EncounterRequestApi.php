@@ -146,32 +146,6 @@ class EncounterRequestApi
     }
 
     /**
-     * Build an array of parameters for a dictionaries list.
-     *
-     * @param  string  $name  Dictionary name. Example: eHealth/ICF/classifiers
-     * @param  bool|null  $isActive  Dictionary status. Example: true.
-     * @param  string|null  $valueCode  Code of the dictionary value. Example: b1142.
-     * @param  string|null  $valueDescription  Description of the dictionary value. Example: Орієнтація в особі.
-     * @param  string|null  $valueIsActive  Status of the dictionary value. Example: true.
-     * @return array
-     */
-    public static function buildGetDictionaries(
-        string $name,
-        ?bool $isActive = null,
-        ?string $valueCode = null,
-        ?string $valueDescription = null,
-        ?string $valueIsActive = null
-    ): array {
-        return [
-            'name' => $name,
-            'is_active' => $isActive,
-            'value_code' => $valueCode,
-            'value_description' => $valueDescription,
-            'value_is_active' => $valueIsActive
-        ];
-    }
-
-    /**
      * Build an array of parameters for getting episodes using a search parameters list.
      *
      * @param  string|null  $periodFrom  Example: 2017-01-01.
@@ -236,29 +210,6 @@ class EncounterRequestApi
             'status' => $status,
             'effective_date_to' => $effectiveDateTo,
             'effective_date_from' => $effectiveDateFrom,
-            'page' => $page,
-            'page_size' => $pageSize
-        ];
-    }
-
-    /**
-     * Build an array of parameters for getting services dictionary.
-     *
-     * @param  string|null  $code  Service code. Example: JF2 01.
-     * @param  string|null  $name  Service name. Example: Some Name.
-     * @param  int|null  $page  Page number. Example: 2.
-     * @param  int|null  $pageSize  A limit on the number of objects to be returned, between 1 and 300. Default: 50 Example: 50.
-     * @return array
-     */
-    public static function buildGetServicesDictionary(
-        ?string $code = null,
-        ?string $name = null,
-        ?int $page = null,
-        ?int $pageSize = null
-    ): array {
-        return [
-            'code' => $code,
-            'name' => $name,
             'page' => $page,
             'page_size' => $pageSize
         ];

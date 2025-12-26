@@ -24,15 +24,25 @@ class Person extends Request
     /**
      * Search for a person by parameters.
      *
-     * @param  array  $params
+     * @param  array{
+     *     first_name: string,
+     *     last_name: string,
+     *     second_name?: string,
+     *     birth_date: string,
+     *     tax_id?: string,
+     *     phone_number?: string,
+     *     birth_certificate?: string
+     * }  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/search-for-a-person
      */
-    public function searchForPersonByParams(array $params): PromiseInterface|EHealthResponse
+    public function searchForPersonByParams(array $query): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateSearch(...));
 
-        return $this->get(self::URL, $params);
+        return $this->get(self::URL, $query);
     }
 
     /**
@@ -40,15 +50,19 @@ class Person extends Request
      * Also, this endpoint shows all the persons who enter the whole chain of merges to this person.
      *
      * @param  string  $uuid
-     * @param  array  $params
+     * @param  array{id: string, status?: string, page?: int, page_size?: int}  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/search-person's-merged-persons
      */
-    public function searchPersonsMergedPersons(string $uuid, array $params = []): PromiseInterface|EHealthResponse
+    public function searchPersonsMergedPersons(string $uuid, array $query = []): PromiseInterface|EHealthResponse
     {
         $this->setDefaultPageSize();
 
-        return $this->get(self::URL . "/$uuid/merged_persons", $params);
+        $mergedQuery = array_merge($this->options['query'], $query);
+
+        return $this->get(self::URL . "/$uuid/merged_persons", $mergedQuery);
     }
 
     /**
@@ -57,6 +71,8 @@ class Person extends Request
      * @param  string  $uuid
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/get-personal-data
      */
     public function getPersonalData(string $uuid): PromiseInterface|EHealthResponse
     {
@@ -70,6 +86,8 @@ class Person extends Request
      * @param  array  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/get-person-authentication-methods
      */
     public function getAuthMethods(string $id, array $query = []): PromiseInterface|EHealthResponse
     {
@@ -84,6 +102,8 @@ class Person extends Request
      * @param  string  $id
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/get-person-verification-details
      */
     public function getPersonVerificationDetails(string $id): PromiseInterface|EHealthResponse
     {
@@ -96,6 +116,8 @@ class Person extends Request
      * @param  string  $id
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/create-new-confidant-person-relationship-request
      */
     public function createConfidantRelationship(string $id): PromiseInterface|EHealthResponse
     {
@@ -106,9 +128,11 @@ class Person extends Request
      * Get list of active confidant person relationships.
      *
      * @param  string  $id
-     * @param  array  $query
+     * @param  array{id: string, is_expired?: string, page?: int, page_size?: int}  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/get-confidant-person-relationships
      */
     public function getConfidantPersonRelationships(string $id, array $query = []): PromiseInterface|EHealthResponse
     {
@@ -122,6 +146,8 @@ class Person extends Request
      * @param  array  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/create-authentication-method-request
      */
     public function createAuthMethod(string $id, array $query): PromiseInterface|EHealthResponse
     {
@@ -136,6 +162,8 @@ class Person extends Request
      * @param  array  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/resend-authorization-otp-on-authentication-method-request
      */
     public function resendAuthOtp(string $id, string $requestId, array $query = []): PromiseInterface|EHealthResponse
     {
