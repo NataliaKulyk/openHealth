@@ -85,7 +85,7 @@ class LegalEntity extends Request
             'edr.kveds.*.code' => 'required|string',
             'edr.kveds.*.is_primary' => 'required|boolean',
             'edr.kveds.*.name' => 'required|string',
-            'edr.legal_form' => 'nullable|boolean',
+            'edr.legal_form' => 'nullable|string',
             'edr.name' => 'required|string',
             'edr.short_name' => 'nullable|string',
             'edr.public_name' => 'nullable|string',
