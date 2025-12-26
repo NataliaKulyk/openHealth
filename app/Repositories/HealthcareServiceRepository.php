@@ -90,6 +90,7 @@ class HealthcareServiceRepository
                 ->map(static function (array $item) {
                     $item['available_time'] = json_encode($item['available_time'], JSON_THROW_ON_ERROR);
                     $item['not_available'] = json_encode($item['not_available'], JSON_THROW_ON_ERROR);
+                    $item['type_id'] ??= null;
 
                     return $item;
                 })

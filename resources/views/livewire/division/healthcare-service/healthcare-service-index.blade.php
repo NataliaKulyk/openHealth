@@ -126,7 +126,7 @@
                             >
                                 <td class="px-6 py-4 break-words whitespace-normal align-top">
                                     <p class="font-semibold text-gray-900 dark:text-white">
-                                        {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] }}
+                                        {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] ?? '-' }}
                                     </p>
                                 </td>
 
@@ -138,7 +138,7 @@
 
                                 <td class="px-6 py-4 break-words whitespace-normal align-top">
                                     <p class="font-medium text-gray-600 dark:text-gray-500">
-                                        {{ $dictionaries['PROVIDING_CONDITION'][$service->providingCondition] }}
+                                        {{ $dictionaries['PROVIDING_CONDITION'][$service->providingCondition] ?? '-' }}
                                     </p>
                                 </td>
 
