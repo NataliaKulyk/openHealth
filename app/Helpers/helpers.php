@@ -44,7 +44,8 @@ if (!function_exists('convertToISO8601')) {
             return '';
         }
 
-        return CarbonImmutable::parse($dateString)->toIso8601ZuluString();
+        return CarbonImmutable::parse($dateString)->avoidMutation()
+            ->rawFormat('Y-m-d\T'. CarbonImmutable::getTimeFormatByPrecision('second').'\Z');
     }
 }
 
