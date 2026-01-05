@@ -46,7 +46,6 @@
                        type="file"
                        id="keyContainerUpload"
                        name="keyContainerUpload"
-                       accept=".jpeg,.jpg"
                 >
                 <div wire:loading wire:target="keyContainerUpload" class="text-sm text-gray-500 mt-2">
                     {{ __('general.loading') }}...
