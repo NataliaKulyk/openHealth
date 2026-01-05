@@ -35,7 +35,7 @@ class HealthcareServiceSync extends EHealthJob
     {
         return EHealth::healthcareService()
             ->withToken($token)
-            ->getMany(query: ['page' => $this->page]);
+            ->getMany(['page' => $this->page]);
     }
 
     /**

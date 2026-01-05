@@ -27,21 +27,28 @@ class HealthcareService extends Request
     /**
      * Get list of Healthcare Services.
      *
-     * @param  string  $url
-     * @param  $query
+     * @param  array{
+     *     division_id?: string,
+     *     speciality_type?: string, // Dictionary SPECIALITY_TYPE
+     *     providing_condition?: string, // Dictionary PROVIDING_CONDITION
+     *     category?: string, // Dictionary HEALTHCARE_SERVICE_CATEGORIES
+     *     type?: string, // Dictionary of types for category
+     *     status?: string, // Entity status
+     *     page?: int,
+     *     page_size?: int
+     * } $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
+    public function getMany(array $query = []): PromiseInterface|EHealthResponse
     {
+        $this->setDefaultPageSize();
         $this->setValidator($this->validateMany(...));
         $this->setMapper($this->mapMany(...));
 
-        $query = array_merge([
-            self::QUERY_PARAM_PAGE_SIZE => config('ehealth.api.page_size')
-        ], $query ?? []);
+        $mergedQuery = array_merge($this->options['query'], $query);
 
-        return $this->get($url, $query);
+        return $this->get(self::URL, $mergedQuery);
     }
 
     /**

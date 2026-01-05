@@ -61,9 +61,7 @@ abstract class EHealthRequest extends PendingRequest
      * @param  string  $method  The HTTP method (e.g., 'GET', 'POST', etc.).
      * @param  string  $url  The endpoint URL.
      * @param  array  $options  Additional request options (query, body, headers, etc.).
-     *
      * @return EHealthResponse|Response
-     *
      * @throws EHealthValidationException|EHealthResponseException|ConnectionException
      */
     public function send(string $method, string $url, array $options = []): EHealthResponse|Response
@@ -89,7 +87,7 @@ abstract class EHealthRequest extends PendingRequest
      * Set a Callable validator for the response, which accepts an EHealthResponse instance as an argument.
      * See EHealthResponse::validate().
      *
-     * @param callable $validator
+     * @param  callable  $validator
      */
     protected function setValidator(callable $validator): void
     {
@@ -154,10 +152,10 @@ abstract class EHealthRequest extends PendingRequest
 
         // 2. Update the API-key and add a User-Agent to bypass WAF (Cloudflare)
         $this->withHeaders([
-                               'API-key'    => $misApiKey,
-                               'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                               'Accept'     => 'application/json',
-                           ]);
+            'API-key' => $misApiKey,
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept' => 'application/json',
+        ]);
 
         return $this;
     }

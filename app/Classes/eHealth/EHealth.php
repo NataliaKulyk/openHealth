@@ -10,6 +10,7 @@ use App\Classes\eHealth\Api\ContractRequest;
 use App\Classes\eHealth\Api\Declaration;
 use App\Classes\eHealth\Api\DeclarationRequest;
 use App\Classes\eHealth\Api\DeviceDefinition;
+use App\Classes\eHealth\Api\Dictionary;
 use App\Classes\eHealth\Api\Employee;
 use App\Classes\eHealth\Api\EmployeeRequest;
 use App\Classes\eHealth\Api\EmployeeRole;
@@ -25,6 +26,7 @@ use App\Classes\eHealth\Api\Patient;
 use App\Classes\eHealth\Api\Person;
 use App\Classes\eHealth\Api\PersonRequest;
 use App\Classes\eHealth\Api\RuleEngineRules;
+use App\Classes\eHealth\Api\Service;
 use App\Models\Contract;
 use App\Models\MedicalEvents\Sql\Condition;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
@@ -167,5 +169,15 @@ final class EHealth
     public static function address(): Address
     {
         return app(Address::class);
+    }
+
+    public static function dictionary(): Dictionary
+    {
+        return app(Dictionary::class);
+    }
+
+    public static function service(): Service
+    {
+        return app(Service::class);
     }
 }

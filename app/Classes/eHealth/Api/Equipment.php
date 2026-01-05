@@ -31,20 +31,37 @@ class Equipment extends Request
     /**
      * Get list of equipments.
      *
-     * @param  string  $url
-     * @param  $query
+     * @param  array{
+     *     division_id?: string,
+     *     device_definition_id?: string,
+     *     type?: string, // Code from dictionary device_definition_classification_type
+     *     status?: \App\Enums\Equipment\Status::class,
+     *     model_number?: string,
+     *     manufacturer?: string,
+     *     availability_status?: \App\Enums\Equipment\AvailabilityStatus::class,
+     *     recorder?: string,
+     *     inventory_number?: string,
+     *     serial_number?: string,
+     *     name?: string,
+     *     created_from?: string,
+     *     created_to?: string,
+     *     page?: int,
+     *     page_size?: int
+     * }  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/equipment/get-equipment-list
      */
-    public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
+    public function getMany(array $query = []): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateMany(...));
         $this->setMapper($this->mapMany(...));
         $this->setDefaultPageSize();
 
-        $mergedQuery = array_merge($this->options['query'], $query ?? []);
+        $mergedQuery = array_merge($this->options['query'], $query);
 
-        return $this->get($url, $mergedQuery);
+        return $this->get(self::URL, $mergedQuery);
     }
 
     /**
@@ -53,6 +70,8 @@ class Equipment extends Request
      * @param  array  $data  // Data for API request
      * @return EHealthResponse|PromiseInterface
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/equipment/create-equipment
      */
     public function create(array $data = []): PromiseInterface|EHealthResponse
     {
@@ -69,6 +88,8 @@ class Equipment extends Request
      * @param  array  $data
      * @return EHealthResponse|PromiseInterface
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/equipment/change-equipment-status
      */
     public function changeStatus(string $uuid, array $data): PromiseInterface|EHealthResponse
     {
@@ -84,6 +105,8 @@ class Equipment extends Request
      * @param  array  $data
      * @return EHealthResponse|PromiseInterface
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/equipment/change-equipment-availability-status
      */
     public function changeAvailabilityStatus(string $uuid, array $data): PromiseInterface|EHealthResponse
     {
@@ -134,14 +157,14 @@ class Equipment extends Request
 
         // Set IDs and UUID for validation and map
         $this->divisionMap = DivisionModel::whereIn('uuid', $uuids['division'])->pluck('id', 'uuid')->toArray();
-        $this->legalEntityMap = LegalEntityModel::whereIn('uuid', $uuids['legal_entity'])->pluck('id', 'uuid')->toArray();
+        $this->legalEntityMap = LegalEntityModel::whereIn('uuid', $uuids['legal_entity'])->pluck('id', 'uuid')
+            ->toArray();
         $this->parentMap = EquipmentModel::whereIn('uuid', $uuids['parent'])->pluck('id', 'uuid')->toArray();
         $this->recorderMap = EmployeeModel::whereIn('uuid', $uuids['recorder'])->pluck('id', 'uuid')->toArray();
 
         // Get unique UUIDs for validations.
         $divisionUuids = array_keys($this->divisionMap);
         $legalEntityUuids = array_keys($this->legalEntityMap);
-        $parentUuids = array_keys($this->parentMap);
         $employeeUuids = array_keys($this->recorderMap);
 
         // Get basic rules

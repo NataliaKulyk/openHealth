@@ -66,7 +66,7 @@ class HealthcareServiceIndex extends Component
         }
 
         $this->divisionUuid = $division->uuid;
-        $this->divisions = $legalEntity->divisions()->select(['id', 'name', 'status'])->get()->toArray();
+        $this->divisions = $legalEntity->divisions()->get(['id', 'name', 'status'])->toArray();
 
         $this->getDictionary();
     }
@@ -193,7 +193,7 @@ class HealthcareServiceIndex extends Component
         try {
             $query = $this->divisionUuid ? ['division_id' => $this->divisionUuid] : null;
 
-            $response = EHealth::healthcareService()->getMany(query: $query);
+            $response = EHealth::healthcareService()->getMany($query);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when getting a healthcare service list');
             Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
@@ -241,11 +241,11 @@ class HealthcareServiceIndex extends Component
         if ($this->isFiltersApplied) {
             if ($this->divisionFilter) {
                 $this->divisionId = $this->divisionFilter;
-                $query->where('division_id', $this->divisionFilter);
+                $query->whereDivisionId($this->divisionFilter);
             }
 
             if (!empty($this->typeFilter)) {
-                $query->where('speciality_type', $this->typeFilter);
+                $query->whereSpecialityType($this->typeFilter);
             }
         }
 

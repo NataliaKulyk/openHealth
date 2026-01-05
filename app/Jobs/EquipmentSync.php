@@ -30,9 +30,7 @@ class EquipmentSync extends EHealthJob
      */
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse
     {
-        return EHealth::equipment()
-            ->withToken($token)
-            ->getMany(query: ['page' => $this->page]);
+        return EHealth::equipment()->withToken($token)->getMany(['page' => $this->page]);
     }
 
     /**

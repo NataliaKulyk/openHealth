@@ -23,36 +23,38 @@ class License extends Request
     /**
      * Use this end-point to obtain all Licenses of the legal entity.
      *
-     * @param  string  $url
-     * @param  $query
+     * @param  array{id?: string, license_number?: string, type?: string, is_primary?: bool, page?: int, page_size?: int}  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/licenses/get-licenses
      */
-    public function getMany(string $url = self::URL, $query = null): PromiseInterface|EHealthResponse
+    public function getMany(array $query = []): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateMany(...));
         $this->setMapper($this->mapMany(...));
         $this->setDefaultPageSize();
 
-        $mergedQuery = array_merge($this->options['query'], $query ?? []);
+        $mergedQuery = array_merge($this->options['query'], $query);
 
-        return $this->get($url, $mergedQuery);
+        return $this->get(self::URL, $mergedQuery);
     }
 
     /**
      * This method must be used to create additional licenses for legal entity.
      *
-     * @param  string  $url
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/licenses/create-license
      */
-    public function create(string $url = self::URL, array $data = []): PromiseInterface|EHealthResponse
+    public function create(array $data = []): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateResponse(...));
         $this->setMapper($this->mapResponse(...));
 
-        return $this->post($url, $data);
+        return $this->post(self::URL, $data);
     }
 
     /**
@@ -62,6 +64,8 @@ class License extends Request
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/licenses/update-license
      */
     public function update(string $uuid, array $data = []): PromiseInterface|EHealthResponse
     {

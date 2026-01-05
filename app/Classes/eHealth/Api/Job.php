@@ -19,11 +19,13 @@ class Job extends Request
      * Used to get the processing status of the async job.
      *
      * @param  string  $uuid
-     * @param  $query
+     * @param  array  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://medicaleventsmisapi.docs.apiary.io/#reference/medical-events/encounter-data-package/get-async-job-processing-details
      */
-    public function getDetails(string $uuid, $query = null): PromiseInterface|EHealthResponse
+    public function getDetails(string $uuid, array $query = []): PromiseInterface|EHealthResponse
     {
         return $this->get(self::URL . "/$uuid", $query);
     }

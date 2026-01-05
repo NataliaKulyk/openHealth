@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Classes\eHealth\Api\DictionaryApi;
-use App\Classes\eHealth\Api\ServiceApi;
+use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\Exceptions\ApiException;
-use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use App\Services\Dictionary\Dictionary;
-use Exception;
+use App\Traits\FormTrait;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use RuntimeException;
+use Illuminate\Support\Facades\Session;
 
 class DictionaryService
 {
+    use FormTrait;
+
     /**
      * Local storage for all founded Dictionaries into incoming array.
      * As 'Dictionary' here should be interpreted as object created from the associative array.
@@ -57,21 +59,27 @@ class DictionaryService
      * Get all dictionaries data from external resource via API and put it into the cache.
      *
      * @return array
-     * @throws RuntimeException
      */
     protected function getSourceDictionaries(): array
     {
-        return Cache::remember('dictionaries', now()->addDays(7), static function (): array {
+        return Cache::remember('dictionaries', now()->addDays(7), function () {
             try {
-                return DictionaryApi::getDictionaries();
-            } catch (ApiException $e) {
-                Log::channel('e_health_errors')->error('Failed to fetch dictionaries', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
+                return EHealth::dictionary()->getDictionaries()->getData();
+            } catch (ConnectionException $exception) {
+                $this->logConnectionError($exception, 'Error connecting when getting dictionaries');
+                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
-                throw new RuntimeException();
+                return [];
+            } catch (EHealthValidationException|EHealthResponseException $exception) {
+                $this->logEHealthException($exception, 'Error connecting when getting dictionaries');
+
+                if ($exception instanceof EHealthValidationException) {
+                    Session::flash('error', $exception->getFormattedMessage());
+                } else {
+                    Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+                }
+
+                return [];
             }
         });
     }
@@ -152,19 +160,24 @@ class DictionaryService
      */
     public function getServiceDictionary(): array
     {
-        $serviceDictionary = Cache::remember('service_dictionary', now()->addDays(7), static function (): array {
+        $serviceDictionary = Cache::remember('service_dictionary', now()->addDays(7), function (): array {
             try {
-                $params = EncounterRequestApi::buildGetServicesDictionary(pageSize: 300);
+                return EHealth::service()->getServiceDictionary()->getData();
+            } catch (ConnectionException $exception) {
+                $this->logConnectionError($exception, 'Error connecting when getting services dictionary');
+                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
 
-                return ServiceApi::getServiceDictionary($params)['data'];
-            } catch (Exception $e) {
-                Log::channel('e_health_errors')->error('Failed to fetch service dictionary', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
+                return [];
+            } catch (EHealthValidationException|EHealthResponseException $exception) {
+                $this->logEHealthException($exception, 'Error connecting when getting services dictionary');
 
-                throw new RuntimeException();
+                if ($exception instanceof EHealthValidationException) {
+                    Session::flash('error', $exception->getFormattedMessage());
+                } else {
+                    Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+                }
+
+                return [];
             }
         });
 
