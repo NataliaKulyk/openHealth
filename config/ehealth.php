@@ -43,16 +43,16 @@ return [
             'reimbursement_report:read', 'secret:refresh', 'capitation_report:read', 'contract_request:create', 'contract_request:read', 'contract_request:terminate', 'contract_request:approve',
             'contract_request:sign', 'contract:read', 'contract:write', 'client:read', 'connection:read', 'connection:write', 'connection:refresh_secret', 'connection:delete', 'patient_summary:read',
             'encounter:write', 'encounter:read', 'episode:write', 'episode:read', 'job:read', 'condition:read', 'condition:write', 'observation:read', 'observation:write', 'immunization:read',
-            'immunization:write', 'allergy_intolerance:read', 'allergy_intolerance:write', 'encounter:cancel', 'service_request:write', 'service_request:read', 'service_request:use',
-            'service_request:cancel', 'service_request:complete', 'service_request:makeinprogress', 'service_request:recall', 'medication_statement:read', 'medication_statement:write', 'device:read',
-            'device:write', 'risk_assessment:read', 'risk_assessment:write', 'approval:create', 'diagnostic_report:cancel', 'diagnostic_report:read', 'diagnostic_report:write', 'procedure:read',
-            'procedure:write', 'procedure:cancel', 'program_service:read', 'medication_administration:read', 'medication_administration:write', 'equipment:write', 'equipment:read', 'person_request:write',
-            'person_request:read', 'authentication_method_request:write', 'care_plan:write', 'care_plan:read', 'approval:read', 'approval:cancel', 'license:details', 'license:read', 'license:write',
-            'clinical_impression:read', 'clinical_impression:write', 'rule_engine_rule:read', 'medical_event_context:read', 'person_emergency_contact:read', 'party_verification:read',
-            'party_verification:details', 'party_verification:write', 'person_verification:details', 'person_verification:write', 'device_definition:read', 'device_request:write', 'device_request:read',
-            'device_request:resend', 'device_request:revoke', 'specimen:write', 'specimen:read', 'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate',
-            'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete', 'device_dispense:read', 'confidant_person_relationship_request:write',
-            'confidant_person_relationship:read'
+            'immunization:write', 'allergy_intolerance:read', 'allergy_intolerance:write', 'encounter:cancel', 'related_legal_entities:read', 'service_request:write', 'service_request:read',
+            'service_request:use', 'service_request:cancel', 'service_request:complete', 'service_request:makeinprogress', 'service_request:recall', 'medication_statement:read',
+            'medication_statement:write', 'device:read', 'device:write', 'risk_assessment:read', 'risk_assessment:write', 'approval:create', 'diagnostic_report:cancel', 'diagnostic_report:read',
+            'diagnostic_report:write', 'procedure:read', 'procedure:write', 'procedure:cancel', 'program_service:read', 'medication_administration:read', 'medication_administration:write',
+            'equipment:write', 'equipment:read', 'person_request:write', 'person_request:read', 'authentication_method_request:write', 'care_plan:write', 'care_plan:read', 'approval:read',
+            'approval:cancel', 'license:details', 'license:read', 'license:write', 'clinical_impression:read', 'clinical_impression:write', 'rule_engine_rule:read', 'medical_event_context:read',
+            'person_emergency_contact:read', 'party_verification:read', 'party_verification:details', 'party_verification:write', 'person_verification:details', 'person_verification:write',
+            'device_definition:read', 'device_request:write', 'device_request:read', 'device_request:resend', 'device_request:revoke', 'specimen:write', 'specimen:read', 'specimen:process',
+            'specimen:cancel', 'specimen:reject', 'specimen:invalidate', 'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete', 'device_dispense:read',
+            'confidant_person_relationship_request:write', 'confidant_person_relationship:read'
              //'related_legal_entities:read',
        ],
        'MSP_LIMITED' => [
@@ -80,7 +80,7 @@ return [
             'person_verification:write', 'device_definition:read', 'device_request:write', 'device_request:read', 'device_request:resend', 'device_request:revoke', 'specimen:write', 'specimen:read',
             'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate', 'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete',
             'device_dispense:read', 'device_association:read', 'detected_issue:read', 'confidant_person_relationship_request:write', 'confidant_person_relationship:read', 'personal_data:read',
-            'person_request:sign'
+            'care_team:read', 'care_team:write', 'person_request:sign'
         ],
         'PHARMACY' => [
             'employee_role:write', 'employee_role:read', 'healthcare_service:write', 'healthcare_service:read', 'division:activate', 'division:deactivate', 'division:details', 'division:read',
@@ -112,7 +112,7 @@ return [
             'party_verification:details', 'party_verification:write', 'person_verification:details', 'person_verification:write', 'device_definition:read', 'device_request:write', 'device_request:read',
             'device_request:resend', 'device_request:revoke', 'specimen:write', 'specimen:read', 'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate',
             'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete', 'device_dispense:read', 'device_association:read', 'detected_issue:read',
-            'confidant_person_relationship_request:write', 'confidant_person_relationship:read', 'personal_data:read', 'person_request:sign'
+            'confidant_person_relationship_request:write', 'confidant_person_relationship:read', 'personal_data:read', 'care_team:read', 'care_team:write', 'person_request:sign'
         ],
         'EMERGENCY' => [
             'capitation_report:read', 'contract_request:sign', 'division:activate', 'division:deactivate', 'division:details', 'division:read', 'division:write', 'drugs:read', 'employee:deactivate',
@@ -130,7 +130,7 @@ return [
             'license:details', 'license:read', 'license:write', 'clinical_impression:read', 'clinical_impression:write', 'rule_engine_rule:read', 'medical_event_context:read',
             'person_emergency_contact:read', 'party_verification:details', 'party_verification:write', 'person_verification:details', 'person_verification:write', 'specimen:write', 'specimen:read',
             'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate', 'service_request:read_impersonal', 'device_request:mark_in_error', 'device_request:complete',
-            'device_dispense:read', 'party_verification:read', 'person_request:sign'
+            'device_dispense:read', 'party_verification:read', 'care_team:read', 'care_team:write', 'person_request:sign'
         ]
     ],
 
@@ -736,22 +736,23 @@ return [
             'party_verification:details', 'party_verification:write', 'device_dispense:read'
         ],
         'ADMIN' => [
-            'declaration:read', 'declaration_request:approve', 'declaration_request:reject', 'declaration_request:read', 'declaration_request:sign', 'declaration_request:write', 'capitation_report:read',
-            'division:details', 'division:read', 'employee:read', 'employee_request:approve', 'employee_request:reject', 'employee_request:read', 'legal_entity:read', 'otp:read', 'otp:write',
-            'person:read', 'service_request:read', 'service_request:use', 'contract_request:sign', 'contract_request:create', 'contract_request:read', 'contract_request:terminate',
-            'contract_request:approve', 'contract:read', 'contract:write', 'healthcare_service:read', 'healthcare_service:write', 'employee_role:read', 'employee_role:write', 'equipment:write',
-            'equipment:read', 'employee_request:write', 'license:read', 'license:details', 'party_verification:details', 'party_verification:write', 'person_verification:details'
+            'declaration:read', 'declaration_request:approve', 'declaration_request:reject', 'declaration_request:read', 'declaration_request:sign', 'declaration_request:write',
+            'capitation_report:read', 'division:details', 'division:read', 'employee:read', 'employee_request:approve', 'employee_request:reject', 'employee_request:read', 'legal_entity:read',
+            'otp:read', 'otp:write', 'person:read', 'service_request:read', 'service_request:use', 'contract_request:sign', 'contract_request:create', 'contract_request:read',
+            'contract_request:terminate', 'contract_request:approve', 'contract:read', 'contract:write', 'healthcare_service:read', 'healthcare_service:write', 'employee_role:read',
+            'employee_role:write', 'equipment:write', 'equipment:read', 'employee_request:write', 'license:read', 'license:details', 'party_verification:details', 'party_verification:write',
+            'person_verification:details'
         ],
         'DOCTOR' => [
             'declaration:read', 'declaration_request:approve', 'declaration_request:read', 'declaration_request:sign', 'declaration_request:write', 'division:read', 'employee:read',
             'employee_request:approve', 'employee_request:reject', 'employee_request:read', 'legal_entity:read', 'otp:read', 'otp:write', 'person:read', 'patient_summary:read', 'encounter:write',
             'encounter:read', 'encounter:cancel', 'episode:write', 'episode:read', 'job:read', 'condition:read', 'condition:write', 'observation:read', 'observation:write', 'immunization:read',
-            'immunization:write', 'allergy_intolerance:read', 'allergy_intolerance:write', 'medication_statement:read', 'medication_statement:write', 'device:read', 'device:write',
-            'risk_assessment:read', 'risk_assessment:write', 'medication_dispense:read', 'drugs:read', 'medication_request:details', 'medication_request:read', 'medication_request:reject',
-            'medication_request:resend', 'medication_request_request:read', 'medication_request_request:reject', 'medication_request_request:sign', 'medication_request_request:write',
-            'diagnostic_report:read', 'diagnostic_report:write', 'diagnostic_report:cancel', 'procedure:read', 'procedure:write', 'procedure:cancel', 'service_request:makeinprogress',
-            'service_request:complete', 'service_request:recall', 'service_request:cancel', 'service_request:write', 'service_request:read', 'service_request:use', 'approval:create',
-            'program_service:read', 'medication_administration:read', 'medication_administration:write', 'healthcare_service:read', 'employee_role:read', 'person_request:write', 'person_request:read',
+            'immunization:write', 'allergy_intolerance:read', 'allergy_intolerance:write', 'medication_statement:read', 'medication_statement:write', 'device:read', 'device:write', 'risk_assessment:read',
+            'risk_assessment:write', 'medication_dispense:read', 'drugs:read', 'medication_request:details', 'medication_request:read', 'medication_request:reject', 'medication_request:resend',
+            'medication_request_request:read', 'medication_request_request:reject', 'medication_request_request:sign', 'medication_request_request:write', 'diagnostic_report:read',
+            'diagnostic_report:write', 'diagnostic_report:cancel', 'procedure:read', 'procedure:write', 'procedure:cancel', 'service_request:makeinprogress', 'service_request:complete',
+            'service_request:recall', 'service_request:cancel', 'service_request:write', 'service_request:read', 'service_request:use', 'approval:create', 'program_service:read',
+            'medication_administration:read', 'medication_administration:write', 'healthcare_service:read', 'employee_role:read', 'person_request:write', 'person_request:read',
             'authentication_method_request:write', 'care_plan:read', 'approval:read', 'approval:cancel', 'care_plan:write', 'composition:create', 'composition:sign', 'composition:cancel',
             'composition:read', 'composition:write', 'composition:mark_in_error', 'composition:resend_sms', 'composition_configuration:read', 'composition:search', 'license:read',
             'clinical_impression:read', 'rule_engine_rule:read', 'medical_event_context:read', 'clinical_impression:write', 'person_verification:read', 'person_verification:details',
@@ -825,11 +826,11 @@ return [
         'MED_COORDINATOR' => [
             'employee_request:read', 'employee_request:approve', 'employee_request:reject', 'employee_role:read', 'diagnostic_report:read', 'encounter:write', 'encounter:read', 'encounter:cancel',
             'episode:write', 'episode:read', 'medical_event_context:read', 'procedure:read', 'person:read', 'preperson:read', 'otp:read', 'otp:write', 'person_request:read',
-            'authentication_method_request:write', 'merge_request:read', 'patient_summary:read', 'division:read', 'employee:read', 'legal_entity:read', 'job:read', 'condition:read', 'observation:read',
-            'allergy_intolerance:read', 'risk_assessment:read', 'immunization:read', 'clinical_impression:read', 'service_request:read', 'service_request:write', 'service_request:cancel',
-            'medication_request:details', 'medication_request:read', 'medication_request:reject', 'medication_request:resend', 'medication_request_request:read', 'medication_request_request:reject',
-            'medication_request_request:sign', 'medication_request_request:write', 'care_plan:read', 'care_plan:write', 'approval:read', 'approval:cancel', 'approval:create', 'condition:write',
-            'person_verification:details', 'confidant_person_relationship:read', 'service_request:recall'
+            'authentication_method_request:write', 'merge_request:read', 'patient_summary:read', 'division:read', 'employee:read', 'legal_entity:read', 'job:read', 'condition:read',
+            'observation:read', 'allergy_intolerance:read', 'risk_assessment:read', 'immunization:read', 'clinical_impression:read', 'service_request:read', 'service_request:write',
+            'service_request:cancel', 'medication_request:details', 'medication_request:read', 'medication_request:reject', 'medication_request:resend', 'medication_request_request:read',
+            'medication_request_request:reject', 'medication_request_request:sign', 'medication_request_request:write', 'care_plan:read', 'care_plan:write', 'approval:read', 'approval:cancel',
+            'approval:create', 'condition:write', 'person_verification:details', 'confidant_person_relationship:read', 'service_request:recall'
         ],
         'PHARMACIST' => [
             'division:read', 'employee:read', 'employee_request:approve', 'employee_request:reject', 'employee_request:read', 'legal_entity:read', 'medication_dispense:process',
