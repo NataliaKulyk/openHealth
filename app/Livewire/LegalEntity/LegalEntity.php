@@ -346,7 +346,7 @@ abstract class LegalEntity extends Component
             'data.email' => 'required|string',
             'data.nhs_verified' => 'required|boolean',
             'data.nhs_reviewed' => 'required|boolean',
-            'data.nhs_comment' => 'nullable|boolean',
+            'data.nhs_comment' => 'nullable|string',
             'data.residence_address' => 'required|array',
             'data.residence_address.type' => 'required|string',
             'data.residence_address.country' => 'required|string',

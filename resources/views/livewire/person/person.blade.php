@@ -27,7 +27,7 @@
 
                     @if($this instanceof PersonUpdate)
                         @can('create', PersonRequest::class)
-                            <button type="submit" wire:click.prevent="update" class="button-primary">
+                            <button type="submit" wire:click.prevent="openAuthMethodModal" class="button-primary">
                                 {{ __('forms.update_data') }}
                             </button>
                         @endcan
@@ -55,6 +55,10 @@
 
     @if($showInformationMessageModal)
         @include('livewire.person.parts.modals.information-message')
+    @endif
+
+    @if($this instanceof PersonUpdate && $showAuthMethodModal)
+        @include('livewire.person.parts.modals.choose-auth-method')
     @endif
 
     @if($showLeafletModal)

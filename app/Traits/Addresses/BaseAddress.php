@@ -1,8 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Traits\Addresses;
 
-use App\Classes\eHealth\Api\AdressesApi;
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Session;
 
 trait BaseAddress
 {
@@ -33,14 +39,13 @@ trait BaseAddress
      * Explicit getter to retrieve internal address state data
      * All non -address keys are delegated to parent
      *
-     * @param string $property The property name to set
-     *
+     * @param  string  $property  The property name to set
      * @return mixed
      */
     public function &__get($property): mixed
     {
-        if (! $this->isAddressKey($property)) {
-            // Here is IMPORTANT to return by local varaiable!!
+        if (!$this->isAddressKey($property)) {
+            // Here is IMPORTANT to return by local variable!!
             $value = parent::__get($property);
 
             return $value;
@@ -53,7 +58,7 @@ trait BaseAddress
          * The leading & makes $ref an alias of addressesState[...] so
          * external mutations affect the original array (required by &__get).
          */
-        $ref =& $this->addressesState[$context][$field];
+        $ref = &$this->addressesState[$context][$field];
 
         return $ref;
     }
@@ -62,14 +67,13 @@ trait BaseAddress
      * Explicit setter to update internal address state data
      * All non -address keys are delegated to parent
      *
-     * @param string $property The property name to set
-     * @param mixed $value The value to assign to the property
-     *
+     * @param  string  $property  The property name to set
+     * @param  mixed  $value  The value to assign to the property
      * @return void
      */
     public function __set(string $property, mixed $value): void
     {
-        if (! $this->isAddressKey($property)) {
+        if (!$this->isAddressKey($property)) {
             parent::__set($property, $value);
 
             return;
@@ -77,7 +81,7 @@ trait BaseAddress
 
         [$context, $field] = $this->resolveAddressKey($property);
 
-        $this->addressesState[$context][$field] = (array) $value;
+        $this->addressesState[$context][$field] = (array)$value;
     }
 
     /**
@@ -86,13 +90,12 @@ trait BaseAddress
      * This method determines whether the provided property name corresponds
      * to an address field or attribute.
      *
-     * @param string $property The property name to check
-     *
+     * @param  string  $property  The property name to check
      * @return bool
      */
     protected function isAddressKey(string $property): bool
     {
-        return \in_array($property, [
+        return in_array($property, [
             'address',
             'receptionAddress',
             'districts',
@@ -104,13 +107,11 @@ trait BaseAddress
         ], true);
     }
 
-
     /**
      * Resolves the address key for a given property.
      *
-     * @param string $property The property name to check
-     *
-     *  @return array
+     * @param  string  $property  The property name to check
+     * @return array
      */
     protected function resolveAddressKey(string $property): array
     {
@@ -130,33 +131,33 @@ trait BaseAddress
     /**
      * Update the address region for the current model (via API call)
      *
-     * @param string $property // The property name to update
-     * @param string $value
-     *
+     * @param  string  $property  // The property name to update
+     * @param  string  $districts
+     * @param  string  $value
      * @return void
      */
     public function updateRegion(string $property, string $districts, string $value): void
     {
         $this->{$districts} = [];
 
-        if (\mb_strlen($value) >= 2) {
+        if (mb_strlen($value) >= 2) {
             $this->getDistricts($property, $districts);
         }
-   }
+    }
 
     /**
      * Update the address street value (via API call)
      *
-     * @param string $property // The property name to update
-     * @param string $value
-     *
+     * @param  string  $property  // The property name to update
+     * @param  string  $streets
+     * @param  string  $value
      * @return void
      */
     public function updateStreet(string $property, string $streets, string $value): void
     {
         $this->{$streets} = [];
 
-        if (\mb_strlen($value) >= 2) {
+        if (mb_strlen($value) >= 2) {
             $this->getStreets($property, $streets);
         }
     }
@@ -164,16 +165,16 @@ trait BaseAddress
     /**
      * Update the address settlement value (via API call)
      *
-     * @param string $property // The property name to update
-     * @param string $value
-     *
+     * @param  string  $property  // The property name to update
+     * @param  string  $settlements
+     * @param  string  $value
      * @return void
      */
     public function updateSettlement(string $property, string $settlements, string $value): void
     {
         $this->{$settlements} = [];
 
-        if (\mb_strlen($value) >= 2) {
+        if (mb_strlen($value) >= 2) {
             $this->getSettlements($property, $settlements);
         }
     }
@@ -188,7 +189,24 @@ trait BaseAddress
 
         $region = $this->{$property}['region'];
 
-        $this->{$districts} = AdressesApi::_districts($area, $region)['data'] ?? [];
+        try {
+            $this->{$districts} = EHealth::address()->getDistricts(['region' => $area, 'name' => $region])->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when searching for districts');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when searching for districts');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
     }
 
     public function getSettlements(string $property, string $settlements): void
@@ -202,7 +220,26 @@ trait BaseAddress
         $area = $this->{$property}['area'];
         $settlement = $this->{$property}['settlement'];
 
-        $this->{$settlements} = AdressesApi::_settlements($area, $region, $settlement)['data'] ?? [];
+        try {
+            $this->{$settlements} = EHealth::address()->getSettlements(
+                ['region' => $area, 'district' => $region, 'name' => $settlement]
+            )->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when searching for settlements');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when searching for settlements');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
     }
 
     public function getStreets(string $property, string $streets): void
@@ -216,6 +253,25 @@ trait BaseAddress
         $streetType = $this->{$property}['streetType'];
         $street = $this->{$property}['street'];
 
-        $this->{$streets} = AdressesApi::_streets($settlementId, $streetType, $street)['data'] ?? [];
+        try {
+            $this->{$streets} = EHealth::address()->getStreets(
+                ['settlement_id' => $settlementId, 'type' => $streetType, 'name' => $street]
+            )->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when searching for streets');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when searching for streets');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
     }
 }

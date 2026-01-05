@@ -42,13 +42,21 @@ class Person extends BasePerson
         return $this->hasOne(PersonRequest::class);
     }
 
-    // Для скількох людей Я є довіреною особою
+    /**
+     * How many people do I represent as a confidant person.
+     *
+     * @return HasMany
+     */
     public function confidantFor(): HasMany
     {
         return $this->hasMany(ConfidantPerson::class, 'person_id');
     }
 
-    // Хто є МОЄЮ довіреною особою
+    /**
+     * Who is MY confidant person.
+     *
+     * @return HasOne
+     */
     public function confidantPerson(): HasOne
     {
         return $this->hasOne(ConfidantPerson::class, 'subject_person_id');

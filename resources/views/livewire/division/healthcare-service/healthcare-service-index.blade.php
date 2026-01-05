@@ -126,7 +126,7 @@
                             >
                                 <td class="px-6 py-4 break-words whitespace-normal align-top">
                                     <p class="font-semibold text-gray-900 dark:text-white">
-                                        {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] }}
+                                        {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] ?? '-' }}
                                     </p>
                                 </td>
 
@@ -138,7 +138,7 @@
 
                                 <td class="px-6 py-4 break-words whitespace-normal align-top">
                                     <p class="font-medium text-gray-600 dark:text-gray-500">
-                                        {{ $dictionaries['PROVIDING_CONDITION'][$service->providingCondition] }}
+                                        {{ $dictionaries['PROVIDING_CONDITION'][$service->providingCondition] ?? '-' }}
                                     </p>
                                 </td>
 
@@ -279,8 +279,25 @@
                     </table>
 
                 @else
-                    <div class="text-center py-16">
-                        <p class="text-gray-500 dark:text-gray-400 text-lg">{{ __('forms.nothing_found') }}</p>
+                    <div class="p-12">
+                        <fieldset class="fieldset">
+                            <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                            <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 mt-0.5">
+                                        @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-bold text-blue-800">
+                                            {{ __('forms.nothing_found') }}
+                                        </p>
+                                        <p class="text-sm text-blue-600">
+                                            {{ __('forms.changing_search_parameters') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
                     </div>
                 @endif
             </div>

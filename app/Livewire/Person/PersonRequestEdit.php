@@ -48,6 +48,10 @@ class PersonRequestEdit extends PersonComponent
             $this->form->person['phones'] = [['type' => null, 'number' => null]];
         }
 
+        if (empty($this->form->person['authenticationMethods'])) {
+            $this->form->person['authenticationMethods'] = [['type' => null]];
+        }
+
         if ($this->form->person['confidantPerson']) {
             $this->form->person['confidantPerson']['personId'] = $personRequest->confidantPerson->person->uuid;
         } else {

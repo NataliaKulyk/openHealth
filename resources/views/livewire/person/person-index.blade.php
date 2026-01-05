@@ -51,8 +51,8 @@
                     <legend class="legend">
                         {{ $patient['lastName'] }} {{ $patient['firstName'] }} {{ $patient['secondName'] ?? '' }}
                     </legend>
-                    <div
-                        class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                         <div class="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mt-2">
 
                             @if($patient['birthDate'])
@@ -73,7 +73,7 @@
                                 <span class="flex items-center gap-1.5 min-w-0">
                                     @icon('tabler-phone', 'w-6 h-6 text-gray-800 dark:text-white')
                                     <a href="tel:{{ $patient['phones'][0]['number'] }}"
-                                       class="truncate hover:underline"
+                                       class="truncate hover:underline font-medium text-gray-900 dark:text-gray-200 text-base"
                                        title="{{ $patient['phones'][0]['number'] }}"
                                     >
                                         {{ $patient['phones'][0]['number'] }}
@@ -94,28 +94,28 @@
                             @endif
                         </div>
 
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-6">
                             @if($patient['source'] === 'request')
                                 <a href="{{ route('persons.edit', [legalEntity(), $patient['id']]) }}"
-                                   class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                   class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1.5 font-medium"
                                 >
-                                    @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                    @icon('file-lines', 'w-4 h-4')
                                     <span class="text-sm">{{ __('patients.continue_registration') }}</span>
                                 </a>
                             @else
                                 @can('view', Person::class)
                                     <button wire:click="redirectTo('{{ $patient['id'] }}', 'persons.patient-data')"
-                                            class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                            class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1.5 font-medium"
                                     >
-                                        @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                        @icon('file-lines', 'w-4 h-4')
                                         <span class="text-sm">{{ __('patients.view_record') }}</span>
                                     </button>
                                 @endcan
                                 @can('create', Encounter::class)
                                     <button wire:click="redirectTo('{{ $patient['id'] }}', 'encounter.create')"
-                                            class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                            class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1.5 font-medium"
                                     >
-                                        @icon('plus', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                        @icon('plus', 'w-4 h-4')
                                         <span class="text-sm">{{ __('patients.start_interacting') }}</span>
                                     </button>
                                 @endcan
@@ -128,8 +128,7 @@
                             <table class="table-input w-full table-auto">
                                 <thead class="thead-input">
                                 <tr>
-                                    <th scope="col" class="th-input">{{ __('forms.phone') }}</th>
-                                    <th scope="col" class="th-input">{{ __('forms.birth_date') }}</th>
+                                    <th scope="col" class="th-input">{{ __('forms.city') }}</th>
                                     <th scope="col" class="th-input">{{ __('forms.rnokpp') }}</th>
                                     <th scope="col" class="th-input">{{ __('patients.birth_certificate') }}</th>
                                     <th scope="col" class="th-input">{{ __('forms.status.label') }}</th>
@@ -139,16 +138,13 @@
 
                                 <tbody>
                                 <tr>
-                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
-                                        {{ $patient['phones'][0]['number'] ?? '-' }}
+                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top font-bold text-gray-900 dark:text-white">
+                                        {{ $patient['birthSettlement'] ?? '-' }}
                                     </td>
-                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
-                                        {{ $patient['birthDate'] }}
-                                    </td>
-                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
+                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top font-bold text-gray-900 dark:text-white">
                                         {{ $patient['taxId'] ?? '-' }}
                                     </td>
-                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top">
+                                    <td class="td-input whitespace-nowrap overflow-hidden text-ellipsis align-top font-bold text-gray-900 dark:text-white">
                                         {{ $patient['birthCertificate'] ?? '-' }}
                                     </td>
                                     <td class="td-input whitespace-nowrap align-top">
@@ -165,7 +161,7 @@
                                             }
                                         @endphp
 
-                                        <span class="{{ $color }}">{{ $label }}</span>
+                                        <span class="{{ $color }} px-2 py-0.5 rounded text-xs">{{ $label }}</span>
                                     </td>
                                     <td class="td-input text-center">
                                         <div class="relative"
@@ -174,7 +170,7 @@
                                         >
                                             <button @click="openDropdown = !openDropdown"
                                                     type="button"
-                                                    class="cursor-pointer"
+                                                    class="cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                             >
                                                 @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-gray-200')
                                             </button>
@@ -182,15 +178,15 @@
                                             <div x-show="openDropdown"
                                                  x-transition
                                                  x-cloak
-                                                 class="absolute right-0 z-10 w-48 bg-white rounded shadow dark:bg-gray-700"
+                                                 class="absolute right-0 z-10 w-56 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
                                             >
                                                 @if($patient['source'] === 'request')
                                                     <div class="py-1" @click="openDropdown = false">
                                                         <button wire:click="deleteDraft({{ $patient['id'] }})"
-                                                                class="dropdown-button !flex gap-2"
+                                                                class="dropdown-button !flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                                                                 type="button"
                                                         >
-                                                            @icon('delete', 'w-5 h-5 text-red-600')
+                                                            @icon('delete', 'w-5 h-5')
                                                             {{ __('forms.delete') }}
                                                         </button>
                                                     </div>
@@ -198,7 +194,7 @@
                                                     <div class="py-1">
                                                         @can('create', DeclarationRequest::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'declaration.create')"
-                                                               class="dropdown-button !flex gap-2 border-b border-gray-100 dark:border-gray-600 w-full"
+                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-600 w-full hover:bg-gray-50 cursor-pointer text-left"
                                                                @click="openDropdown = false"
                                                             >
                                                                 @icon('file-text', 'w-4 h-4')
@@ -208,7 +204,7 @@
 
                                                         @can('create', DiagnosticReport::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'diagnostic-report.create')"
-                                                               class="dropdown-button !flex gap-2 border-b border-gray-100 dark:border-gray-600 w-full"
+                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-600 w-full hover:bg-gray-50 cursor-pointer text-left"
                                                                @click="openDropdown = false"
                                                             >
                                                                 @icon('activity', 'w-4 h-4')
@@ -218,7 +214,7 @@
 
                                                         @can('create', Procedure::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'procedure.create')"
-                                                               class="dropdown-button !flex gap-2 w-full"
+                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm w-full hover:bg-gray-50 cursor-pointer text-left"
                                                                @click="openDropdown = false"
                                                             >
                                                                 @icon('settings', 'w-4 h-4')
@@ -237,9 +233,24 @@
                     </div>
                 </fieldset>
             @empty
-                <div class="text-center py-16">
-                    <p class="text-gray-500 dark:text-gray-400 text-lg">{{ __('forms.nothing_found') }}</p>
-                </div>
+                <fieldset class="fieldset mx-auto">
+                    <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                    <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-blue-800">
+                                    {{ __('forms.nothing_found') }}
+                                </p>
+                                <p class="text-sm text-blue-600">
+                                    {{ __('forms.changing_search_parameters') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
             @endforelse
         </div>
 

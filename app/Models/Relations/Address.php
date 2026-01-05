@@ -10,11 +10,11 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Address extends Model
 {
-    public const string DEFAULT_TYPE='RESIDENCE';
+    public const string DEFAULT_TYPE = 'RESIDENCE';
 
-    public const string RECEPTION_TYPE='RECEPTION';
+    public const string RECEPTION_TYPE = 'RECEPTION';
 
-    public const string DEFAULT_COUNTRY='UA';
+    public const string DEFAULT_COUNTRY = 'UA';
 
     protected $hidden = [
         'id',

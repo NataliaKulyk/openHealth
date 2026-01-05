@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
+use App\Classes\eHealth\Api\Address;
 use App\Classes\eHealth\Api\Auth;
 use App\Classes\eHealth\Api\ContractRequest;
 use App\Classes\eHealth\Api\Declaration;
@@ -161,5 +162,10 @@ final class EHealth
     public static function medicalProgram(): MedicalProgram
     {
         return app(MedicalProgram::class);
+    }
+
+    public static function address(): Address
+    {
+        return app(Address::class);
     }
 }

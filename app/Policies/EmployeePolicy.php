@@ -20,7 +20,7 @@ class EmployeePolicy
 
     public function view(User $user, Employee $employee): Response
     {
-        if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
+        if ((int) $employee->legalEntityId !== (int) legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -31,22 +31,35 @@ class EmployeePolicy
 
     public function update(User $user, Employee $employee): Response
     {
-        if ($employee->status === Status::DISMISSED) {
-            return Response::deny(__('employees.policy.emp.dismissed_no_edit'));
-        }
-
+        // 1. Verification of affiliation with the current institution
         if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
+        // 2. Prohibition of editing the owner of the establishment
+        if ($employee->employeeType === 'OWNER') {
+            return Response::deny(__('employees.policy.owner_no_edit'));
+        }
+
+        // 3. Check if there is a connection with the user (user_id)
+        if (is_null($employee->userId)) {
+            return Response::deny(__('employees.policy.no_user_linked'));
+        }
+
+        // 4.Status check (dismissed cannot be edited)
+        if ($employee->status === Status::DISMISSED) {
+            return Response::deny(__('employees.policy.emp.dismissed_no_edit'));
+        }
+
+        // 5. Checking the access rights of the current user (ACL)
         return $user->can('employee:write')
             ? Response::allow()
-            : Response::deny(__('employees.policy.emp.update_denied'));
+            : Response::deny(__('employees.policy.update_denied'));
     }
 
     public function deactivate(User $user, Employee $employee): Response
     {
-        if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
+        if ((int) $employee->legalEntityId !== (int) legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 
@@ -61,7 +74,7 @@ class EmployeePolicy
     public function sync(User $user, Employee $employee): Response
     {
         // 1. Verification of affiliation with the current institution
-        if ((int)$employee->legalEntityId !== (int)legalEntity()->id) {
+        if ((int) $employee->legalEntityId !== (int) legalEntity()->id) {
             return Response::denyWithStatus(404);
         }
 

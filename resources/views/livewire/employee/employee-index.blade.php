@@ -334,20 +334,39 @@
 
                             <div class="flex items-center gap-4">
                                 @if($party->employees->isNotEmpty())
-                                    @can('create', \App\Models\Employee\EmployeeRequest::class)
-                                        <a href="{{ route('party.edit', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
-                                           class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                            @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
-                                            <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
-                                        </a>
+                                    @php
+                                        // Find the last active employee of this person to check the rights
+                                        $latestEmployee = $party->employees->first(); // or through the method by which you get a topical position
 
-                                        <a href="{{ route('employee-request.position-add', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
-                                           class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                            <span class="text-xl leading-none">+</span>
-                                            <span>{{ __('forms.add_position') }}</span>
-                                        </a>
+                                        $isOwner = $latestEmployee && $latestEmployee->employeeType === 'OWNER';
+                                        $hasUserLinked = $latestEmployee && !empty($latestEmployee->userId);
+
+                                        // We check the possibility of editing personal data according to your rules:
+                                        // 1. Not the owner 2. There is a tethered user 3. Not exempt
+                                        $canEditParty = $latestEmployee
+                                            && !$isOwner
+                                            && $hasUserLinked
+                                            && $latestEmployee->status !== \App\Enums\Status::DISMISSED;
+                                    @endphp
+                                    @can('create', \App\Models\Employee\EmployeeRequest::class)
+                                        {{-- Edit personal data button --}}
+                                        @if($canEditParty)
+                                            <a href="{{ route('party.edit', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
+                                               class="cursor-pointer text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                @icon('file-lines', 'w-4 h-4 text-blue-600 hover:text-blue-800')
+                                                <span class="text-sm">{{ __('forms.edit_personal_data') }}</span>
+                                            </a>
+                                        @endif
+
+                                        {{-- Add position button (if you want to restrict for owners too) --}}
+
+                                            <a href="{{ route('employee-request.position-add', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
+                                               class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                <span class="text-xl leading-none">+</span>
+                                                <span>{{ __('forms.add_position') }}</span>
+                                            </a>
+                                        @endif
                                     @endcan
-                                @endif
                             </div>
                         </div>
 
@@ -426,9 +445,24 @@
                         </div>
                     </fieldset>
                 @empty
-                    <div class="text-center py-16">
-                        <p class="text-gray-500 dark:text-gray-400 text-lg">{{__('forms.nothing_found')}}</p>
-                    </div>
+                    <fieldset class="fieldset mx-auto">
+                        <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                        <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-blue-800">
+                                        {{ __('forms.nothing_found') }}
+                                    </p>
+                                    <p class="text-sm text-blue-600">
+                                        {{ __('forms.changing_search_parameters') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
                 @endforelse
             </div>
         </div>

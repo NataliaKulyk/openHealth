@@ -29,13 +29,25 @@ class PersonUpdate extends PersonComponent
     #[Locked]
     public string $uuid;
 
+    public array $authenticationMethods;
+
+    public bool $showAuthMethodModal = false;
+
     public function mount(LegalEntity $legalEntity, Person $person): void
     {
         $this->personId = $person->id;
         $this->uuid = $person->uuid;
         $this->baseMount();
 
-        $this->form->person = Arr::toCamelCase($person->load(['addresses', 'documents', 'phones'])->toArray());
+        $this->form->person = Arr::toCamelCase(
+            $person->load([
+                'addresses',
+                'documents',
+                'phones',
+                'authenticationMethods',
+                'confidantPerson.person:id,uuid,last_name,first_name,second_name,tax_id,unzr'
+            ])->toArray()
+        );
 
         $this->address = $this->form->person['addresses'][0];
 
@@ -43,48 +55,77 @@ class PersonUpdate extends PersonComponent
             $this->form->person['phones'] = [['type' => null, 'number' => null]];
         }
 
+        $authenticationMethods = $person->authenticationMethods->toArray();
+
         if ($person->confidantPerson) {
             $this->selectedConfidantPersonId = $person->confidantPerson->person->uuid;
+            $confidantPersonData = $person->confidantPerson->person;
 
-            $authorizeWith = $person->authenticationMethods
-                ->where('type', AuthenticationMethod::THIRD_PERSON)
-                ->first()
-                ?->uuid;
-
-            // If uuid isn't found, do request and save it in DB
-            if (!$authorizeWith) {
-                try {
-                    $response = EHealth::person()->getAuthMethods($this->uuid);
-
-                    $newAuthMethods = $response->validate();
-
-                    // Update by type
-                    foreach ($newAuthMethods as $method) {
-                        $person->authenticationMethods()->updateOrCreate(
-                            ['type' => $method['type']],
-                            $method
-                        );
+            $modifiedMethods = collect($authenticationMethods)->map(
+                function (array $method) use ($confidantPersonData) {
+                    if ($method['type'] === AuthenticationMethod::THIRD_PERSON->value) {
+                        $method['confidantPerson'] = [
+                            'name' => $confidantPersonData->fullName,
+                            'taxId' => $confidantPersonData->taxId,
+                            'unzr' => $confidantPersonData->unzr,
+                            'documentsPerson' => $confidantPersonData->documents->toArray()
+                        ];
                     }
 
-                    $this->form->authorizeWith = $newAuthMethods[0]['uuid'];
-                } catch (ConnectionException $exception) {
-                    $this->logConnectionError($exception, 'Error connecting when getting auth methods');
-                    Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
-
-                    return;
-                } catch (EHealthValidationException|EHealthResponseException $exception) {
-                    $this->logEHealthException($exception, 'Error when getting auth methods');
-
-                    if ($exception instanceof EHealthValidationException) {
-                        Session::flash('error', $exception->getFormattedMessage());
-                    } else {
-                        Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
-                    }
-
-                    return;
+                    return $method;
                 }
-            } else {
-                $this->form->authorizeWith = $authorizeWith;
+            );
+
+            $this->authenticationMethods = $modifiedMethods->toArray();
+        } else {
+            $this->authenticationMethods = $authenticationMethods;
+        }
+    }
+
+    /**
+     * Show modal for choosing authorize with param.
+     *
+     * @return void
+     */
+    public function openAuthMethodModal(): void
+    {
+        $this->showAuthMethodModal = true;
+
+        // Check if all auth methods has IDs
+        $allHaveIdentifier = collect($this->authenticationMethods)
+            ->every(static fn (array $method) => !empty(data_get($method, 'uuid')) || !empty(data_get($method, 'id')));
+
+        // If not, get all and update it
+        if (!$allHaveIdentifier) {
+            try {
+                $response = EHealth::person()->getAuthMethods($this->uuid);
+                $newAuthMethods = $response->validate();
+                $person = Person::whereUuid($this->uuid)->firstOrFail();
+
+                // Update by type
+                foreach ($newAuthMethods as $method) {
+                    $person->authenticationMethods()->updateOrCreate(
+                        ['type' => $method['type']],
+                        $method
+                    );
+                }
+
+                $this->authenticationMethods = Arr::toCamelCase($response->getData());
+            } catch (ConnectionException $exception) {
+                $this->logConnectionError($exception, 'Error connecting when getting auth methods');
+                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+                return;
+            } catch (EHealthValidationException|EHealthResponseException $exception) {
+                $this->logEHealthException($exception, 'Error when getting auth methods');
+
+                if ($exception instanceof EHealthValidationException) {
+                    Session::flash('error', $exception->getFormattedMessage());
+                } else {
+                    Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+                }
+
+                return;
             }
         }
     }

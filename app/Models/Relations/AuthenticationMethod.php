@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Casts\EHealthDateCast;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -14,10 +15,8 @@ class AuthenticationMethod extends Model
 
     protected $hidden = [
         'id',
-        'uuid',
         'authenticatable_type',
         'authenticatable_id',
-        'ehealth_ended_at',
         'created_at',
         'updated_at'
     ];
@@ -32,6 +31,8 @@ class AuthenticationMethod extends Model
         'alias',
         'ehealth_ended_at'
     ];
+
+    protected $casts = ['ehealth_ended_at' => EHealthDateCast::class];
 
     public function authenticatable(): MorphTo
     {

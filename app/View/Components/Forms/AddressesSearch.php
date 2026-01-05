@@ -7,7 +7,6 @@ namespace App\View\Components\Forms;
 use App\Rules\Zip;
 use Illuminate\Validation\Rule;
 use Illuminate\Contracts\View\View;
-use App\View\Components\Forms\Addresses;
 
 class AddressesSearch extends Addresses
 {

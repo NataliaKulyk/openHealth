@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace App\View\Components\Forms;
 
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
+use App\Traits\FormTrait;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Session;
 use Illuminate\View\Component;
-use App\Classes\eHealth\Api\AdressesApi;
 
 abstract class Addresses extends Component
 {
+    use FormTrait;
+
     public bool $readonly;
+
     public array $address = [];
 
     public ?array $regions = [];
@@ -22,8 +30,6 @@ abstract class Addresses extends Component
 
     public string $class = '';
 
-    public ?array $dictionaries;
-
     /**
      * Create a new component instance.
      */
@@ -33,7 +39,24 @@ abstract class Addresses extends Component
 
         $this->address = $address;
 
-        $this->regions = AdressesApi::_regions()['data'] ?? [];
+        try {
+            $this->regions = EHealth::address()->getRegions()->getData();
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when searching for regions');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when searching for regions');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
 
         $this->districts = $districts;
 
