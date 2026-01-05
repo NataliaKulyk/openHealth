@@ -43,10 +43,10 @@
             </x-slot>
         </x-header-navigation>
 
-        <div class="space-y-6" wire:key="patients-{{ $paginatedPatients->total() }}">
+        <div class="space-y-6 pl-3.5" wire:key="patients-{{ $paginatedPatients->total() }}">
             @forelse($paginatedPatients->items() as $patient)
                 <fieldset wire:key="patient-{{ $patient['id'] }}"
-                          class="p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]"
+                          class="shift-content p-4 sm:p-8 sm:pb-10 mb-16 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-[1280px]"
                 >
                     <legend class="legend">
                         {{ $patient['lastName'] }} {{ $patient['firstName'] }} {{ $patient['secondName'] ?? '' }}
@@ -194,7 +194,7 @@
                                                     <div class="py-1">
                                                         @can('create', DeclarationRequest::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'declaration.create')"
-                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-600 w-full hover:bg-gray-50 cursor-pointer text-left"
+                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-600 w-full hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer text-left text-gray-700 dark:text-gray-200"
                                                                @click="openDropdown = false"
                                                             >
                                                                 @icon('file-text', 'w-4 h-4')
@@ -204,7 +204,7 @@
 
                                                         @can('create', DiagnosticReport::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'diagnostic-report.create')"
-                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-600 w-full hover:bg-gray-50 cursor-pointer text-left"
+                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-600 w-full hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer text-left text-gray-700 dark:text-gray-200"
                                                                @click="openDropdown = false"
                                                             >
                                                                 @icon('activity', 'w-4 h-4')
@@ -214,7 +214,7 @@
 
                                                         @can('create', Procedure::class)
                                                             <a wire:click="redirectTo('{{ $patient['id'] }}', 'procedure.create')"
-                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm w-full hover:bg-gray-50 cursor-pointer text-left"
+                                                               class="dropdown-button !flex items-center gap-2 px-4 py-2 text-sm w-full hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer text-left text-gray-700 dark:text-gray-200"
                                                                @click="openDropdown = false"
                                                             >
                                                                 @icon('settings', 'w-4 h-4')
@@ -233,7 +233,7 @@
                     </div>
                 </fieldset>
             @empty
-                <fieldset class="fieldset mx-auto">
+                <fieldset class="fieldset mx-auto shift-content">
                     <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
                     <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
                         <div class="flex items-start gap-3">
