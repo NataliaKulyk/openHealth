@@ -23,7 +23,7 @@
 
                     <div class="ml-auto flex items-center gap-6 self-start -mt-22 translate-x-10">
                         {{-- Show the create button if a division is selected in the filter and has an active status --}}
-                        @if(isset($divisionId))
+                        @if(isset($divisionId, $divisionFilter))
                             @php
                                 $selectedDivision = collect($divisions)->firstWhere('id', $divisionFilter);
                             @endphp

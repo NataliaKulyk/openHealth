@@ -191,7 +191,7 @@ class HealthcareServiceIndex extends Component
         }
 
         try {
-            $query = $this->divisionUuid ? ['division_id' => $this->divisionUuid] : null;
+            $query = $this->divisionUuid ? ['division_id' => $this->divisionUuid] : [];
 
             $response = EHealth::healthcareService()->getMany($query);
         } catch (ConnectionException $exception) {
@@ -241,7 +241,10 @@ class HealthcareServiceIndex extends Component
         if ($this->isFiltersApplied) {
             if ($this->divisionFilter) {
                 $this->divisionId = $this->divisionFilter;
+                $this->divisionUuid = Division::whereId($this->divisionId)->value('uuid');
                 $query->whereDivisionId($this->divisionFilter);
+            } else {
+                $this->divisionUuid = null;
             }
 
             if (!empty($this->typeFilter)) {
