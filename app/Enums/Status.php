@@ -22,6 +22,7 @@ enum Status: string
     case UNSYNCED = 'UNSYNCED';
 
     case REORGANIZED = 'REORGANIZED';
+    case ENTERED_IN_ERROR = 'ENTERED_IN_ERROR';
 
     public function label(): string
     {
@@ -37,6 +38,7 @@ enum Status: string
             self::UNSYNCED => __('forms.status.unsynced'),
             self::STOPPED => __('forms.status.stopped'),
             self::REORGANIZED => __('forms.status.reorganized'),
+            self::ENTERED_IN_ERROR => __('forms.status.entered_in_error'),
         };
     }
 

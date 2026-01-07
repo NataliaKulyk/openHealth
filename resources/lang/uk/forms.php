@@ -388,7 +388,8 @@ return [
         'unsynced' => 'Не синхронізовано',
         'dracs_death_unverified' => 'Потребує підтвердження смерті',
         'unknown' => 'Невідомо',
-        'stopped' => 'Зупинений'
+        'stopped' => 'Зупинений',
+        'entered_in_error' => 'Внесено помилково'
     ],
 
     // Declarations
