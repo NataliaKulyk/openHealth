@@ -184,24 +184,54 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         );
     }
 
-    /**
-     * Prepares the nested data structure for a Revision from flat form data.
-     */
     protected function mapRevisionData(array $flatData): array
     {
         $employeeChunk = Arr::only($flatData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);
         $partyChunk = Arr::only($flatData, ['last_name', 'first_name', 'second_name', 'gender', 'birth_date', 'tax_id', 'no_tax_id', 'email', 'working_experience', 'about_myself']);
         $documentsChunk = $flatData['documents'] ?? [];
         $phonesChunk = $flatData['phones'] ?? [];
-        $doctorChunk = $flatData['doctor'] ?? [];
 
-        return [
+        // 1. Get raw data (UI usually writes to 'doctor' variable)
+        $rawProfessionalData = $flatData['doctor'] ?? [];
+
+        // 2. Determine the correct key for eHealth (doctor vs med_admin)
+        $employeeType = $flatData['employee_type'] ?? '';
+
+        $professionalKey = match ($employeeType) {
+            'MED_ADMIN' => 'med_admin',
+            'PHARMACIST' => 'pharmacist',
+            default => 'doctor', // Includes SPECIALIST
+        };
+
+        // 3. Fix structure (ensure lists are arrays, not objects with keys)
+        // Only do this if we have data
+        $professionalChunk = [];
+        if (!empty($rawProfessionalData)) {
+            // eHealth needs 'educations' (plural), UI might give 'education' or 'educations'
+            $edu = $rawProfessionalData['educations'] ?? $rawProfessionalData['education'] ?? [];
+
+            $professionalChunk = [
+                'educations' => array_values($edu), // Ensure JSON array [...]
+                'specialities' => array_values($rawProfessionalData['specialities'] ?? []),
+                'qualifications' => array_values($rawProfessionalData['qualifications'] ?? []),
+                'science_degree' => $rawProfessionalData['science_degree'] ?? null,
+            ];
+        }
+
+        // 4. Build result
+        $result = [
             'employee_request_data' => $employeeChunk,
             'party' => $partyChunk,
             'documents' => $documentsChunk,
             'phones' => $phonesChunk,
-            'doctor' => $doctorChunk,
         ];
+
+        // Only add the block if there is data or if it's required type
+        if (!empty($professionalChunk)) {
+            $result[$professionalKey] = $professionalChunk;
+        }
+
+        return $result;
     }
 
     private function handleEHealthResponseException(EHealthResponseException $e): void

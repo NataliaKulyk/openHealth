@@ -12,8 +12,8 @@
             class="section-form shift-content"
             x-data="{
             employeeType: $wire.entangle('form.employeeType'),
-            isDoctor() {
-                return {{ Js::from(config('ehealth.doctors_type')) }}.includes(this.employeeType);
+            isMedicalType() {
+                return {{ Js::from(config('ehealth.medical_employees')) }}.includes(this.employeeType);
             }
         }"
         >
@@ -23,8 +23,8 @@
                 @include('livewire.employee.parts.position')
 
                 {{-- 2: Doctor/Specialist data --}}
-                {{-- Now isDoctor() will work correctly because it is defined in x-data above --}}
-                <template x-if="isDoctor()">
+                {{-- Now isMedicalType() will work correctly because it is defined in x-data above --}}
+                <template x-if="isMedicalType()">
                     <div class="space-y-8" wire:key="doctor-specific-fields">
                         @include('livewire.employee.parts.education')
                         @include('livewire.employee.parts.specialities')

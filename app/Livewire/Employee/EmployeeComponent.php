@@ -80,6 +80,17 @@ abstract class EmployeeComponent extends Component
 
             foreach ($this->dictionaries['EMPLOYEE_TYPE'] as $employeeType => $description) {
 
+                // --- Removing restrictions for MED_ADMIN ---
+                if ($employeeType === 'MED_ADMIN') {
+                    $this->employeeTypeQualifications[$employeeType] = array_keys($this->dictionaries['QUALIFICATION_TYPE'] ?? []);
+                    $this->employeeTypeSpecQualifications[$employeeType] = array_keys($this->dictionaries['SPEC_QUALIFICATION_TYPE'] ?? []);
+                    $this->employeeTypePosition[$employeeType] = array_keys($this->dictionaries['POSITION'] ?? []);
+                    $this->employeeTypeSpecialities[$employeeType] = array_keys($this->dictionaries['SPECIALITY_TYPE'] ?? []);
+                    $this->employeeTypeLevels[$employeeType] = array_keys($this->dictionaries['SPECIALITY_LEVEL'] ?? []);
+                    $this->employeeTypeDegrees[$employeeType] = array_keys($this->dictionaries['EDUCATION_DEGREE'] ?? []);
+                    continue;
+                }
+
                 $allowedQualKeys = config("ehealth.employee_type.{$employeeType}.qualification_type", []);
                 $masterQualDict = $this->dictionaries['QUALIFICATION_TYPE'] ?? [];
                 $this->employeeTypeQualifications[$employeeType] = array_intersect_key($masterQualDict, array_flip($allowedQualKeys));

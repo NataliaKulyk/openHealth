@@ -402,11 +402,33 @@ return [
             'education_degree' => ['EXPERT', 'MASTER', 'BACHELOR', 'JUNIOR_EXPERT'],
             'qualification_type' => ['INFORMATION_COURSES', 'STAZHUVANNYA'],
             'speciality_level' => ['FIRST', 'SECOND', 'HIGHEST', 'NOT_APPLICABLE'],
+            'speciality_qualification_type' => ['AWARDING', 'DEFENSE'],
         ],
     ],
 
-    'doctors_type' => [
-        'LABORANT', 'DOCTOR', 'MED_ADMIN', 'ASSISTANT', 'MED_COORDINATOR'
+    /*
+    |--------------------------------------------------------------------------
+    | Employee Types Requiring Medical/Professional Data
+    |--------------------------------------------------------------------------
+    | These roles mandate the presence of education, specialties,
+    | qualifications, and science degree blocks in the eHealth request.
+    */
+    'medical_employees' => [
+        'DOCTOR',
+        'SPECIALIST',
+        'ASSISTANT',
+        'PHARMACIST',
+        'MED_ADMIN',
+        'LABORANT',
+        'MED_COORDINATOR',
+    ],
+
+    // admin group
+    'administrative_employees' => [
+        'OWNER',
+        'HR',
+        'ACCOUNTANT',
+        'PHARMACY_OWNER',
     ],
 
     'pharmacy_employee_types' => [
