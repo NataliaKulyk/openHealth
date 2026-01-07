@@ -202,13 +202,13 @@ class EmployeeForm extends Form
      */
     protected function doctorRules(): array
     {
-        $medTypes = config('ehealth.medical_employees');
-        $isMedicalType = in_array($this->employeeType, $medTypes, true);
+        $doctorTypes = config('ehealth.doctors_type');
+        $isDoctor = in_array($this->employeeType, $doctorTypes, true);
 
         $educationRules = ['nullable', 'array'];
         $specialitiesRules = ['nullable', 'array'];
 
-        if ($isMedicalType) {
+        if ($isDoctor) {
             $educationRules[] = 'required';
             $educationRules[] = 'min:1';
         }
