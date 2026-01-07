@@ -3,8 +3,8 @@
               :disabled="$wire.isPositionDataLocked ?? false"
               x-data="{
                   scienceDegree: $wire.entangle('form.doctor.scienceDegree').live,
-                  employeeType: $wire.get('form.employeeType'),
-                  employeeTypeSpecialities: @js($this->employeeTypeSpecialities), // Додано для фільтрації
+                  employeeType: $wire.entangle('form.employeeType'),
+                  employeeTypeSpecialities: @js($this->employeeTypeSpecialities),
                   openModal: false,
                   modalScienceDegree: new ScienceDegree(),
                   isNew: false,
