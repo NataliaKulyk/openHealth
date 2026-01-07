@@ -4,7 +4,7 @@
     </x-section-navigation>
 
     <x-forms.loading />
-    <x-messages />
+    <livewire:components.x-message :key="time()" />
 
     <div class="form shift-content" wire:key="{{ time() }}">
         @include('livewire.contract.parts.legal-entity-info')

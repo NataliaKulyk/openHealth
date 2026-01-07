@@ -4,8 +4,8 @@
 @endphp
 
 <div>
-    <x-messages/>
-    <x-forms.loading/>
+    <livewire:components.x-message :key="time()" />
+    <x-forms.loading />
 
     <x-header-navigation class="items-start">
         <x-slot name="title">

@@ -12,8 +12,8 @@
 @endphp
 
 <div>
-    <x-messages/>
-    <x-forms.loading/>
+    <livewire:components.x-message :key="time()" />
+    <x-forms.loading />
 
     <x-header-navigation class="items-start">
         <x-slot name="title">{{ __('forms.contracts') }}</x-slot>
@@ -131,18 +131,18 @@
                                 {{-- TYPE --}}
                                 <td class="td-input align-middle text-sm text-gray-900 dark:text-white">
                                     <div class="flex flex-col">
-                <span class="font-medium">
-                    @if($contract->type === 'REIMBURSEMENT')
-                        {{ __('Реімбурсація') }}
-                    @elseif($contract->type === 'CAPITATION')
-                        {{ __('ПМД (Капітація)') }}
-                    @else
-                        {{ $contract->type }}
-                    @endif
-                </span>
+                                        <span class="font-medium">
+                                            @if($contract->type === 'REIMBURSEMENT')
+                                                {{ __('Реімбурсація') }}
+                                            @elseif($contract->type === 'CAPITATION')
+                                                {{ __('ПМД (Капітація)') }}
+                                            @else
+                                                {{ $contract->type }}
+                                            @endif
+                                        </span>
                                         <span class="text-xs text-gray-500">
-                    {{ $contract->id_form ?? '' }}
-                </span>
+                                            {{ $contract->id_form ?? '' }}
+                                        </span>
                                     </div>
                                 </td>
 
@@ -171,8 +171,8 @@
                                         {{-- Ensure your Enum has label() and color() methods --}}
                                         <span
                                             class="{{ $contract->status->color() }} px-2.5 py-0.5 rounded text-xs font-medium">
-                    {{ $contract->status->label() }}
-                </span>
+                                            {{ $contract->status->label() }}
+                                        </span>
 
                                         @if($contract->status_reason)
                                             <div class="flex items-center gap-1 text-xs text-red-500 max-w-[150px]"

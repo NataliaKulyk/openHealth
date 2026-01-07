@@ -1,6 +1,4 @@
 <div>
-    <livewire:components.x-message :key="now()->timestamp" />
-
     <img class="mx-auto" src="{{ Vite::asset('resources/images/logo.webp') }}" alt="OpenHealth Logo">
 
     <fieldset class="fieldset">
@@ -74,7 +72,7 @@
             {{-- Action buttons --}}
             <div class="flex gap-8 mt-6">
                 <button type="button" class="button-minor">
-                    {{__('forms.cancel')}}
+                    {{ __('forms.cancel') }}
                 </button>
 
                 <button wire:click="login"
@@ -91,5 +89,5 @@
     </fieldset>
 
     <x-forms.loading />
-    <x-messages />
+    <livewire:components.x-message :key="time()" />
 </div>

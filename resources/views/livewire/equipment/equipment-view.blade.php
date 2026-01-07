@@ -205,6 +205,6 @@
     @include('livewire.equipment.modals.update-status-modal')
     @include('livewire.equipment.modals.update-availability-modal')
 
-    <x-messages/>
-    <x-forms.loading/>
+    <livewire:components.x-message :key="time()" />
+    <x-forms.loading />
 </section>

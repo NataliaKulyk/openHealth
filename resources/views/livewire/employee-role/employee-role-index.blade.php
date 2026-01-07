@@ -274,6 +274,6 @@
         </div>
     </div>
 
-    <x-messages/>
-    <x-forms.loading/>
+    <livewire:components.x-message :key="time()" />
+    <x-forms.loading />
 </div>

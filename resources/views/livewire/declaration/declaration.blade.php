@@ -46,6 +46,6 @@
         @endif
     </form>
 
-    <x-messages />
+    <livewire:components.x-message :key="time()" />
     <x-forms.loading />
 </section>

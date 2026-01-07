@@ -1,5 +1,5 @@
 <div class="form shift-content"
-      x-data="{
+     x-data="{
           licenseType: $wire.entangle('form.type'),
           licenseTypes: @js($licenseTypes)
       }"
@@ -31,7 +31,7 @@
             <label for="orderNumber" class="label">{{ __('licenses.order_no') }}</label>
 
             @error('form.orderNo')
-                <p class="text-error">{{ $message }}</p>
+            <p class="text-error">{{ $message }}</p>
             @enderror
         </div>
     </div>
@@ -191,6 +191,6 @@
 
     @yield('action-buttons')
 
-    <x-messages/>
-    <x-forms.loading/>
+    <livewire:components.x-message :key="time()" />
+    <x-forms.loading />
 </div>
