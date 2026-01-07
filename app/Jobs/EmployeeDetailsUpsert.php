@@ -65,10 +65,9 @@ class EmployeeDetailsUpsert extends EHealthJob
         Log::info('Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity->id ?? 'N/A'));
 
         // This need for OWNER that has a more than one employee_types for the same party
-        if ($this->user?->hasRole('OWNER')) {
-            $party = Party::where('uuid', $validatedData['party']['uuid'])->with('users')->first();
-
-            $this->employee->userId = $party?->users?->first()?->id ?? null;
+        if ($this->user?->hasRole('OWNER') && !$this->employee?->userId) {
+            $ownerEmployee = Employee::where('employee_type', 'OWNER')->where('legal_entity_id', $this->legalEntity->id)->first();
+            $this->employee->userId = $ownerEmployee->userId;
         }
 
         $this->employee->legalEntityUuid = $this->legalEntity?->uuid;
