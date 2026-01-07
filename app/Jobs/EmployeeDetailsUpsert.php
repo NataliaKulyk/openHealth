@@ -63,9 +63,9 @@ class EmployeeDetailsUpsert extends EHealthJob
         $validatedData = $response->validate();
 
         Log::info('Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity->id ?? 'N/A'));
-        $ownerEmployee = Employee::where('employee_type', 'OWNER')->where('legal_entity_id', $this->legalEntity->id)->first();
+        $ownerEmployee = Employee::with('party')->where('employee_type', 'OWNER')->where('legal_entity_id', $this->legalEntity->id)->first();
         // This need for OWNER that has a more than one employee_types for the same party
-        if ($this->employee->partyId === $ownerEmployee->partyId && !$this->employee?->userId) {
+        if ($validatedData['party']['uuid'] === $ownerEmployee->party->uuid && !$this->employee?->userId) {
             $this->employee->userId = $ownerEmployee->userId;
         }
 
