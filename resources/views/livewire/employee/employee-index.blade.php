@@ -239,26 +239,34 @@
             <div class="table-container-responsive overflow-x-auto" style="max-width:100%;" wire:key="{{ $filterKey }}">
                 @forelse($parties as $party)
                     @php
-                        $drafts = $party->employeeRequests;
+                        // Filter requests: exclude those that are already APPROVED and have an applied_at date.
+                        // We use strict filtering on the collection to avoid showing historical processed requests.
+                        $drafts = $party->employeeRequests->reject(function ($request) {
+                            $status = $request->status instanceof \UnitEnum ? $request->status->value : $request->status;
+                            return $status === 'APPROVED' && !empty($request->applied_at);
+                        });
+
                         $employees = $party->employees;
 
                         $positions = $drafts->merge($employees)->sortByDesc('updated_at');
 
-                        // Looking to see if there is at least one available action for the entire table (for the Actions column)
-                        // Here, too, we use optimized permission checks so as not to pull $user->can()
+                        // Check permissions for actions.
+                        // We iterate through the filtered list of positions.
                         $hasAnyActionInTable = $positions->contains(function ($pos) use ($permissions) {
                             $isEmp = $pos instanceof \App\Models\Employee\Employee;
-                            $status = $pos->status?->value ?? null;
+                            // Safe access to status value handling both Enum objects and strings
+                            $status = $pos->status instanceof \UnitEnum ? $pos->status->value : $pos->status;
 
                             if ($isEmp) {
                                 return $permissions['employee_view'] ||
                                        $permissions['employee_write'] ||
                                        ($status === 'APPROVED' && $permissions['employee_deactivate']);
                             }
+
                             // Request checks
-                             $isProcessed = !empty($pos->uuid);
-                             return $permissions['request_view'] ||
-                                    (!$isProcessed && $permissions['request_write']);
+                            $isProcessed = !empty($pos->uuid);
+                            return $permissions['request_view'] ||
+                                   (!$isProcessed && $permissions['request_write']);
                         });
                     @endphp
 
