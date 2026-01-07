@@ -176,7 +176,7 @@ abstract class EHealthJob implements ShouldQueue
         if (!in_array($exception->getCode(), static::ERR_TO_RETRY, true)) {
             $this->setEntityStatus(JobStatus::FAILED);
 
-            $this->user->notify(new SyncNotification('legal_entity', 'failed'));
+            $olduser?->notify(new SyncNotification('legal_entity', 'failed'));
 
             return;
         }
