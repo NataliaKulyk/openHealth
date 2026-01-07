@@ -78,9 +78,16 @@ class EquipmentRepository
     public function sync(array $items): void
     {
         DB::transaction(static function () use ($items) {
+
+            $toUpsert = collect($items)->map(static function (array $item) {
+                Arr::except($item, ['names']);
+                $item['properties'] = isset($item['properties']) ? json_encode($item['properties']) : null;
+                return $item;
+            });
+
             // Sync equipment
             Equipment::upsert(
-                collect($items)->map(static fn (array $item) => Arr::except($item, ['names']))->toArray(),
+                $toUpsert->toArray(),
                 'uuid',
                 Arr::except(new Equipment()->getFillable(), ['names'])
             );
