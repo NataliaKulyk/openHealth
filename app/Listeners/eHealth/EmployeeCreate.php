@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace App\Listeners\eHealth;
 
-use App\Classes\eHealth\EHealth;
+use Log;
+use Throwable;
 use App\Core\Arr;
+use Carbon\Carbon;
+use App\Classes\eHealth\EHealth;
 use App\Enums\Employee\RequestStatus;
 use App\Enums\Employee\RevisionStatus;
 use App\Events\EHealthUserLogin;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Repositories\Repository;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Log;
-use Throwable;
-
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 class EmployeeCreate
 {
     /**
@@ -28,9 +28,28 @@ class EmployeeCreate
         $user = $event->user;
 
         $employeeRequests = EmployeeRequest::with('revision')
-            ->where('status', RequestStatus::SIGNED)
             ->where('email', $user->email)
-            ->whereNull('employee_id')
+            ->where(fn(EloquentBuilder $q) => $q
+                ->where(fn(EloquentBuilder $query) =>
+                    $query->where('status', RequestStatus::SIGNED)
+                        ->whereNull('employee_id')
+                )
+                // Sync for requests approved through our system and synced before user's first login
+                ->orWhere(fn(EloquentBuilder $query) =>
+                    $query->where('status', RequestStatus::APPROVED)
+                        ->whereNotNull('employee_id')
+                        ->whereNotNull('user_id')
+                        ->where('user_id', $user->id)
+                        ->whereHas('employee', fn(EloquentBuilder $query) =>
+                            $query->whereNull('user_id')
+                        )
+                )
+                // Sync for requests that weren't approved through our system, were imported from EHealth
+                ->orWhere(fn(EloquentBuilder $query) =>
+                    $query->where('status', RequestStatus::APPROVED)
+                        ->whereNull('employee_id')
+                )
+            )
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -70,6 +89,7 @@ class EmployeeCreate
         // This filters out only uuids associated with the current user
         $existingUuids = Employee::whereIn('uuid', array_column($employees, 'uuid'))
             ->where('legal_entity_id', $event->legalEntity->id)
+            ->whereNotNull('user_id')
             ->pluck('uuid')
             ->all();
 

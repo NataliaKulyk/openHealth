@@ -243,7 +243,7 @@
                         // We use strict filtering on the collection to avoid showing historical processed requests.
                         $drafts = $party->employeeRequests->reject(function ($request) {
                             $status = $request->status instanceof \UnitEnum ? $request->status->value : $request->status;
-                            return $status === 'APPROVED' && !empty($request->applied_at);
+                            return $status === 'APPROVED';
                         });
 
                         $employees = $party->employees;

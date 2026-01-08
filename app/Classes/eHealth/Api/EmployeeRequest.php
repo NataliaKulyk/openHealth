@@ -6,11 +6,14 @@ namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest;
 use App\Classes\eHealth\EHealthResponse;
+use App\Enums\Status;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use App\Models\Division;
+use App\Models\LegalEntity;
+use Illuminate\Validation\Rule;
 use Log;
 use RuntimeException;
 use Validator;
@@ -83,6 +86,63 @@ class EmployeeRequest extends EHealthRequest
         ];
     }
 
+
+    // Trasform Employee Request data received from eHealth to the format suitable for save to DB
+    public function mapRequestCreate(array $ehealthData, LegalEntity $legalEntity, ?int $userId = null, ?int $partyId = null): array
+    {
+        $mappedData['legal_entity_id'] = $legalEntity->id;
+        $mappedData['user_id'] = $userId;
+        $mappedData['party_id'] = $partyId;
+        $mappedData['division_id'] = null;
+
+        foreach ($ehealthData as $key => $value) {
+            switch($key) {
+                case 'uuid':
+                    $mappedData['uuid'] = $value;
+                    break;
+                case 'division_uuid':
+                    $mappedData['division_uuid'] = $value;
+
+                    $mappedData['division_id'] = Division::where('uuid', $value)->first()->id;
+
+                    break;
+                case 'legal_entity_uuid':
+                    $mappedData['legal_entity_uuid'] = $value;
+                    break;
+                case 'position':
+                    $mappedData['position'] = $value;
+                    break;
+                case 'start_date':
+                    $mappedData['start_date'] = $value;
+                    break;
+                case 'end_date':
+                    $mappedData['end_date'] = $value;
+                    break;
+                case 'employee_type':
+                    $mappedData['employee_type'] = $value;
+                    break;
+                case 'email':
+                    $mappedData['email'] = $value;
+                    break;
+                case 'inserted_at':
+                    $mappedData['inserted_at'] = $value;
+                    $mappedData['created_at'] = $value;
+                    break;
+                case 'status':
+                    $mappedData['status'] = $value;
+                    break;
+                case 'applied_at':
+                    $mappedData['applied_at'] = $value;
+                    break;
+                default:
+                    // Ignore other keys
+                    break;
+            }
+        }
+
+        return $mappedData;
+    }
+
     /**
      * Gets employee requests from E-Health.
      * Handles both paginated listing and lookup by a single ID.
@@ -123,6 +183,10 @@ class EmployeeRequest extends EHealthRequest
      */
     public function getDetails(string $uuid): PromiseInterface|Response
     {
+        $this->setValidator($this->validate(...));
+
+        $this->setMapper($this->mapRequestCreate(...));
+
         $getEndpoint = '/api/employee_requests';
         $url = $getEndpoint . '/' . $uuid;
 
@@ -166,6 +230,34 @@ class EmployeeRequest extends EHealthRequest
         return $validator->validated();
     }
 
+    protected function validate(EHealthResponse $response): array
+    {
+        $transformedData = self::replaceEHealthPropNames($response->getData());
+
+        $validator = Validator::make($transformedData, [
+            "employee_type" => 'required|string',
+		    "uuid" => 'required|uuid',
+		    "inserted_at" => 'required|date',
+            "created_at" => 'required|date', // The same as 'inserted_at' date
+		    "legal_entity_uuid" => 'required|uuid',
+            'party' => 'required|array',
+            "email" => 'required|string',
+		    "position" => 'required|string',
+		    "start_date" => 'nullable|date',
+		    "status" => ['required', Rule::enum(Status::class)],
+		    "updated_at" => 'required|date'
+        ]);
+
+        if ($validator->fails()) {
+            Log::channel('e_health_errors')->error(
+                'EHealth EmployeeRequest validation failed: ' . implode(', ', $validator->errors()->all())
+            );
+            $validator->validate();
+        }
+
+        return $validator->validated();
+    }
+
     /**
      * Replaces eHealth property names with the ones used in the application (e.g., id -> uuid).
      *
@@ -175,11 +267,28 @@ class EmployeeRequest extends EHealthRequest
     protected static function replaceEHealthPropNames(array $properties): array
     {
         $replaced = [];
+
         foreach ($properties as $name => $value) {
-            if ($name === 'id') {
-                $replaced['uuid'] = $value;
-            } else {
-                $replaced[$name] = $value;
+            switch($name) {
+                case 'id':
+                    $replaced['uuid'] = $value;
+                    break;
+                case 'legal_entity_id':
+                    $replaced['legal_entity_uuid'] = $value;
+                    break;
+                case 'division_id':
+                    $replaced['division_uuid'] = $value;
+                    break;
+                case 'inserted_at':
+                    $replaced['inserted_at'] = $value;
+                    $replaced['created_at'] = $value;
+                    break;
+                case 'party':
+                    $replaced['party'] = $value;
+                    $replaced['email'] = $value['email'];
+                    break;
+                default:
+                    $replaced[$name] = $value;
             }
         }
 
@@ -467,5 +576,59 @@ class EmployeeRequest extends EHealthRequest
                 'employee_request',
             ],
         ];
+    }
+
+    public function mapRevisionData(EHealthResponse $response):array
+    {
+        foreach ($response->getData() as $key => $value) {
+
+            switch($key) {
+                case 'position':
+                    $mappedData['employee_request_data'][$key] = $value;
+                    break;
+                case 'employee_type':
+                    $mappedData['employee_request_data'][$key] = $value;
+                    break;
+                case 'start_date':
+                    $mappedData['employee_request_data'][$key] = $value;
+                    break;
+                case 'end_date':
+                    $mappedData['employee_request_data'][$key] = $value;
+                    break;
+                case 'division_id':
+                    $mappedData['employee_request_data'][$key] = $value;
+                    break;
+                case 'party':
+                    $mappedData['party']['last_name'] = $value['last_name'];
+                    $mappedData['party']['first_name'] = $value['first_name'];
+                    $mappedData['party']['second_name'] = $value['second_name'];
+                    $mappedData['party']['gender'] = $value['gender'];
+                    $mappedData['party']['birth_date'] = $value['birth_date'];
+                    $mappedData['party']['tax_id'] = $value['tax_id'];
+                    $mappedData['party']['no_tax_id'] = $value['no_tax_id'];
+                    $mappedData['party']['email'] = $value['email'];
+                    $mappedData['party']['working_experience'] = $value['working_experience'] ?? null;
+                    $mappedData['party']['about_myself'] = $value['about_myself'] ?? null;
+
+                    $mappedData['documents'] = $value['documents'];
+
+                    $mappedData['phones'] = $value['phones'];
+
+                    break;
+                case 'doctor':
+                case 'assistant':
+                case 'specialist':
+                case 'med_admin':
+                case 'pharmacist':
+                case 'laborant':
+                    $mappedData[$key] = $value;
+
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return $mappedData;
     }
 }

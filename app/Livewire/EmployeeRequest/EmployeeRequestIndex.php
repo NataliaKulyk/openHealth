@@ -15,6 +15,7 @@ use App\Models\LegalEntity;
 use App\Notifications\EmployeeRequestSyncCompleted;
 use App\Notifications\EmployeeSyncCompleted;
 use App\Services\Employee\EmployeeRequestProcessor;
+use App\Traits\BatchLegalEntityQueries;
 use Auth;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -27,7 +28,8 @@ use Illuminate\Bus\Batch;
 
 class EmployeeRequestIndex extends EmployeeComponent
 {
-    use WithPagination;
+    use WithPagination,
+        BatchLegalEntityQueries;
 
     public string $search = '';
     public string $status = '';
@@ -189,19 +191,31 @@ class EmployeeRequestIndex extends EmployeeComponent
                 ->onQueue('sync')
                 ->name('EmployeeRequest Full Sync')
                 ->dispatch();
+        } else {
+             Bus::batch($this->getEmployeeRequestDetailsStartJob($this->legalEntity, null))
+                ->withOption('legal_entity_id', $this->legalEntity->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    $message = __('employees.sync.completed_successfully', [
+                        'processed' => $batch->processedJobs,
+                        'total' => $batch->totalJobs,
+                    ]);
+                    $user->notify(new EmployeeRequestSyncCompleted($message, 'success'));
+                })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
+                    $message = __('employees.sync.failed');
+                    Log::error('Employee sync batch failed.', ['batch_id' => $batch->id, 'exception' => $e]);
+                    $user->notify(new EmployeeRequestSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name('EmployeeRequest Details Full Sync')
+                ->dispatch();
+        }
 
-            $this->dispatch('flashMessage', [
+        $this->dispatch('flashMessage', [
                 'message' => "Сторінка 1 оброблена ({$processedCount} оновлень). Решта завантажується фоново.",
                 'type' => 'success'
             ]);
-        } else {
-            // If it was the only page - we are done
-            $this->dispatch('flashMessage', [
-                'message' => "Синхронізацію завершено. Оновлено заявок: {$processedCount}.",
-                'type' => 'success'
-            ]);
-        }
-
         // Force refresh of the table
         $this->resetPage();
     }

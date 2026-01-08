@@ -90,7 +90,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('ehealth-employee-request-get', function (object $job) {
-            return Limit::perMinute(20)->by($job->user->id);
+            return Limit::perMinute(19)->by($job->user->id);
         });
     }
 }

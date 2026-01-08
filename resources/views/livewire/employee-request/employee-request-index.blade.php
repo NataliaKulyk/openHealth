@@ -66,6 +66,11 @@
                     </thead>
                     <tbody>
                     @forelse($requests as $request)
+                        {{-- Avoid showing empty request during sync --}}
+                        @if(!$request->revision)
+                            @continue
+                        @endif
+
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
 
                             {{-- Name --}}

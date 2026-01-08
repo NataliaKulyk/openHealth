@@ -59,12 +59,6 @@ class Employee extends BaseEmployee
         return $this->morphMany(Speciality::class, 'specialityable');
     }
 
-    public function setSyncStatus(JobStatus $status): void
-    {
-        $this->sync_status = $status;
-        $this->save();
-    }
-
     // --- EMPLOYEE-SPECIFIC SCOPES ---
 
     public function scopeDoctor(Builder $query): Builder
@@ -97,16 +91,6 @@ class Employee extends BaseEmployee
         return $query->whereIn('uuid', $uuids);
     }
 
-    public function scopeFilterBySyncStatus(Builder $query, JobStatus $status): Builder
-    {
-        return $query->where('sync_status', $status);
-    }
-
-    #[Scope]
-    public function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
-    {
-        return $query->where('legal_entity_id', $legalEntityId);
-    }
 
     #[Scope]
     protected function activeSpecialists(Builder $query, int $legalEntityId): Builder
