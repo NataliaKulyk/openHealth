@@ -596,7 +596,7 @@ class EmployeeRequest extends EHealthRequest
                     $mappedData['employee_request_data'][$key] = $value;
                     break;
                 case 'division_id':
-                    $mappedData['employee_request_data'][$key] = $value;
+                    $mappedData['employee_request_data'][$key] = Division::where('uuid', $value)->first()?->id;
                     break;
                 case 'party':
                     $mappedData['party']['last_name'] = $value['last_name'];
