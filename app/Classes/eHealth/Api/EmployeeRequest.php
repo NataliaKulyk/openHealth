@@ -605,7 +605,7 @@ class EmployeeRequest extends EHealthRequest
                     $mappedData['party']['gender'] = $value['gender'];
                     $mappedData['party']['birth_date'] = $value['birth_date'];
                     $mappedData['party']['tax_id'] = $value['tax_id'];
-                    $mappedData['party']['no_tax_id'] = $value['no_tax_id'];
+                    $mappedData['party']['no_tax_id'] = $value['no_tax_id'] ?? null;
                     $mappedData['party']['email'] = $value['email'];
                     $mappedData['party']['working_experience'] = $value['working_experience'] ?? null;
                     $mappedData['party']['about_myself'] = $value['about_myself'] ?? null;
