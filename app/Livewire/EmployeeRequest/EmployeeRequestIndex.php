@@ -230,6 +230,7 @@ class EmployeeRequestIndex extends EmployeeComponent
         return EmployeeRequest::query()
             ->with(['party', 'division', 'revision'])
             ->where('legal_entity_id', legalEntity()->id)
+            ->whereHas('revision')
             ->when($this->search, function ($query) {
                 $searchTerm = '%' . $this->search . '%';
 
