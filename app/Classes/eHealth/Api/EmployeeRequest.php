@@ -601,7 +601,7 @@ class EmployeeRequest extends EHealthRequest
                 case 'party':
                     $mappedData['party']['last_name'] = $value['last_name'];
                     $mappedData['party']['first_name'] = $value['first_name'];
-                    $mappedData['party']['second_name'] = $value['second_name'];
+                    $mappedData['party']['second_name'] = $value['second_name'] ?? null;
                     $mappedData['party']['gender'] = $value['gender'];
                     $mappedData['party']['birth_date'] = $value['birth_date'];
                     $mappedData['party']['tax_id'] = $value['tax_id'];
