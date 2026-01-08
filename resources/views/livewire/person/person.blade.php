@@ -66,9 +66,9 @@
     @endif
 
     @can('create', PersonRequest::class)
-        <x-signature-modal method="sign" />
+        <x-signature-modal method="sign"/>
     @endcan
 
-    <x-messages />
-    <x-forms.loading />
+    <x-messages/>
+    <x-forms.loading/>
 </div>

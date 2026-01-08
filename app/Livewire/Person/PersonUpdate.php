@@ -33,6 +33,13 @@ class PersonUpdate extends PersonComponent
 
     public bool $showAuthMethodModal = false;
 
+    public int $authStep = 0;
+
+    public function setStep(int $step): void
+    {
+        $this->authStep = $step;
+    }
+
     public function mount(LegalEntity $legalEntity, Person $person): void
     {
         $this->personId = $person->id;
@@ -90,6 +97,7 @@ class PersonUpdate extends PersonComponent
     public function openAuthMethodModal(): void
     {
         $this->showAuthMethodModal = true;
+        $this->authStep = 0;
 
         // Check if all auth methods has IDs
         $authMethods = collect($this->authenticationMethods);
