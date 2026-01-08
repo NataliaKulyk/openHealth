@@ -8,27 +8,22 @@
         resetTimer() {
             if(this.timer === 0) {
                 this.timer = 60;
-                $wire.resendCode();
+                $wire.sendNewSms();
             }
         }
     }"
 >
-    <legend class="legend">{{ __('patients.enter_a_new_phone_number') }}</legend>
+    <legend class="legend">{{ __('patients.authentication_SMS') }}</legend>
 
-    <div class="form-row-3 mt-4">
-        <div class="form-group">
-            <input
-                type="tel"
-                placeholder=" "
-                class="peer input"
-                wire:model.defer="newPhoneNumber"
-                x-mask="+380999999999"
-            />
-            <label class="label">{{ __('forms.phone') }}</label>
-        </div>
+    <div class="mt-4 bg-gray-100 dark:bg-slate-800 rounded-lg p-4 mb-8 flex items-start">
+        @icon('alert-circle', 'w-5 h-5 text-slate-600 dark:text-slate-400 mr-3 mt-0.5')
+        <p class="text-sm text-gray-800 dark:text-gray-200">
+            {{ __('patients.please_check_patient_number') }}
+            <span class="font-bold text-slate-900 dark:text-white">+38095123xxxx</span>
+        </p>
     </div>
 
-    <legend class="legend mt-6">{{ __('patients.confirmation_code') }}</legend>
+    <legend class="legend">{{ __('patients.code_SMS') }}</legend>
 
     <div class="form-row-3 mt-4">
         <div class="form-group group">
@@ -41,7 +36,7 @@
                    placeholder=" "
                    autocomplete="off"/>
             <label for="confirmation_code" class="label">
-                {{ __('patients.code_SMS') }}
+                {{ __('patients.confirmation_code') }}
             </label>
         </div>
 
@@ -58,7 +53,7 @@
     </div>
 
     <div class="flex gap-4">
-        <button type="button" wire:click="setStep(4)" class="button-minor">
+        <button type="button" wire:click="setStep(1)" class="button-minor">
             {{ __('forms.back') }}
         </button>
 
@@ -66,7 +61,7 @@
             {{ __('patients.to_authentication_methods') }}
         </button>
 
-        <button type="button" wire:click="update" class="button-primary">
+        <button type="button" wire:click="setStep(3)" class="button-primary">
             {{ __('patients.confirm') }}
         </button>
     </div>
