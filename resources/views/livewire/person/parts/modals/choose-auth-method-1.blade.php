@@ -13,7 +13,7 @@
         {{ __('patients.back_authentication_methods') }}
     </button>
 
-    <button type="button" wire:click="setStep(4)" class="button-primary-outline-red">
+    <button type="button" wire:click="setStep(3)" class="button-primary-outline-red">
         {{ __('patients.no_access') }}
     </button>
 
