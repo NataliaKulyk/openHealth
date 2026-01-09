@@ -333,6 +333,7 @@ class EmployeeRequest extends EHealthRequest
         if (in_array($employeeType, $medTypes, true)) {
             // 1. We determine the correct key that eHealth expects
             $targetKey = match ($employeeType) {
+                'MED_COORDINATOR' => 'med_coordinator',
                 'MED_ADMIN' => 'med_admin',
                 'PHARMACIST' => 'pharmacist',
                 'SPECIALIST' => 'specialist',
