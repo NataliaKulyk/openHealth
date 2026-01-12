@@ -83,19 +83,51 @@ class HealthcareServiceRepository
      */
     public function sync(array $items): void
     {
-        DB::transaction(function () use ($items) {
-            // At first save category and type, and format json fields
-            $prepared = collect($items)
-                ->map(fn (array $item) => $this->storeCategoryAndType($item))
-                ->map(static function (array $item) {
-                    $item['available_time'] = json_encode($item['available_time'], JSON_THROW_ON_ERROR);
-                    $item['not_available'] = json_encode($item['not_available'], JSON_THROW_ON_ERROR);
-                    $item['type_id'] ??= null;
+        DB::transaction(static function () use ($items) {
+            $uuids = collect($items)->pluck('uuid')->all();
 
-                    return $item;
-                })
-                ->values()
-                ->all();
+            // Get the existing IDs of the category and type for updating them
+            $existingConceptIds = HealthcareService::whereIn('uuid', $uuids)
+                ->get(['uuid', 'category_id', 'type_id'])
+                ->keyBy('uuid');
+
+            $prepared = collect($items)->map(function (array $item) use ($existingConceptIds) {
+                $existing = $existingConceptIds->get($item['uuid']);
+
+                // Sync category
+                $categoryConcept = $item['category'] ?? null;
+                if ($categoryConcept) {
+                    if ($existing && $existing->categoryId) {
+                        $item['category_id'] = Repository::codeableConcept()->updateById(
+                            $existing->categoryId,
+                            $categoryConcept
+                        )->id;
+                    } else {
+                        $item['category_id'] = Repository::codeableConcept()->store($categoryConcept)->id;
+                    }
+                }
+
+                // Sync type
+                $typeConcept = $item['type'] ?? null;
+                if ($typeConcept) {
+                    if ($existing && $existing->typeId) {
+                        $item['type_id'] = Repository::codeableConcept()->updateById(
+                            $existing->typeId,
+                            $typeConcept
+                        )->id;
+                    } else {
+                        $item['type_id'] = Repository::codeableConcept()->store($typeConcept)->id;
+                    }
+                }
+
+                unset($item['category'], $item['type']);
+
+                // Format to JSON
+                $item['available_time'] = json_encode($item['available_time'] ?? [], JSON_THROW_ON_ERROR);
+                $item['not_available'] = json_encode($item['not_available'] ?? [], JSON_THROW_ON_ERROR);
+
+                return $item;
+            })->values()->all();
 
             HealthcareService::upsert($prepared, 'uuid', new HealthcareService()->getFillable());
         });

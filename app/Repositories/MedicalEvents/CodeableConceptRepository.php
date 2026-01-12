@@ -6,6 +6,7 @@ namespace App\Repositories\MedicalEvents;
 
 use App\Models\MedicalEvents\Sql\CodeableConcept as SqlCodeableConcept;
 use App\Models\MedicalEvents\Sql\Identifier as SqlIdentifier;
+use InvalidArgumentException;
 
 class CodeableConceptRepository extends BaseRepository
 {
@@ -61,6 +62,34 @@ class CodeableConceptRepository extends BaseRepository
         }
 
         return $codeableConcept;
+    }
+
+    /**
+     * Update related codeable concept by ID.
+     *
+     * @param  int  $id
+     * @param  array  $data
+     * @return mixed
+     */
+    public function updateById(int $id, array $data)
+    {
+        if (empty($data) || empty($data['coding'][0]['code'])) {
+            throw new InvalidArgumentException("Invalid CodeableConcept data for update.");
+        }
+
+        $concept = $this->model::findOrFail($id);
+
+        $codingData = $data['coding'][0];
+        $text = $data['text'] ?? null;
+
+        $concept->update(['text' => $text]);
+
+        $concept->coding()->update([
+            'code' => $codingData['code'],
+            'system' => $codingData['system'] ?? null
+        ]);
+
+        return $concept;
     }
 
     /**
