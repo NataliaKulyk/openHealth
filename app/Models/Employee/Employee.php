@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models\Employee;
 
 use App\Casts\EHealthDateCast;
-use App\Enums\JobStatus;
 use App\Enums\Party\VerificationStatus;
 use App\Enums\Status;
 use App\Models\Declaration;
@@ -88,12 +87,6 @@ class Employee extends BaseEmployee
     public function scopeFilterByUuids(Builder $query, array $uuids): Builder
     {
         return $query->whereIn('uuid', $uuids);
-    }
-
-    #[Scope]
-    public function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
-    {
-        return $query->whereLegalEntityId($legalEntityId);
     }
 
     #[Scope]

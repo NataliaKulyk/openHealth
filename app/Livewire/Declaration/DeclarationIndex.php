@@ -89,7 +89,7 @@ class DeclarationIndex extends Component
     {
         $user = Auth::user();
 
-        $this->employeeIds = $user->employees()->pluck('id')->all();
+        $this->employeeIds = $user->employees()->filterByLegalEntityId($legalEntity->id)->pluck('id')->all();
 
         if ($user->hasRole('OWNER')) {
             $this->doctors = $this->getDoctors();
