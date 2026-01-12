@@ -8,34 +8,37 @@ use Throwable;
 use App\Core\EHealthJob;
 use App\Enums\JobStatus;
 use App\Models\LegalEntity;
-use App\Models\Relations\Party;
 use App\Repositories\Repository;
 use App\Classes\eHealth\EHealth;
-use App\Models\Employee\Employee;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Queue\SerializesModels;
 use App\Classes\eHealth\EHealthResponse;
+use App\Core\Arr;
+use App\Enums\Employee\RevisionStatus;
+use App\Models\Employee\EmployeeRequest;
+use App\Models\User;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Http\Client\ConnectionException;
 
-class EmployeeDetailsUpsert extends EHealthJob
+class EmployeeRequestDetailsUpsert extends EHealthJob
 {
     use Dispatchable,
         SerializesModels;
 
-    public const string BATCH_NAME = 'EmployeeDetailsSync';
+    public const string BATCH_NAME = 'EmployeeRequestDetailsSync';
 
-    public const string SCOPE_REQUIRED = 'employee:details';
+    public const string SCOPE_REQUIRED = 'employee_request:read';
 
     public const string ENTITY = LegalEntity::ENTITY_EMPLOYEE;
 
+    protected const int RATE_LIMIT_DELAY = 3;
+
     public function __construct(
-        public Employee $employee,
+        public EmployeeRequest $employeeRequest,
         public ?LegalEntity $legalEntity,
         protected ?EHealthJob $nextEntity = null,
         public bool $standalone = false,
@@ -50,7 +53,7 @@ class EmployeeDetailsUpsert extends EHealthJob
      */
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse|null
     {
-        return EHealth::employee()->withToken($token)->getDetails($this->employee->uuid, groupByEntities: true);
+        return EHealth::employeeRequest()->withToken($token)->getDetails($this->employeeRequest->uuid);
     }
 
     // Store or update data in the database
@@ -62,56 +65,29 @@ class EmployeeDetailsUpsert extends EHealthJob
     {
         $validatedData = $response->validate();
 
-        Log::info('Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity->id ?? 'N/A'));
-//        $ownerEmployee = Employee::with('party')->where('employee_type', 'OWNER')->where('legal_entity_id', $this->legalEntity->id)->first();
-//        // This need for OWNER that has a more than one employee_types for the same party
-//        if ($validatedData['party']['uuid'] === $ownerEmployee->party->uuid && !$this->employee?->userId) {
-//            $this->employee->userId = $ownerEmployee->userId;
-//        }
+        Log::info('Processing EmployeeRequestDetailsUpsert for employee_request:' . $this->employeeRequest->id . ', LE:' . ($this->legalEntity->id ?? 'N/A'));
 
-        $this->employee->legalEntityUuid = $this->legalEntity?->uuid;
+        $this->employeeRequest->legalEntityUuid = $this->legalEntity?->uuid;
 
-        $this->employee->save();
 
-        Repository::employee()->updateDetails(
-            $this->employee,
-            $validatedData['party'],
-            $validatedData['documents'],
-            $validatedData['phones'],
-            $validatedData['educations'] ?? null,
-            $validatedData['specialities'] ?? null,
-            $validatedData['qualifications'] ?? null,
-            $validatedData['scienceDegree'] ?? null
+        $userEmail = Arr::get($validatedData, 'party.email');
+
+        $employeeRequestUser = User::where('email', $userEmail)->first();
+
+        $employeeRequestPartyId = $employeeRequestUser?->partyId;
+
+        $this->employeeRequest->fill(array_merge(
+            $response->map($validatedData, $this->legalEntity, $employeeRequestUser?->id ?? null, $employeeRequestPartyId ?? null),
+            ['sync_status' => JobStatus::COMPLETED->value])
         );
 
-        $this->employee->setSyncStatus(JobStatus::COMPLETED);
-        $this->employee->refresh();
+        $this->employeeRequest->save();
 
-        $user = $this->employee->user;
+        $revisionData['data'] = Ehealth::employeeRequest()->mapRevisionData($response);
+        $revisionData['ehealth_response'] = [ 'data' => $response->getData()];
+        $revisionData['status'] = RevisionStatus::APPLIED->value;
 
-        if (!$user) {
-            Log::info('Employee sync: User is not associated with this employee record yet.', [
-                'employee_id' => $this->employee->id,
-                'employee_uuid' => $this->employee->uuid,
-            ]);
-
-            return;
-        }
-
-        $roleName = $this->employee->employee_type;
-        $legalEntityId = $this->employee->legal_entity_id;
-
-        setPermissionsTeamId($legalEntityId);
-
-        if (!$user->hasRole($roleName)) {
-            foreach ($this->getGuardsForRole($roleName) as $guard) {
-                Log::info("Assigning role '{$roleName}' to user ID {$user->id} for guard '{$guard}'.");
-
-                Auth::shouldUse($guard);
-
-                $user->assignRole($roleName);
-            }
-        }
+        Repository::revision()->saveRevision($this->employeeRequest, $revisionData);
     }
 
     /**
@@ -122,7 +98,7 @@ class EmployeeDetailsUpsert extends EHealthJob
     protected function getAdditionalMiddleware(): array
     {
         return [
-            new RateLimited('ehealth-employee-get')
+            new RateLimited('ehealth-employee-request-get')
         ];
     }
 

@@ -66,7 +66,7 @@
     @endif
 
     @can('create', PersonRequest::class)
-        <x-signature-modal method="sign" />
+        <x-signature-modal method="sign"/>
     @endcan
 
     <livewire:components.x-message :key="time()" />

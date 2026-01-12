@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Employee;
 
 use App\Casts\EHealthDateCast;
+use App\Enums\JobStatus;
 use App\Models\User;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
@@ -12,7 +13,9 @@ use App\Traits\SyncsMorphManyRelations;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 
 /**
  * An abstract base class for Employee and EmployeeRequest models.
@@ -96,5 +99,23 @@ abstract class BaseEmployee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+
+    protected function scopefilterBySyncStatus(Builder $query, JobStatus $status): Builder
+    {
+        return $query->where('sync_status', $status);
+    }
+
+
+    protected function scopefilterByLegalEntityId(Builder $query, int $legalEntityId): Builder
+    {
+        return $query->where('legal_entity_id', $legalEntityId);
+    }
+
+    public function setSyncStatus(JobStatus $status): void
+    {
+        $this->sync_status = $status;
+        $this->save();
     }
 }

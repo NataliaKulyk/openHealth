@@ -30,7 +30,11 @@ class PartyEdit extends AbstractEmployeeFormManager
         $this->partyId = $party->id;
         $this->pageTitle = __('forms.edit_personal_data') . ' - ' . ($party->fullName ?? '');
 
-        $employee = $party->employees()->latest('start_date')->first();
+        // Fetch the latest employee record strictly within the current Legal Entity
+        $employee = $party->employees()
+            ->where('legal_entity_id', $legalEntity->id)
+            ->latest('start_date')
+            ->first();
 
         // MERGE STRATEGY
         $existingDraft = null;
@@ -48,7 +52,7 @@ class PartyEdit extends AbstractEmployeeFormManager
             $this->form->hydrate($existingDraft);
             session()->flash('info', __('forms.draft_loaded_automatically'));
         } else {
-            // Hydrate from Employee if exists, otherwise Party (standard logic)
+            // Hydrate from Employee if exists (within this LE), otherwise Party
             $this->form->hydrate($employee ?? $party);
         }
 
@@ -66,7 +70,11 @@ class PartyEdit extends AbstractEmployeeFormManager
     #[Computed]
     public function partyPositions(): Collection
     {
-        return $this->party->employees()->with('division')->get();
+        // Filter employees to show only positions within the current Legal Entity
+        return $this->party->employees()
+            ->where('legal_entity_id', legalEntity()->id)
+            ->with('division')
+            ->get();
     }
 
     /**

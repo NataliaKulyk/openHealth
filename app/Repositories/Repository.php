@@ -75,4 +75,9 @@ final class Repository
     {
         return app(ContractRepository::class);
     }
+
+    public static function revision()
+    {
+        return app(RevisionRepository::class);
+    }
 }

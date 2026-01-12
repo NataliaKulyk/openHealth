@@ -8,18 +8,21 @@ use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Enums\Employee\RequestStatus as LocalStatus;
 use App\Enums\Employee\RevisionStatus;
+use App\Enums\JobStatus;
 use App\Enums\Status;
 use App\Models\Division;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Repositories\Repository;
+use App\Traits\BatchLegalEntityQueries;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class EmployeeRequestProcessor
 {
+    use BatchLegalEntityQueries;
     /**
      * Applies data from an APPROVED eHealth request to the local Employee entity.
      * Since the User Token response does not contain the created 'employee_id',
@@ -343,9 +346,27 @@ class EmployeeRequestProcessor
             }
         }
 
-        Log::info(
-            "[EmployeeRequestProcessor] Batch processing finished. Approved and applied: {$approvedCount} requests."
-        );
+        $localEmployeeRequestUuids = EmployeeRequest::where('legal_entity_id', $legalEntity->id)
+            ->pluck('uuid')
+            ->toArray();
+
+        $employeeRequestsUpsertData = [];
+
+        foreach($eHealthData as $ehealthEmployeeRequest) {
+            if (in_array($ehealthEmployeeRequest['uuid'], $localEmployeeRequestUuids) || $ehealthEmployeeRequest['status'] !== Status::APPROVED->value) {
+                continue;
+            }
+
+            $employeeRequestsUpsertData[] = [
+                'uuid' => $ehealthEmployeeRequest['uuid'],
+                'inserted_at' => $ehealthEmployeeRequest['inserted_at'],
+                'status' => $ehealthEmployeeRequest['status'],
+                'legal_entity_id' => $legalEntity->id,
+                'sync_status' => JobStatus::PARTIAL->value
+            ];
+        }
+
+        EmployeeRequest::insert($employeeRequestsUpsertData);
     }
 
     /**

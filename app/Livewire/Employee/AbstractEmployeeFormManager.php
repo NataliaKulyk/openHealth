@@ -184,6 +184,9 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         );
     }
 
+    /**
+     * Prepares the nested data structure for a Revision from flat form data.
+     */
     protected function mapRevisionData(array $flatData): array
     {
         $employeeChunk = Arr::only($flatData, ['position', 'employee_type', 'start_date', 'end_date', 'division_id']);

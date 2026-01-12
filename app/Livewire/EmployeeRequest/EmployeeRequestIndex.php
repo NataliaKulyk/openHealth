@@ -8,25 +8,41 @@ use App\Classes\eHealth\EHealth;
 use App\Enums\Employee\RequestStatus;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Jobs\EmployeeRequestsSyncAll;
+use App\Jobs\EmployeeSync;
 use App\Livewire\Employee\EmployeeComponent;
 use App\Models\Employee\EmployeeRequest;
+use App\Models\LegalEntity;
+use App\Notifications\EmployeeRequestSyncCompleted;
+use App\Notifications\EmployeeSyncCompleted;
 use App\Services\Employee\EmployeeRequestProcessor;
+use App\Traits\BatchLegalEntityQueries;
 use Auth;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Bus\Batch;
 
 class EmployeeRequestIndex extends EmployeeComponent
 {
-    use WithPagination;
+    use WithPagination,
+        BatchLegalEntityQueries;
 
     public string $search = '';
-    public string $status       = '';
+    public string $status = '';
+    private LegalEntity $legalEntity;
 
-    public function mount(): void
+    public function boot(): void
     {
+        $this->legalEntity = legalEntity();
+    }
+
+    public function mount(LegalEntity $legalEntity): void
+    {
+        $this->legalEntity = $legalEntity;
         $this->loadDictionaries();
     }
 
@@ -145,23 +161,61 @@ class EmployeeRequestIndex extends EmployeeComponent
         $validatedData = $response->validate();
         $processedCount = $processor->processBatch($validatedData, legalEntity());
 
+        $token = session()->get(config('ehealth.api.oauth.bearer_token'));
+
         // 3. Check if there are more pages
         if ($response->isNotLast()) {
-            // Dispatch Job starting from Page 2
-            EmployeeRequestsSyncAll::dispatch(legalEntity(), 2);
 
-            $this->dispatch('flashMessage', [
+            Bus::batch([
+                new EmployeeRequestsSyncAll(
+                    legalEntity: $this->legalEntity,
+                    page: 2,
+                    nextEntity: null
+                ),
+            ])
+                ->withOption('legal_entity_id', $this->legalEntity->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    // app(PermissionRegistrar::class)->forgetCachedPermissions();
+                    $message = __('employees.sync.completed_successfully', [
+                        'processed' => $batch->processedJobs,
+                        'total' => $batch->totalJobs,
+                    ]);
+                    $user->notify(new EmployeeRequestSyncCompleted($message, 'success'));
+                })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
+                    $message = __('employees.sync.failed');
+                    Log::error('EmployeeRequest sync batch failed.', ['batch_id' => $batch->id, 'exception' => $e]);
+                    $user->notify(new EmployeeRequestSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name('EmployeeRequest Full Sync')
+                ->dispatch();
+        } else {
+             Bus::batch($this->getEmployeeRequestDetailsStartJob($this->legalEntity, null))
+                ->withOption('legal_entity_id', $this->legalEntity->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    $message = __('employees.sync.completed_successfully', [
+                        'processed' => $batch->processedJobs,
+                        'total' => $batch->totalJobs,
+                    ]);
+                    $user->notify(new EmployeeRequestSyncCompleted($message, 'success'));
+                })->catch(callback: function (Batch $batch, \Throwable $e) use ($user) {
+                    $message = __('employees.sync.failed');
+                    Log::error('Employee sync batch failed.', ['batch_id' => $batch->id, 'exception' => $e]);
+                    $user->notify(new EmployeeRequestSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name('EmployeeRequest Details Full Sync')
+                ->dispatch();
+        }
+
+        $this->dispatch('flashMessage', [
                 'message' => "Сторінка 1 оброблена ({$processedCount} оновлень). Решта завантажується фоново.",
                 'type' => 'success'
             ]);
-        } else {
-            // If it was the only page - we are done
-            $this->dispatch('flashMessage', [
-                'message' => "Синхронізацію завершено. Оновлено заявок: {$processedCount}.",
-                'type' => 'success'
-            ]);
-        }
-
         // Force refresh of the table
         $this->resetPage();
     }
@@ -176,6 +230,7 @@ class EmployeeRequestIndex extends EmployeeComponent
         return EmployeeRequest::query()
             ->with(['party', 'division', 'revision'])
             ->where('legal_entity_id', legalEntity()->id)
+            ->whereHas('revision')
             ->when($this->search, function ($query) {
                 $searchTerm = '%' . $this->search . '%';
 

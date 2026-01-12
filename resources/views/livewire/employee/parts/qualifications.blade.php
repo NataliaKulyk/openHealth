@@ -3,7 +3,7 @@
               :disabled="$wire.isPositionDataLocked ?? false"
               x-data="{
                   qualifications: $wire.entangle('form.doctor.qualifications'),
-                  employeeType: $wire.get('form.employeeType'),
+                  employeeType: $wire.entangle('form.employeeType'),
                   employeeTypeSpecialities: @js($this->employeeTypeSpecialities),
                   employeeTypeQualifications: @js($this->employeeTypeQualifications),
                   openModal: false,

@@ -45,6 +45,8 @@ class EmployeeRequest extends BaseEmployee
         'applied_at',
         'employee_id',
         'email',
+        'sync_status',
+        'created_at'
     ];
 
     /**
@@ -56,6 +58,7 @@ class EmployeeRequest extends BaseEmployee
         'start_date' => EHealthDateCast::class,
         'end_date' => EHealthDateCast::class,
         'applied_at' => 'datetime',
+        'created_at' => 'datetime'
     ];
 
     // --- REQUEST-SPECIFIC RELATIONS ---

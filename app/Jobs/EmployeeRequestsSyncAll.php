@@ -9,12 +9,15 @@ use App\Classes\eHealth\EHealthResponse;
 use App\Core\EHealthJob;
 use App\Models\LegalEntity;
 use App\Services\Employee\EmployeeRequestProcessor;
+use App\Traits\BatchLegalEntityQueries;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Support\Facades\Log;
 
 class EmployeeRequestsSyncAll extends EHealthJob
 {
+    use BatchLegalEntityQueries;
+
     public const string BATCH_NAME = 'EmployeeRequestsSyncAll';
     public const string SCOPE_REQUIRED = 'employee_request:read';
     public const string ENTITY = LegalEntity::ENTITY_EMPLOYEE;
@@ -42,5 +45,20 @@ class EmployeeRequestsSyncAll extends EHealthJob
     protected function getAdditionalMiddleware(): array
     {
         return [new RateLimited('ehealth-employee-request-get')];
+    }
+
+    /**
+     * Get the next entity job to be scheduled after EmployeeRequestSync completes.
+     *
+     * If the job is standalone, returns a CompleteSync job for the current legal entity.
+     * Otherwise, returns a chain of EmployeeDetailsUpsert jobs for employees with PARTIAL sync status.
+     *
+     * @return EHealthJob|null
+     */
+    protected function getNextEntityJob(): ?EHealthJob
+    {
+        return $this->standalone
+            ? new CompleteSync($this->legalEntity, isFirstLogin: $this->isFirstLogin)
+            : $this->getEmployeeRequestDetailsStartJob($this->legalEntity, $this->nextEntity);
     }
 }

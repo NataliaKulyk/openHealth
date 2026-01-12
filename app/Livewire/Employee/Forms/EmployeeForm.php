@@ -205,12 +205,11 @@ class EmployeeForm extends Form
         $medTypes = config('ehealth.medical_employees');
         $isMedicalType = in_array($this->employeeType, $medTypes, true);
 
-        $educationRules = ['nullable', 'array'];
-        $specialitiesRules = ['nullable', 'array'];
+        $educationRules = $specialitiesRules = ['nullable', 'array'];
 
         if ($isMedicalType) {
-            $educationRules[] = 'required';
-            $educationRules[] = 'min:1';
+            $educationRules[] = $specialitiesRules[] = 'required';
+            $educationRules[] = $specialitiesRules[] = 'min:1';
         }
 
         return [
@@ -223,7 +222,7 @@ class EmployeeForm extends Form
             'doctor.educations.*.degree' => ['required', 'string', 'max:255'],
             'doctor.educations.*.speciality' => ['required', 'string', 'max:255'],
 
-            'doctor.specialities' => ['nullable', 'array'],
+            'doctor.specialities' => $specialitiesRules,
             'doctor.specialities.*.speciality' => ['required', 'string', 'max:255'],
             'doctor.specialities.*.specialityOfficio' => ['required', 'boolean'],
             'doctor.specialities.*.level' => ['required', 'string', 'max:255'],
