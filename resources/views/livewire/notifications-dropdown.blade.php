@@ -35,14 +35,12 @@
                      class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-3 flex items-start gap-3 relative"
                 >
                     <div class="flex-shrink-0 mt-0.5">
-                        @if($iconType === 'sync')
+                        @if($iconType === 'started')
                             @icon('refresh', 'w-5 h-5 text-blue-600')
-                        @elseif($iconType === 'success')
+                        @elseif($iconType === 'completed')
                             @icon('check', 'w-5 h-5 text-green-600')
-                        @elseif($iconType === 'error')
+                        @elseif($iconType === 'failed')
                             @icon('alert', 'w-5 h-5 text-red-600')
-                        @elseif($iconType === 'info')
-                            @icon('alert-circle', 'w-5 h-5 text-blue-600')
                         @else
                             @icon('alert-circle', 'w-5 h-5 text-gray-600')
                         @endif
@@ -77,11 +75,9 @@
 
         {{-- Link to all notifications --}}
         @if($notifications->count() > 0)
-            @php
-                $notificationsUrl = Route::has('notifications.index') ? route('notifications.index') : '#';
-            @endphp
-            <a href="{{ $notificationsUrl }}"
-               class="block text-left text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline py-2.5 px-4.5">
+            <a href="{{ Route::has('notifications.index') ? route('notifications.index') : '#' }}"
+               class="block text-left text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline py-2.5 px-4.5"
+            >
                 Перейти до сповіщень
             </a>
         @endif
