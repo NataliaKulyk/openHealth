@@ -6,6 +6,7 @@ namespace App\Models\Employee;
 
 use App\Casts\EHealthDateCast;
 use App\Enums\JobStatus;
+use App\Models\Division;
 use App\Models\User;
 use App\Models\LegalEntity;
 use App\Models\Relations\Party;
@@ -88,7 +89,7 @@ abstract class BaseEmployee extends Model
 
     public function division(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Division::class);
+        return $this->belongsTo(Division::class);
     }
 
     public function party(): BelongsTo
@@ -101,14 +102,14 @@ abstract class BaseEmployee extends Model
         return $this->belongsTo(User::class);
     }
 
-
-    protected function scopefilterBySyncStatus(Builder $query, JobStatus $status): Builder
+    #[Scope]
+    protected function filterBySyncStatus(Builder $query, JobStatus $status): Builder
     {
         return $query->where('sync_status', $status);
     }
 
-
-    protected function scopefilterByLegalEntityId(Builder $query, int $legalEntityId): Builder
+    #[Scope]
+    protected function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
     {
         return $query->where('legal_entity_id', $legalEntityId);
     }

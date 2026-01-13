@@ -1,5 +1,5 @@
 <div class="form-row-3"
-     x-data="{ selectedTypes: $wire.entangle('typeFilter').live }"
+     x-data="{ selectedTypes: $wire.entangle('typeFilter') }"
 >
     {{-- Filter by type --}}
     <div class="form-group group">
@@ -26,7 +26,7 @@
                 <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
                     <li>
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input wire:model.live="typeFilter"
+                            <input wire:model="typeFilter"
                                    type="checkbox"
                                    value="request"
                                    class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"
@@ -36,7 +36,7 @@
                     </li>
                     <li>
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input wire:model.live="typeFilter"
+                            <input wire:model="typeFilter"
                                    type="checkbox"
                                    value="declaration"
                                    class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"
@@ -55,7 +55,7 @@
                id="searchByNumber"
                placeholder=" "
                class="input peer"
-               wire:model.live.debounce.300ms="searchByNumber"
+               wire:model="searchByNumber"
                autocomplete="off"
         />
         <label for="searchByNumber" class="label">
@@ -67,7 +67,7 @@
 {{-- Filter by declaration status --}}
 <div class="form-row-3"
      :class="openType ? 'mt-20' : 'mt-6'"
-     x-data="{ open: false, selectedStatuses: $wire.entangle('statusFilter').live }"
+     x-data="{ open: false, selectedStatuses: $wire.entangle('statusFilter') }"
 >
     <label for="statusFilter" class="label mb-1">{{ __('declarations.show') }}</label>
     <div class="relative">
@@ -92,7 +92,7 @@
             <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
                 <li>
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input wire:model.live="statusFilter"
+                        <input wire:model="statusFilter"
                                type="checkbox"
                                value="active"
                                class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"
@@ -102,7 +102,7 @@
                 </li>
                 <li>
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input wire:model.live="statusFilter"
+                        <input wire:model="statusFilter"
                                type="checkbox"
                                value="CANCELLED"
                                class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"

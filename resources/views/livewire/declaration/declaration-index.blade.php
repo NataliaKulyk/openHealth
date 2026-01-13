@@ -34,7 +34,7 @@
                                    id="searchByName"
                                    placeholder=" "
                                    class="input peer"
-                                   wire:model.live.debounce.300ms="searchByName"
+                                   wire:model="searchByName"
                                    autocomplete="off"
                             />
                             <label for="searchByName" class="label">
@@ -43,7 +43,8 @@
                         </div>
 
                         <button class="flex items-center gap-2 button-minor h-[44px] min-w-max px-4"
-                                @click="showFilter = !showFilter">
+                                @click="showFilter = !showFilter"
+                        >
                             @icon('adjustments', 'w-4 h-4')
                             <span x-text="showFilter ? '{{ __('forms.additional_search_parameters') }}' : '{{ __('forms.additional_search_parameters') }}'">
                                 {{ __('forms.additional_search_parameters') }}
@@ -61,13 +62,25 @@
                     </div>
                 </div>
             </div>
+
+            <div class="mb-9 mt-6 flex gap-2">
+                <button wire:click.prevent="search" class="flex items-center gap-2 button-primary">
+                    @icon('search', 'w-4 h-4')
+                    <span>{{ __('patients.search') }}</span>
+                </button>
+                <button type="button" wire:click="resetFilters" class="button-primary-outline-red">
+                    {{ __('forms.reset_all_filters') }}
+                </button>
+            </div>
         </x-slot>
     </x-header-navigation>
 
-    <div class="flow-root mt-14 shift-content pl-3.5">
+    <div class="flow-root mt-4 shift-content pl-3.5"
+         wire:key="declarations-table-page-{{ $declarations->total() }}-{{ $declarations->currentPage() }}"
+    >
         <div class="max-w-screen-xl">
             <div class="relative shadow-md sm:rounded-lg">
-                <div wire:key="declarations-table-{{ $declarations->total() }}-{{ $declarations->currentPage() }}">
+                <div>
                     @if($declarations->isNotEmpty())
                         <table class="table-input w-full min-w-[1000px]">
                             <thead class="thead-input">
@@ -100,15 +113,21 @@
                                     {{ $declaration->status->label() }}
                                 </span>
                                     </td>
-                                    <td x-data="{ openDropdown: false }" class="relative td-input text-center overflow-visible">
+                                    <td x-data="{ openDropdown: false }"
+                                        class="relative td-input text-center overflow-visible"
+                                    >
                                         @if($declaration->type === 'declaration' || $declaration->status === Status::REJECTED)
                                             @can('view', $declaration)
-                                                <a href="{{ route('declaration.view', [legalEntity(), $declaration->id]) }}" class="cursor-pointer">
+                                                <a href="{{ route('declaration.view', [legalEntity(), $declaration->id]) }}"
+                                                   class="cursor-pointer"
+                                                >
                                                     @icon('eye', 'w-6 h-6 text-gray-800 dark:text-white')
                                                 </a>
                                             @endcan
                                         @else
-                                            <button @click.stop="openDropdown = !openDropdown" type="button" class="cursor-pointer">
+                                            <button @click.stop="openDropdown = !openDropdown" type="button"
+                                                    class="cursor-pointer"
+                                            >
                                                 @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-white')
                                             </button>
                                         @endif
@@ -220,5 +239,6 @@
         </div>
     </div>
 
-    <x-forms.loading/>
+    <livewire:components.x-message :key="time()" />
+    <x-forms.loading />
 </div>

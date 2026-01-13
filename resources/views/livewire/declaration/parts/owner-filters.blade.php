@@ -1,6 +1,6 @@
 <div x-data="{ openType: false }">
     {{-- Filter by declaration status --}}
-    <div class="form-row-3" x-data="{ selectedStatuses: $wire.entangle('statusFilter').live }">
+    <div class="form-row-3" x-data="{ selectedStatuses: $wire.entangle('statusFilter') }">
         <div class="form-group group">
             <label for="statusFilter" class="label mb-1">{{ __('declarations.show') }}</label>
             <div class="relative">
@@ -25,7 +25,7 @@
                     <ul class="py-2 px-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
                         <li>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input wire:model.live="statusFilter"
+                                <input wire:model="statusFilter"
                                        type="checkbox"
                                        value="active"
                                        class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"
@@ -35,7 +35,7 @@
                         </li>
                         <li>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input wire:model.live="statusFilter"
+                                <input wire:model="statusFilter"
                                        type="checkbox"
                                        value="CANCELLED"
                                        class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"
@@ -54,7 +54,7 @@
                    id="searchByNumber"
                    placeholder=" "
                    class="input peer"
-                   wire:model.live.debounce.300ms="searchByNumber"
+                   wire:model="searchByNumber"
                    autocomplete="off"
             />
             <label for="searchByNumber" class="label">
@@ -67,7 +67,7 @@
     <div class="form-row-3 form-group group"
          x-data="{
              openDoctor: false,
-             selectedDoctors: $wire.entangle('doctorFilter').live,
+             selectedDoctors: $wire.entangle('doctorFilter'),
              doctors: @js($this->doctors->toArray()),
              getSelectedDoctorNames() {
                  return this.doctors
@@ -104,7 +104,7 @@
                         <li>
                             <label
                                 class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-1 rounded">
-                                <input wire:model.live="doctorFilter"
+                                <input wire:model="doctorFilter"
                                        type="checkbox"
                                        :value="doctor.uuid"
                                        class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"

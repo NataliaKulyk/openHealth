@@ -83,17 +83,36 @@ class DeclarationIndex extends Component
 
     public array $employeeIds;
 
+    public bool $isFiltersApplied = false;
+
     public function mount(LegalEntity $legalEntity): void
     {
         $user = Auth::user();
 
-        $this->employeeIds = $user?->employees()->pluck('id')->all();
+        $this->employeeIds = $user->employees()->filterByLegalEntityId($legalEntity->id)->pluck('id')->all();
 
         if ($user->hasRole('OWNER')) {
             $this->doctors = $this->getDoctors();
         } else {
             $this->countActive = Declaration::whereIn('employee_id', $this->employeeIds)->count();
         }
+    }
+
+    public function search(): void
+    {
+        $this->resetPage();
+        $this->isFiltersApplied = true;
+    }
+
+    public function resetFilters(): void
+    {
+        $this->searchByName = '';
+        $this->searchByNumber = '';
+        $this->typeFilter = ['request', 'declaration'];
+        $this->statusFilter = ['active', 'CANCELLED'];
+        $this->doctorFilter = [];
+
+        $this->resetPage();
     }
 
     #[Computed]
@@ -104,11 +123,11 @@ class DeclarationIndex extends Component
         $declarations = collect();
         $declarationRequests = collect();
 
-        if ($user?->can('viewAny', Declaration::class)) {
+        if ($user->can('viewAny', Declaration::class)) {
             $declarations = Declaration::where('legal_entity_id', legalEntity()->id)
                 ->select(['id', 'person_id', 'employee_id', 'legal_entity_id', 'declaration_number', 'status'])
                 ->when(
-                    !$user?->hasRole('OWNER'),
+                    !$user->hasRole('OWNER'),
                     fn (Builder $query) => $query->whereIn('employee_id', $this->employeeIds)
                 )->with([
                     'person:id,first_name,last_name,second_name,birth_date',
@@ -120,7 +139,7 @@ class DeclarationIndex extends Component
         }
 
         // Don't show declaration requests for OWNER
-        if (!$user?->hasRole('OWNER') && $user?->can('viewAny', DeclarationRequest::class)) {
+        if (!$user->hasRole('OWNER') && $user->can('viewAny', DeclarationRequest::class)) {
             $declarationRequests = DeclarationRequest::where('legal_entity_id', legalEntity()->id)
                 ->select(['id', 'uuid', 'person_id', 'employee_id', 'declaration_number', 'status'])
                 ->whereNotIn('status', [Status::SIGNED->value])
@@ -135,56 +154,58 @@ class DeclarationIndex extends Component
 
         $allItems = $declarationRequests->concat($declarations);
 
-        // Filter by type
-        if (!empty($this->typeFilter)) {
-            $allItems = $allItems->filter(
-                fn (DeclarationRequest|Declaration $item) => in_array($item->type, $this->typeFilter, true)
-            );
-        }
+        if ($this->isFiltersApplied) {
+            // Filter by type
+            if (!empty($this->typeFilter)) {
+                $allItems = $allItems->filter(
+                    fn (DeclarationRequest|Declaration $item) => in_array($item->type, $this->typeFilter, true)
+                );
+            }
 
-        // Filter by status
-        if (!empty($this->statusFilter)) {
-            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) {
-                if ($item instanceof Declaration) {
-                    return in_array($item->status->value, $this->statusFilter, true);
-                }
+            // Filter by status
+            if (!empty($this->statusFilter)) {
+                $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) {
+                    if ($item instanceof Declaration) {
+                        return in_array($item->status->value, $this->statusFilter, true);
+                    }
 
-                return true;
-            });
-        }
+                    return true;
+                });
+            }
 
-        // Search by first and last name
-        if (!empty($this->searchByName)) {
-            $searchTerm = Str::lower(trim($this->searchByName));
+            // Search by first and last name
+            if (!empty($this->searchByName)) {
+                $searchTerm = Str::lower(trim($this->searchByName));
 
-            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) use ($searchTerm) {
-                $last = Str::lower(data_get($item, 'person.last_name', ''));
-                $first = Str::lower(data_get($item, 'person.first_name', ''));
+                $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) use ($searchTerm) {
+                    $last = Str::lower(data_get($item, 'person.last_name', ''));
+                    $first = Str::lower(data_get($item, 'person.first_name', ''));
 
-                return Str::contains($last, $searchTerm) || Str::contains($first, $searchTerm);
-            });
-        }
+                    return Str::contains($last, $searchTerm) || Str::contains($first, $searchTerm);
+                });
+            }
 
-        // Search by declaration number
-        if (!empty($this->searchByNumber)) {
-            $searchTerm = Str::lower(trim($this->searchByNumber));
+            // Search by declaration number
+            if (!empty($this->searchByNumber)) {
+                $searchTerm = Str::lower(trim($this->searchByNumber));
 
-            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) use ($searchTerm) {
-                $number = Str::lower($item->declaration_number ?? '');
+                $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) use ($searchTerm) {
+                    $number = Str::lower($item->declaration_number ?? '');
 
-                return Str::contains($number, $searchTerm);
-            });
-        }
+                    return Str::contains($number, $searchTerm);
+                });
+            }
 
-        // Filter by doctors
-        if (!empty($this->doctorFilter)) {
-            $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) {
-                if ($item instanceof Declaration) {
-                    return in_array($item->employee->uuid, $this->doctorFilter, true);
-                }
+            // Filter by doctors
+            if (!empty($this->doctorFilter)) {
+                $allItems = $allItems->filter(function (DeclarationRequest|Declaration $item) {
+                    if ($item instanceof Declaration) {
+                        return in_array($item->employee->uuid, $this->doctorFilter, true);
+                    }
 
-                return false;
-            });
+                    return false;
+                });
+            }
         }
 
         // Pagination
@@ -300,7 +321,7 @@ class DeclarationIndex extends Component
      */
     protected function ensureAbility(string $ability, string $errorMessage): bool
     {
-        if (Auth::user()?->cannot($ability, DeclarationRequest::class)) {
+        if (Auth::user()->cannot($ability, DeclarationRequest::class)) {
             Session::flash('error', $errorMessage);
 
             return false;
@@ -316,12 +337,11 @@ class DeclarationIndex extends Component
      */
     protected function getDoctors(): Collection
     {
-        return Employee::where('employee_type', 'DOCTOR')
-            ->with('party:id,last_name,first_name')
-            ->where('legal_entity_id', legalEntity()->id)
+        return Employee::with('party:id,last_name,first_name')
+            ->doctor()
+            ->filterByLegalEntityId(legalEntity()->id)
             ->whereHas('declarations')
-            ->select(['id', 'uuid', 'user_id', 'party_id'])
-            ->get()
+            ->get(['id', 'uuid', 'user_id', 'party_id'])
             ->map(fn (Employee $doctor) => [
                 'uuid' => $doctor->uuid,
                 'full_name' => trim($doctor->party->fullName)
