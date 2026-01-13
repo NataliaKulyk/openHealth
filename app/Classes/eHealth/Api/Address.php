@@ -14,6 +14,8 @@ use Illuminate\Http\Client\ConnectionException;
 class Address extends Request
 {
     protected const string URL = '/api/uaddresses';
+    protected const int PAGE_DEFAULT_NUMBER = 1;
+    protected const int PAGE_REGION_SIZE = 30;
 
     /**
      * Get list of regions by search params.
@@ -26,9 +28,14 @@ class Address extends Request
      */
     public function getRegions(array $query = []): PromiseInterface|EHealthResponse
     {
-        $this->setDefaultPageSize();
-
-        $mergedQuery = array_merge($this->options['query'], $query);
+        $mergedQuery = array_merge(
+            $this->options['query'] ?? [],
+            [
+                'page' => self::PAGE_DEFAULT_NUMBER,
+                'page_size' => self::PAGE_REGION_SIZE
+            ],
+            $query
+        );
 
         return $this->get(self::URL . '/regions', $mergedQuery);
     }
