@@ -1,15 +1,12 @@
-@use('App\Enums\Person\AuthenticationMethod')
-
 <legend class="legend mb-8 text-2xl font-bold">{{ __('patients.enter_new_phone') }}</legend>
 
-<div class="form-row-4">
+<div class="form-row-3">
     <div class="form-group">
-        <input
-            type="tel"
-            placeholder=" "
-            class="peer input"
-            wire:model.defer="newPhoneNumber"
-            x-mask="+380999999999"
+        <input type="tel"
+               placeholder=" "
+               class="peer input"
+               wire:model="newPhoneNumber"
+               x-mask="+380999999999"
         />
         <label class="label">{{ __('forms.phone') }}</label>
     </div>
@@ -20,7 +17,7 @@
         {{ __('forms.back') }}
     </button>
 
-    <button type="button" wire:click="setStep(5)" class="button-primary">
+    <button type="button" wire:click="updatePhoneNumber" class="button-primary">
         {{ __('patients.confirm') }}
     </button>
 </div>

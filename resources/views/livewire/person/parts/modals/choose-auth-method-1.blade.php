@@ -4,8 +4,20 @@
     @icon('alert-circle', 'w-5 h-5 text-gray-700 dark:text-gray-300 mr-3 mt-0.5')
     <p class="text-sm text-gray-800 dark:text-gray-200">
         {{ __('patients.please_clarify_phone_number') }}
-        <span class="font-bold">+38095123xxxx</span>
+        <span class="font-bold">{{ $phoneNumber }}</span>
     </p>
+</div>
+
+<div class="form-row-3">
+    <div class="form-group">
+        <input type="tel"
+               placeholder=" "
+               class="peer input"
+               wire:model="form.phoneNumber"
+               x-mask="+380999999999"
+        />
+        <label class="label">{{ __('Введіть новий номер телефону') }}</label>
+    </div>
 </div>
 
 <div class="mt-8 flex gap-3">
@@ -17,7 +29,7 @@
         {{ __('patients.no_access') }}
     </button>
 
-    <button type="button" wire:click="setStep(2)" class="button-primary">
+    <button type="button" wire:click="verifyOwnership" class="button-primary">
         {{ __('patients.available_access') }}
     </button>
 </div>
