@@ -1,8 +1,8 @@
-<legend class="legend mb-8 text-2xl font-bold">{{ __('Заміна методу автентифікації на СМС') }}</legend>
+<legend class="legend mb-8 text-2xl font-bold">{{ __('patients.change_method_to_sms') }}</legend>
 
 <div class="bg-gray-100 dark:bg-slate-800 rounded-lg p-4 mb-8 flex items-start">
     @icon('alert-circle', 'w-5 h-5 text-gray-700 dark:text-gray-300 mr-3 mt-0.5')
-    <p class="text-sm text-gray-800 dark:text-gray-200">{{ __('Завантажте будь ласка документи пацієнта') }}</p>
+    <p class="text-sm text-gray-800 dark:text-gray-200">{{ __('patients.load_person_documents') }}</p>
 </div>
 
 @foreach($this->uploadedDocuments as $key => $document)
@@ -34,7 +34,7 @@
 @endforeach
 
 <div class="mt-8 flex gap-3">
-    <button type="button" wire:click="setStep(1)" class="button-minor">
+    <button type="button" wire:click="setAuthStep(1)" class="button-minor">
         {{ __('forms.back') }}
     </button>
 
