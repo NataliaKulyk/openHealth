@@ -1,14 +1,13 @@
-<legend class="legend mb-8 text-2xl font-bold">{{ __('patients.enter_new_phone') }}</legend>
+<legend class="legend mb-8 text-2xl font-bold">{{ __('patients.new_alias_method') }}</legend>
 
 <div class="form-row-3">
     <div class="form-group">
-        <input type="tel"
+        <input type="text"
                placeholder=" "
                class="peer input"
-               wire:model="newPhoneNumber"
-               x-mask="+380999999999"
+               wire:model="alias"
         />
-        <label class="label">{{ __('forms.phone') }}</label>
+        <label class="label">{{ __('forms.name') }}</label>
     </div>
 </div>
 
@@ -17,7 +16,7 @@
         {{ __('forms.back') }}
     </button>
 
-    <button type="button" wire:click="updatePhoneNumber" class="button-primary">
+    <button type="button" wire:click="updateAliasName" class="button-primary">
         {{ __('forms.confirm') }}
     </button>
 </div>
