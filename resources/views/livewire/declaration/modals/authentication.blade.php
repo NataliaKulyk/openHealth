@@ -8,9 +8,7 @@
              class="modal"
         >
             <div x-transition.opacity class="fixed inset-0 bg-black/30"></div>
-            <div x-transition @click="showAuthModal = false"
-                 class="modal-wrapper"
-            >
+            <div x-transition @click="showAuthModal = false" class="modal-wrapper">
                 <div @click.stop x-trap.noscroll.inert="showAuthModal"
                      class="modal-content w-full max-w-2xl mx-auto"
                 >
@@ -98,7 +96,7 @@
                                 >
                                     @icon('mail', 'w-4 h-4 text-gray-800 dark:text-white')
                                     <span
-                                        x-text="sentOnce ? 'СМС вже відправлено' : (cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : 'Відправити ще раз')">
+                                        x-text="sentOnce ? 'СМС вже відправлено' : (cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : '{{ __('forms.send_again') }}')">
                                     </span>
                                 </button>
                             </div>

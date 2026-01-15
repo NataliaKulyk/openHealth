@@ -11,7 +11,7 @@
         }
     }"
 >
-    <legend class="legend mt-6">{{ __('patients.confirmation_code') }}</legend>
+    <legend class="legend mt-6">{{ __('forms.confirmation_code_from_SMS') }}</legend>
 
     <div class="form-row-3 mt-4">
         <div class="form-group group">
@@ -25,7 +25,7 @@
                    autocomplete="off"
             />
             <label for="verificationCode" class="label">
-                {{ __('patients.code_SMS') }}
+                {{ __('patients.code_sms') }}
             </label>
         </div>
 
@@ -35,7 +35,7 @@
                 class="button-minor"
         >
             @icon('mail', 'w-4 h-4 mr-2')
-            <span>{{ __('patients.send_again') }}</span>
+            <span>{{ __('forms.send_again') }}</span>
             <template x-if="timer > 0">
                 <span x-text="`(${timer}c)`"></span>
             </template>
@@ -43,16 +43,16 @@
     </div>
 
     <div class="flex gap-4">
-        <button type="button" wire:click="setStep(4)" class="button-minor">
+        <button type="button" wire:click="setAuthStep(4)" class="button-minor">
             {{ __('forms.back') }}
         </button>
 
-        <button type="button" wire:click="setStep(0)" class="button-outline-primary">
+        <button type="button" wire:click="setAuthStep(0)" class="button-outline-primary">
             {{ __('patients.to_authentication_methods') }}
         </button>
 
         <button type="button" wire:click="approveUpdatingPhoneNumber" class="button-primary">
-            {{ __('patients.confirm') }}
+            {{ __('forms.confirm') }}
         </button>
     </div>
 </div>

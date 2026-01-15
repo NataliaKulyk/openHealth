@@ -60,6 +60,7 @@ return [
     'auth_method' => 'Метод автентифікації',
     'to_enter' => 'Увійти',
     'sendRequest' => 'Надіслати дані',
+    'send_again' => 'Відправити ще раз',
     'step' => 'Крок :currentSteep з :totalSteps',
     'employeeSearch' => 'Пошук працівника',
     'contacts' => 'Контакти',

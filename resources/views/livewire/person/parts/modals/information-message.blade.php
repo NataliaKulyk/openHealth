@@ -69,7 +69,7 @@
                                    class="default-checkbox"
                             />
                             <label class="default-p" for="isInformed">
-                                {{ __("інформація з пам'ятки повідомлена пацієнту") }}
+                                {{ __('patients.informed') }}
                             </label>
                         </div>
                     </div>

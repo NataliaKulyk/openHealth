@@ -6,6 +6,7 @@ namespace App\Classes\eHealth\Api;
 
 use App\Classes\eHealth\EHealthRequest as Request;
 use App\Classes\eHealth\EHealthResponse;
+use App\Enums\Person\AuthenticationMethod;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Rules\InDictionary;
@@ -223,6 +224,7 @@ class Person extends Request
     protected function validateAuthMethods(EHealthResponse $response): array
     {
         $data = $response->getData();
+        $thirdPerson = AuthenticationMethod::THIRD_PERSON->value;
 
         $replaced = self::replaceEHealthPropNames($data);
 
@@ -235,10 +237,10 @@ class Person extends Request
             '*.phone_number' => ['nullable', 'string', 'max:255'],
             '*.confidant_person.documents_person.*.number' => ['nullable', 'string', 'max:255'],
             '*.confidant_person.documents_person.*.type' => ['nullable', new InDictionary('DOCUMENT_TYPE')],
-            '*.confidant_person.gender' => ['required', new InDictionary('GENDER')],
-            '*.confidant_person.name' => ['required', 'string', 'max:255'],
-            '*.confidant_person.uuid' => ['required', 'uuid'],
-            '*.confidant_person.no_tax_id' => ['required', 'boolean:strict'],
+            '*.confidant_person.gender' => ["required_if:*.type,$thirdPerson", new InDictionary('GENDER')],
+            '*.confidant_person.name' => ["required_if:*.type,$thirdPerson", 'string', 'max:255'],
+            '*.confidant_person.uuid' => ["required_if:*.type,$thirdPerson", 'uuid'],
+            '*.confidant_person.no_tax_id' => ["required_if:*.type,$thirdPerson", 'boolean:strict'],
             '*.confidant_person.phones.number' => ['nullable', 'string'],
             '*.confidant_person.tax_id' => ['nullable', 'string'],
             '*.confidant_person.unzr' => ['nullable', 'string']

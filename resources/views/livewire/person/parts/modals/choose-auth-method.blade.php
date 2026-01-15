@@ -49,6 +49,10 @@
                                                     <h3 class="text-gray-900 dark:text-white font-bold"
                                                         x-text="`${prefix} ${labels[method.type] ?? method.type}`"
                                                     ></h3>
+
+                                                    <p class="default-p"
+                                                       x-text="'{{ __('patients.method_name') }}: ' + (method.alias || '—')"
+                                                    ></p>
                                                 </div>
 
                                                 <div class="flex items-center gap-4">
@@ -56,7 +60,7 @@
                                                         <button @click="open = !open" type="button"
                                                                 class="text-blue-600 hover:underline text-sm whitespace-nowrap"
                                                         >
-                                                            {{ __('Змінити') }}
+                                                            {{ __('patients.change') }}
                                                         </button>
 
                                                         <div x-show="open"
@@ -65,28 +69,35 @@
                                                              class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-50 p-2 border border-gray-100"
                                                         >
                                                             <template x-if="method.type === '{{ AuthenticationMethod::OTP->value }}'">
-                                                                <button wire:click.prevent="setStep(1)"
-                                                                        @click="open = false"
+                                                                <button @click="open = false"
+                                                                        wire:click.prevent="selectAuthMethod(method.uuid, method.type, 1)"
                                                                         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                                 >
-                                                                    Змінити номер телефона
+                                                                    {{ __('patients.change_phone_number') }}
                                                                 </button>
                                                             </template>
 
                                                             <template x-if="method.type === '{{ AuthenticationMethod::OFFLINE->value }}'">
-                                                                <button wire:click.prevent="setStep(1)"
+                                                                <button wire:click.prevent="selectAuthMethod(method.uuid, method.type, 1)"
                                                                         @click="open = false"
                                                                         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                                 >
-                                                                    Замінити метод на СМС
+                                                                    {{ __('patients.change_method_to_sms') }}
                                                                 </button>
                                                             </template>
 
-                                                            <button wire:click.prevent="setStep(3)"
+                                                            <button @click="open = false"
+                                                                    wire:click.prevent="selectAuthMethod(method.uuid, method.type, 7)"
+                                                                    class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
+                                                            >
+                                                                {{ __('patients.change_method_alias') }}
+                                                            </button>
+
+                                                            <button wire:click.prevent="selectAuthMethod(method.uuid, method.type, 3)"
                                                                     @click="open = false"
                                                                     class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                             >
-                                                                Деактивувати метод
+                                                                {{ __('patients.deactivate_method') }}
                                                             </button>
                                                         </div>
                                                     </div>

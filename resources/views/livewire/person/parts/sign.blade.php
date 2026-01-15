@@ -113,7 +113,7 @@
                         class="button-minor gap-2 w-full"
                 >
                     @icon('mail', 'w-4 h-4 text-gray-800 dark:text-white')
-                    <span x-text="cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : 'Відправити ще раз'">
+                    <span x-text="cooldown > 0 ? `Відправити ще раз (через ${cooldown} с)` : '{{ __('forms.send_again') }}'">
                     </span>
                 </button>
             </div>
