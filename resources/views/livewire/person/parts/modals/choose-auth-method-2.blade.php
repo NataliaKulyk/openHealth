@@ -8,7 +8,7 @@
     </p>
 </div>
 
-<legend class="legend">{{ __('patients.code_SMS') }}</legend>
+<legend class="legend">{{ __('patients.code_sms') }}</legend>
 
 <div class="form-row-3 mt-4">
     <div class="form-group group">
@@ -22,21 +22,21 @@
                autocomplete="off"
         />
         <label for="code" class="label">
-            {{ __('patients.confirmation_code') }}
+            {{ __('forms.confirmation_code_from_SMS') }}
         </label>
     </div>
 </div>
 
 <div class="flex gap-4">
-    <button type="button" wire:click="setStep(1)" class="button-minor">
+    <button type="button" wire:click="setAuthStep(1)" class="button-minor">
         {{ __('forms.back') }}
     </button>
 
-    <button type="button" wire:click="setStep(0)" class="button-outline-primary">
+    <button type="button" wire:click="setAuthStep(0)" class="button-outline-primary">
         {{ __('patients.to_authentication_methods') }}
     </button>
 
     <button type="button" wire:click="completeVerifyingOwnership" class="button-primary">
-        {{ __('patients.confirm') }}
+        {{ __('forms.confirm') }}
     </button>
 </div>
