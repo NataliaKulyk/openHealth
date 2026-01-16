@@ -303,6 +303,15 @@ return [
     'update_method_alias' => 'Оновлення назви методу автентифікації',
     'load_person_documents' => 'Завантажте будь ласка документи пацієнта',
     'new_alias_method' => 'Введіть будь ласка нову назву методу автентифікації',
+    'add_authentication_method' => 'Додати метод автентифікації',
+    'authentication_from_SMS' => 'Автентифікація через СМС',
+    'adding_authentication_method_SMS' => 'Додавання методу автентифікації - через СМС',
+    'authentication_method_name' => 'Назва методу автентифікації',
+    'authentication_through_documents' => 'Автентифікація через документи',
+    'file_not_selected' => 'Файл не обрано',
+    'select_file' => 'Вибрати файл',
+    'the_size_uploaded_file' => 'Розмір завантажуваного файлу не більше 10МБ у форматі jpeg',
+    'send_files' => 'Відправити файли',
 
     'errors' => [
         'authMethod' => [
