@@ -162,7 +162,7 @@ return [
     'capitation_contract_max_period_days' => 366,
 
     'rate_limit' => [
-        'employee_request' => 30,
+        'employee_request' => 29,
         'division_request' => 50,
         'healthcare_service' => 50,
         'equipment' => 50,
