@@ -4,24 +4,26 @@ declare(strict_types=1);
 
 namespace App\Livewire\Division;
 
-use App\Notifications\SyncNotification;
 use Throwable;
 use Exception;
+use App\Models\Division;
+use Illuminate\Bus\Batch;
+use App\Jobs\DivisionSync;
 use Livewire\WithPagination;
 use App\Classes\eHealth\EHealth;
 use App\Repositories\Repository;
 use Livewire\Attributes\Computed;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Session;
+use App\Notifications\SyncNotification;
 use App\Livewire\Division\Trait\HasAction;
 use Illuminate\Http\Client\ConnectionException;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
-use App\Jobs\DivisionSync;
-use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Crypt;
 
 class DivisionIndex extends DivisionComponent
 {
@@ -67,8 +69,19 @@ class DivisionIndex extends DivisionComponent
      */
     public function sync(): void
     {
+        if (Auth::user()->cannot('viewAny', Division::class)) {
+            Session::flash('error', 'У вас немає дозволу на синхронізацію місць надання послуг');
+
+            return;
+        }
+
+        $syncQuery = [
+            'page' => 1,
+            'per_page' => config('ehealth.api.max_per_page')
+        ];
+
         try {
-            $response = EHealth::division()->getMany();
+            $response = EHealth::division()->getMany(query: $syncQuery);
 
             $divisions = $response->validate();
 
@@ -101,6 +114,7 @@ class DivisionIndex extends DivisionComponent
                 new DivisionSync(
                     legalEntity: legalEntity(),
                     page: 2,
+                    standalone: true, // Sync only divisions (without healthcare services)
                     nextEntity: null
                 )
             ])
@@ -125,6 +139,10 @@ class DivisionIndex extends DivisionComponent
         } else {
             session()->flash('success', __('Інформацію успішно оновлено'));
         }
+
+        $this->redirect(route('division.index', [legalEntity()]), navigate: true);
+
+        return;
     }
 
     public function render(): View
