@@ -13,7 +13,6 @@ use App\Jobs\EmployeeSync;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
-use App\Models\Relations\Party;
 use App\Notifications\EmployeeSyncCompleted;
 use App\Notifications\SyncNotification;
 use App\Repositories\Repository;
@@ -410,24 +409,30 @@ class EmployeeIndex extends EmployeeComponent
     public function deleteRequest(): void
     {
         if ($this->requestToDeleteId) {
-            $request = EmployeeRequest::find($this->requestToDeleteId);
+            $request = EmployeeRequest::with('revision')->find($this->requestToDeleteId);
 
-            // Ensure the request exists and is a local draft (no UUID) before deleting
+            // Make sure the request exists and it's a draft (without UUID)
             if ($request && !$request->uuid) {
+
+                // 1. Delete the related revision if it exists
+                if ($request->revision) {
+                    // Since Revision model uses SoftDeletes, standard delete() only hides the record.
+                    // We use forceDelete() to physically remove the draft data from the database.
+                    $request->revision->forceDelete();
+                }
+
+                // 2. Delete the request itself
                 $request->delete();
+
                 $this->dispatch(
                     'flashMessage',
                     ['message' => __('employees.draft.delete_success'), 'type' => 'success']
                 );
             }
 
-            // Close the modal after deletion
+            // Close the modal and clear the ID
             $this->showDeleteModal = false;
             $this->requestToDeleteId = null;
-
-            // Dispatch a success message (optional, requires a listener)
-            // Note: You have two dispatches here, ensure you don't show double notifications
-            $this->dispatch('flashMessage', ['message' => 'Request deleted successfully', 'type' => 'success']);
         }
     }
 
