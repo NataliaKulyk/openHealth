@@ -56,7 +56,7 @@ class EHealthLoginController extends Controller
             return Redirect::route('login');
         }
 
-        $selectedLegalEntityUuidFromSession = Session::pull('selected_legal_entity_uuid_for_ehealth');
+        $selectedLegalEntityUuidFromSession = Session::get('selected_legal_entity_uuid_for_ehealth');
 
         if (!$selectedLegalEntityUuidFromSession) {
             Log::warning('Legal Entity is not selected');

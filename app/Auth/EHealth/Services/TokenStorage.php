@@ -1,10 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\EHealth\Services;
 
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
+use App\Models\LegalEntity;
 use Carbon\Carbon;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use App\Classes\eHealth\Request as eHealthRequest;
 
 class TokenStorage
 {
@@ -20,16 +27,15 @@ class TokenStorage
     }
 
     /**
-     * Save all data concerns to teh Bearer token
+     * Save all data concerns to the Bearer token
      *
-     * @param array $tokenData
-     *
+     * @param  array  $tokenData
      * @return void
      */
     public function store(array $tokenData): void
     {
         Session::put($this->tokenKey, $tokenData['value']);
-        Session::put($this->expiresAtKey, Carbon::createFromTimestamp($tokenData['expires_at']));
+        Session::put($this->expiresAtKey, $tokenData['expires_at']);
         Session::put($this->refreshTokenKey, $tokenData['details']['refresh_token']);
         Session::save();
     }
@@ -44,16 +50,16 @@ class TokenStorage
         return Session::get($this->tokenKey);
     }
 
-    public function getRefreshToken(): ?string
+    public function getRefreshToken(): string
     {
         return Session::get($this->refreshTokenKey);
     }
 
-    public function getExpiresAt(): ?Carbon
+    public function getExpiresAt(): Carbon
     {
-        $expiresAt = Session::get($this->expiresAtKey);
+        $ts = Session::get($this->expiresAtKey);
 
-        return $expiresAt ? Carbon::parse($expiresAt) : null;
+        return Carbon::createFromTimestamp($ts);
     }
 
     /**
@@ -72,27 +78,35 @@ class TokenStorage
         Session::save();
     }
 
-    public function refreshBearerToken(): ?array
+    public function refreshBearerToken(): bool
     {
-        $user = auth('ehealth')->user();
+        $legalEntityUuid = Session::get('selected_legal_entity_uuid_for_ehealth');
 
-        if (! $user) {
-            return null;
+        $entity = LegalEntity::whereUuid($legalEntityUuid)
+            ->select(['client_id', 'client_secret'])
+            ->first();
+
+        if (!$entity) {
+            $this->clear();
+
+            return false;
         }
 
-        $data = [
-            'token' => [
-                'client_id'     => legalEntity()->client_id ?? '',
-                'client_secret' => legalEntity()->client_secret ?? '',
-                'grant_type'    => 'refresh_token',
-                'refresh_token' => $this->getRefreshToken(),
-            ]
-        ];
+        try {
+            $response = EHealth::auth()->extendTokenLifetime(
+                $entity->clientId,
+                $entity->clientSecret,
+                $this->getRefreshToken()
+            );
+            $this->store($response->validate());
 
-        $request = new EhealthRequest('POST', config('ehealth.api.oauth.tokens'), $data, false)->sendRequest();
+            return true;
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            Log::channel('e_health_errors')->error("Error while extend token lifetime {$exception->getMessage()}", [
+                'exception' => $exception
+            ]);
 
-        $this->store($request);
-
-        return $request;
+            return false;
+        }
     }
 }

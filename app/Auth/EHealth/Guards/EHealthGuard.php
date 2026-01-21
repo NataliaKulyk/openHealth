@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\EHealth\Guards;
 
 use Exception;
@@ -33,7 +35,7 @@ class EHealthGuard extends SessionGuard
      */
     public function user()
     {
-        if(!empty($this->user)) {
+        if (!empty($this->user)) {
             return $this->user;
         }
 
@@ -52,11 +54,6 @@ class EHealthGuard extends SessionGuard
         return $this->user;
     }
 
-    public function isLoggedIn(): bool
-    {
-        return $this->tokenStorage->hasBearerToken() && $this->tokenStorage->getExpiresAt();
-    }
-
     public function getUserUUID(Authenticatable $user): ?string
     {
         return $user->uuid;
@@ -72,7 +69,7 @@ class EHealthGuard extends SessionGuard
      */
     public function login(Authenticatable $user, $remember = false)
     {
-        if (! $this->tokenStorage->hasBearerToken()) {
+        if (!$this->tokenStorage->hasBearerToken()) {
             Log::error(__('Bearer token missing in session', [], 'en'));
 
             throw new Exception(__('Bearer token missing in session'));

@@ -247,5 +247,4 @@ class LegalEntity extends Model
             }
         });
     }
-
 }
