@@ -43,7 +43,7 @@ class NotificationsDropdown extends Component
 
     public function getNotificationIconType(DatabaseNotification $notification): string
     {
-        return $notification->data['action'];
+        return $notification->data['action'] ?? '';
     }
 
     public function render(): View
