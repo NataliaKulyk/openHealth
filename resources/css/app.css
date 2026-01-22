@@ -658,3 +658,16 @@ input:-webkit-autofill {
         line-height: 1;
     }
 }
+
+/* File upload input */
+.file-input-wrapper {
+    @apply flex items-center rounded-lg border border-gray-300 dark:border-gray-600;
+}
+
+.file-input-button {
+    @apply cursor-pointer inline-flex items-center px-5 py-2.5 bg-gray-800 rounded-l-lg text-sm font-medium text-white hover:bg-gray-700;
+}
+
+.file-input-text {
+    @apply flex-1 px-5 py-2.5 bg-white text-sm text-gray-500 truncate rounded-r-lg dark:bg-gray-700 dark:text-gray-400;
+}
