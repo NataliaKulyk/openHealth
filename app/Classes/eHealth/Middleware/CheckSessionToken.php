@@ -41,7 +41,7 @@ class CheckSessionToken
             return $next($request);
         }
 
-        if (Auth::check()) {
+        if (Auth::check() && Auth::guard('ehealth')->check()) {
             $lastActivityKey = 'last_activity';
             $lastActivityTime = Session::get($lastActivityKey);
             $now = now()->timestamp;
