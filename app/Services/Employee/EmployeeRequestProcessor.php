@@ -359,7 +359,7 @@ class EmployeeRequestProcessor
 
             $employeeRequestsUpsertData[] = [
                 'uuid' => $ehealthEmployeeRequest['uuid'],
-                'inserted_at' => $ehealthEmployeeRequest['inserted_at'],
+                'inserted_at' => Carbon::parse($ehealthEmployeeRequest['inserted_at'])->format('Y-m-d H:i:s'),
                 'status' => $ehealthEmployeeRequest['status'],
                 'legal_entity_id' => $legalEntity->id,
                 'sync_status' => JobStatus::PARTIAL->value

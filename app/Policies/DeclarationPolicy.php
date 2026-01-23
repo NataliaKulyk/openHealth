@@ -40,4 +40,16 @@ class DeclarationPolicy
             ? Response::allow()
             : Response::denyWithStatus(404);
     }
+
+    /**
+     * Determine whether the user can synchronize all the declarations.
+     */
+    public function sync(User $user): Response
+    {
+        if ($user->cannot('declaration:read') || $user->cannot('declaration_request:read') || $user->cannot('person:read')) {
+            return Response::denyWithStatus(404);
+        }
+
+        return Response::allow();
+    }
 }

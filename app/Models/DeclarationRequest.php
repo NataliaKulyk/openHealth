@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Declaration\Status;
+use App\Enums\JobStatus;
 use App\Models\Employee\Employee;
 use App\Models\Person\Person;
 use Eloquence\Behaviours\HasCamelCasing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 
 class DeclarationRequest extends Model
 {
@@ -21,6 +24,18 @@ class DeclarationRequest extends Model
         'status' => Status::class,
         'data_to_be_signed' => 'array'
     ];
+
+    #[Scope]
+    public function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
+    {
+        return $query->where('legal_entity_id', $legalEntityId);
+    }
+
+    #[Scope]
+    public function filterBySyncStatus(Builder $query, JobStatus $status): Builder
+    {
+        return $query->where('sync_status', $status);
+    }
 
     public function person(): BelongsTo
     {

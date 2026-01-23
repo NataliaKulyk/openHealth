@@ -10,14 +10,20 @@ use App\Models\User;
 use App\Core\EHealthJob;
 use App\Enums\JobStatus;
 use App\Models\LegalEntity;
+use App\Models\Declaration;
+use App\Jobs\ConfidantPersonSync;
 use App\Models\Employee\Employee;
+use App\Models\DeclarationRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Bus;
 use App\Jobs\EmployeeDetailsUpsert;
-use App\Jobs\EmployeeRequestDetailsUpsert;
-use App\Models\Employee\EmployeeRequest;
 use Illuminate\Bus\BatchRepository;
+use App\Jobs\DeclarationDetailsSync;
+use App\Models\Employee\EmployeeRequest;
+use App\Models\Relations\ConfidantPerson;
+use App\Jobs\EmployeeRequestDetailsUpsert;
+use App\Jobs\DeclarationRequestDetailsSync;
 
 /**
  * Trait for querying batches by legal_entity_id
@@ -203,10 +209,10 @@ trait BatchLegalEntityQueries
     }
 
     /**
-     * Creates a chain of EmployeeRequestDetailsUpsert jobs for all employees with PARTIAL sync status.
+     * Creates a chain of EmployeeRequestDetailsUpsert jobs for all employee_requests with PARTIAL sync status.
      *
      * Jobs are created in reverse order, each next job receives the previous one as nextEntity.
-     * Returns the first job in the chain (or null if there are no employees).
+     * Returns the first job in the chain (or null if there are no employee_requests).
      * So the jobs will be executed in the original order one by one.
      *
      * @param LegalEntity $legalEntity
@@ -228,6 +234,119 @@ trait BatchLegalEntityQueries
         foreach ($models->reverse() as $index => $model) {
             $job = new EmployeeRequestDetailsUpsert(
                 employeeRequest: $model,
+                legalEntity: $legalEntity,
+                nextEntity: $previousJob
+            );
+
+            $previousJob = $job;
+        }
+
+        // Here $job is the first job in the chain (or null if no employees)
+        return $job;
+    }
+
+    /**
+     * Creates a chain of DeclarationDetailsSync jobs for all declarations with PARTIAL sync status.
+     *
+     * Jobs are created in reverse order, each next job receives the previous one as nextEntity.
+     * Returns the first job in the chain (or null if there are no employees).
+     * So the jobs will be executed in the original order one by one.
+     *
+     * @param LegalEntity $legalEntity
+     * @param EHealthJob|null $nextEntity The job to be executed after the chain completes (or null)
+     *
+     * @return EHealthJob|null The first job in the EmployeeDetailsUpsert chain, or null if there are no employees
+     */
+    protected function getDeclarationDataStartJob(LegalEntity $legalEntity, ?EHealthJob $nextEntity): ?EHealthJob
+    {
+        $job = null;
+
+        // The incoming $nextEntity will be executed after the whole chain
+        $previousJob = $nextEntity;
+
+        $models = Declaration::with('person')
+            ->filterByLegalEntityId(legalEntityId: $legalEntity->id)
+            ->filterBySyncStatus(status: JobStatus::PARTIAL)
+            ->get();
+
+        foreach ($models->reverse() as $index => $model) {
+            $job = new DeclarationDetailsSync(
+                declaration: $model,
+                legalEntity: $legalEntity,
+                nextEntity: $previousJob
+            );
+
+            $previousJob = $job;
+        }
+
+        // Here $job is the first job in the chain (or null if no declarations)
+        return $job;
+    }
+
+    /**
+     * Creates a chain of DeclarationRequestsDetailsSync jobs for all declarationRequests with PARTIAL sync status.
+     *
+     * Jobs are created in reverse order, each next job receives the previous one as nextEntity.
+     * Returns the first job in the chain (or null if there are no declarationRequests).
+     * So the jobs will be executed in the original order one by one.
+     *
+     * @param LegalEntity $legalEntity
+     * @param EHealthJob|null $nextEntity The job to be executed after the chain completes (or null)
+     *
+     * @return EHealthJob|null The first job in the EmployeeDetailsUpsert chain, or null if there are no employees
+     */
+    protected function getDeclarationRequestsStartJob(LegalEntity $legalEntity, ?EHealthJob $nextEntity): ?EHealthJob
+    {
+        $job = null;
+
+        // The incoming $nextEntity will be executed after the whole chain
+        $previousJob = $nextEntity ?? $this->getDeclarationDataStartJob($legalEntity, $nextEntity);
+
+        $models = DeclarationRequest::with(['employee', 'division', 'person'])
+            ->filterByLegalEntityId(legalEntityId: $legalEntity->id)
+            ->filterBySyncStatus(status: JobStatus::PARTIAL)
+            ->get();
+
+        foreach ($models->reverse() as $index => $model) {
+            $job = new DeclarationRequestDetailsSync(
+                declarationRequest: $model,
+                legalEntity: $legalEntity,
+                nextEntity: $previousJob
+            );
+
+            $previousJob = $job;
+        }
+
+        // Here $job is the first job in the chain (or null if no declarationRequests)
+        return $job;
+    }
+
+    /**
+     * Creates a chain of ConfidantPersonSync jobs for all confidant_persons with PARTIAL sync status.
+     *
+     * Jobs are created in reverse order, each next job receives the previous one as nextEntity.
+     * Returns the first job in the chain (or null if there are no confidant_persons).
+     * So the jobs will be executed in the original order one by one.
+     *
+     * @param LegalEntity $legalEntity
+     * @param EHealthJob|null $nextEntity The job to be executed after the chain completes (or null)
+     *
+     * @return EHealthJob|null The first job in the EmployeeDetailsUpsert chain, or null if there are no employees
+     */
+    protected function getConfidantPersonStartJob(LegalEntity $legalEntity, ?EHealthJob $nextEntity): ?EHealthJob
+    {
+        $job = null;
+
+        // The incoming $nextEntity will be executed after the whole chain
+        $previousJob = $nextEntity;
+
+        $models = ConfidantPerson::with(['person', 'subjectPerson'])->filterByLegalEntityId(legalEntityId: $legalEntity->id)
+            ->filterBySyncStatus(status: JobStatus::PARTIAL)
+            ->get();
+
+        foreach ($models->reverse() as $index => $model) {
+            $job = new ConfidantPersonSync(
+                confidantPerson: $model,
                 legalEntity: $legalEntity,
                 nextEntity: $previousJob
             );

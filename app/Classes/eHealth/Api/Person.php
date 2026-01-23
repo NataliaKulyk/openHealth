@@ -205,7 +205,7 @@ class Person extends Request
             '*.birth_settlement' => ['required', 'string', 'max:255'],
             '*.first_name' => ['required', 'string', 'max:255'],
             '*.gender' => ['required', new InDictionary('GENDER')],
-            '*.id' => ['required', 'uuid'],
+            '*.id' => ['nullable', 'uuid'],
             '*.last_name' => ['required', 'string', 'max:255'],
             '*.second_name' => ['nullable', 'string', 'max:255'],
             '*.phones' => ['nullable', 'array'],

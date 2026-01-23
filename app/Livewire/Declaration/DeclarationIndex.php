@@ -4,33 +4,43 @@ declare(strict_types=1);
 
 namespace App\Livewire\Declaration;
 
+use Throwable;
+use Exception;
+use Livewire\Component;
+use Illuminate\View\View;
+use Illuminate\Bus\Batch;
+use App\Traits\FormTrait;
+use App\Models\Declaration;
+use App\Models\LegalEntity;
+use Illuminate\Support\Str;
+use Livewire\WithPagination;
+use App\Jobs\DeclarationsSync;
+use App\Repositories\Repository;
 use App\Classes\eHealth\EHealth;
 use App\Enums\Declaration\Status;
+use App\Models\Employee\Employee;
+use Livewire\Attributes\Computed;
+use App\Models\DeclarationRequest;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Session;
+use App\Notifications\SyncNotification;
+use App\Traits\BatchLegalEntityQueries;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Client\ConnectionException;
+use App\Notifications\DeclarationSyncCompleted;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
-use App\Models\Declaration;
-use App\Models\DeclarationRequest;
-use App\Models\Employee\Employee;
-use App\Models\LegalEntity;
-use App\Repositories\Repository;
-use App\Traits\FormTrait;
-use Exception;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
-use Illuminate\View\View;
-use Livewire\Attributes\Computed;
-use Livewire\Component;
-use Livewire\WithPagination;
 
 class DeclarationIndex extends Component
 {
-    use WithPagination;
-    use FormTrait;
+    use BatchLegalEntityQueries,
+        WithPagination,
+        FormTrait;
 
     /**
      * Search by patient first and last names.
@@ -220,6 +230,118 @@ class DeclarationIndex extends Component
             $currentPage,
             ['path' => request()->url()]
         );
+    }
+
+
+    public function sync(): void
+    {
+        if (Auth::user()->cannot('sync', Declaration::class)) {
+            session()->flash('error', __('У вас немає дозволу на синхронізацію декларацій'));
+
+            return;
+        }
+
+        $legalEntity = legalEntity();
+
+        $user = Auth::user();
+        $user->notify(new SyncNotification('declaration', 'started'));
+
+        // Get declarations from eHealth filtered by legal entity
+        $query = ['legal_entity_id' => $legalEntity->uuid];
+
+        // If user is doctor, get only his declarations
+        if ($user->hasRole('DOCTOR') && !$user->hasRole('OWNER')) {
+            $query['employee_id'] = Auth::user()
+                ->employees()
+                ->where('party_id', Auth::user()->party->id)
+                ->first()->uuid;
+        }
+
+        try {
+            $response = EHealth::declaration()->getMany(query: $query, groupByEntities: true);
+
+            $declarations = $response->validate();
+
+            Repository::declaration()->storeMany($declarations);
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error while syncing declaration requests');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error while syncing declaration requests');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        } catch (Exception $exception) {
+            $this->logDatabaseErrors($exception, 'Error while syncing declaration requests');
+            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+
+            return;
+        }
+
+        $token = session()->get(config('ehealth.api.oauth.bearer_token'));
+
+        // Check if there are more pages to process
+        if ($response->isNotLast()) {
+            Bus::batch([
+                new DeclarationsSync(
+                    legalEntity: $legalEntity,
+                    page: 2,
+                    nextEntity: null
+                )
+            ])
+                ->withOption('legal_entity_id', $legalEntity->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    $message = __('declarations.sync.completed', [
+                        'processed' => $batch->processedJobs,
+                        'total' => $batch->totalJobs,
+                    ]);
+
+                    $user->notify(new DeclarationSyncCompleted($message, 'success'));
+                })->catch(callback: function (Batch $batch, Throwable $err) use ($user) {
+                    $message = __('declarations.sync.failed');
+
+                    Log::error('Declaration sync batch failed.', [
+                        'batch_id' => $batch->id,
+                        'exception' => $err
+                    ]);
+
+                    $user->notify(new DeclarationSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name('Declarations Full Sync')
+                ->dispatch();
+        } else {
+            Bus::batch($this->getDeclarationRequestsStartJob($legalEntity, null))
+                ->withOption('legal_entity_id', $legalEntity->id)
+                ->withOption('token', Crypt::encryptString($token))
+                ->withOption('user', $user)
+                ->then(function (Batch $batch) use ($user) {
+                    $message = __('declarationRequests.sync.completed', [
+                        'processed' => $batch->processedJobs,
+                        'total' => $batch->totalJobs,
+                    ]);
+
+                    $user->notify(new DeclarationSyncCompleted($message, 'success'));
+                })->catch(callback: function (Batch $batch, Throwable $err) use ($user) {
+                    $message = __('declarationRequests.sync.failed');
+
+                    Log::error('DeclarationRequest sync batch failed.', [
+                        'batch_id' => $batch->id,
+                        'exception' => $err
+                    ]);
+
+                    $user->notify(new DeclarationSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name('DeclarationRequest Full Sync')
+                ->dispatch();
+        }
+
+        session()->flash('success', __('declarations.sync.started'));
     }
 
     public function approve(int $patientId, int $declarationRequestId): void

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\JobStatus;
 use App\Enums\Declaration\RequestStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -54,6 +55,7 @@ return new class extends Migration
                 'request_cancelled',
                 'request_overdue'
             ])->nullable();
+            $table->enum('sync_status', JobStatus::values())->nullable();
             $table->integer('system_declaration_limit')->nullable();
             $table->timestamps();
         });

@@ -13,6 +13,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use App\Models\Division;
 use App\Models\LegalEntity;
+use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Log;
 use RuntimeException;
@@ -125,7 +126,7 @@ class EmployeeRequest extends EHealthRequest
                     $mappedData['email'] = $value;
                     break;
                 case 'inserted_at':
-                    $mappedData['inserted_at'] = $value;
+                    $mappedData['inserted_at'] = Carbon::parse($value)->format('Y-m-d H:i:s');
                     $mappedData['created_at'] = $value;
                     break;
                 case 'status':

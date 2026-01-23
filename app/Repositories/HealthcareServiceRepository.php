@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Repositories\MedicalEvents\Repository;
 use App\Models\HealthcareService;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -126,6 +127,8 @@ class HealthcareServiceRepository
                 $item['available_time'] = json_encode($item['available_time'] ?? [], JSON_THROW_ON_ERROR);
                 $item['not_available'] = json_encode($item['not_available'] ?? [], JSON_THROW_ON_ERROR);
 
+                $item['ehealth_inserted_at'] = Carbon::parse($item['ehealth_inserted_at'])->format('Y-m-d H:i:s');
+                $item['ehealth_updated_at'] = Carbon::parse($item['ehealth_updated_at'])->format('Y-m-d H:i:s');
                 return $item;
             })->values()->all();
 

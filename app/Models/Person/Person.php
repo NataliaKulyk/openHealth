@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Person;
 
+use App\Models\Declaration;
 use App\Models\Employee\Employee;
 use App\Models\MedicalEvents\Sql\Encounter;
 use App\Models\Relations\ConfidantPerson;
@@ -30,6 +31,11 @@ class Person extends BasePerson
     public function encounters(): HasMany
     {
         return $this->hasMany(Encounter::class);
+    }
+
+    public function declarations(): HasMany
+    {
+        return $this->hasMany(Declaration::class);
     }
 
     public function employee(): HasOne

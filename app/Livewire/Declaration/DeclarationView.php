@@ -35,6 +35,6 @@ class DeclarationView extends Component
             'division:id,name'
         ]);
 
-        $this->printableContent = $this->declaration->declarationRequest->dataToBeSigned['content'];
+        $this->printableContent = $this->declaration->declarationRequest->dataToBeSigned['content'] ?? '';
     }
 }

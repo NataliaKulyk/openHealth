@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\JobStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -22,6 +23,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('persons');
             $table->foreignId('person_request_id')->nullable()->constrained();
+            $table->enum('sync_status', JobStatus::values())->nullable();
             $table->timestamps();
         });
     }

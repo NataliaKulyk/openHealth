@@ -301,7 +301,7 @@ class DeclarationRequestRepository
      * @param  string  $modelClass  Model to sync with
      * @return bool
      */
-    private function syncRelatedData(
+    public function syncRelatedData(
         Model $model,
         string $relationName,
         array $incomingData,

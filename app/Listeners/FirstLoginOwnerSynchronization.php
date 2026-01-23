@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use Exception;
 use Throwable;
 use App\Enums\JobStatus;
 use App\Jobs\EmployeeSync;
 use App\Jobs\DivisionSync;
+use App\Jobs\DeclarationsSync;
 use App\Events\EHealthUserLogin;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Bus;
@@ -44,8 +44,14 @@ class FirstLoginOwnerSynchronization implements ShouldQueue
         // TODO: remove it after testing
         echo 'First login synchronization started. ' . 'legalEntity:' . $event->legalEntity->id. PHP_EOL;
 
+        $declarationJob = new DeclarationsSync(
+            legalEntity: $event->legalEntity,
+            isFirstLogin: true
+        );
+
         $employeeJob = new EmployeeSync(
             legalEntity: $event->legalEntity,
+            nextEntity: $declarationJob,
             isFirstLogin: true
         );
 

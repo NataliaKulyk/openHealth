@@ -92,5 +92,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('ehealth-employee-request-get', function (object $job) {
             return Limit::perMinute(19)->by($job->user->id);
         });
+
+        RateLimiter::for('ehealth-declaration-get', function (object $job) {
+            return Limit::perMinute(config('ehealth.rate_limit.declaration'))->by($job->user->id);
+        });
     }
 }

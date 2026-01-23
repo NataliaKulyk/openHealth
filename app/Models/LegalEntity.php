@@ -40,6 +40,8 @@ class LegalEntity extends Model
     public const string ENTITY_EMPLOYEE = 'employee_';
     public const string ENTITY_LICENSE = 'license_';
     public const string ENTITY_CONTRACT = 'contract_';
+    public const string ENTITY_DECLARATION = 'declaration_';
+    public const string ENTITY_DECLARATION_REQUEST = 'declaration_request_';
 
     protected $fillable = [
         'uuid',

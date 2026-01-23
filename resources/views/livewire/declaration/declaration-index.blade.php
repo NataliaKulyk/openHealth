@@ -2,11 +2,13 @@
 @use('Carbon\CarbonImmutable')
 
 <div>
+    <livewire:components.x-message :key="now()->timestamp"/>
+
     <x-header-navigation x-data="{ showFilter: false }">
         <x-slot name="title">{{ __('forms.declarations') }}</x-slot>
 
         <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
-            <button class="button-sync flex items-center gap-2 whitespace-nowrap">
+            <button  wire:click="sync" :key="sync-button" class="button-sync flex items-center gap-2 whitespace-nowrap">
                 @icon('refresh', 'w-4 h-4')
                 {{ __('forms.synchronise_with_eHealth') }}
             </button>

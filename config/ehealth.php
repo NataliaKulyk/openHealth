@@ -167,7 +167,9 @@ return [
         'healthcare_service' => 50,
         'equipment' => 50,
         'employee_role' => 50,
-        'party_request' => 30
+        'party_request' => 30,
+        'declaration' => 10,
+        'declaration_request' => 20
     ],
     'employee_type' => [
         'OWNER' => [
