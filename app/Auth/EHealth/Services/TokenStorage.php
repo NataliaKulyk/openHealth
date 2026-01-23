@@ -80,7 +80,7 @@ class TokenStorage
 
     public function refreshBearerToken(): bool
     {
-        $legalEntityUuid = Session::get('selected_legal_entity_uuid_for_ehealth');
+        $legalEntityUuid = Session::get('ehealth_legal_entity_uuid');
 
         $entity = LegalEntity::whereUuid($legalEntityUuid)
             ->select(['client_id', 'client_secret'])

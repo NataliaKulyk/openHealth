@@ -56,7 +56,7 @@ class EHealthLoginController extends Controller
             return Redirect::route('login');
         }
 
-        $selectedLegalEntityUuidFromSession = Session::get('selected_legal_entity_uuid_for_ehealth');
+        $selectedLegalEntityUuidFromSession = Session::pull('selected_legal_entity_uuid_for_ehealth');
 
         if (!$selectedLegalEntityUuidFromSession) {
             Log::warning('Legal Entity is not selected');
@@ -84,6 +84,8 @@ class EHealthLoginController extends Controller
 
         $authUserUUID = $validatedEHealthTokenData['user_id'];
         $authLegalEntityUUID = $validatedEHealthTokenData['details']['client_id'];
+
+        Session::put('ehealth_legal_entity_uuid', $authLegalEntityUUID);
 
         // This checks if the user chose one LE, but eHealth returned another
         if ($selectedLegalEntityUuidFromSession !== $authLegalEntityUUID) {
