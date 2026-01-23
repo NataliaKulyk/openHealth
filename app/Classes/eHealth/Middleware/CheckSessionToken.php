@@ -1,52 +1,95 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Classes\eHealth\Middleware;
 
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 use Closure;
-use Carbon\Carbon;
 use App\Auth\EHealth\Services\TokenStorage;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Session;
 
 class CheckSessionToken
 {
-    protected  TokenStorage $tokenStorage;
+    /**
+     * Number of minutes of inactivity before automatic logout
+     */
+    private const int INACTIVITY_LIMIT_MINUTES = 60;
 
-    public function __construct(TokenStorage $tokenStorage)
+    public function __construct(protected TokenStorage $tokenStorage)
     {
-        $this->tokenStorage = $tokenStorage;
     }
 
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  Request  $request
+     * @param  Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
-        $tokenExpiresAt = $this->tokenStorage->getExpiresAt();
+        // Skip check
+        if ($request->routeIs(['login', 'dev.login', 'logout'])) {
+            return $next($request);
+        }
 
-        // Check if the auth token and its expiration time exist
-        if (Auth::check() && $this->tokenStorage->hasBearerToken() && $tokenExpiresAt) {
-            $expiresTime = Carbon::parse($tokenExpiresAt);
+        if (Auth::check()) {
+            $lastActivityKey = 'last_activity';
+            $lastActivityTime = Session::get($lastActivityKey);
+            $now = now()->timestamp;
 
-            // If the token has expired, try to refresh it using the refresh token
-            if (Carbon::now()->greaterThanOrEqualTo($expiresTime)) {
-                if ($this->tokenStorage->getRefreshToken()) {
-                    $newTokenData = $this->tokenStorage->refreshBearerToken();
+            // If this is the first request, just set the timestamp
+            if ($lastActivityTime === null) {
+                Session::put($lastActivityKey, $now);
 
-                    if (!$newTokenData) {
-                        Auth::logout();
+                return $next($request);
+            }
 
-                        return redirect()->route('login')->withErrors('Session expired, please log in again.');
-                    }
-                } else {
+            // Checking if more than 60 minutes of inactivity have passed
+            $inactivityLimitSeconds = self::INACTIVITY_LIMIT_MINUTES * 60;
+            $timeSinceLastActivity = $now - $lastActivityTime;
+
+            //  If time expired, log out and redirect with an error
+            if ($timeSinceLastActivity > $inactivityLimitSeconds) {
+                try {
+                    EHealth::auth()->logout($this->tokenStorage->getBearerToken());
+                } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+                    Log::channel('e_health_errors')->error("Error while logout: {$exception->getMessage()}", [
+                        'exception' => $exception
+                    ]);
+                }
+
+                Auth::logout();
+                Session::flush();
+
+                return Redirect::route('login')
+                    ->with('error', __('auth.session_expired'));
+            }
+
+            // Extend the token lifetime if the lifetime is 20 minutes or less
+            $expiresAt = $this->tokenStorage->getExpiresAt();
+
+            if (now()->addMinutes(20)->greaterThanOrEqualTo($expiresAt)) {
+                $refreshed = $this->tokenStorage->refreshBearerToken();
+
+                if (!$refreshed) {
                     Auth::logout();
+                    Session::flush();
 
-                    return redirect()->route('login')->withErrors('Session expired, please log in again.');
+                    return Redirect::route('login')->with('error', 'Could not refresh eHealth session.');
                 }
             }
+
+            // Update last activity time after every request
+            Session::put($lastActivityKey, $now);
         }
 
         return $next($request);

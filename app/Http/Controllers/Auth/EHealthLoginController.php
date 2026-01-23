@@ -85,6 +85,8 @@ class EHealthLoginController extends Controller
         $authUserUUID = $validatedEHealthTokenData['user_id'];
         $authLegalEntityUUID = $validatedEHealthTokenData['details']['client_id'];
 
+        Session::put('ehealth_legal_entity_uuid', $authLegalEntityUUID);
+
         // This checks if the user chose one LE, but eHealth returned another
         if ($selectedLegalEntityUuidFromSession !== $authLegalEntityUUID) {
             Log::warning('User selected a different Legal Entity in form than eHealth returned.', [

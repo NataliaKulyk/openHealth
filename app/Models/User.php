@@ -6,8 +6,6 @@ namespace App\Models;
 
 use Exception;
 use App\Enums\Status;
-use App\Models\Permission;
-use App\Models\LegalEntity;
 use InvalidArgumentException;
 use App\Models\Person\Person;
 use App\Models\Relations\Party;
@@ -202,13 +200,13 @@ class User extends Authenticatable implements MustVerifyEmail
         // Base union of direct + role permissions from Spatie
         $all = $this->getAllPermissionsParent();
 
-        if (! config('permission.teams')) {
+        if (!config('permission.teams')) {
             return $all;
         }
 
         $teamId = getPermissionsTeamId();
 
-        if (! $teamId) {
+        if (!$teamId) {
             return $all;
         }
 
@@ -218,19 +216,19 @@ class User extends Authenticatable implements MustVerifyEmail
             ? LegalEntityType::where('name', 'MSP_LIMITED')->value('id')
             : LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
 
-        if (! $typeId) {
-            return $all->where(fn() => false); // empty collection
+        if (!$typeId) {
+            return $all->where(fn () => false); // empty collection
         }
 
         $guard = Auth::getDefaultDriver();
 
         // Permission names allowed for the current team’s LegalEntity type (MSP_LIMITED if REORGANIZED or assigned) and current guard
         $allowedNames = Permission::where('guard_name', $guard)
-            ->whereHas('legalEntityTypes', fn($q) => $q->where('legal_entity_type_id', $typeId))
+            ->whereHas('legalEntityTypes', fn ($q) => $q->where('legal_entity_type_id', $typeId))
             ->pluck('name')
             ->unique();
 
-        return $all->filter(fn($perm) => $allowedNames->contains($perm->name))->values();
+        return $all->filter(fn ($perm) => $allowedNames->contains($perm->name))->values();
     }
 
     /**
@@ -323,14 +321,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function syncPermissions(...$permissions)
     {
         // If teams are disabled, fallback to original behavior
-        if (! config('permission.teams')) {
+        if (!config('permission.teams')) {
             return $this->syncPermissionsParent(...$permissions);
         }
 
         $teamId = getPermissionsTeamId();
 
         // Team context is mandatory when teams are enabled
-        if (! $teamId) {
+        if (!$teamId) {
             // Calling original syncPermissions with empty set
             return $this->syncPermissionsParent([]);
         }
@@ -389,7 +387,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function givePermissionTo(...$permissions)
     {
-        if (! config('permission.teams')) {
+        if (!config('permission.teams')) {
             // Teams are disabled: fallback to original behavior
             return $this->givePermissionToParent(...$permissions);
         }
@@ -397,7 +395,7 @@ class User extends Authenticatable implements MustVerifyEmail
         $teamId = getPermissionsTeamId();
 
         // If no active team than do not grant
-        if (! $teamId) {
+        if (!$teamId) {
             return $this;
         }
 
@@ -455,14 +453,14 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function assignRole(...$roles): static
     {
-        if (! config('permission.teams')) {
+        if (!config('permission.teams')) {
             // Teams are disabled: fallback to original behavior
             return $this->assignRoleParent(...$roles);
         }
 
         $teamId = getPermissionsTeamId();
 
-        if (! $teamId) {
+        if (!$teamId) {
             throw new InvalidArgumentException('No active legal entity (team) context for role assignment.');
         }
 
@@ -539,7 +537,6 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @param  string|int|Permission|\BackedEnum  $permission
      * @param  string|null  $guardName
-     *
      * @throws PermissionDoesNotExist
      */
     public function hasPermissionTo(string|int|Permission|\BackedEnum $permission, ?string $guardName = null): bool
