@@ -43,28 +43,6 @@ class NotificationsDropdown extends Component
 
     public function getNotificationIconType(DatabaseNotification $notification): string
     {
-        return $notification->data['action'];
-    }
-
-    #[Computed]
-    public function totalUnreadCount(): int
-    {
-        return Auth::user()->unreadNotifications->count();
-    }
-
-    public function getNotificationIconType(DatabaseNotification $notification): string
-    {
-        return $notification->data['action'];
-    }
-
-    #[Computed]
-    public function totalUnreadCount(): int
-    {
-        return Auth::user()->unreadNotifications->count();
-    }
-
-    public function getNotificationIconType(DatabaseNotification $notification): string
-    {
         return $notification->data['action'] ?? '';
     }
 
