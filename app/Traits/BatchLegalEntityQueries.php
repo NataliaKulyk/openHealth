@@ -411,41 +411,4 @@ trait BatchLegalEntityQueries
         // Here $job is the first job in the chain (or null if no employees)
         return $job ?? $previousJob;
     }
-
-    /**
-     * Creates a chain of EmployeeRequestDetailsUpsert jobs for all employees with PARTIAL sync status.
-     *
-     * Jobs are created in reverse order, each next job receives the previous one as nextEntity.
-     * Returns the first job in the chain (or null if there are no employees).
-     * So the jobs will be executed in the original order one by one.
-     *
-     * @param LegalEntity $legalEntity
-     * @param EHealthJob|null $nextEntity The job to be executed after the chain completes (or null)
-     *
-     * @return EHealthJob|null The first job in the EmployeeDetailsUpsert chain, or null if there are no employees
-     */
-    protected function getEmployeeRequestDetailsStartJob(LegalEntity $legalEntity, ?EHealthJob $nextEntity): ?EHealthJob
-    {
-        $job = null;
-
-        // The incoming $nextEntity will be executed after the whole chain
-        $previousJob = $nextEntity;
-
-        $models = EmployeeRequest::filterByLegalEntityId($legalEntity->id)
-            ->filterBySyncStatus(JobStatus::PARTIAL)
-            ->get();
-
-        foreach ($models->reverse() as $index => $model) {
-            $job = new EmployeeRequestDetailsUpsert(
-                employeeRequest: $model,
-                legalEntity: $legalEntity,
-                nextEntity: $previousJob
-            );
-
-            $previousJob = $job;
-        }
-
-        // Here $job is the first job in the chain (or null if no employees)
-        return $job;
-    }
 }
