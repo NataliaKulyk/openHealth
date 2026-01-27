@@ -39,9 +39,6 @@ return new class extends Migration
             $table->uuid('ehealth_inserted_by')->nullable();
             $table->date('ehealth_updated_at')->nullable();
             $table->uuid('ehealth_updated_by')->nullable();
-
-            // Inventory number must be unique within legal entity if it is set in request.
-            $table->unique(['legal_entity_id', 'inventory_number']);
             $table->timestamps();
         });
 

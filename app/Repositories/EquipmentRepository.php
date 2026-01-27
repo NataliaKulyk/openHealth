@@ -78,17 +78,10 @@ class EquipmentRepository
     public function sync(array $items): void
     {
         DB::transaction(static function () use ($items) {
-            $alreadyInsertedInventoryNumber = [];
-            $toUpsert = collect($items)->map(static function (array $item) use (&$alreadyInsertedInventoryNumber) {
+            $toUpsert = collect($items)->map(static function (array $item) {
                 unset($item['names']);
                 $item['properties'] = isset($item['properties']) ? json_encode($item['properties']) : null;
 
-                // TODO Temporary fix because of data inconsistency and duplicates of inventory_number in EHealth
-                if (isset($item['inventory_number']) && in_array($item['inventory_number'], $alreadyInsertedInventoryNumber)) {
-                    $item['inventory_number'] = null;
-                }
-
-                $alreadyInsertedInventoryNumber[] = $item['inventory_number'];
                 return $item;
             });
 

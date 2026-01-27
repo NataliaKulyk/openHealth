@@ -73,7 +73,8 @@ class EquipmentForm extends Form
                 'string',
                 'max:255',
                 Rule::unique('equipments', 'inventory_number')
-                    ->where(fn (Builder $query) => $query->where('legal_entity_id', legalEntity()->id))
+                    ->where(fn (Builder $query) => $query->where('legal_entity_id', legalEntity()->id)
+                        ->whereNot('status', Status::INACTIVE))
                     ->ignore($this->component->equipmentId)
             ],
             'manufacturer' => ['nullable', 'string', 'max:255'],
