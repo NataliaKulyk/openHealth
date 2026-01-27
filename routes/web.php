@@ -241,6 +241,8 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                         });
                 });
 
+            Route::get('/treatment-plan', \App\Livewire\TreatmentPlan\TreatmentPlanIndex::class)
+                ->name('treatmentPlan.index');
             Route::get('/treatment-plan/create', \App\Livewire\TreatmentPlan\TreatmentPlanCreate::class)
                 ->name('treatmentPlan.create');
 
