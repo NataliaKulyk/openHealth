@@ -54,8 +54,9 @@ class EmployeeIndex extends EmployeeComponent
 
     // --- State for Modals ---
     public bool $showDeactivateModal = false;
-    public ?int $employeeToDeactivateId = null;
+    public ?int $employeeIdToDeactivate = null;
     public ?string $employeeToDeactivateName = null;
+    public bool $isDoctorToDeactivate = false;
 
     public ?int $employeeToDismissId = null;
     public ?string $employeeToDismissName = null;
@@ -220,18 +221,19 @@ class EmployeeIndex extends EmployeeComponent
 
     public function showModalDeactivate(int $id): void
     {
-        $employee = Employee::with('party')->find($id);
-        if (!$employee) {
-            return;
-        }
+        $employee = Employee::find($id);
 
-        $this->employeeToDeactivateName = $employee->party->fullName ?? __('employees.modals.deactivate.default_name');
-        $this->employeeToDeactivateId = $id;
+        if ($employee) {
+            $this->employeeIdToDeactivate = $id;
 
-        if ($employee->employee_type === 'DOCTOR') {
-            $this->dismissalMessageType = 'doctor';
-        } else {
-            $this->dismissalMessageType = 'default';
+            $this->employeeToDeactivateName = $employee->full_name
+                ?? ($employee->last_name . ' ' . $employee->first_name);
+
+            // Logic to determine if the employee is a doctor
+            // Checks both the property/accessor and the position code
+            $type = $employee->employeeType ?? $employee->employee_type ?? '';
+
+            $this->isDoctorToDeactivate = ($type === 'DOCTOR');
         }
 
         $this->showDeactivateModal = true;
@@ -252,23 +254,29 @@ class EmployeeIndex extends EmployeeComponent
 
     public function deactivate(): void
     {
-        $employee = Employee::find($this->employeeToDeactivateId);
-        if (!$employee) {
-            $this->closeModal();
+       // 1. Get the ID (must match the name in showModalDeactivate)
+        $employee = Employee::find($this->employeeIdToDeactivate);
 
+        if (!$employee) {
+            // If the employee is not found, just close and clean
+            $this->resetDeactivateState();
             return;
         }
 
         try {
             $endDate = Carbon::now('UTC')->format('Y-m-d');
+
+            // 2. eHealth API Call
             $response = EHealth::employee()->deactivate($employee->uuid, $endDate);
 
             if (!empty($response)) {
+                // 3. Updates in the database
                 $employee->update([
                     'status' => Status::STOPPED->value,
                     'end_date' => $endDate,
                 ]);
 
+                // 4. Remove a role from a user (if there is a binding)
                 if ($user = $employee->user) {
                     $roleToRemove = $employee->employee_type;
                     if ($user->hasRole($roleToRemove)) {
@@ -290,7 +298,18 @@ class EmployeeIndex extends EmployeeComponent
             );
         }
 
-        $this->closeModal();
+        // 5. Reset UI State
+        // This will ensure that the modal opens "clean" the next time
+        $this->resetDeactivateState();
+    }
+
+    // Auxiliary method to avoid duplicating the reset code (can be pasted directly into deactivate if you want)
+    private function resetDeactivateState(): void
+    {
+        $this->showDeactivateModal = false;
+        $this->employeeIdToDeactivate = null;
+        $this->employeeToDeactivateName = null;
+        $this->isDoctorToDeactivate = false;
     }
 
     /**
