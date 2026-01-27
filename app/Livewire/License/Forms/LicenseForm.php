@@ -50,7 +50,12 @@ class LicenseForm extends Form
             'licenseNumber' => ['nullable', 'string', 'max:255'],
             'issuedBy' => ['required', 'string', 'max:255'],
             'issuedDate' => ['required', 'date_format:d.m.Y', 'before_or_equal:activeFromDate'],
-            'expiryDate' => ['required_if:type,PHARMACY_DRUGS', 'date_format:d.m.Y', 'after_or_equal:today'],
+            'expiryDate' => [
+                'required_if:type,PHARMACY_DRUGS',
+                'date_format:d.m.Y',
+                'after_or_equal:today',
+                'after_or_equal:activeFromDate'
+            ],
             'activeFromDate' => ['required', 'date_format:d.m.Y', 'before_or_equal:expiryDate'],
             'whatLicensed' => ['required', 'string', 'max:255'],
             'orderNo' => ['required', 'string', 'max:255'],
