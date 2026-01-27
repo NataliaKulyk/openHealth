@@ -13,6 +13,7 @@ use App\Enums\Employee\RevisionStatus;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Employee\BaseEmployee;
+use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
 use App\Models\Revision;
@@ -350,6 +351,49 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
             //    We take this 'party' from the 'user' and
             //    assign it to $this->matchedParty.
             $this->matchedParty = $userByEmail->party;
+        }
+    }
+
+    /**
+     * Helper to retrieve the current Party ID regardless of the child component context.
+     */
+    protected function getRelevantPartyId(): ?int
+    {
+        return
+            $this->employee?->party_id
+            ?? $this->employeeRequest?->party_id
+            ?? data_get($this, 'partyId')
+            ?? data_get($this, 'matchedParty.id')
+            ?? $this->form->existingPartyId;
+    }
+
+    /**
+     * Applies strict business rules for specific employee types before persistence.
+     */
+    protected function applyEmployeeTypeBusinessRules(): void
+    {
+        $isOwnerContext = false;
+
+        // 1. If the OWNER type is selected right now
+        if ($this->form->employeeType === 'OWNER') {
+            $isOwnerContext = true;
+        }
+        // 2. If not, check if there is already an active owner record in the database
+        else {
+            $partyId = $this->getRelevantPartyId();
+
+            if ($partyId) {
+                // We use the Scope activeOwners, which we added to the Employee model
+                $isOwnerContext = Employee::query()
+                    ->where('party_id', $partyId)
+                    ->activeOwners(legalEntity()->id)
+                    ->exists();
+            }
+        }
+
+        // If it is the Owner (new or existing) and the length of service is empty/zero -> put 1.
+        if ($isOwnerContext && empty($this->form->party['workingExperience'])) {
+            $this->form->party['workingExperience'] = 1;
         }
     }
 

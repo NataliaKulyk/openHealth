@@ -86,4 +86,14 @@ class Party extends Model
     {
         return $this->morphMany(Phone::class, 'phoneable');
     }
+
+    /**
+     * Checks whether a person has an active role as an Owner in a given institution.
+     */
+    public function hasActiveOwnerRole(int $legalEntityId): bool
+    {
+        return $this->employees()
+            ->activeOwners($legalEntityId)
+            ->exists();
+    }
 }

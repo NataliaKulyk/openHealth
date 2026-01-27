@@ -53,13 +53,13 @@ class EmployeeRequestEdit extends AbstractEmployeeFormManager
     protected function handleDraftPersistence(): EmployeeRequest
     {
         $preparedData = $this->form->getPreparedData();
+        $this->applyEmployeeTypeBusinessRules();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
         // ---Ensure employee_uuid is present if linked to an employee ---
         if ($this->employeeRequest->employeeId && $this->employeeRequest->employee) {
             $nestedDataForRevision['employee_uuid'] = $this->employeeRequest->employee->uuid;
         }
-        // --------------------------------------------------------------------
 
         // If it's a SIGNED request being corrected -> Create NEW Draft (Standard logic)
         if (!is_null($this->employeeRequest->uuid)) {

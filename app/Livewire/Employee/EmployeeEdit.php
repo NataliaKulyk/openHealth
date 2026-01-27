@@ -64,6 +64,7 @@ class EmployeeEdit extends AbstractEmployeeFormManager
     protected function handleDraftPersistence(): EmployeeRequest
     {
         $preparedData = $this->form->getPreparedData();
+        $this->applyEmployeeTypeBusinessRules();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
         $nestedDataForRevision['employee_uuid'] = $this->employee->uuid;
 

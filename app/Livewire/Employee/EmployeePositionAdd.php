@@ -53,6 +53,7 @@ class EmployeePositionAdd extends AbstractEmployeeFormManager
     protected function handleDraftPersistence(): EmployeeRequest
     {
         $preparedData = $this->form->getPreparedData();
+        $this->applyEmployeeTypeBusinessRules();
         $nestedDataForRevision = $this->mapRevisionData($preparedData);
 
         $employeeRequestData = Arr::only($preparedData, [
