@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use Throwable;
+use App\Enums\JobStatus;
 use App\Events\EHealthUserLogin;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\SyncNotification;
@@ -14,6 +15,8 @@ class OnRegularLoginSyncronization implements ShouldQueue
 {
     use InteractsWithQueue,
         BatchLegalEntityQueries;
+
+    protected const string FIRST_LOGIN_BATCH_NAME = 'FirstLoginSync';
 
     /**
      * This listener will be placed on the 'sync' queue
@@ -45,6 +48,10 @@ class OnRegularLoginSyncronization implements ShouldQueue
 
         foreach ($failedBatches as $batch) {
             echo 'Found related batch: ' . $batch->name . ' id: ' . $batch->id . PHP_EOL;
+
+            if ($batch->name === self::FIRST_LOGIN_BATCH_NAME) {
+                $event->legalEntity?->setEntityStatus(JobStatus::PROCESSING);
+            }
 
             $this->restartBatch($batch, $event->user, $event->token, $event->legalEntity);
         }

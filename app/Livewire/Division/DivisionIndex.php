@@ -6,6 +6,7 @@ namespace App\Livewire\Division;
 
 use Throwable;
 use Exception;
+use App\Models\User;
 use App\Enums\JobStatus;
 use App\Models\Division;
 use Illuminate\Bus\Batch;
@@ -36,6 +37,11 @@ class DivisionIndex extends DivisionComponent
 
     protected const string BATCH_NAME = 'DivisionSync';
 
+    /**
+     * Represents the current synchronization status for the component.
+     *
+     * @var string
+     */
     public string $syncStatus = '';
 
     #[Computed]
@@ -68,13 +74,10 @@ class DivisionIndex extends DivisionComponent
         $this->syncStatus = $this->getSyncStatus();
 
         // Determine if either the Legal Entity's sync is in progress
-        $legalEntitySync = $legalEntitySyncStatus !== JobStatus::COMPLETED->value && ($legalEntitySyncStatus !== JobStatus::PAUSED->value && !empty($legalEntitySyncStatus));
+        $legalEntitySync = $this->isEntitySyncIsInProgress($legalEntitySyncStatus, true);
 
         // Determine if either the Division's sync is in progress
-        $divisionSync = $this->syncStatus !== JobStatus::COMPLETED->value &&
-                        $this->syncStatus !== JobStatus::PAUSED->value &&
-                        $this->syncStatus !== JobStatus::FAILED->value &&
-                        !empty($this->syncStatus);
+        $divisionSync = $this->isEntitySyncIsInProgress($this->syncStatus);
 
         // Return true if either sync is in progress
         return $legalEntitySync || $divisionSync;
@@ -128,6 +131,18 @@ class DivisionIndex extends DivisionComponent
 
         $user = Auth::user();
         $token = session()->get(config('ehealth.api.oauth.bearer_token'));
+
+        // Try to resume previous sync if it was paused or failed
+        if ($this->syncStatus === JobStatus::PAUSED->value || $this->syncStatus === JobStatus::FAILED->value) {
+
+            $this->resumeSynchronization($user, $token);
+
+            Session::flash('success', __('Відновлення попередньої синхронізації розпочато'));
+
+            $user->notify(new SyncNotification('division', 'resumed'));
+
+            return;
+        }
 
         // Try to resume if previous batch failed or was paused
         if ($this->syncStatus === JobStatus::FAILED->value || $this->syncStatus === JobStatus::PAUSED->value) {
@@ -197,7 +212,40 @@ class DivisionIndex extends DivisionComponent
 
                 session()->flash('success', __('Синхронізація запущена у фоновому режимі'));
         } else {
+            legalEntity()?->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_DIVISION);
+
             session()->flash('success', __('Інформацію успішно оновлено'));
+        }
+    }
+
+
+    /**
+     * Resume the synchronization process for a user with the provided token.
+     *
+     * This method handles the continuation of a previously initiated synchronization
+     * operation for a specific user using an authentication or session token.
+     *
+     * @param User $user The user instance for whom synchronization should be resumed
+     * @param string $token The authentication or session token used to resume the sync process
+     * @return void
+     */
+    protected function resumeSynchronization(User $user, string $token): void
+    {
+        $encryptedToken = Crypt::encryptString($token);
+
+        // Find all the Divisions failed batches for this legal entity and retry them
+        $failedBatches = $this->findFailedBatchesByLegalEntity(legalEntity()->id, 'ASC');
+
+        foreach ($failedBatches as $batch) {
+            if ($batch->name === self::BATCH_NAME) {
+                Log::info('Resuming Division sync batch: ' . $batch->name . ' id: ' . $batch->id);
+
+                legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_DIVISION);
+
+                $this->restartBatch($batch, $user, $encryptedToken, legalEntity());
+
+                break;
+            }
         }
     }
 

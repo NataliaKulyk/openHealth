@@ -832,6 +832,15 @@ abstract class LegalEntity extends Component
         // Do unset this because it already set if create or present and deny to modify if edit
         unset($data['data']['license']);
 
+        // Normalize date fields (need for MySQL date format)
+        if (isset($data['data']['inserted_at'])) {
+            $data['data']['inserted_at'] = convertToYmd($data['data']['inserted_at']);
+        }
+
+        if (isset($data['data']['updated_at'])) {
+            $data['data']['updated_at'] = convertToYmd($data['data']['updated_at']);
+        }
+
         try {
             // Find or create a new LegalEntity object by UUID
             $this->legalEntity = LegalEntityModel::firstOrNew(['uuid' => $uuid]);
@@ -926,6 +935,9 @@ abstract class LegalEntity extends Component
      */
     protected function saveLicense(array $data): void
     {
+        $data['ehealth_inserted_at'] = convertToYmd($data['ehealth_inserted_at']);
+        $data['ehealth_updated_at'] = convertToYmd($data['ehealth_updated_at']);
+
         $license = License::firstOrNew(['uuid' => $data['uuid']]);
         $license->fill($data);
         $license->is_primary = true;

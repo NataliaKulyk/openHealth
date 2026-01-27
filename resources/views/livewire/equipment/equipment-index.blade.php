@@ -1,6 +1,7 @@
 @php
     use App\Enums\Equipment\{Status, AvailabilityStatus};
     use App\Models\Equipment;
+    use App\Enums\JobStatus;
 @endphp
 
 <div>
@@ -26,7 +27,7 @@
                     {{ $this->isSync ? 'disabled' : '' }}
                 >
                     @icon('refresh', 'w-4 h-4')
-                    {{ __('forms.synchronise_with_eHealth') }}
+                    <span>{{ ($syncStatus === JobStatus::PAUSED->value || $syncStatus === JobStatus::FAILED->value) ? __('forms.sync_retry') : __('forms.synchronise_with_eHealth') }}</span>
                 </button>
             @endcan
         </div>

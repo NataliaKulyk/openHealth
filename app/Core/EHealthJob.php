@@ -8,6 +8,7 @@ use Throwable;
 use App\Models\User;
 use App\Enums\JobStatus;
 use Illuminate\Bus\Batch;
+use App\Traits\FormTrait;
 use App\Jobs\CompleteSync;
 use App\Models\LegalEntity;
 use Illuminate\Bus\Batchable;
@@ -28,6 +29,7 @@ abstract class EHealthJob implements ShouldQueue
 {
     use Queueable,
         Batchable,
+        FormTrait,
         InteractsWithQueue,
         BatchLegalEntityQueries;
 

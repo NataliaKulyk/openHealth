@@ -47,7 +47,7 @@ class EmployeeRoleSync extends EHealthJob
      */
     protected function processResponse(?EHealthResponse $response): void
     {
-        $employeeRolesData = $response?->validate();
+        $employeeRolesData = $this->normalizeDate($response?->validate());
 
         if (empty($employeeRolesData)) {
             return;

@@ -277,4 +277,34 @@ trait FormTrait
             'line' => $exception->getLine()
         ]);
     }
+
+    /**
+     * Normalize date fields in an array (need for MySQL database)
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    protected function normalizeDate(array $data): array
+    {
+        return array_map(function ($item) {
+            if (isset($item['ehealth_inserted_at'])) {
+                $item['ehealth_inserted_at'] = convertToYmd($item['ehealth_inserted_at']);
+            }
+
+            if (isset($item['ehealth_updated_at'])) {
+                $item['ehealth_updated_at'] = convertToYmd($item['ehealth_updated_at']);
+            }
+
+            if (isset($item['end_date'])) {
+                $item['end_date'] = convertToYmd($item['end_date']);
+            }
+
+            if (isset($item['start_date'])) {
+                $item['start_date'] = convertToYmd($item['start_date']);
+            }
+
+            return $item;
+        }, $data);
+    }
 }

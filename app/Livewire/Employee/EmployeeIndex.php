@@ -14,6 +14,7 @@ use App\Jobs\EmployeeSync;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeRequest;
 use App\Models\LegalEntity;
+use App\Models\User;
 use App\Notifications\EmployeeSyncCompleted;
 use App\Notifications\SyncNotification;
 use App\Repositories\Repository;
@@ -39,8 +40,11 @@ use Throwable;
 #[AllowDynamicProperties]
 class EmployeeIndex extends EmployeeComponent
 {
-    use WithPagination;
-    use BatchLegalEntityQueries;
+    use WithPagination,
+        BatchLegalEntityQueries;
+
+    protected const string BATCH_NAME = 'EmployeeFullSync';
+    protected const string DEPENDENT_BATCH_NAME = 'EmployeeDetailsSync';
 
     // --- Component State for Filters ---
     public string $search = '';
@@ -73,10 +77,27 @@ class EmployeeIndex extends EmployeeComponent
 
     private LegalEntity $legalEntity;
 
-    #[Computed]
+    /**
+     * Represents the current synchronization status for the component.
+     *
+     * @var string
+     */
+    public string $syncStatus = '';
+
+   #[Computed]
     public function isSync(): bool
     {
         return $this->isSyncProcessing();
+    }
+
+    /**
+     * Get the synchronization status of the employee request.
+     *
+     * @return string The current sync status
+     */
+    protected function getSyncStatus(): string
+    {
+        return legalEntity()?->getEntityStatus(LegalEntity::ENTITY_EMPLOYEE) ?? '';
     }
 
     /**
@@ -89,14 +110,14 @@ class EmployeeIndex extends EmployeeComponent
         // Get the sync status for whole Legal Entity
         $legalEntitySyncStatus = legalEntity()?->getEntityStatus();
 
-        // Get the sync status only for Division
-        $employeeSyncStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_EMPLOYEE);
+        // Set the sync status only for Employee
+        $this->syncStatus = $this->getSyncStatus();
 
         // Determine if either the Legal Entity's sync is in progress
-        $legalEntitySync = $legalEntitySyncStatus !== JobStatus::COMPLETED->value && ($legalEntitySyncStatus !== JobStatus::PAUSED->value && !empty($legalEntitySyncStatus));
+        $legalEntitySync = $this->isEntitySyncIsInProgress($legalEntitySyncStatus, true);
 
         // Determine if either the Division's sync is in progress
-        $employeeSync = $employeeSyncStatus !== JobStatus::COMPLETED->value && ($employeeSyncStatus !== JobStatus::PAUSED->value && !empty($employeeSyncStatus));
+        $employeeSync = $this->isEntitySyncIsInProgress($this->syncStatus);
 
         // Return true if either sync is in progress
         return $legalEntitySync || $employeeSync;
@@ -113,8 +134,13 @@ class EmployeeIndex extends EmployeeComponent
     public function mount(LegalEntity $legalEntity): void
     {
         $this->legalEntity = $legalEntity;
+
         $this->loadDivisions($legalEntity);
+
         $this->loadDictionaries();
+
+        // Set the sync status for Employee
+        $this->syncStatus = $this->getSyncStatus();
     }
 
     public function applyFilters(): void
@@ -328,6 +354,18 @@ class EmployeeIndex extends EmployeeComponent
         }
 
         $user = Auth::user();
+        $token = session()->get(config('ehealth.api.oauth.bearer_token'));
+
+        // Try to resume previous sync if it was paused or failed
+        if ($this->syncStatus === JobStatus::PAUSED->value || $this->syncStatus === JobStatus::FAILED->value) {
+
+            $this->resumeSynchronization($user, $token);
+
+            $user->notify(new SyncNotification('employee', 'resumed'));
+
+            return;
+        }
+
         $user->notify(new SyncNotification('employee', 'started'));
 
         $this->dispatch('flashMessage', [
@@ -374,8 +412,6 @@ class EmployeeIndex extends EmployeeComponent
 
         Employee::upsert($employees, uniqueBy: ['uuid']);
 
-        $token = session()->get(config('ehealth.api.oauth.bearer_token'));
-
         if ($response->isNotLast()) {
             Bus::batch([
                 new EmployeeSync(
@@ -400,7 +436,7 @@ class EmployeeIndex extends EmployeeComponent
                     $user->notify(new EmployeeSyncCompleted($message, 'error'));
                 })
                 ->onQueue('sync')
-                ->name('Employee Full Sync')
+                ->name(self::BATCH_NAME)
                 ->dispatch();
         } else {
             Bus::batch($this->getEmployeeDetailsStartJob($this->legalEntity, null))
@@ -419,7 +455,7 @@ class EmployeeIndex extends EmployeeComponent
                     $user->notify(new EmployeeSyncCompleted($message, 'error'));
                 })
                 ->onQueue('sync')
-                ->name('Employee Full Sync')
+                ->name(self::DEPENDENT_BATCH_NAME)
                 ->dispatch();
         }
 
@@ -429,6 +465,41 @@ class EmployeeIndex extends EmployeeComponent
             'message' => "Сторінка 1 оброблена. Решта завантажується фоново.",
             'type' => 'success'
         ]);
+    }
+
+    /**
+     * Resume the synchronization process for a user with the provided token.
+     *
+     * This method handles the continuation of a previously initiated synchronization
+     * operation for a specific user using an authentication or session token.
+     *
+     * @param User $user The user instance for whom synchronization should be resumed
+     * @param string $token The authentication or session token used to resume the sync process
+     * @return void
+     */
+    protected function resumeSynchronization(User $user, string $token): void
+    {
+        $encryptedToken = Crypt::encryptString($token);
+
+        // Find all the EmployeeRequests failed batches for this legal entity and retry them
+        $failedBatches = $this->findFailedBatchesByLegalEntity(legalEntity()->id, 'ASC');
+
+        foreach ($failedBatches as $batch) {
+            if ($batch->name === self::BATCH_NAME || $batch->name === self::DEPENDENT_BATCH_NAME) {
+                Log::info('Resuming Employee sync batch: ' . $batch->name . ' id: ' . $batch->id);
+
+                legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_EMPLOYEE);
+
+                $this->restartBatch($batch, $user, $encryptedToken, legalEntity());
+
+                $this->dispatch('flashMessage', [
+                    'message' => __('Відновлення попередньої синхронізації розпочато'),
+                    'type' => 'success'
+                ]);
+
+                break;
+            }
+        }
     }
 
     /**

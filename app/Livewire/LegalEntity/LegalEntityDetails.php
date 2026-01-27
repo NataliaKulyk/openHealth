@@ -4,14 +4,20 @@ namespace App\Livewire\LegalEntity;
 
 use Arr;
 use Throwable;
+use App\Models\User;
 use App\Enums\JobStatus;
+use App\Traits\FormTrait;
 use App\Models\LegalEntity;
 use App\Classes\eHealth\EHealth;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use App\Repositories\PhoneRepository;
+use App\Notifications\SyncNotification;
+use Illuminate\Support\Facades\Session;
 use App\Repositories\AddressRepository;
+use App\Traits\BatchLegalEntityQueries;
 use Spatie\Permission\PermissionRegistrar;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
@@ -19,6 +25,11 @@ use App\Livewire\LegalEntity\LegalEntity as LegalEntityComponent;
 
 class LegalEntityDetails extends LegalEntityComponent
 {
+    use BatchLegalEntityQueries,
+        FormTrait;
+
+    protected const string BATCH_NAME = 'FirstLoginSync';
+
     public array $edrStatuses = [];
 
     public array $edrLegalForms = [];
@@ -26,6 +37,23 @@ class LegalEntityDetails extends LegalEntityComponent
     public array $mainKVED = [];
 
     public array $additionalKVEDs = [];
+
+    /**
+     * Represents the current synchronization status for the component.
+     *
+     * @var string
+     */
+    public string $syncStatus = '';
+
+    /**
+     * Get the synchronization status of the declarations
+     *
+     * @return string The current sync status
+     */
+    protected function getSyncStatus(): string
+    {
+        return legalEntity()?->getEntityStatus() ?? '';
+    }
 
     #[Computed]
     public function isSync(): bool
@@ -41,13 +69,10 @@ class LegalEntityDetails extends LegalEntityComponent
     protected function isSyncProcessing(): bool
     {
         // Get the sync status for whole Legal Entity
-        $legalEntitySyncStatus = legalEntity()?->getEntityStatus();
+        $this->syncStatus = $this->getSyncStatus();
 
         // Determine if either the Legal Entity's sync is in progress
-        return $legalEntitySyncStatus !== JobStatus::COMPLETED->value &&
-               $legalEntitySyncStatus !== JobStatus::FAILED->value &&
-               $legalEntitySyncStatus !== JobStatus::PAUSED->value &&
-               !empty($legalEntitySyncStatus);
+        return $this->isEntitySyncIsInProgress($this->syncStatus);
     }
 
     public function boot(
@@ -73,6 +98,9 @@ class LegalEntityDetails extends LegalEntityComponent
         $this->edrLegalForms = dictionary()->getDictionary('LEGAL_FORM');
 
         $this->filterKveds();
+
+        // Get the sync status for whole Legal Entity
+        $this->syncStatus = $this->getSyncStatus();
     }
 
     /**
@@ -277,6 +305,27 @@ class LegalEntityDetails extends LegalEntityComponent
             return;
         }
 
+        if ($this->isSyncProcessing()) {
+            Session::flash('error', 'Синхронізація вже запущена. Будь ласка, зачекайте її завершення.');
+
+            return;
+        }
+
+        $user = Auth::user();
+        $token = Session::get(config('ehealth.api.oauth.bearer_token'));
+
+        // Try to resume previous sync if it was paused or failed
+        if ($this->syncStatus === JobStatus::PAUSED->value || $this->syncStatus === JobStatus::FAILED->value) {
+
+            $this->resumeSynchronization($user, $token);
+
+            Session::flash('success', __('Відновлення попередньої синхронізації розпочато'));
+
+            $user->notify(new SyncNotification('legal_entity', 'resumed'));
+
+            return;
+        }
+
         legalEntity()?->setEntityStatus(JobStatus::PROCESSING);
 
         $oldStatus = $this->legalEntity->status;
@@ -284,7 +333,7 @@ class LegalEntityDetails extends LegalEntityComponent
         try {
             $response = EHealth::legalEntity()->getDetails();
 
-            $legalEntityData = ['data' => $response->validate()];
+            $legalEntityData = $this->normalizeDate(['data' => $response->validate()]);
 
             // Set accreditation and archive to null concerns on the storda data in the DB table
             $legalEntityData = $this->filterUnprovidedFields($legalEntityData, $this->legalEntityForm->toArray());
@@ -340,6 +389,36 @@ class LegalEntityDetails extends LegalEntityComponent
         legalEntity()?->setEntityStatus(JobStatus::COMPLETED);
 
         return;
+    }
+
+     /**
+     * Resume the synchronization process for a user with the provided token.
+     *
+     * This method handles the continuation of a previously initiated synchronization
+     * operation for a specific user using an authentication or session token.
+     *
+     * @param User $user The user instance for whom synchronization should be resumed
+     * @param string $token The authentication or session token used to resume the sync process
+     * @return void
+     */
+    protected function resumeSynchronization(User $user, string $token): void
+    {
+        $encryptedToken = Crypt::encryptString($token);
+
+        // Find all the Equipment's failed batches for this legal entity and retry them
+        $failedBatches = $this->findFailedBatchesByLegalEntity(legalEntity()->id, 'ASC');
+
+        foreach ($failedBatches as $batch) {
+            if ($batch->name === self::BATCH_NAME) {
+                Log::info('Resuming Equipment sync batch: ' . $batch->name . ' id: ' . $batch->id);
+
+                legalEntity()?->setEntityStatus(JobStatus::PROCESSING);
+
+                $this->restartBatch($batch, $user, $encryptedToken, legalEntity());
+
+                break;
+            }
+        }
     }
 
     public function render()

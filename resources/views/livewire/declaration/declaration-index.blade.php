@@ -1,4 +1,5 @@
 @use('App\Enums\Declaration\Status')
+@use('App\Enums\JobStatus')
 @use('Carbon\CarbonImmutable')
 @use('\App\Enums\User\Role')
 
@@ -15,7 +16,7 @@
                 {{ $this->isSync ? 'disabled' : '' }}
             >
                 @icon('refresh', 'w-4 h-4')
-                <span>{{ __('forms.synchronise_with_eHealth') }}</span>
+                <span>{{ ($syncStatus === JobStatus::PAUSED->value || $syncStatus === JobStatus::FAILED->value) ? __('forms.sync_retry') : __('forms.synchronise_with_eHealth') }}</span>
             </button>
         </div>
 

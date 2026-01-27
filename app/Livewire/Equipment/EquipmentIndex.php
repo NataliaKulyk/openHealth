@@ -14,8 +14,11 @@ use App\Jobs\EquipmentSync;
 use App\Livewire\Equipment\Traits\StatusTrait;
 use App\Models\Equipment;
 use App\Models\LegalEntity;
+use App\Models\User;
 use App\Notifications\SyncNotification;
 use App\Repositories\Repository;
+use App\Traits\BatchLegalEntityQueries;
+use App\Traits\FormTrait;
 use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
@@ -33,8 +36,10 @@ use Throwable;
 
 class EquipmentIndex extends Component
 {
-    use WithPagination;
-    use StatusTrait;
+    use BatchLegalEntityQueries,
+        WithPagination,
+        StatusTrait,
+        FormTrait;
 
     protected const string BATCH_NAME = 'EquipmentSync';
 
@@ -121,17 +126,35 @@ class EquipmentIndex extends Component
         $this->syncStatus = $this->getSyncStatus();
 
         // Determine if either the Legal Entity's sync is in progress
-        $legalEntitySync = $legalEntitySyncStatus !== JobStatus::COMPLETED->value &&
-                           ($legalEntitySyncStatus !== JobStatus::PAUSED->value && !empty($legalEntitySyncStatus));
+        $legalEntitySync = $this->isEntitySyncIsInProgress($legalEntitySyncStatus, true);
+
+        // Get the sync status only for Division
+        $divisionSyncStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_DIVISION);
+
+        // Get the sync status only for HealthCare Service
+        $healthCareServiceSyncStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_HEALTHCARE_SERVICE);
+
+        // Get the sync status only for HealthCare Service
+        $employeeSyncStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_EMPLOYEE);
 
         // Determine if either the Equipment's sync is in progress
-        $equipmentSync = $this->syncStatus !== JobStatus::COMPLETED->value &&
-                               $this->syncStatus !== JobStatus::PAUSED->value &&
-                               $this->syncStatus !== JobStatus::FAILED->value &&
-                               !empty($this->syncStatus);
+        $equipmentSync = $this->isEntitySyncIsInProgress($this->syncStatus);
+
+        // Determine if either the Division's sync is in progress
+        $divisionSync = $divisionSyncStatus !== JobStatus::COMPLETED->value;
+
+        // Determine if either the HealthCare Service's sync is in progress
+        $healthCareServiceSync = $healthCareServiceSyncStatus !== JobStatus::COMPLETED->value;
+
+        // Determine if either the Employee's sync is in progress
+        $employeeSync = $employeeSyncStatus !== JobStatus::COMPLETED->value;
 
         // Return true if either sync is in progress
-        return $legalEntitySync || $equipmentSync;
+        return $equipmentSync ||
+               $legalEntitySync ||
+               $divisionSync ||
+               $healthCareServiceSync ||
+               $employeeSync;;
     }
 
     public function boot(): void
@@ -176,6 +199,21 @@ class EquipmentIndex extends Component
             return;
         }
 
+        $user = Auth::user();
+        $token = Session::get(config('ehealth.api.oauth.bearer_token'));
+
+        // Try to resume previous sync if it was paused or failed
+        if ($this->syncStatus === JobStatus::PAUSED->value || $this->syncStatus === JobStatus::FAILED->value) {
+
+            $this->resumeSynchronization($user, $token);
+
+            Session::flash('success', __('Відновлення попередньої синхронізації розпочато'));
+
+            $user->notify(new SyncNotification('equipment', 'resumed'));
+
+            return;
+        }
+
         try {
             $response = EHealth::equipment()->getMany();
         } catch (ConnectionException $exception) {
@@ -196,7 +234,8 @@ class EquipmentIndex extends Component
         }
 
         try {
-            $validated = $response->validate();
+            $validated = $this->normalizeDate($response->validate());
+
             Repository::equipment()->sync($response->map($validated));
         } catch (Throwable $exception) {
             Session::flash('error', 'Виникла помилка. Оновіть список місць надання послуг та співробітників і спробуйте ще раз');
@@ -208,16 +247,48 @@ class EquipmentIndex extends Component
         // If there are more pages, dispatch a job to handle the rest
         if ($response->isNotLast()) {
             try {
-                Auth::user()->notify(new SyncNotification('equipment', 'started'));
-                $this->dispatchNextSyncJobs();
+                $user->notify(new SyncNotification('equipment', 'started'));
+                $this->dispatchNextSyncJobs($user, $token);
                 Session::flash('success', __('forms.success.sync_started'));
             } catch (Throwable $exception) {
                 Log::error('Failed to dispatch EquipmentSync batch', ['exception' => $exception]);
 
-                Auth::user()->notify(new SyncNotification('equipment', 'failed'));
+                $user->notify(new SyncNotification('equipment', 'failed'));
             }
         } else {
+            legalEntity()?->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_EQUIPMENT);
+
             Session::flash('success', __('forms.success.updated'));
+        }
+    }
+
+    /**
+     * Resume the synchronization process for a user with the provided token.
+     *
+     * This method handles the continuation of a previously initiated synchronization
+     * operation for a specific user using an authentication or session token.
+     *
+     * @param User $user The user instance for whom synchronization should be resumed
+     * @param string $token The authentication or session token used to resume the sync process
+     * @return void
+     */
+    protected function resumeSynchronization(User $user, string $token): void
+    {
+        $encryptedToken = Crypt::encryptString($token);
+
+        // Find all the Equipment's failed batches for this legal entity and retry them
+        $failedBatches = $this->findFailedBatchesByLegalEntity(legalEntity()->id, 'ASC');
+
+        foreach ($failedBatches as $batch) {
+            if ($batch->name === self::BATCH_NAME) {
+                Log::info('Resuming Equipment sync batch: ' . $batch->name . ' id: ' . $batch->id);
+
+                legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_EQUIPMENT);
+
+                $this->restartBatch($batch, $user, $encryptedToken, legalEntity());
+
+                break;
+            }
         }
     }
 
@@ -265,12 +336,10 @@ class EquipmentIndex extends Component
      * @return void
      * @throws Throwable
      */
-    protected function dispatchNextSyncJobs(): void
+    protected function dispatchNextSyncJobs(User $user, string $token): void
     {
-        $token = Session::get(config('ehealth.api.oauth.bearer_token'));
-        $user = Auth::user();
-
         Bus::batch([new EquipmentSync(legalEntity(), page: 2)])
+            ->withOption('legal_entity_id', legalEntity()->id)
             ->withOption('token', Crypt::encryptString($token))
             ->withOption('user', $user)
             ->then(fn () => $user->notify(new SyncNotification('equipment', 'completed')))

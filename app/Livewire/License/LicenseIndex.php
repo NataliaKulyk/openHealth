@@ -59,7 +59,7 @@ class LicenseIndex extends Component
             return;
         }
 
-        $licences = $response->validate();
+        $licences = $this->normalizeDate($response->validate());
 
         try {
             License::upsert($response->map($licences), uniqueBy: ['uuid'], update: new License()->getFillable());
