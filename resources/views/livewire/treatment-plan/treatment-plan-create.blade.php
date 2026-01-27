@@ -7,7 +7,7 @@
         </x-slot>
     </x-header-navigation>
 
-    <div class="form" wire:key="{{ time() }}">
+    <div class="form shift-content" wire:key="{{ time() }}">
 
         @include('livewire.treatment-plan.parts.doctors')
         @include('livewire.treatment-plan.parts.patient_data')

@@ -14,7 +14,7 @@
     </x-header-navigation>
 
     {{-- Tabs Container --}}
-    <div x-data="{ activeTab: 'info', openDropdown: false }">
+    <div x-data="{ activeTab: 'info', openDropdown: false }" class="form shift-content">
         {{-- Tab Switcher and New Prescription Button - on the same row --}}
         <div class="flex items-center justify-between mt-4 mb-6">
             {{-- Tabs on the left --}}
@@ -115,7 +115,14 @@
                         {{ __('treatment-plan.no_prescriptions_yet') }}
                     </p>
                 </div>
-                <button type="button" class="item-add">
+                <button type="button"
+                        class="item-add"
+                        data-drawer-target="services-drawer-right"
+                        data-drawer-show="services-drawer-right"
+                        data-drawer-placement="right"
+                        data-drawer-body-scrolling="false"
+                        aria-controls="services-drawer-right"
+                >
                     {{ __('treatment-plan.add_services') }}
                 </button>
             </fieldset>
@@ -131,7 +138,14 @@
                         {{ __('treatment-plan.no_prescriptions_yet') }}
                     </p>
                 </div>
-                <button type="button" class="item-add">
+                <button type="button"
+                        class="item-add"
+                        data-drawer-target="medications-drawer-right"
+                        data-drawer-show="medications-drawer-right"
+                        data-drawer-placement="right"
+                        data-drawer-body-scrolling="false"
+                        aria-controls="medications-drawer-right"
+                >
                     {{ __('treatment-plan.add_medications') }}
                 </button>
             </fieldset>
@@ -147,7 +161,14 @@
                         {{ __('treatment-plan.no_prescriptions_yet') }}
                     </p>
                 </div>
-                <button type="button" class="item-add">
+                <button type="button"
+                        class="item-add"
+                        data-drawer-target="medical-devices-drawer-right"
+                        data-drawer-show="medical-devices-drawer-right"
+                        data-drawer-placement="right"
+                        data-drawer-body-scrolling="false"
+                        aria-controls="medical-devices-drawer-right"
+                >
                     {{ __('treatment-plan.add_medical_devices') }}
                 </button>
             </fieldset>
@@ -158,6 +179,12 @@
                     {{ __('treatment-plan.complete_treatment_plan') }}
                 </button>
             </div>
+
+            {{-- Drawers --}}
+            @include('livewire.treatment-plan.parts.modals.services-drawer')
+            @include('livewire.treatment-plan.parts.modals.service-search-drawer')
+            @include('livewire.treatment-plan.parts.modals.medications-drawer')
+            @include('livewire.treatment-plan.parts.modals.medical-devices-drawer')
         </div>
     </div>
 
