@@ -119,6 +119,7 @@ return [
     'url' => 'Формат поля :attribute неправильний.',
     'uuid' => 'Поле :attribute повинно містити коректний UUID.',
 
+    // Translate not nested values from validation rules
     // See: https://laravel.com/docs/12.x/validation#specifying-values-in-language-files
     'values' => [
         'today' => 'сьогодні',
@@ -151,11 +152,6 @@ return [
         ],
         'unique_edrpou' => 'Заклад з таким ЄДРПОУ  вже зареєстровано в системі',
         ':attribute.required' => 'Поле :attribute є обов\'язковим для заповнення.',
-        'roleTable' => 'Заповніть таблицю Ролі',
-        'documentsEmpty' => 'Заповніть таблицю Документи Паспорт або Номер РНОКПП',
-        'educationsTable' => 'Заповніть таблицю Освіта',
-        'specialitiesTable' => 'Заповніть таблицю Спеціальності',
-        'employeeTable' => 'Заповніть данні Працівника',
         'Token' => [
             'csrfToken' => 'Токен CSRF є недійсним.',
         ],
