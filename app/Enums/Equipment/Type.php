@@ -25,4 +25,17 @@ enum Type: string
             self::USER_FRIENDLY => __('equipments.type.user_friendly')
         };
     }
+
+    /**
+     * Allowed names for creating equipment.
+     *
+     * @return array
+     */
+    public static function allowedForEquipment(): array
+    {
+        return [
+            self::REGISTERED->value => __('equipments.type.registered'),
+            self::USER_FRIENDLY->value => __('equipments.type.user_friendly')
+        ];
+    }
 }

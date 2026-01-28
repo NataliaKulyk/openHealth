@@ -6,7 +6,7 @@
     </legend>
 
     <div class="space-y-4"
-         x-data="{ names: $wire.entangle('form.names'), types: @js(Type::options()), errors: @js($errors->getMessages()) }"
+         x-data="{ names: $wire.entangle('form.names'), types: @js(Type::allowedForEquipment()), errors: @js($errors->getMessages()) }"
          x-init="if (!Array.isArray(names) || names.length === 0) { names = [{ name: '', type: '' }] }"
          x-id="['name']"
     >
