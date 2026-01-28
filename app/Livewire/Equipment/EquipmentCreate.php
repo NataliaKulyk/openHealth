@@ -30,7 +30,7 @@ class EquipmentCreate extends EquipmentComponent
     public function create(): void
     {
         if (Auth::user()->cannot('create', Equipment::class)) {
-            Session::flash('error', 'У вас немає дозволу на створення обладнання');
+            Session::flash('error', __('equipments.policy.create'));
 
             return;
         }
@@ -64,7 +64,7 @@ class EquipmentCreate extends EquipmentComponent
     public function createLocally(): void
     {
         if (Auth::user()->cannot('create', Equipment::class)) {
-            Session::flash('error', 'У вас немає дозволу на створення обладнання');
+            Session::flash('error', __('equipments.policy.create'));
 
             return;
         }

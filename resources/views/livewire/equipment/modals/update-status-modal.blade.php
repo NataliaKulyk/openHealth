@@ -57,7 +57,7 @@
                             @error('status') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="mb-6 text-left">
+                        <div class="mb-6 text-left" x-show="$wire.status === '{{ Status::ENTERED_IN_ERROR->value }}'">
                             <label for="errorReason" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ __('equipments.reason_for_status_change') }}
                             </label>

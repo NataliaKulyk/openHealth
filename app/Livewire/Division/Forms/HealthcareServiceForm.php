@@ -142,8 +142,23 @@ class HealthcareServiceForm extends Form
      */
     protected function validationAttributes(): array
     {
+        return ['divisionId' => __('forms.division_name')];
+    }
+
+    /**
+     * Custom validation messages for nested values translations.
+     *
+     * @return array
+     */
+    protected function messages(): array
+    {
         return [
-            'divisionId' => __('forms.division_name')
+            'specialityType.required_if' => __('healthcare-services.validation.speciality_type.required_if'),
+            'specialityType.prohibited_unless' => __('healthcare-services.validation.speciality_type.prohibited_unless'),
+            'type.coding.*.code.required_if' => __('healthcare-services.validation.type_coding.required_if'),
+            'type.coding.*.code.prohibited_unless' => __('healthcare-services.validation.type_coding.prohibited_unless'),
+            'licenseId.required_if' => __('healthcare-services.validation.license_id.required_if'),
+            'licenseId.prohibited_if' => __('healthcare-services.validation.license_id.prohibited_if'),
         ];
     }
 

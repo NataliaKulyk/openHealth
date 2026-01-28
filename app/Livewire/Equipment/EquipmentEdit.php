@@ -30,7 +30,7 @@ class EquipmentEdit extends EquipmentComponent
         $this->form->status = Status::ACTIVE->value;
 
         if (Auth::user()->cannot('edit', $equipment)) {
-            Session::flash('error', __('equipments.error.edit'));
+            Session::flash('error', __('equipments.policy.edit'));
 
             return;
         }

@@ -32,8 +32,8 @@ trait StatusTrait
     public function updateStatus(string $uuid): void
     {
         $equipment = Equipment::whereUuid($uuid)->firstOrFail();
-        if (Auth::user()?->cannot('updateStatus', $equipment)) {
-            Session::flash('error', 'У вас немає дозволу на оновлення статусу обладнання');
+        if (Auth::user()->cannot('updateStatus', $equipment)) {
+            Session::flash('error', __('equipments.policy.update'));
 
             return;
         }
@@ -83,7 +83,7 @@ trait StatusTrait
     {
         $equipment = Equipment::whereUuid($uuid)->firstOrFail();
         if (Auth::user()->cannot('updateAvailabilityStatus', $equipment)) {
-            Session::flash('error', 'У вас немає дозволу на оновлення доступності обладнання');
+            Session::flash('error', __('equipments.policy.update_availability_status'));
 
             return;
         }
@@ -150,7 +150,7 @@ trait StatusTrait
                     }
                 }
             ],
-            'errorReason' => ['nullable', 'required_if:status,entered_in_error', 'string']
+            'errorReason' => ['nullable', 'required_if:status,' . Status::ENTERED_IN_ERROR->value, 'string']
         ];
     }
 

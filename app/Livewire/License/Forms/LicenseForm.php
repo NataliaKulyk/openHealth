@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\License\Forms;
 
 use App\Core\Arr;
+use App\Enums\License\Type;
 use App\Models\LegalEntity;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -51,7 +52,7 @@ class LicenseForm extends Form
             'issuedBy' => ['required', 'string', 'max:255'],
             'issuedDate' => ['required', 'date_format:d.m.Y', 'before_or_equal:activeFromDate'],
             'expiryDate' => [
-                'required_if:type,PHARMACY_DRUGS',
+                'required_if:type,' . Type::PHARMACY_DRUGS->value,
                 'date_format:d.m.Y',
                 'after_or_equal:today',
                 'after_or_equal:activeFromDate'
