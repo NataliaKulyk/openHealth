@@ -25,7 +25,7 @@ class HealthcareServiceForm extends Form
         'coding' => [['system' => 'HEALTHCARE_SERVICE_CATEGORIES']]
     ];
 
-    public string $specialityType = '';
+    public ?string $specialityType = '';
 
     public string $providingCondition = '';
 
