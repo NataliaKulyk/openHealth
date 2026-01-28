@@ -1,6 +1,6 @@
 @php
     use App\Livewire\Division\HealthcareService\{HealthcareServiceCreate, HealthcareServiceView, HealthcareServiceEdit};
-    use App\Models\HealthcareService;
+    use App\Models\{HealthcareService, LegalEntity};
 
     $healthcareServiceModel = HealthcareService::find($healthcareServiceId);
 @endphp
@@ -104,49 +104,51 @@
                 </div>
             </div>
 
-            <div class="form-row-2">
-                <div class="form-group group">
-                    <select wire:model="form.type.coding.0.code"
-                            type="text"
-                            name="type"
-                            id="type"
-                            class="input-select @error('form.type.coding.0.code') input-error @enderror"
-                            x-bind:disabled="isDisabled"
-                    >
-                        <option value="" selected>{{ __('forms.select') }}</option>
-                        @foreach($this->dictionaries['HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES'] as $key => $pharmacyDrugsType)
-                            <option value="{{ $key }}">{{ $pharmacyDrugsType }}</option>
-                        @endforeach
-                    </select>
+            @if(legalEntity()->type->name !== LegalEntity::TYPE_PRIMARY_CARE)
+                <div class="form-row-2">
+                    <div class="form-group group">
+                        <select wire:model="form.type.coding.0.code"
+                                type="text"
+                                name="type"
+                                id="type"
+                                class="input-select @error('form.type.coding.0.code') input-error @enderror"
+                                x-bind:disabled="isDisabled"
+                        >
+                            <option value="" selected>{{ __('forms.select') }}</option>
+                            @foreach($this->dictionaries['HEALTHCARE_SERVICE_PHARMACY_DRUGS_TYPES'] as $key => $pharmacyDrugsType)
+                                <option value="{{ $key }}">{{ $pharmacyDrugsType }}</option>
+                            @endforeach
+                        </select>
 
-                    <label for="type" class="label">{{ __('healthcare-services.type') }}</label>
+                        <label for="type" class="label">{{ __('healthcare-services.type') }}</label>
 
-                    @error('form.type.coding.0.code')
-                    <p class="text-error">{{ $message }}</p>
-                    @enderror
+                        @error('form.type.coding.0.code')
+                        <p class="text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group group">
+                        <select wire:model="form.licenseId"
+                                type="text"
+                                name="licenseId"
+                                id="licenseId"
+                                class="input-select @error('form.licenseId') input-error @enderror"
+                                x-bind:disabled="isDisabled"
+                        >
+                            <option value="" selected>{{ __('forms.select') }}</option>
+                            @foreach($licenses as $key => $license)
+                                <option value="{{ $license['uuid'] }}">{{ $license['type']->label() }}</option>
+                            @endforeach
+                        </select>
+
+                        <label for="licenseId" class="label">{{ __('healthcare-services.license') }}</label>
+
+                        @error('form.licenseId')
+                        <p class="text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
-
-                <div class="form-group group">
-                    <select wire:model="form.licenseId"
-                            type="text"
-                            name="licenseId"
-                            id="licenseId"
-                            class="input-select @error('form.licenseId') input-error @enderror"
-                            x-bind:disabled="isDisabled"
-                    >
-                        <option value="" selected>{{ __('forms.select') }}</option>
-                        @foreach($licenses as $key => $license)
-                            <option value="{{ $license['uuid'] }}">{{ $license['type']->label() }}</option>
-                        @endforeach
-                    </select>
-
-                    <label for="licenseId" class="label">{{ __('healthcare-services.license') }}</label>
-
-                    @error('form.licenseId')
-                    <p class="text-error">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
+            @endif
 
             <div class="form-row">
                 <div>
@@ -197,6 +199,6 @@
         </div>
     </div>
 
-    <x-forms.loading/>
-    <livewire:components.x-message :key="now()->timestamp"/>
+    <x-forms.loading />
+    <livewire:components.x-message :key="now()->timestamp" />
 </section>

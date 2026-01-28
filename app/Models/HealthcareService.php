@@ -131,7 +131,7 @@ class HealthcareService extends Model
     protected function active(Builder $query): Builder
     {
         return $query->whereLegalEntityId(legalEntity()->id)
-            ->where('is_active', '=', true)
+            ->whereIsActive(true)
             ->whereStatus(Status::ACTIVE)
             ->with('division:id,name')
             ->select(['division_id', 'uuid', 'speciality_type'])
