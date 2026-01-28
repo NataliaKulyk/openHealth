@@ -85,4 +85,50 @@ return [
     'inactive' => 'Неактивна',
     'procedures_on_nervous_system' => 'Процедури на нервовій системі',
 
+    // Medications drawer
+    'new_medication_prescription' => 'Нове призначення на ліки',
+    'program_selection' => 'Вибір програми',
+    'prescription_medication' => 'Рецептурний лікарський засіб',
+
+    // Medication search drawer
+    'medication_search' => 'Пошук ліки',
+    'medication_search_placeholder' => 'Дротаверин',
+    'inn_name' => 'Міжнародна непатентована назва ЛЗ',
+    'atc_code' => 'Код анатомо-терапевтично-хімічної класифікації',
+    'dosage_form' => 'Лікарська форма',
+    'release_form' => 'Форма випуску',
+    'prescription_form_type' => 'Тип рецептурного бланка',
+    'tablets' => 'Таблетки',
+    'type' => 'Тип',
+    'example_medication_name' => 'Дротаверин 20 мг/мл, розчин для ін\'єкцій',
+    'inn_basic' => 'МНН(основний)',
+    'package_quantity' => 'Кількість в упаковці',
+    'otc_sign' => 'Ознака дозованості ЛЗ',
+    'maintenance_dose' => 'Підтримуюча добова доза',
+    'max_daily_dose' => 'Максимальна добова доза',
+    'showing_records' => 'Показано :from to :to of :total Записів',
+
+    // Medication form drawer
+    'medication' => 'Лікарський засіб',
+    'ml' => 'мл',
+    'example_diagnostic_report' => 'Діагностичний звіт A35002 Загальний аналіз сечі (лабораторна діагностика), Лейкоцити 10,0',
+
+    // Medical devices drawer
+    'new_medical_device_prescription' => 'Нове призначення на медичні вироби',
+    'medical_guarantees_program' => 'Програма медичних гарантій',
+    'medical_device' => 'Медичний виріб',
+    'select_medical_device' => 'Обрати медичний виріб',
+    'provider' => 'Постійник',
+
+    // Medical device search drawer
+    'medical_device_search' => 'Пошук медичних виробів',
+    'test_strips' => 'Тест-смужки',
+    'medical_device_type' => 'Тип медичного виробу',
+    'medical_device_model_number' => 'Номер моделі медичного виробу',
+    'glucose_test_reagent' => 'Реагент швидкого тестування на глюкозу',
+    'medical_device_for_glucose' => 'Медичні вироби для визначення рівня глюкози в крові',
+    'packaging' => 'Пакування',
+    'box_50_pieces' => 'Коробка 50 штук',
+    'program_participants' => 'Учасники програми',
+
 ];

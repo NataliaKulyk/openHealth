@@ -14,7 +14,7 @@
     </x-header-navigation>
 
     {{-- Tabs Container --}}
-    <div x-data="{ activeTab: 'info', openDropdown: false }" class="form shift-content">
+    <div x-data="{ activeTab: 'info', openDropdown: false, showServiceSearchDrawer: false, showMedicationSearchDrawer: false, showMedicationFormDrawer: false, showMedicalDeviceSearchDrawer: false, showMedicalDeviceFormDrawer: false }" class="form shift-content">
         {{-- Tab Switcher and New Prescription Button - on the same row --}}
         <div class="flex items-center justify-between mt-4 mb-6">
             {{-- Tabs on the left --}}
@@ -184,7 +184,11 @@
             @include('livewire.treatment-plan.parts.modals.services-drawer')
             @include('livewire.treatment-plan.parts.modals.service-search-drawer')
             @include('livewire.treatment-plan.parts.modals.medications-drawer')
+            @include('livewire.treatment-plan.parts.modals.medication-search-drawer')
+            @include('livewire.treatment-plan.parts.modals.medication-form-drawer')
             @include('livewire.treatment-plan.parts.modals.medical-devices-drawer')
+            @include('livewire.treatment-plan.parts.modals.medical-device-search-drawer')
+            @include('livewire.treatment-plan.parts.modals.medical-device-form-drawer')
         </div>
     </div>
 

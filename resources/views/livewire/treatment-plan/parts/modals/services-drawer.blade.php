@@ -31,6 +31,7 @@
                                     data-drawer-placement="right"
                                     data-drawer-body-scrolling="false"
                                     aria-controls="service-search-drawer-right"
+                                    @click="showServiceSearchDrawer = true"
                             >
                                 {{ __('treatment-plan.select_service') }}
                             </button>
@@ -215,7 +216,7 @@
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <thead class="thead-input">
                                 <tr>
                                     <th scope="col" class="px-4 py-3 font-medium">{{ __('treatment-plan.date') }}</th>
                                     <th scope="col" class="px-4 py-3 font-medium">{{ __('treatment-plan.name') }}</th>
@@ -293,8 +294,8 @@
                         data-drawer-target="service-search-drawer-right"
                         data-drawer-show="service-search-drawer-right"
                         data-drawer-placement="right"
-                        data-drawer-body-scrolling="false"
                         aria-controls="service-search-drawer-right"
+                        @click="showServiceSearchDrawer = true"
                 >
                     {{ __('treatment-plan.add_service') }}
                 </button>

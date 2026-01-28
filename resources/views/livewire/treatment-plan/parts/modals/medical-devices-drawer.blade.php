@@ -6,18 +6,34 @@
          aria-labelledby="medical-devices-drawer-label"
     >
         <h3 class="modal-header" id="medical-devices-drawer-label">
-            {{ __('treatment-plan.medical_devices') }}
+            {{ __('treatment-plan.new_medical_device_prescription') }}
         </h3>
 
         {{-- Content --}}
         <form>
-            <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 mb-4">
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Контент drawer для медичних виробів буде додано пізніше') }}
-                </p>
-            </div>
+            {{-- Program Selection Section --}}
+            <fieldset class="fieldset">
+                <legend class="legend">
+                    {{ __('treatment-plan.program_selection') }}
+                </legend>
 
-            <div class="mt-6 flex justify-between space-x-2">
+                <div class="form-row-3">
+                    <div class="form-group group">
+                        <label for="medical_device_program" class="label">
+                            {{ __('treatment-plan.program') }}*
+                        </label>
+                        <select id="medical_device_program"
+                                name="medical_device_program"
+                                class="input-select peer"
+                        >
+                            <option selected value="">{{ __('treatment-plan.medical_guarantees_program') }}</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            {{-- Footer Buttons --}}
+            <div class="mt-6 flex justify-start gap-3">
                 <button type="button"
                         class="button-minor"
                         data-drawer-hide="medical-devices-drawer-right"
@@ -28,9 +44,9 @@
 
                 <button type="button"
                         class="button-primary"
-                        data-drawer-hide="medical-devices-drawer-right"
+                        @click="showMedicalDeviceSearchDrawer = true"
                 >
-                    {{ __('forms.save') }}
+                    {{ __('forms.continue') }}
                 </button>
             </div>
         </form>

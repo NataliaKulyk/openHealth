@@ -6,18 +6,34 @@
          aria-labelledby="medications-drawer-label"
     >
         <h3 class="modal-header" id="medications-drawer-label">
-            {{ __('treatment-plan.medications') }}
+            {{ __('treatment-plan.new_medication_prescription') }}
         </h3>
 
         {{-- Content --}}
         <form>
-            <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 mb-4">
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Контент drawer для ліків буде додано пізніше') }}
-                </p>
-            </div>
+            {{-- Program Selection Section --}}
+            <fieldset class="fieldset">
+                <legend class="legend">
+                    {{ __('treatment-plan.program_selection') }}
+                </legend>
 
-            <div class="mt-6 flex justify-between space-x-2">
+                <div class="form-row-3">
+                    <div class="form-group group">
+                        <label for="medication_program" class="label">
+                            {{ __('treatment-plan.program') }}*
+                        </label>
+                        <select id="medication_program"
+                                name="medication_program"
+                                class="input-select peer"
+                        >
+                            <option selected value="">{{ __('treatment-plan.prescription_medication') }}</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            {{-- Footer Buttons --}}
+            <div class="mt-6 flex justify-start gap-3">
                 <button type="button"
                         class="button-minor"
                         data-drawer-hide="medications-drawer-right"
@@ -28,9 +44,13 @@
 
                 <button type="button"
                         class="button-primary"
-                        data-drawer-hide="medications-drawer-right"
+                        data-drawer-target="medication-search-drawer-right"
+                        data-drawer-show="medication-search-drawer-right"
+                        data-drawer-placement="right"
+                        aria-controls="medication-search-drawer-right"
+                        @click="showMedicationSearchDrawer = true"
                 >
-                    {{ __('forms.save') }}
+                    {{ __('forms.continue') }}
                 </button>
             </div>
         </form>
