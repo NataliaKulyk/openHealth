@@ -5,6 +5,7 @@
               showDocumentDrawer: false,
               selectedPatient: null,
               documentsRelationship: $wire.entangle('form.person.confidantPerson.documentsRelationship'),
+              documentTypes: @js($this->dictionaries['DOCUMENT_RELATIONSHIP_TYPE']),
               newDocument: {
                   type: '',
                   typeLabel: '',
@@ -62,7 +63,7 @@
                   // Open the legal rep drawer with existing data
                   this.showLegalRepDrawer = true;
               },
-              saveLegalRepresentative() {
+              saveConfidantPerson() {
                   if (this.isEditingLegalRep && this.editingLegalRepIndex !== null && this.selectedPatient) {
                       this.showLegalRepDrawer = false;
                       this.isEditingLegalRep = false;
@@ -86,11 +87,14 @@
           }"
 >
     <legend class="legend flex items-baseline gap-2">
-        <x-checkbox class="default-checkbox mb-2"
-                    x-model="isIncapacitated"
-                    id="isIncapacitated"
+        <input type="checkbox"
+               class="default-checkbox mb-2"
+               x-model="isIncapacitated"
+               id="isIncapacitated"
         />
-        {{ __('patients.incapacitated') }}
+        <label for="isIncapacitated" class="cursor-pointer">
+            {{ __('patients.incapacitated') }}
+        </label>
     </legend>
 
     <div x-show="isIncapacitated" x-cloak x-transition>
@@ -107,7 +111,7 @@
                         <th scope="col" class="th-input">{{ __('forms.document') }}</th>
                         <th scope="col" class="th-input">{{ __('forms.phone') }}</th>
                         <th scope="col" class="th-input">{{ __("Дата, до якої з'язок активний") }}</th>
-                        <th scope="col" class="th-input">{{ __("документ підтвердження зв'язку") }}</th>
+                        <th scope="col" class="th-input">{{ __("Документ підтвердження зв'язку") }}</th>
                         <th scope="col" class="th-input text-center">{{ __('forms.action') }}</th>
                     </tr>
                     </thead>
@@ -126,11 +130,11 @@
                                         {{ $selectedConfidant['gender'] === 'male' ? __('patients.male') : __('patients.female') }}
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        <span>РНОКПП </span><span>{{ $selectedConfidant['taxId'] ?? '-' }}</span>
+                                        <span>{{ __('forms.rnokpp') }} </span><span>{{ $selectedConfidant['taxId'] ?? '-' }}</span>
                                     </div>
                                     @if($selectedConfidant['unzr'] ?? false)
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            <span>УНЗР </span><span>{{ $selectedConfidant['unzr'] }}</span>
+                                            <span>{{ __('patients.unzr') }} </span><span>{{ $selectedConfidant['unzr'] }}</span>
                                         </div>
                                     @endif
                                 </td>
@@ -142,17 +146,21 @@
                                                 <div class="text-sm text-gray-500 dark:text-gray-400" x-text="docRel.number"></div>
                                             </div>
                                         </template>
-                                        @if(empty($selectedConfidant['documentNumber']) === false)
-                                            <div class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
-                                                <div class="text-gray-900 dark:text-white font-medium">Паспорт</div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ $selectedConfidant['documentNumber'] ?? 'СН...' }}</div>
-                                            </div>
-                                        @endif
                                     </div>
                                 </td>
                                 <td class="td-input align-top">
-                                    <div class="text-gray-900 dark:text-white">Мобільний</div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $selectedConfidant['phone'] ?? '-' }}</div>
+                                    @empty($selectedConfidant['phones'])
+                                        <div class="text-gray-900 dark:text-white">-</div>
+                                    @else
+                                        @foreach($selectedConfidant['phones'] as $phone)
+                                            <div class="text-gray-900 dark:text-white">
+                                                {{ $this->dictionaries['PHONE_TYPE'][$phone['type']] ?? '-' }}
+                                            </div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ $phone['number'] ?? '-' }}
+                                            </div>
+                                        @endforeach
+                                    @endempty
                                 </td>
                                 <td class="td-input align-top">
                                     <div class="space-y-2">
@@ -167,7 +175,7 @@
                                     <div class="space-y-2">
                                         <template x-for="(doc, index) in documentsRelationship" :key="'confirm-' + index">
                                             <div class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
-                                                <div class="text-gray-900 dark:text-white" x-text="doc.type === 'birth_certificate' ? '{{ __('patients.documents.birth_certificate') }}' : '{{ __('patients.documents.confidant_certificate') }}'"></div>
+                                                <div class="text-gray-900 dark:text-white" x-text="documentTypes[doc.type] || doc.type"></div>
                                                 <div class="text-sm text-gray-500 dark:text-gray-400" x-text="doc.number"></div>
                                             </div>
                                         </template>
@@ -223,9 +231,11 @@
             </div>
         </div>
 
-        <button type="button" @click="showLegalRepDrawer = true" class="item-add my-5">
-            {{ __('patients.add_legal_representative') }}
-        </button>
+        @unless(($this instanceof \App\Livewire\Person\PersonCreate || $this instanceof \App\Livewire\Person\PersonRequestEdit) && !empty($selectedConfidantPersonId))
+            <button type="button" @click="showLegalRepDrawer = true" class="item-add my-5">
+                {{ __('patients.add_legal_representative') }}
+            </button>
+        @endunless
 
         @include('livewire.person.parts.drawers.add-confidant-person')
     </div>

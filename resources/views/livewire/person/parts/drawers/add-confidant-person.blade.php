@@ -193,11 +193,10 @@
                     <tbody>
                     <template x-for="(doc, index) in documentsRelationship" :key="doc.type + '_' + index">
                         <tr>
-                            <td class="td-input"
-                                x-text="doc.type === 'birth_certificate' ? '{{ __('patients.documents.birth_certificate') }}' : '{{ __('patients.documents.confidant_certificate') }}'"></td>
+                            <td class="td-input" x-text="documentTypes[doc.type] || doc.type"></td>
                             <td class="td-input" x-text="doc.number"></td>
-                            <td class="td-input" x-text="doc.issuedBy || '-'"></td>
-                            <td class="td-input" x-text="doc.issuedAt || '-'"></td>
+                            <td class="td-input" x-text="doc.issuedBy"></td>
+                            <td class="td-input" x-text="doc.issuedAt"></td>
                             <td class="td-input" x-text="doc.activeTo || '-'"></td>
                             <td class="td-input text-center">
                                 <div class="relative"
@@ -254,7 +253,7 @@
         <button x-show="isEditingLegalRep && selectedPatient"
                 class="button-primary"
                 type="button"
-                @click="saveLegalRepresentative()"
+                @click="saveConfidantPerson()"
         >
             {{ __('forms.save_changes') }}
         </button>
