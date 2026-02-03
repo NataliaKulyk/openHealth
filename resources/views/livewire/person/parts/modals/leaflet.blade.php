@@ -18,8 +18,7 @@
                          x-data="{
                              printContent() {
                                  let printWindow = window.open('', '_blank');
-                                 printWindow.document.write($wire.leafletContent);
-                                 printWindow.document.close();
+                                 printWindow.document.body.innerHTML = $wire.leafletContent;
                                  printWindow.focus();
                                  printWindow.print();
                              }

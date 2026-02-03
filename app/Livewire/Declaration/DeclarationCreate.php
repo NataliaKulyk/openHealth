@@ -21,7 +21,7 @@ class DeclarationCreate extends DeclarationComponent
 
     public function createLocally(): void
     {
-        if (!$this->ensureAbility('create', 'У вас немає дозволу на створення заявки на подання декларації')) {
+        if (!$this->ensureAbility('create', __('declarations.policy.create'))) {
             return;
         }
 

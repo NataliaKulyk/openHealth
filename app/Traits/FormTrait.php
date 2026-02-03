@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use App\Classes\Cipher\Exceptions\CipherApiException;
 use App\Classes\eHealth\EHealthResponse;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
@@ -258,6 +259,22 @@ trait FormTrait
             'method' => $caller['function'] ?? 'unknown_method',
             'exception_type' => get_class($exception),
             'error_message' => $exception->getDetails()
+        ]);
+    }
+
+    /**
+     * Log validation and response error from Cipher.
+     *
+     * @param  CipherApiException  $exception
+     * @param  string  $message
+     * @return void
+     */
+    protected function logCipherError(CipherApiException $exception, string $message): void
+    {
+        Log::channel('api_errors')->error($message, [
+            'message' => $exception->response->json(['message']),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine()
         ]);
     }
 }

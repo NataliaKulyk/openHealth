@@ -9,7 +9,8 @@
         >
             <div x-transition.opacity class="fixed inset-0 bg-black/30"></div>
             <div x-transition @click="showAuthModal = false" class="modal-wrapper">
-                <div @click.stop x-trap.noscroll.inert="showAuthModal"
+                <div @click.stop
+                     x-trap.noscroll.inert="showAuthModal"
                      class="modal-content w-full max-w-2xl mx-auto"
                 >
                     <h2 class="mb-8 text-2xl font-semibold text-gray-900 dark:text-white text-center">

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\LegalEntity;
 
+use App\Enums\User\Role;
 use Log;
 use Arr;
 use Exception;
@@ -35,12 +38,12 @@ use App\Livewire\LegalEntity\Forms\LegalEntitiesRequestApi;
 
 abstract class LegalEntity extends Component
 {
-    use FormTrait,
-        Cipher,
-        WithFileUploads,
-        AddressSearch;
+    use FormTrait;
+    use Cipher;
+    use WithFileUploads;
+    use AddressSearch;
 
-    protected const STEP_PATH='views/livewire/legal-entity/step';
+    protected const STEP_PATH = 'views/livewire/legal-entity/step';
 
     /**
      * @var string
@@ -189,11 +192,11 @@ abstract class LegalEntity extends Component
             $this->legalEntityForm->fill($modelData);
 
             return true;
-        } else {
-            $this->legalEntity = new LegalEntityModel();
-
-            return false;
         }
+        $this->legalEntity = new LegalEntityModel();
+
+        return false;
+
     }
 
     protected function mergeAddress(array $address): void
@@ -202,7 +205,7 @@ abstract class LegalEntity extends Component
             return;
         }
 
-        foreach($address as $key => $value) {
+        foreach ($address as $key => $value) {
             $this->address[$key] = $value;
         }
 
@@ -258,7 +261,7 @@ abstract class LegalEntity extends Component
     protected function signLegalEntity(): array|null
     {
         // TODO: remove this after MVP (if not needed)
-        if (! $this->legalEntityForm->customRulesValidation()) {
+        if (!$this->legalEntityForm->customRulesValidation()) {
             return null;
         }
 
@@ -288,7 +291,7 @@ abstract class LegalEntity extends Component
         // Prepare data for API request
         $response = LegalEntitiesRequestApi::_createOrUpdate([
             'signed_legal_entity_request' => $base64Data,
-            'signed_content_encoding'     => 'base64',
+            'signed_content_encoding' => 'base64',
         ]);
 
         // Handle errors from API request
@@ -328,7 +331,7 @@ abstract class LegalEntity extends Component
     {
         $replaced = $this->replaceEHealthPropNames($data);
 
-        $validator = Validator::make($replaced , [
+        $validator = Validator::make($replaced, [
             'data' => 'required|array',
             'data.edr' => 'required|array',
             "data.edr.edrpou" => "required|string",
@@ -422,11 +425,14 @@ abstract class LegalEntity extends Component
         $validator->sometimes(
             'data.accreditation.order_date',
             'required_unless:data.accreditation.category,NO_ACCREDITATION|string',
-            fn($input) => isset(
-                    $input->data['accreditation']) &&
+            fn ($input) => isset(
+                $input->data['accreditation']) &&
                     is_array($input->data['accreditation']) &&
-                    array_key_exists('category', $input->data['accreditation']
-        ));
+                    array_key_exists(
+                        'category',
+                        $input->data['accreditation']
+                    )
+        );
 
         if ($validator->fails()) {
             Log::error('Legal Entity Response Schema:', ['errors' => $validator->errors()]);
@@ -475,7 +481,7 @@ abstract class LegalEntity extends Component
         // Define an array with consent text and consent status
         return [
             'consent_text' => __(dictionary()->getDictionary('LE_CONSENT_TEXT')['APPROVED']),
-            'consent'      => $this->legalEntityForm->publicOffer['consent'] ?? false,
+            'consent' => $this->legalEntityForm->publicOffer['consent'] ?? false,
         ];
     }
 
@@ -494,7 +500,7 @@ abstract class LegalEntity extends Component
     /**
      * Prepares the data for the request by converting documents to an array, tax_id to no_tax_id, and archive to an array.
      *
-     * @param array $data The data to be prepared for the request
+     * @param  array  $data  The data to be prepared for the request
      * @return array The prepared data for the request
      */
     private function prepareDataForRequest(array $data): array
@@ -511,7 +517,7 @@ abstract class LegalEntity extends Component
         if (Arr::has($data, 'license.uuid')) {
             $uuid = Arr::pull($data, 'license.uuid');
 
-            if (! $this->isLicenseChanged($data['license'], $uuid)) {
+            if (!$this->isLicenseChanged($data['license'], $uuid)) {
                 $data['license'] = ['id' => $uuid];
             }
         }
@@ -531,12 +537,12 @@ abstract class LegalEntity extends Component
 
         // Converting documents to array
         if (Arr::has($data, 'owner.employee_uuid')) {
-            Arr::set($data, 'owner.employee_id',Arr::get($data, 'owner.employee_uuid'));
+            Arr::set($data, 'owner.employee_id', Arr::get($data, 'owner.employee_uuid'));
         }
 
         // If no_tax_id=true its means that taxID should store related document's number
         if (Arr::boolean($data, 'owner.no_tax_id')) {
-            Arr::set($data, 'owner.tax_id',  Arr::get($data, 'owner.documents.number'));
+            Arr::set($data, 'owner.tax_id', Arr::get($data, 'owner.documents.number'));
         }
 
         // Converting documents to array
@@ -560,7 +566,7 @@ abstract class LegalEntity extends Component
         $data['accreditation'] = $data['accreditation_show'] ? $data['accreditation'] : [];
 
         // Check if 'category' === 'NO_ACCREDITATION' and only required fields are filled, also update following fields: 'issued_date', 'expiry_date', 'order_date'
-         if(Arr::get($data, 'accreditation.category') === 'NO_ACCREDITATION') {
+        if (Arr::get($data, 'accreditation.category') === 'NO_ACCREDITATION') {
             Arr::set($data, 'accreditation.issued_date', null);
             Arr::set($data, 'accreditation.expiry_date', null);
             Arr::set($data, 'accreditation.order_date', null);
@@ -588,9 +594,8 @@ abstract class LegalEntity extends Component
      * Reformats date values in the provided data array based on the specified data items.
      *
      *
-     * @param array $data The input data array containing date values to be reformatted
-     * @param array $dataItems Configuration array specifying which items are dates and how to format them
-     *
+     * @param  array  $data  The input data array containing date values to be reformatted
+     * @param  array  $dataItems  Configuration array specifying which items are dates and how to format them
      * @return array
      */
     protected function dateReformat(array $data, array $dataItems): array
@@ -603,7 +608,7 @@ abstract class LegalEntity extends Component
             }
 
             if (\is_array($itemValue)) {
-                $reformatted = collect($itemValue)->map(function($item) {
+                $reformatted = collect($itemValue)->map(function ($item) {
                     if (isset($item['date'])) {
                         $item['date'] = convertToYmd($item['date']);
                     }
@@ -623,9 +628,8 @@ abstract class LegalEntity extends Component
     /**
      * Check if the license data has been changed for a given legal entity.
      *
-     * @param array $data The new license data to compare
-     * @param string $uuid The unique identifier of the license model
-     *
+     * @param  array  $data  The new license data to compare
+     * @param  string  $uuid  The unique identifier of the license model
      * @return bool Returns true if the license has been changed, false otherwise
      */
     protected function isLicenseChanged(array $data, string $uuid): bool
@@ -648,9 +652,8 @@ abstract class LegalEntity extends Component
     /**
      * Prepare all data needs for creating EmployeeRequest throught LegalEntity creation
      *
-     * @param string $legalEntityId
-     * @param array $requestData
-     *
+     * @param  string  $legalEntityId
+     * @param  array  $requestData
      * @return array
      */
     private function mapEmployeRequestData(array $requestData): array
@@ -694,8 +697,8 @@ abstract class LegalEntity extends Component
     /**
      * Dispatches an error message with optional errors array.
      *
-     * @param string $message The error message to dispatch
-     * @param array $errors Additional errors to include
+     * @param  string  $message  The error message to dispatch
+     * @param  array  $errors  Additional errors to include
      * @return void
      */
     protected function dispatchErrorMessage(string $message, array $errors = []): void
@@ -704,8 +707,8 @@ abstract class LegalEntity extends Component
 
         $this->dispatch('flashMessage', [
             'message' => $message,
-            'type'    => 'error',
-            'errors'  => $errors
+            'type' => 'error',
+            'errors' => $errors
         ]);
     }
 
@@ -716,7 +719,7 @@ abstract class LegalEntity extends Component
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
-        if(!isset($requestData['accreditation']) || !$requestData['accreditation'] ['category']) {
+        if (!isset($requestData['accreditation']) || !$requestData['accreditation'] ['category']) {
             unset($response['data']['accreditation']);
         }
 
@@ -725,7 +728,7 @@ abstract class LegalEntity extends Component
          * Only way to determine if it's present is to check if it's not empty.
          * This mainly concerns the editing of the legal entity.
          */
-        if(!isset($requestData['archive']) || empty($requestData['archive'])) {
+        if (!isset($requestData['archive']) || empty($requestData['archive'])) {
             unset($response['data']['archive']);
         }
 
@@ -736,12 +739,10 @@ abstract class LegalEntity extends Component
      * Prepare all data need for create EmployeeRequest (for case of creating Legal Entity only!)
      * And store the EmployeeRequest & Revision record
      *
-     * @param LegalEntityModel $legalEntity
-     * @param array $requestData
-     * @param string $employeeRequestId
-     *
+     * @param  LegalEntityModel  $legalEntity
+     * @param  array  $requestData
+     * @param  string  $employeeRequestId
      * @throws Exception
-     *
      * @return void
      */
     protected function createEmployeeRequest(LegalEntityModel $legalEntity, array $requestData, string $employeeRequestId): void
@@ -755,7 +756,7 @@ abstract class LegalEntity extends Component
         $employeeRequest = $employeeRequestHelper->handleDraftPersistence();
 
         // This method just create a draft record in the local DB and set the $this->employeeRequestId property)
-        $employeeRequestEmulatedData = $this->mapEmployeeRequestResponse($preparedData , $legalEntity->uuid, $employeeRequestId);
+        $employeeRequestEmulatedData = $this->mapEmployeeRequestResponse($preparedData, $legalEntity->uuid, $employeeRequestId);
 
         // Save the EmployeeRequest emulated response data to the local DB (create the revision record at the same time)
         $employeeRequestHelper->applyUpdateLocalRecords($employeeRequest, $employeeRequestEmulatedData, $legalEntity);
@@ -764,16 +765,15 @@ abstract class LegalEntity extends Component
     /**
      * Emulate the EmployeeRequest response from the server (as if the really one will received)
      *
-     * @param array $employeeData
-     * @param string $legalEntityUUID
-     * @param string $employeeRequestId
-     *
+     * @param  array  $employeeData
+     * @param  string  $legalEntityUUID
+     * @param  string  $employeeRequestId
      * @return array
      */
     protected function mapEmployeeRequestResponse(array $employeeData, string $legalEntityUUID, string $employeeRequestId): array
     {
         return [
-           "id"=> $employeeRequestId,
+           "id" => $employeeRequestId,
             "ehealth_response" => [
                 "data" => [
                     "employee_type" => $employeeData['employee_type'],
@@ -812,8 +812,7 @@ abstract class LegalEntity extends Component
     /**
      * Create a new legal entity based on the provided data
      *
-     * @param array $data  data needed to create the legal entity
-     *
+     * @param  array  $data  data needed to create the legal entity
      * @return void
      */
     protected function persistLegalEntity(array $data): array
@@ -825,7 +824,7 @@ abstract class LegalEntity extends Component
         $uuid = Arr::pull($data['data'], 'uuid', '');
 
         // This need because the LegalEntity has a separate table for the address
-        $addressData= [Arr::pull($data['data'], 'residence_address', [])];
+        $addressData = [Arr::pull($data['data'], 'residence_address', [])];
 
         // This need because the LegalEntity has a separate table for the phones
         $phones = Arr::pull($data['data'], 'phones', []);
@@ -923,7 +922,7 @@ abstract class LegalEntity extends Component
     /**
      * Create a new license with the provided data.
      *
-     * @param array $data The data to fill the license with.
+     * @param  array  $data  The data to fill the license with.
      */
     protected function saveLicense(array $data): void
     {
@@ -954,11 +953,11 @@ abstract class LegalEntity extends Component
 
         // Check if a user with the provided email already exists
         $owner = User::where('email', $ownerEmail)->first() ?? User::create([
-                'email'    => $ownerEmail,
+                'email' => $ownerEmail,
                 'password' => Hash::make($password),
-            ]);;
+            ]);
 
-        try{
+        try {
             $owner->save();
 
             $owner->refresh();
@@ -968,15 +967,15 @@ abstract class LegalEntity extends Component
             return null;
         }
 
-        auth()->shouldUse('web');
+        Auth::shouldUse('web');
 
-        // Assign the 'OWNER' role to the user authenticated via web guad
-        $owner->assignRole('OWNER');
+        // Assign the 'OWNER' role to the user authenticated via web guard
+        $owner->assignRole(Role::OWNER);
 
-        auth()->shouldUse('ehealth');
+        Auth::shouldUse('ehealth');
 
-        // Assign the 'OWNER' role to the user authenticaed via ehealth guard
-        $owner->assignRole('OWNER');
+        // Assign the 'OWNER' role to the user authenticated via ehealth guard
+        $owner->assignRole(Role::OWNER);
 
         // Send credentials and email verification link
         event(new LegalEntityCreate($authenticatedUser, $owner, $password));
@@ -988,15 +987,16 @@ abstract class LegalEntity extends Component
      * Returns an anonymous helper (extends AbstractEmployeeFormManager) that
      * creates an EmployeeRequest draft and its Revision for the current Legal Entity
      *
-     * @param array $preparedData
-     *
+     * @param  array  $preparedData
      * @return AbstractEmployeeFormManager Anonymous helper instance.
      */
     protected function getAbstractEmployeeFormManagerHelper(array $preparedData): AbstractEmployeeFormManager
     {
-        return new class($preparedData, $this->legalEntity) extends AbstractEmployeeFormManager {
-
-            public function __construct(private array $preparedData, private LegalEntityModel $legalEntity) {}
+        return new class ($preparedData, $this->legalEntity) extends AbstractEmployeeFormManager
+        {
+            public function __construct(private array $preparedData, private LegalEntityModel $legalEntity)
+            {
+            }
 
             public function handleDraftPersistence(): EmployeeRequest
             {

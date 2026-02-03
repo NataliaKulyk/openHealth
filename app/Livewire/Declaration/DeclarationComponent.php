@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Declaration;
 
+use App\Classes\Cipher\Api\CipherRequest;
+use App\Classes\Cipher\Exceptions\CipherApiException;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Enums\Declaration\Status;
@@ -27,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
+use JsonException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -130,7 +133,7 @@ abstract class DeclarationComponent extends Component
     protected function baseMount(int $patientId): void
     {
         $patient = Person::select(['uuid', 'first_name', 'last_name', 'second_name'])
-            ->where('id', $patientId)
+            ->whereId($patientId)
             ->firstOrFail();
         $this->patientFullName = $patient->fullName;
         $this->patientId = $patientId;
@@ -155,7 +158,7 @@ abstract class DeclarationComponent extends Component
      */
     public function create(): void
     {
-        if (!$this->ensureAbility('create', 'У вас немає дозволу на створення заявки на подання декларації')) {
+        if (!$this->ensureAbility('create', __('declarations.policy.create'))) {
             return;
         }
 
@@ -188,7 +191,7 @@ abstract class DeclarationComponent extends Component
         }
 
         try {
-            $response = EHealth::declarationRequest()->create(data: removeEmptyKeys(Arr::toSnakeCase($validated)));
+            $response = EHealth::declarationRequest()->create(removeEmptyKeys(Arr::toSnakeCase($validated)));
 
             try {
                 Repository::declarationRequest()->update($declarationRequest->id, $response->getData());
@@ -208,7 +211,7 @@ abstract class DeclarationComponent extends Component
             $this->showInformationMessageModal = true;
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when creating a declaration');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+            Session::flash('error', __('validation.custom.connection_exception'));
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -247,7 +250,7 @@ abstract class DeclarationComponent extends Component
      */
     public function approve(): void
     {
-        if (!$this->ensureAbility('approve', 'У вас немає дозволу на підтвердження заявки на подання декларації.')) {
+        if (!$this->ensureAbility('approve', __('declarations.policy.approve'))) {
             return;
         }
 
@@ -286,7 +289,7 @@ abstract class DeclarationComponent extends Component
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when approving a declaration');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+            Session::flash('error', __('validation.custom.connection_exception'));
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -323,7 +326,7 @@ abstract class DeclarationComponent extends Component
      */
     public function sendFiles(): void
     {
-        if (!$this->ensureAbility('approve', 'У вас немає дозволу на створення заявки на подання декларації.')) {
+        if (!$this->ensureAbility('approve', __('declarations.policy.approve'))) {
             return;
         }
 
@@ -359,7 +362,7 @@ abstract class DeclarationComponent extends Component
                 }
             } catch (ConnectionException $exception) {
                 $this->logConnectionError($exception, 'Error while uploading document');
-                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+                Session::flash('error', __('validation.custom.connection_exception'));
             }
         }
 
@@ -372,7 +375,7 @@ abstract class DeclarationComponent extends Component
                     $exception,
                     'Error connecting when approving a declaration request after sending files'
                 );
-                Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+                Session::flash('error', __('validation.custom.connection_exception'));
 
                 return;
             } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -406,7 +409,7 @@ abstract class DeclarationComponent extends Component
             $response = EHealth::declarationRequest()->resendAuthOtp($this->declarationRequestUuid);
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when resending sms to person');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+            Session::flash('error', __('validation.custom.connection_exception'));
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -467,13 +470,14 @@ abstract class DeclarationComponent extends Component
      */
     public function sign(): void
     {
-        if (!$this->ensureAbility('sign', 'У вас немає дозволу на підписання заявки на подання декларації.')) {
+        if (!$this->ensureAbility('sign', __('declarations.policy.sign'))) {
             return;
         }
 
         try {
-            $validated = $this->form->validate($this->form->rulesForSigning());
+            $validated = $this->form->validate($this->form->signingRules());
         } catch (ValidationException $exception) {
+            $this->setErrorBag($exception->validator->getMessageBag());
             Session::flash('error', $exception->validator->errors()->first());
 
             return;
@@ -482,18 +486,35 @@ abstract class DeclarationComponent extends Component
         $dataToSign = $this->dataToBeSigned;
         $dataToSign['person']['patient_signed'] = $this->isSigned;
 
-        $signedContent = signatureService()->signData(
-            $dataToSign,
-            $validated['password'],
-            $validated['knedp'],
-            $validated['keyContainerUpload'],
-            Auth::user()->party->taxId
-        );
+        try {
+            $signedContent = new CipherRequest()->signData(
+                $dataToSign,
+                $validated['knedp'],
+                $validated['keyContainerUpload'],
+                $validated['password'],
+                Auth::user()->party->taxId
+            );
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting to Cipher when signing data');
+            Session::flash('error', __('validation.custom.connection_exception'));
+
+            return;
+        } catch (CipherApiException $exception) {
+            $this->logCipherError($exception, 'Cipher API error when signing data');
+            Session::flash('error', $exception->getMessage());
+
+            return;
+        } catch (JsonException $exception) {
+            $this->logDatabaseErrors($exception, 'JSON encoding error when signing data');
+            Session::flash('error', 'Помилка обробки даних. Зверніться до адміністратора.');
+
+            return;
+        }
 
         try {
             $response = EHealth::declarationRequest()->sign(
                 $this->declarationRequestUuid,
-                ['signed_declaration_request' => $signedContent]
+                ['signed_declaration_request' => $signedContent->getBase64Data()]
             );
 
             if ($response->getStatusCode() === 200) {
@@ -514,7 +535,7 @@ abstract class DeclarationComponent extends Component
             }
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when signing declaration request');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+            Session::flash('error', __('validation.custom.connection_exception'));
 
             return;
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -532,8 +553,8 @@ abstract class DeclarationComponent extends Component
 
     protected function setEmployeesInfo(): void
     {
-        $employees = Auth::user()?->employees()
-            ->where('legal_entity_id', legalEntity()->id)
+        $employees = Auth::user()->employees()
+            ->filterByLegalEntityId(legalEntity()->id)
             ->whereNotNull('division_id')
             ->whereHas('specialities', fn (Builder $query) => $query->where('speciality_officio', true))
             ->with([
@@ -566,7 +587,7 @@ abstract class DeclarationComponent extends Component
             return EHealth::person()->getAuthMethods($this->patientUuid)->getData();
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting when getting auth methods');
-            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+            Session::flash('error', __('validation.custom.connection_exception'));
 
             return [];
         } catch (EHealthValidationException|EHealthResponseException $exception) {
@@ -586,7 +607,7 @@ abstract class DeclarationComponent extends Component
      */
     protected function ensureAbility(string $ability, string $errorMessage): bool
     {
-        if (Auth::user()?->cannot($ability, DeclarationRequest::class)) {
+        if (Auth::user()->cannot($ability, DeclarationRequest::class)) {
             Session::flash('error', $errorMessage);
 
             return false;

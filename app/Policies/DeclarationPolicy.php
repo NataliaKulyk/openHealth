@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\User\Role;
 use App\Models\Declaration;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -31,7 +32,7 @@ class DeclarationPolicy
             return Response::denyWithStatus(404);
         }
 
-        if ($user->hasRole('OWNER') && $declaration->legalEntityId === legalEntity()->id) {
+        if ($user->hasRole(Role::OWNER) && $declaration->legalEntityId === legalEntity()->id) {
             return Response::allow();
         }
 

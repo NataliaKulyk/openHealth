@@ -10,6 +10,7 @@ use App\Classes\eHealth\Exceptions\ApiException as eHealthApiException;
 use App\Classes\Cipher\Traits\Cipher;
 use App\Classes\eHealth\Api\PatientApi;
 use App\Classes\eHealth\Api\ServiceRequestApi;
+use App\Enums\User\Role;
 use App\Livewire\Encounter\Forms\Api\EncounterRequestApi;
 use App\Models\Division;
 use App\Models\Employee\Employee;
@@ -36,6 +37,7 @@ class EncounterComponent extends Component
 
     /**
      * ID of the patient for which create an encounter.
+     *
      * @var int
      */
     #[Locked]
@@ -43,138 +45,161 @@ class EncounterComponent extends Component
 
     /**
      * Patient full name.
+     *
      * @var string
      */
     public string $patientFullName;
 
     /**
      * List of authorized user's divisions.
+     *
      * @var array
      */
     public array $divisions;
 
     /**
      * List of existing patient episodes.
+     *
      * @var array
      */
     public array $episodes = [];
 
     /**
      * List of existing patient clinical impressions.
+     *
      * @var array
      */
     public array $clinicalImpressions = [];
 
     /**
      * List of existing patient encounters.
+     *
      * @var array
      */
     public array $encounters = [];
 
     /**
      * List of existing patient procedures.
+     *
      * @var array
      */
     public array $procedures = [];
 
     /**
      * List of existing patient diagnostic reports.
+     *
      * @var array
      */
     public array $diagnosticReports = [];
 
     /**
      * Episode type, new or existing.
+     *
      * @var string
      */
     public string $episodeType = 'new';
 
     /**
      * Full name of employee.
+     *
      * @var string
      */
     public string $employeeFullName;
 
     /**
      * KEP key.
+     *
      * @var object|null
      */
     public ?object $file = null;
 
     /**
      * Patient UUID for API requests.
+     *
      * @var string
      */
     public string $patientUuid;
 
     /**
      * Legal entity type of auth user.
+     *
      * @var string
      */
     protected string $legalEntityType;
 
     /**
      * Role of auth user.
+     *
      * @var string
      */
     protected string $role;
 
     /**
      * Found the ICD-10 code and description.
+     *
      * @var array
      */
     public array $results;
 
     /**
      * List of observation codes for categories.
+     *
      * @var array
      */
     public array $observationCodeMap;
 
     /**
      * List of observation values and type of data for specific categories.
+     *
      * @var array
      */
     public array $observationValueMap;
 
     /**
      * List of values for codeable concept.
+     *
      * @var array
      */
     public array $codeableConceptValues;
 
     /**
      * List of employees of current legal entity.
+     *
      * @var array
      */
     public array $employees;
 
     /**
      * List of founded conditions and observations.
+     *
      * @var array
      */
     public array $evidenceDetails = [];
 
     /**
      * List of founded conditions and observations.
+     *
      * @var array
      */
     public array $conditionsAndObservations = [];
 
     /**
      * List of founded complication details for current episode.
+     *
      * @var array
      */
     public array $complicationDetails;
 
     /**
      * List of founded problems for current episode.
+     *
      * @var array
      */
     public array $problems;
 
     /**
      * List of dictionary names.
+     *
      * @var array|string[]
      */
     protected array $dictionaryNames = [
@@ -323,7 +348,7 @@ class EncounterComponent extends Component
         }
 
         $employees = $authUser->employees()
-            ->whereEmployeeType('DOCTOR')
+            ->whereEmployeeType(Role::DOCTOR)
             ->select(['uuid', 'position', 'party_id'])
             ->with('party:id,last_name,first_name,second_name')
             ->whereLegalEntityId(legalEntity()->id)

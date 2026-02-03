@@ -1,5 +1,6 @@
 @use('App\Enums\Declaration\Status')
 @use('Carbon\CarbonImmutable')
+@use('\App\Enums\User\Role')
 
 <div>
     <livewire:components.x-message :key="now()->timestamp"/>
@@ -8,10 +9,9 @@
         <x-slot name="title">{{ __('forms.declarations') }}</x-slot>
 
         <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
-            <button
-                :key="sync-button"
-                wire:click="{{ !$this->isSync ? 'sync' : '' }}"
-                class="{{ $this->isSync ? 'button-sync-disabled' : 'button-sync' }} flex items-center gap-2 whitespace-nowrap"
+            <button :key="sync-button"
+                    wire:click="{{ !$this->isSync ? 'sync' : '' }}"
+                    class="{{ $this->isSync ? 'button-sync-disabled' : 'button-sync' }} flex items-center gap-2 whitespace-nowrap"
                 {{ $this->isSync ? 'disabled' : '' }}
             >
                 @icon('refresh', 'w-4 h-4')
@@ -61,7 +61,7 @@
 
                     {{-- Show additional filters --}}
                     <div x-show="showFilter" x-cloak x-transition class="mt-8" x-data="{ openType: false }">
-                        @if(Auth::user()->hasRole('OWNER'))
+                        @if(Auth::user()->hasRole(Role::OWNER))
                             @include('livewire.declaration.parts.owner-filters')
                         @else
                             @include('livewire.declaration.parts.basic-filters')

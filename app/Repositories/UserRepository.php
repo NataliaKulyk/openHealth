@@ -4,49 +4,13 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use App\Models\Division;
+use App\Enums\User\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class UserRepository
 {
-    /**
-     * @param $party
-     * @param $role
-     * @return User|null
-     */
-    public function createIfNotExist($party, $role): User|null
-    {
-        if (empty($party['email'])) {
-            return null;
-        }
-
-        // Create User if not exists
-        $user = User::firstOrCreate(
-            [
-                'email' => $party['email']
-            ],
-            [
-                'password' => Hash::make(Str::random(8))
-            ]
-        );
-
-        // Set Role     //TODO: need more examine is this need for all user creation cases...
-        auth()->shouldUse('web');
-
-        $user->assignRole($role);
-
-        auth()->shouldUse('ehealth');
-        $user->assignRole($role);
-
-        $user->save();
-
-        return $user;
-    }
-
     /**
      * Get list of users that:
      * 1) have permission 'division:write'
@@ -60,8 +24,8 @@ class UserRepository
     {
         return User::permission('division:write')
             ->whereHas('employees', static function (Builder $query) use ($divisionId) {
-                $query->where('division_id', $divisionId)
-                    ->where('legal_entity_id', legalEntity()->id);
+                $query->whereDivisionId($divisionId)
+                    ->whereLegalEntityId(legalEntity()->id);
             })
             ->get();
     }
@@ -73,10 +37,8 @@ class UserRepository
      */
     public function getLegalEntityOwners(): Collection
     {
-        return User::role('OWNER')
-            ->whereHas('employees', static function (Builder $query) {
-                $query->where('legal_entity_id', legalEntity()->id);
-            })
+        return User::role(Role::OWNER)
+            ->whereHas('employees', static fn (Builder $query) => $query->whereLegalEntityId(legalEntity()->id))
             ->get();
     }
 }

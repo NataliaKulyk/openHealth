@@ -54,7 +54,7 @@ class CipherResponse
         return $this->response->json('signature.certificateInfo.extensionsCertificateInfo.value.personalData.value.drfou.value');
     }
 
-    public function getBase64Data(): ?string
+    public function getBase64Data(): string
     {
         return $this->response->json('base64Data');
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Enums\User\Role;
 use Throwable;
 use App\Enums\JobStatus;
 use App\Jobs\EmployeeSync;
@@ -40,7 +41,7 @@ class FirstLoginOwnerSynchronization implements ShouldQueue
 
         $event->user->load('roles', 'permissions', 'party');
 
-        if (!$event->isFirstLogin || !$event->user->hasRole('OWNER')) {
+        if (!$event->isFirstLogin || !$event->user->hasRole(Role::OWNER)) {
             return;
         }
 
@@ -101,8 +102,8 @@ class FirstLoginOwnerSynchronization implements ShouldQueue
     /**
      * Handle a job failure.
      *
-     * @param EHealthUserLogin $event
-     * @param Throwable $exception
+     * @param  EHealthUserLogin  $event
+     * @param  Throwable  $exception
      * @return void
      */
     public function failed(EHealthUserLogin $event, Throwable $exception): void
