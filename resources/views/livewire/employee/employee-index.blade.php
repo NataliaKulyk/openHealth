@@ -1,5 +1,7 @@
 <div>
     @php
+        use App\Enums\User\Role;
+
         $currentUser = auth()->user();
         // We cache the hospital ID so as not to call the legalEntity() function 100 times in a loop
         $currentLegalEntityId = legalEntity()->id;
@@ -52,7 +54,7 @@
                                                 <path stroke="currentColor" stroke-linecap="round"
                                                       stroke-linejoin="round"
                                                       stroke-width="2"
-                                                      d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                                                      d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                                             </svg>
                                             <span>{{ __('forms.employee_search') }}</span>
                                         </label>
@@ -64,7 +66,7 @@
                                                    placeholder=" "
                                                    class="input peer"
                                                    wire:model.defer="search"
-                                                   autocomplete="off"/>
+                                                   autocomplete="off" />
                                             <label for="employee_search" class="label">ПІБ</label>
                                         </div>
                                     </x-slot>
@@ -85,13 +87,13 @@
                                            wire:keydown.enter="applyFilters"
                                            type="tel" placeholder=" "
                                            class="peer input pl-10 with-leading-icon text-gray-500"
-                                           x-mask="+380999999999" id="filter_phone"/>
+                                           x-mask="+380999999999" id="filter_phone" />
                                     <label for="filter_phone" class="label pl-10">{{ __('forms.phone') }}</label>
                                 </div>
                                 <div class="form-group group">
                                     <input wire:model.defer="filter.email" wire:keydown.enter="applyFilters"
                                            name="filter_email" id="filter_email" class="input peer" placeholder=" "
-                                           autocomplete="off"/>
+                                           autocomplete="off" />
                                     <label for="filter_email" class="label">Email</label>
                                 </div>
                             </div>
@@ -176,14 +178,14 @@
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
                                                         <input type="checkbox" value="APPROVED" wire:model="status"
-                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"/>
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                         <span>{{ __('forms.active') }}</span>
                                                     </label>
                                                 </li>
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
                                                         <input type="checkbox" value="NEW" wire:model="status"
-                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"/>
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                         <span>{{ __('forms.draft') }}</span>
                                                     </label>
                                                 </li>
@@ -191,7 +193,7 @@
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
                                                         <input type="checkbox" value="SIGNED" wire:model="status"
-                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"/>
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                         <span>{{ __('forms.status.sent') }}</span>
                                                     </label>
                                                 </li>
@@ -199,7 +201,7 @@
                                                 <li>
                                                     <label class="flex items-center space-x-2 cursor-pointer">
                                                         <input type="checkbox" value="DISMISSED" wire:model="status"
-                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent"/>
+                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent" />
                                                         <span>{{ __('forms.dismissed') }}</span>
                                                     </label>
                                                 </li>
@@ -293,7 +295,7 @@
                                              xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                              viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round"
                                                                        stroke-linejoin="round" stroke-width="2"
-                                                                       d="M18.427 14.768 17.2 13.542a1.733 1.733 0 0 0-2.45 0l-.613.613a1.732 1.732 0 0 1-2.45 0l-1.838-1.84a1.735 1.735 0 0 1 0-2.452l.612-.613a1.735 1.735 0 0 0 0-2.452L9.237 5.572a1.6 1.6 0 0 0-2.45 0c-3.223 3.2-1.702 6.896 1.519 10.117 3.22 3.221 6.914 4.745 10.12 1.535a1.601 1.601 0 0 0 0-2.456Z"/></svg>
+                                                                       d="M18.427 14.768 17.2 13.542a1.733 1.733 0 0 0-2.45 0l-.613.613a1.732 1.732 0 0 1-2.45 0l-1.838-1.84a1.735 1.735 0 0 1 0-2.452l.612-.613a1.735 1.735 0 0 0 0-2.452L9.237 5.572a1.6 1.6 0 0 0-2.45 0c-3.223 3.2-1.702 6.896 1.519 10.117 3.22 3.221 6.914 4.745 10.12 1.535a1.601 1.601 0 0 0 0-2.456Z" /></svg>
                                         <a href="tel:{{ $mobilePhone->number }}" class="truncate hover:underline"
                                            title="{{ $mobilePhone->number }}">{{ $mobilePhone->number }}</a>
                                     </span>
@@ -313,7 +315,7 @@
                                              xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                              viewBox="0 0 24 24">
                                             <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
-                                                  d="m3.5 5.5 7.893 6.036a1 1 0 0 0 1.214 0L20.5 5.5M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
+                                                  d="m3.5 5.5 7.893 6.036a1 1 0 0 0 1.214 0L20.5 5.5M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z" />
                                         </svg>
                                         <a href="mailto:{{ $visibleEmail }}" class="hover:underline truncate"
                                            title="{{ $visibleEmail }}">{{ $visibleEmail }}</a>
@@ -351,7 +353,7 @@
                                         // Find the last active employee of this person to check the rights
                                         $latestEmployee = $party->employees->first(); // or through the method by which you get a topical position
 
-                                        $isOwner = $latestEmployee && $latestEmployee->employeeType === 'OWNER';
+                                        $isOwner = $latestEmployee && $latestEmployee->employeeType === Role::OWNER->value;
                                         $hasUserLinked = $latestEmployee && !empty($latestEmployee->userId);
 
                                         // We check the possibility of editing personal data according to your rules:
@@ -373,13 +375,13 @@
 
                                         {{-- Add position button (if you want to restrict for owners too) --}}
 
-                                            <a href="{{ route('employee-request.position-add', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
-                                               class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                                <span class="text-xl leading-none">+</span>
-                                                <span>{{ __('forms.add_position') }}</span>
-                                            </a>
-                                        @endif
-                                    @endcan
+                                        <a href="{{ route('employee-request.position-add', ['legalEntity' => $currentLegalEntityId, 'party' => $party->id]) }}"
+                                           class="item-add text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                            <span class="text-xl leading-none">+</span>
+                                            <span>{{ __('forms.add_position') }}</span>
+                                        </a>
+                                    @endif
+                                @endcan
                             </div>
                         </div>
 
@@ -394,8 +396,9 @@
                                         <th scope="col" class="th-input w-[24%]">{{ __('forms.email') }}</th>
                                         <th scope="col" class="th-input w-[10%]">{{ __('forms.status.label') }}</th>
                                         @if($hasAnyActionInTable)
-                                            <th scope="col"
-                                                class="th-input w-[7%] text-center">{{ __('forms.actions') }}</th>
+                                            <th scope="col" class="th-input w-[7%] text-center">
+                                                {{ __('forms.actions') }}
+                                            </th>
                                         @endif
                                     </tr>
                                     </thead>

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\Status;
+use App\Enums\User\Role;
 use App\Enums\JobStatus;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
 use App\Models\Employee\Employee;
-use Illuminate\Support\Collection;
 use App\Casts\LegalEntityArchiveCast;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee\EmployeeRequest;
@@ -141,26 +140,14 @@ class LegalEntity extends Model
         return $this->belongsTo(LegalEntityType::class, 'legal_entity_type_id');
     }
 
-    // Get Legal Entity UUID
-    public function getUuid(): string
-    {
-        return $this->uuid;
-    }
-
-    public function getClientId(): ?string
-    {
-        return $this->client_id;
-    }
-
-    // Get Owner Legal Entity
+    /**
+     * Get Owner Legal Entity
+     *
+     * @return object|null
+     */
     public function getOwner(): ?object
     {
-        return $this->employees()->where('employee_type', 'OWNER')->first();
-    }
-
-    public function getActiveDivisions(): Collection
-    {
-        return $this->divisions()->has('healthcareServices')->where('status', Status::ACTIVE)->get();
+        return $this->employees()->whereEmployeeType(Role::OWNER)->first();
     }
 
     public function healthcareServices(): HasMany
@@ -232,7 +219,7 @@ class LegalEntity extends Model
     /**
      * Get the status of a legal entity's sync process based on entity type.
      *
-     * @param  string  $entityType  The type of legal entity's entity sync process to check
+     * @param  string|null  $entityType  The type of legal entity's entity sync process to check
      * @return string|null The status of the sync process of entity or null if not found
      */
     public function getEntityStatus(?string $entityType = ''): ?string

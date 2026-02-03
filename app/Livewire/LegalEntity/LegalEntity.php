@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\LegalEntity;
 
+use App\Enums\User\Role;
 use Log;
 use Arr;
 use Exception;
@@ -926,15 +927,15 @@ abstract class LegalEntity extends Component
             return null;
         }
 
-        auth()->shouldUse('web');
+        Auth::shouldUse('web');
 
         // Assign the 'OWNER' role to the user authenticated via web guard
-        $owner->assignRole('OWNER');
+        $owner->assignRole(Role::OWNER);
 
-        auth()->shouldUse('ehealth');
+        Auth::shouldUse('ehealth');
 
         // Assign the 'OWNER' role to the user authenticated via ehealth guard
-        $owner->assignRole('OWNER');
+        $owner->assignRole(Role::OWNER);
 
         // Send credentials and email verification link
         event(new LegalEntityCreate($authenticatedUser, $owner, $password));

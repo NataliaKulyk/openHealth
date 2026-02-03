@@ -62,7 +62,7 @@ class Employee extends BaseEmployee
     #[Scope]
     public function doctor(Builder $query): Builder
     {
-        return $query->whereEmployeeType('DOCTOR');
+        return $query->whereEmployeeType(Role::DOCTOR);
     }
 
     #[Scope]

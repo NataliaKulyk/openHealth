@@ -6,6 +6,7 @@ namespace App\Livewire\Declaration\Forms;
 
 use App\Core\BaseForm;
 use App\Enums\Declaration\Status;
+use App\Enums\User\Role;
 use App\Models\Declaration;
 use App\Models\Employee\Employee;
 use App\Models\Person\Person;
@@ -48,7 +49,7 @@ class DeclarationForm extends BaseForm
                 'required',
                 'uuid',
                 Rule::exists('employees', 'uuid')
-                    ->where(fn (QueryBuilder $query) => $query->where('employee_type', 'DOCTOR')),
+                    ->where(fn (QueryBuilder $query) => $query->where('employee_type', Role::DOCTOR)),
                 // Match with age and doctor speciality
                 $this->validateDoctorSpecialityForPatientAge()
             ],

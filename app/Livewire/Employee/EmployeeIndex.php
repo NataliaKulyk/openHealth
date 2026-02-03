@@ -8,6 +8,7 @@ use AllowDynamicProperties;
 use App\Classes\eHealth\EHealth;
 use App\Enums\JobStatus;
 use App\Enums\Status;
+use App\Enums\User\Role;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Jobs\EmployeeSync;
 use App\Models\Employee\Employee;
@@ -72,10 +73,10 @@ class EmployeeIndex extends EmployeeComponent
 
     private LegalEntity $legalEntity;
 
-   #[Computed]
+    #[Computed]
     public function isSync(): bool
     {
-       return $this->isSyncProcessing();
+        return $this->isSyncProcessing();
     }
 
     /**
@@ -233,7 +234,7 @@ class EmployeeIndex extends EmployeeComponent
             // Checks both the property/accessor and the position code
             $type = $employee->employeeType ?? $employee->employee_type ?? '';
 
-            $this->isDoctorToDeactivate = ($type === 'DOCTOR');
+            $this->isDoctorToDeactivate = ($type === Role::DOCTOR->value);
         }
 
         $this->showDeactivateModal = true;
@@ -254,12 +255,13 @@ class EmployeeIndex extends EmployeeComponent
 
     public function deactivate(): void
     {
-       // 1. Get the ID (must match the name in showModalDeactivate)
+        // 1. Get the ID (must match the name in showModalDeactivate)
         $employee = Employee::find($this->employeeIdToDeactivate);
 
         if (!$employee) {
             // If the employee is not found, just close and clean
             $this->resetDeactivateState();
+
             return;
         }
 

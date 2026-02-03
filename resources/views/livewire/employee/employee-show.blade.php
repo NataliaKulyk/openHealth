@@ -1,3 +1,5 @@
+@use('App\Enums\User\Role')
+
 <div>
     {{-- Header Navigation with shift-content class for alignment --}}
     <x-header-navigation class="breadcrumb-form shift-content">
@@ -37,7 +39,7 @@
             @include('livewire.employee.parts.position')
 
             {{-- Doctor-specific fields --}}
-            @if ($form->employeeType === 'DOCTOR')
+            @if ($form->employeeType === Role::DOCTOR->value)
                 <div class="space-y-8">
                     @include('livewire.employee.parts.education')
                     @include('livewire.employee.parts.specialities')
