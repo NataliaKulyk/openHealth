@@ -3,6 +3,8 @@
               isIncapacitated: $wire.entangle('isIncapacitated'),
               showLegalRepDrawer: false,
               showDocumentDrawer: false,
+              showAuthDrawer: false,
+              showSignatureDrawer: false,
               selectedPatient: null,
               documentsRelationship: $wire.entangle('form.person.confidantPerson.documentsRelationship'),
               documentTypes: @js($this->dictionaries['DOCUMENT_RELATIONSHIP_TYPE']),
@@ -14,6 +16,8 @@
                   issuedAt: '',
                   expiryDate: ''
               },
+              verificationCode: '',
+              timer: 60,
               isEditing: false,
               editingIndex: null,
               isEditingLegalRep: false,
@@ -46,7 +50,7 @@
               editDocument(index) {
                   const doc = this.documentsRelationship[index];
                   this.newDocument.type = doc.type;
-                  this.newDocument.typeLabel = doc.type === 'birth_certificate' ? 'Свідоцтво про народження' : 'Довідка про опіку';
+                  this.newDocument.typeLabel = doc.type;
                   this.newDocument.number = doc.number;
                   this.newDocument.issuedBy = doc.issuedBy;
                   this.newDocument.issuedAt = doc.issuedAt;
@@ -98,20 +102,27 @@
     </legend>
 
     <div x-show="isIncapacitated" x-cloak x-transition>
-        <div class="mb-6" x-show="documentsRelationship.length > 0">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                {{ __('Законні представники') }}
-            </h3>
+        {{-- Legal Representatives Section --}}
+        <div class="mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {{ __('patients.legal_representatives') }}
+                </h3>
+                <button type="button" class="button-sync">
+                    @icon('refresh', 'w-4 h-4 mr-2')
+                    {{ __('patients.sync_legal_representatives') }}
+                </button>
+            </div>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto" x-show="documentsRelationship.length > 0">
                 <table class="table-input w-full">
                     <thead class="thead-input">
                     <tr>
                         <th scope="col" class="th-input">{{ __('forms.personal_data') }}</th>
                         <th scope="col" class="th-input">{{ __('forms.document') }}</th>
                         <th scope="col" class="th-input">{{ __('forms.phone') }}</th>
-                        <th scope="col" class="th-input">{{ __("Дата, до якої з'язок активний") }}</th>
-                        <th scope="col" class="th-input">{{ __("Документ підтвердження зв'язку") }}</th>
+                        <th scope="col" class="th-input">{{ __('patients.relationship_active_until') }}</th>
+                        <th scope="col" class="th-input">{{ __('patients.relationship_confirmation_document') }}</th>
                         <th scope="col" class="th-input text-center">{{ __('forms.action') }}</th>
                     </tr>
                     </thead>
@@ -140,10 +151,17 @@
                                 </td>
                                 <td class="td-input align-top">
                                     <div class="space-y-2">
-                                        <template x-for="(docRel, docIndex) in documentsRelationship" :key="'doc-' + docIndex">
-                                            <div class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
-                                                <div class="text-gray-900 dark:text-white font-medium" x-text="docRel.type === 'birth_certificate' ? '{{ __('patients.documents.birth_certificate') }}' : '{{ __('patients.documents.confidant_certificate') }}'"></div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400" x-text="docRel.number"></div>
+                                        <template x-for="(docRel, docIndex) in documentsRelationship"
+                                                  :key="'doc-' + docIndex"
+                                        >
+                                            <div
+                                                class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
+                                                <div class="text-gray-900 dark:text-white font-medium"
+                                                     x-text="documentTypes[docRel.type] || docRel.type"
+                                                ></div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400"
+                                                     x-text="docRel.number"
+                                                ></div>
                                             </div>
                                         </template>
                                     </div>
@@ -164,27 +182,40 @@
                                 </td>
                                 <td class="td-input align-top">
                                     <div class="space-y-2">
-                                        <template x-for="(doc, index) in documentsRelationship" :key="'active-' + index">
+                                        <template x-for="(doc, index) in documentsRelationship"
+                                                  :key="'active-' + index"
+                                        >
                                             <div class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
-                                                <div class="text-gray-900 dark:text-white" x-text="doc.activeTo || '-'"></div>
+                                                <div class="text-gray-900 dark:text-white"
+                                                     x-text="doc.activeTo || '-'"
+                                                ></div>
                                             </div>
                                         </template>
                                     </div>
                                 </td>
                                 <td class="td-input align-top">
                                     <div class="space-y-2">
-                                        <template x-for="(doc, index) in documentsRelationship" :key="'confirm-' + index">
-                                            <div class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
-                                                <div class="text-gray-900 dark:text-white" x-text="documentTypes[doc.type] || doc.type"></div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400" x-text="doc.number"></div>
+                                        <template x-for="(doc, index) in documentsRelationship"
+                                                  :key="'confirm-' + index"
+                                        >
+                                            <div
+                                                class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
+                                                <div class="text-gray-900 dark:text-white"
+                                                     x-text="documentTypes[doc.type] || doc.type"
+                                                ></div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400"
+                                                     x-text="doc.number"
+                                                ></div>
                                             </div>
                                         </template>
                                     </div>
                                 </td>
                                 <td class="td-input text-center align-top">
                                     <div class="space-y-2">
-                                        <template x-for="(doc, index) in documentsRelationship" :key="'action-' + index">
-                                            <div class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
+                                        <template x-for="(doc, index) in documentsRelationship"
+                                                  :key="'action-' + index">
+                                            <div
+                                                class="border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
                                                 <div class="relative"
                                                      x-data="{ openDropdown: false }"
                                                      @click.outside="openDropdown = false"
@@ -229,13 +260,96 @@
                     </tbody>
                 </table>
             </div>
+
+            @unless(($this instanceof \App\Livewire\Person\PersonCreate || $this instanceof \App\Livewire\Person\PersonRequestEdit) && !empty($selectedConfidantPersonId))
+                <button type="button" @click="showLegalRepDrawer = true" class="item-add my-5">
+                    {{ __('patients.add_legal_representative') }}
+                </button>
+            @endunless
+
+            <div class="flex justify-end mt-4">
+                <button type="button" class="button-minor flex items-center gap-2">
+                    @icon('delete', 'w-4 h-4')
+                    {{ __('patients.deactivate_relationship') }}
+                </button>
+            </div>
         </div>
 
-        @unless(($this instanceof \App\Livewire\Person\PersonCreate || $this instanceof \App\Livewire\Person\PersonRequestEdit) && !empty($selectedConfidantPersonId))
-            <button type="button" @click="showLegalRepDrawer = true" class="item-add my-5">
-                {{ __('patients.add_legal_representative') }}
-            </button>
-        @endunless
+        @if($this instanceof \App\Livewire\Person\PersonUpdate)
+            {{-- Requests Section --}}
+            <div class="mt-8">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        {{ __('patients.relationship_requests') }}
+                    </h3>
+                    <button type="button" class="button-sync">
+                        @icon('refresh', 'w-4 h-4 mr-2')
+                        {{ __('patients.sync_requests') }}
+                    </button>
+                </div>
+
+                <table class="table-input w-full">
+                    <thead class="thead-input">
+                    <tr>
+                        <th scope="col" class="th-input">ID</th>
+                        <th scope="col" class="th-input">{{ __('forms.status.label') }}</th>
+                        <th scope="col" class="th-input">{{ __('forms.action') }}</th>
+                        <th scope="col" class="th-input">{{ __('patients.channel') }}</th>
+                        <th scope="col" class="th-input text-center">{{ __('forms.action') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($relationshipRequests ?? [] as $index => $request)
+                        <tr>
+                            <td class="td-input text-sm text-gray-600 dark:text-gray-400">{{ $request['id'] ?? '-' }}</td>
+                            <td class="td-input">
+                                <span class="text-gray-700 dark:text-gray-300">{{ $request['status'] ?? '-' }}</span>
+                            </td>
+                            <td class="td-input text-gray-700 dark:text-gray-300">
+                                {{ ($request['action'] ?? '') === 'activate' ? __('patients.activate_relationship') : __('patients.deactivate_relationship') }}
+                            </td>
+                            <td class="td-input text-gray-700 dark:text-gray-300">{{ $request['channel'] ?? '-' }}</td>
+                            <td class="td-input text-center">
+                                <div class="relative"
+                                     x-data="{ openRequestDropdown: false }"
+                                     @click.outside="openRequestDropdown = false"
+                                >
+                                    <button @click="openRequestDropdown = !openRequestDropdown"
+                                            type="button"
+                                            class="cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-gray-200')
+                                    </button>
+
+                                    <div x-show="openRequestDropdown"
+                                         x-transition
+                                         x-cloak
+                                         class="absolute right-0 z-10 w-44 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
+                                    >
+                                        <div class="py-1">
+                                            <button type="button"
+                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
+                                                    @click="openRequestDropdown = false"
+                                            >
+                                                {{ __('patients.confirm_action') }}
+                                            </button>
+                                            <button type="button"
+                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400"
+                                                    @click="openRequestDropdown = false"
+                                            >
+                                                {{ __('patients.cancel_request') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
 
         @include('livewire.person.parts.drawers.add-confidant-person')
     </div>
