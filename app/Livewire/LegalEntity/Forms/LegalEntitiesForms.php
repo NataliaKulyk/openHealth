@@ -2,6 +2,7 @@
 
 namespace App\Livewire\LegalEntity\Forms;
 
+use Carbon\Carbon;
 use Livewire\Form;
 use App\Rules\Name;
 use App\Models\User;
@@ -83,7 +84,21 @@ class LegalEntitiesForms extends Form
             'owner.taxId' => ['required_unless:owner.noTaxId,true', 'string', new TaxId()],
             'owner.documents.type' => ['required','string', new InDictionary('DOCUMENT_TYPE')],
             'owner.documents.number' => ['required', 'string', new DocumentNumber($this->owner['documents']['type'] ?? '')],
-            'owner.documents.issuedAt' => ['nullable', new DateFormat(), 'before_or_equal:today'],
+            'owner.documents.issuedAt' => [
+                'nullable',
+                new DateFormat(),
+                'before_or_equal:today',
+                function ($attribute, $value, $fail) {
+                    $birthDate = Carbon::parse($this->owner['birthDate']);
+                    $issuedAt = Carbon::parse($value);
+
+                    if ($issuedAt->lt($birthDate)) {
+                        $fail(__('validation.attributes.errors.documentIssuedAtBirth'));
+                    } elseif ($issuedAt->lt($birthDate->copy()->addYears(14))) {
+                        $fail(__('validation.attributes.errors.documentIssuedAtAge'));
+                    }
+                }
+            ],
             'owner.phones' => 'required|array',
             'owner.phones.*.number' => ['required', 'string', new PhoneNumber()],
             'owner.phones.*.type' => [
