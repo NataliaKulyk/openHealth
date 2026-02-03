@@ -121,8 +121,7 @@
                     @error('form.person.gender') input-error @enderror"
                     required
             >
-                <option value="" selected>
-                    {{ __('forms.select') }} *</option>
+                <option value="" selected>{{ __('forms.select') }} *</option>
                 @foreach($this->dictionaries['GENDER'] as $key => $gender)
                     <option value="{{ $key }}">{{ $gender }}</option>
                 @endforeach

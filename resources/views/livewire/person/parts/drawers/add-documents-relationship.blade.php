@@ -35,20 +35,19 @@
         <div class="mt-4">
             <div class="form-row-3">
                 <div class="form-group group">
-                    <select name="documentType"
-                            id="documentType"
+                    <select name="documentRelationshipType"
+                            id="documentRelationshipType"
                             class="input-select peer"
                             x-model="newDocument.type"
                             @change="newDocument.typeLabel = $event.target.options[$event.target.selectedIndex].text"
                             required
                     >
-                        <option value="">{{ __('forms.select') }}</option>
-                        <option value="birth_certificate">{{ __('patients.documents.birth_certificate') }}</option>
-                        <option value="confidant_certificate">
-                            {{ __('patients.documents.confidant_certificate') }}
-                        </option>
+                        <option value="" selected>{{ __('forms.select') }}</option>
+                        @foreach($this->dictionaries['DOCUMENT_RELATIONSHIP_TYPE'] as $key => $document)
+                            <option value="{{ $key }}">{{ $document }}</option>
+                        @endforeach
                     </select>
-                    <label for="documentType" class="label">
+                    <label for="documentRelationshipType" class="label">
                         {{ __('forms.document_type') }}
                     </label>
                 </div>

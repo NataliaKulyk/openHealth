@@ -568,6 +568,10 @@ abstract class LegalEntity extends Component
         foreach ($dataItems as $item) {
             $itemValue = Arr::get($data, $item);
 
+            if (empty($itemValue)) {
+                continue;
+            }
+
             if (\is_array($itemValue)) {
                 $reformatted = collect($itemValue)->map(function($item) {
                     if (isset($item['date'])) {

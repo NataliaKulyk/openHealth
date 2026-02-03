@@ -117,12 +117,13 @@ return [
         'verification_not_needed' => 'Не потребує верифікації',
         'verified' => 'Верифіковано',
 
-        // Request statuses
+        // Statuses that related to person
         'draft' => 'Чернетка',
         'new' => 'Новий',
         'approved' => 'Підтверджений',
         'signed' => 'Підписаний',
         'cancelled' => 'Скасований',
+        'completed' => 'Завершений',
         'expired' => 'Прострочений',
         'rejected' => 'Відхилений'
     ],

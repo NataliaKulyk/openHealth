@@ -15,8 +15,8 @@
                 @include('livewire.person.parts.contact-data')
                 @include('livewire.person.parts.addresses')
                 @include('livewire.person.parts.emergency-contact')
+                @include('livewire.person.parts.incapacitated')
                 @if(!$this instanceof PersonUpdate)
-                    @include('livewire.person.parts.incapacitated')
                     @include('livewire.person.parts.authentication-methods')
                 @endif
 

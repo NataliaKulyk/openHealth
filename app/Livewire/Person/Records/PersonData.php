@@ -114,7 +114,7 @@ class PersonData extends BasePatientComponent
     public function getConfidantPersons(): void
     {
         try {
-            $response = EHealth::person()->getConfidantPersonRelationships($this->uuid, ['isExpired' => false]);
+            $response = EHealth::person()->getConfidantPersonRelationships($this->uuid, ['is_expired' => false]);
 
             $this->confidantPersonRelationships = $response->getData();
         } catch (ConnectionException $exception) {

@@ -26,7 +26,7 @@
             {{ __('patients.rnokpp_not_found') }}
         </label>
         <input x-model="noTaxId"
-               @change="handleNoTaxIdChange"
+               @change="handleNoTaxIdChange()"
                type="checkbox"
                name="noTaxId"
                id="noTaxId"

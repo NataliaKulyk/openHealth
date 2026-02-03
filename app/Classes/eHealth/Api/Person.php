@@ -115,6 +115,21 @@ class Person extends Request
     }
 
     /**
+     * Get list of active confidant person relationships.
+     *
+     * @param  string  $id
+     * @param  array{is_expired?: bool, page?: int, page_size?: int}  $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/get-confidant-person-relationships
+     */
+    public function getConfidantPersonRelationships(string $id, array $query = []): PromiseInterface|EHealthResponse
+    {
+        return $this->get(self::URL . "/$id/confidant_person_relationships", $query);
+    }
+
+    /**
      * Create new Confidant Person relationship request.
      *
      * @param  string  $id
@@ -129,18 +144,100 @@ class Person extends Request
     }
 
     /**
-     * Get list of active confidant person relationships.
+     * Deactivate new Confidant Person relationship request.
      *
      * @param  string  $id
-     * @param  array{id: string, is_expired?: string, page?: int, page_size?: int}  $query
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      *
-     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/get-confidant-person-relationships
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/deactivate-confidant-person-relationship-request
      */
-    public function getConfidantPersonRelationships(string $id, array $query = []): PromiseInterface|EHealthResponse
+    public function deactivateConfidantRelationship(string $id): PromiseInterface|EHealthResponse
     {
+        return $this->post(self::URL . "/$id/confidant_person_relationship_requests/deactivate");
+    }
+
+    /**
+     * Get list of previously created Confidant Person relationship requests.
+     *
+     * @param  string  $id
+     * @param  array{status?: \App\Enums\Person\ConfidantPersonRelationshipRequestStatus::class, page?: int, page_size?: int}  $query
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/get-confidant-person-relationship-requests-list
+     */
+    public function getConfidantPersonRelationshipRequestsList(
+        string $id,
+        array $query = []
+    ): PromiseInterface|EHealthResponse {
         return $this->get(self::URL . "/$id/confidant_person_relationships", $query);
+    }
+
+    /**
+     * Approve previously created Confidant Person relationship request (creation or deactivation).
+     *
+     * @param  string  $id  Person ID
+     * @param  string  $confidantPersonRelationshipRequestId  Confidant Person relationship request ID
+     * @param  array{verification_code?: int}  $data
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/approve-confidant-person-relationship-request
+     */
+    public function approveConfidantPersonRelationshipRequest(
+        string $id,
+        string $confidantPersonRelationshipRequestId,
+        array $data = []
+    ): PromiseInterface|EHealthResponse {
+        return $this->patch(
+            self::URL . "/$id/confidant_person_relationship_requests/$confidantPersonRelationshipRequestId/actions/approve",
+            $data ?: (object)$data
+        );
+    }
+
+    /**
+     * Sign previously created Confidant Person relationship request.
+     *
+     * @param  string  $id  Person ID
+     * @param  string  $confidantPersonRelationshipRequestId  Confidant Person relationship request ID
+     * @param  array  $data
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/sign-confidant-person-relationship-request
+     */
+    public function signConfidantPersonRelationshipRequest(
+        string $id,
+        string $confidantPersonRelationshipRequestId,
+        array $data = []
+    ): PromiseInterface|EHealthResponse {
+        return $this->patch(
+            self::URL . "/$id/confidant_person_relationship_requests/$confidantPersonRelationshipRequestId/actions/sign",
+            $data
+        );
+    }
+
+    /**
+     * Re-send SMS to confidant.
+     *
+     * @param  string  $id  Person ID
+     * @param  string  $confidantPersonRelationshipRequestId
+     * @param  array  $data
+     * @return PromiseInterface|EHealthResponse
+     * @throws ConnectionException|EHealthValidationException|EHealthResponseException
+     *
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/persons/resend-authorization-otp-on-confidant-person-relationship
+     */
+    public function resendAuthOtpOnConfidantPersonRelationship(
+        string $id,
+        string $confidantPersonRelationshipRequestId,
+        array $data = []
+    ): PromiseInterface|EHealthResponse {
+        return $this->post(
+            self::URL . "/$id/confidant_person_relationship_requests/$confidantPersonRelationshipRequestId/actions/resend_otp",
+            $data
+        );
     }
 
     /**
