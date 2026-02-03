@@ -113,13 +113,8 @@ class PersonUpdate extends PersonComponent
                 'documents',
                 'phones',
                 'authenticationMethods',
-<<<<<<< i59_use_new_cipher_class
-                'confidantPerson.person:id,uuid,last_name,first_name,second_name,tax_id,unzr',
-                'confidantPerson.person.documents'
-=======
                 'confidantPerson.person:id,uuid,gender,last_name,first_name,second_name,tax_id,unzr',
                 'confidantPerson.documentsRelationship'
->>>>>>> dev
             ])->toArray()
         );
 
