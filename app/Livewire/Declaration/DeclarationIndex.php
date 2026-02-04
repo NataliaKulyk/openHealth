@@ -7,7 +7,9 @@ namespace App\Livewire\Declaration;
 use App\Enums\User\Role;
 use Throwable;
 use Exception;
+use App\Models\User;
 use Livewire\Component;
+use App\Enums\JobStatus;
 use Illuminate\View\View;
 use Illuminate\Bus\Batch;
 use App\Traits\FormTrait;
@@ -19,7 +21,6 @@ use App\Jobs\DeclarationsSync;
 use App\Repositories\Repository;
 use App\Classes\eHealth\EHealth;
 use App\Enums\Declaration\Status;
-use App\Enums\JobStatus;
 use App\Models\Employee\Employee;
 use Livewire\Attributes\Computed;
 use App\Models\DeclarationRequest;
@@ -44,8 +45,9 @@ class DeclarationIndex extends Component
     use WithPagination;
     use FormTrait;
 
-    protected const string BATCH_NAME = 'Declarations Full Sync';
-    protected const string SUB_BATCH_NAME = 'DeclarationRequests Full Sync';
+    protected const string BATCH_NAME = 'DeclarationsSync';
+    protected const string SUB_BATCH_NAME = 'DeclarationDetailsSync';
+    protected const string DEPENDENT_BATCH_NAME = 'DeclarationRequestDetailsSync';
 
     /**
      * Search by patient first and last names.
@@ -54,6 +56,11 @@ class DeclarationIndex extends Component
      */
     public string $searchByName = '';
 
+    /**
+     * Represents the current synchronization status for the component.
+     *
+     * @var string
+     */
     public string $syncStatus = '';
 
     /**
@@ -133,29 +140,39 @@ class DeclarationIndex extends Component
         // Get the sync status for whole Legal Entity
         $legalEntitySyncStatus = legalEntity()?->getEntityStatus();
 
-        // Get the sync status for Declaration Requests
-        $declarationRequestStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_DECLARATION_REQUEST);
+        // Get the sync status only for Division
+        $divisionSyncStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_DIVISION);
+
+        // Get the sync status only for HealthCare Service
+        $healthCareServiceSyncStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_HEALTHCARE_SERVICE);
+
+        // Get the sync status only for HealthCare Service
+        $employeeSyncStatus = legalEntity()?->getEntityStatus(LegalEntity::ENTITY_EMPLOYEE);
 
         // Set the sync status only for Declaration
         $this->syncStatus = $this->getSyncStatus();
 
         // Determine if either the Legal Entity's sync is in progress
-        $legalEntitySync = $legalEntitySyncStatus !== JobStatus::COMPLETED->value && ($legalEntitySyncStatus !== JobStatus::PAUSED->value && !empty($legalEntitySyncStatus));
+        $legalEntitySync = $this->isEntitySyncIsInProgress($legalEntitySyncStatus, true);
 
-        // Determine if either the DeclarationRequest's sync is in progress (declarations depends on it)
-        $declarationRequestSync = $declarationRequestStatus !== JobStatus::COMPLETED->value &&
-            $declarationRequestStatus !== JobStatus::PAUSED->value &&
-            $declarationRequestStatus !== JobStatus::FAILED->value &&
-            !empty($declarationRequestStatus);
+        // Determine if either the Division's sync is in progress
+        $divisionSync = $divisionSyncStatus !== JobStatus::COMPLETED->value;
+
+        // Determine if either the HealthCare Service's sync is in progress
+        $healthCareServiceSync = $healthCareServiceSyncStatus !== JobStatus::COMPLETED->value;
+
+        // Determine if either the Employee's sync is in progress
+        $employeeSync = $employeeSyncStatus !== JobStatus::COMPLETED->value;
 
         // Determine if either the Declaration's sync is in progress
-        $declarationSync = $this->syncStatus !== JobStatus::COMPLETED->value &&
-            $this->syncStatus !== JobStatus::PAUSED->value &&
-            $this->syncStatus !== JobStatus::FAILED->value &&
-            !empty($this->syncStatus);
+        $declarationSync = $this->isEntitySyncIsInProgress($this->syncStatus);
 
         // Return true if either sync is in progress
-        return $legalEntitySync || $declarationSync || $declarationRequestSync;
+        return $legalEntitySync ||
+               $declarationSync ||
+               $divisionSync ||
+               $healthCareServiceSync ||
+               $employeeSync;
     }
 
     public function boot(): void
@@ -323,6 +340,18 @@ class DeclarationIndex extends Component
         $token = Session::get(config('ehealth.api.oauth.bearer_token'));
         $user->notify(new SyncNotification('declaration', 'started'));
 
+        // Try to resume previous sync if it was paused or failed
+        if ($this->syncStatus === JobStatus::PAUSED->value || $this->syncStatus === JobStatus::FAILED->value) {
+
+            $this->resumeSynchronization($user, $token);
+
+            Session::flash('success', __('Відновлення попередньої синхронізації розпочато'));
+
+            $user->notify(new SyncNotification('declaration', 'resumed'));
+
+            return;
+        }
+
         // Get declarations from eHealth filtered by legal entity
         $query = ['legal_entity_id' => $legalEntity->uuid];
 
@@ -414,18 +443,50 @@ class DeclarationIndex extends Component
                             'exception' => $err
                         ]);
 
-                        $user->notify(new DeclarationSyncCompleted($message, 'error'));
-                    })
-                    ->onQueue('sync')
-                    ->name(self::SUB_BATCH_NAME)
-                    ->dispatch();
+                    $user->notify(new DeclarationSyncCompleted($message, 'error'));
+                })
+                ->onQueue('sync')
+                ->name(self::DEPENDENT_BATCH_NAME)
+                ->dispatch();
+
+                legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_DECLARATION);
 
                 Session::flash('success', __('declarations.sync.started'));
             } else {
                 // If there were no declarations to sync, mark the status as completed
                 legalEntity()?->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_DECLARATION);
 
-                Session::flash('success');
+                session()->flash('success', __('declarations.sync.completed'));
+            }
+        }
+    }
+
+    /**
+     * Resume the synchronization process for a user with the provided token.
+     *
+     * This method handles the continuation of a previously initiated synchronization
+     * operation for a specific user using an authentication or session token.
+     *
+     * @param User $user The user instance for whom synchronization should be resumed
+     * @param string $token The authentication or session token used to resume the sync process
+     * @return void
+     */
+    protected function resumeSynchronization(User $user, string $token): void
+    {
+        $encryptedToken = Crypt::encryptString($token);
+
+        // Find all the EmployeeRequests failed batches for this legal entity and retry them
+        $failedBatches = $this->findFailedBatchesByLegalEntity(legalEntity()->id, 'ASC');
+
+        foreach ($failedBatches as $batch) {
+            if ($batch->name === self::BATCH_NAME || $batch->name === self::SUB_BATCH_NAME || $batch->name === self::DEPENDENT_BATCH_NAME) {
+                Log::info('Resuming Declaration sync batch: ' . $batch->name . ' id: ' . $batch->id);
+
+                legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_DECLARATION);
+
+                $this->restartBatch($batch, $user, $encryptedToken, legalEntity());
+
+                break;
             }
         }
     }

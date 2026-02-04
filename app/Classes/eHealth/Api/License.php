@@ -128,7 +128,7 @@ class License extends Request
     {
         return [
             'active_from_date' => 'required|date_format:Y-m-d',
-            'expiry_date' => 'required|date_format:Y-m-d',
+            'expiry_date' => 'nullable|date_format:Y-m-d',
             'uuid' => 'required|uuid',
             'is_active' => 'required|boolean',
             'is_primary' => 'required|boolean',

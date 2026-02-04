@@ -1,4 +1,5 @@
 @use('App\Enums\Status')
+@use('App\Enums\JobStatus')
 @use('App\Models\{HealthcareService, Division}')
 
 <div x-data="{
@@ -30,7 +31,7 @@
                 {{ $this->isSync ? 'disabled' : '' }}
             >
                 @icon('refresh', 'w-4 h-4')
-                <span>{{ __('forms.synchronise_with_eHealth') }}</span>
+                <span>{{ ($syncStatus === JobStatus::PAUSED->value || $syncStatus === JobStatus::FAILED->value) ? __('forms.sync_retry') : __('forms.synchronise_with_eHealth') }}</span>
             </button>
         </div>
     </x-header-navigation>

@@ -32,6 +32,28 @@ use App\Jobs\DeclarationRequestDetailsSync;
 trait BatchLegalEntityQueries
 {
     /**
+     * Check if the entity in the synchronization process right now.
+     * This determines if the entity synchronization status is valid for start/continue synchronization
+     * If returns true, synchronization cannot proceed; otherwise, it can be start/continue.
+     * If returns true the sync entity button's got the "disabled" state.
+     *
+     * @param string $entityStatus The synchronization status of the entity to check
+     *
+     * @return bool Returns true if the entity sync status is valid/successful for sync, false otherwise
+     */
+    protected function isEntitySyncIsInProgress(?string $entityStatus = null, bool $isLegalEntity = false): bool
+    {
+        return $isLegalEntity
+            ?  $entityStatus !== JobStatus::COMPLETED->value
+            :  (
+               $entityStatus !== JobStatus::COMPLETED->value &&
+               $entityStatus !== JobStatus::PAUSED->value &&
+               $entityStatus !== JobStatus::FAILED->value &&
+               !empty($entityStatus)
+            );
+    }
+
+    /**
      * Find all batches for a specific legal entity
      *
      * @param int $legalEntityId
