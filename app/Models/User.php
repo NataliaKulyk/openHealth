@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use BackedEnum;
 use Exception;
 use App\Enums\Status;
 use App\Enums\User\Role;
@@ -484,7 +485,16 @@ class User extends Authenticatable implements MustVerifyEmail
         // Normalize requested roles to names
         $requested = collect($roles)
             ->flatten()
-            ->map(fn ($role) => $role instanceof SpatieRole ? $role->name : (string) $role)
+            ->map(function ($role) {
+                if ($role instanceof SpatieRole) {
+                    return $role->name;
+                }
+                if ($role instanceof BackedEnum) {
+                    return $role->value;
+                }
+
+                return (string) $role;
+            })
             ->filter() // remove empty strings
             ->unique()
             ->values();
@@ -537,11 +547,11 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Determine if the model may perform the given permission.
      *
-     * @param  string|int|Permission|\BackedEnum  $permission
+     * @param  string|int|Permission|BackedEnum  $permission
      * @param  string|null  $guardName
      * @throws PermissionDoesNotExist
      */
-    public function hasPermissionTo(string|int|Permission|\BackedEnum $permission, ?string $guardName = null): bool
+    public function hasPermissionTo(string|int|Permission|BackedEnum $permission, ?string $guardName = null): bool
     {
         $guardName = $guardName ?: $this->getDefaultGuardName();
 
