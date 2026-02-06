@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\EmployeeRequest;
 
 use Auth;
+use Throwable;
 use App\Models\User;
 use App\Enums\JobStatus;
 use Illuminate\Bus\Batch;
@@ -214,7 +215,6 @@ class EmployeeRequestIndex extends EmployeeComponent
         try {
             // 1. Synchronous request for Page 1
             $response = EHealth::employeeRequest()->getMany(['edrpou' => legalEntity()->edrpou]); // Page 1 is default
-
         } catch (ConnectionException $e) {
             Log::error('Employee Request sync failed: No connection.', ['error' => $e->getMessage()]);
             $this->dispatch('flashMessage', ['message' => 'Немає зв\'язку з ЕСОЗ', 'type' => 'error']);
@@ -235,10 +235,12 @@ class EmployeeRequestIndex extends EmployeeComponent
         // 2. Process Page 1 immediately
         $validatedData = $response->validate();
         $processor->processBatch($validatedData, legalEntity());
+        // Store result for dispatched jobs
+        $batch = null;
 
         // 3. Check if there are more pages
         if ($response->isNotLast()) {
-            Bus::batch([
+            $batch = Bus::batch([
                 new EmployeeRequestsSyncAll(
                     legalEntity: $this->legalEntity,
                     page: 2,
@@ -264,7 +266,7 @@ class EmployeeRequestIndex extends EmployeeComponent
                 ->name(self::BATCH_NAME)
                 ->dispatch();
         } else {
-             Bus::batch($this->getEmployeeRequestDetailsStartJob($this->legalEntity, null))
+            $batch= Bus::batch($this->getEmployeeRequestDetailsStartJob($this->legalEntity, null))
                 ->withOption('legal_entity_id', $this->legalEntity->id)
                 ->withOption('token', Crypt::encryptString($token))
                 ->withOption('user', $user)
@@ -284,15 +286,21 @@ class EmployeeRequestIndex extends EmployeeComponent
                 ->dispatch();
         }
 
-        legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_EMPLOYEE_REQUEST);
+        if ($batch?->totalJobs > 0) {
+            legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_EMPLOYEE_REQUEST);
+
+            $message = __('Сторінка 1 оброблена. Решта завантажується фоново.');
+
+            // Force refresh of the table
+            $this->resetPage();
+        } else {
+            $message = __('Немає нових заявок для синхронізації');
+        }
 
         $this->dispatch('flashMessage', [
-            'message' => "Сторінка 1 оброблена. Решта завантажується фоново.",
+            'message' => $message,
             'type' => 'success'
         ]);
-
-        // Force refresh of the table
-        $this->resetPage();
     }
 
     /**
