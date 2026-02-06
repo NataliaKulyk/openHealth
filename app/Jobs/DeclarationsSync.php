@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Core\EHealthJob;
+use App\Enums\User\Role;
 use App\Models\LegalEntity;
 use App\Classes\eHealth\EHealth;
 use App\Repositories\Repository;
@@ -24,19 +27,18 @@ class DeclarationsSync extends EHealthJob
     /**
      * Get declarations data from EHealth API
      *
-     * @param string $token
-     *
+     * @param  string  $token
      * @return PromiseInterface|EHealthResponse
      */
     protected function sendRequest(string $token): PromiseInterface|EHealthResponse
     {
-        $query= ['page' => $this->page];
+        $query = ['page' => $this->page];
 
         // If user is doctor, get only his declarations
-        if ($this->user->hasRole('DOCTOR') && !$this->user->hasRole('OWNER')) {
+        if ($this->user->hasRole(Role::DOCTOR) && !$this->user->hasRole(Role::OWNER)) {
             $query['employee_id'] = $this->user
                 ->employees()
-                ->where('party_id', $this->user->party->id)
+                ->forParty($this->user->party->id)
                 ->first()->uuid;
         }
 
@@ -46,8 +48,7 @@ class DeclarationsSync extends EHealthJob
     /**
      * Store or update all the declarations data in the database
      *
-     * @param EHealthResponse|null $response
-     *
+     * @param  EHealthResponse|null  $response
      * @throws \Throwable
      */
     protected function processResponse(?EHealthResponse $response): void

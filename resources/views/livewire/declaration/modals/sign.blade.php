@@ -9,7 +9,8 @@
         >
             <div x-transition.opacity class="fixed inset-0 bg-black/30"></div>
             <div x-transition @click="showSignModal = false" class="modal-wrapper">
-                <div @click.stop x-trap.noscroll.inert="showSignModal"
+                <div @click.stop
+                     x-trap.noscroll.inert="showSignModal"
                      class="modal-content w-full max-w-4xl mx-auto"
                 >
                     <h2 class="mb-8 text-2xl font-semibold text-gray-900 dark:text-white text-center">
@@ -21,8 +22,7 @@
                         <button x-data
                                 @click="
                                     let printWindow = window.open('', '_blank');
-                                    printWindow.document.write($wire.printableContent);
-                                    printWindow.document.close();
+                                    printWindow.document.body.innerHTML = $wire.printableContent;
                                     printWindow.focus();
                                     printWindow.print();
                                 "

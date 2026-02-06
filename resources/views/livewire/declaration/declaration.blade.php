@@ -1,4 +1,5 @@
 @use('App\Models\DeclarationRequest')
+@use('App\Livewire\Declaration\DeclarationCreate')
 
 <section class="section-form">
     <x-header-navigation class="breadcrumb-form">
@@ -7,7 +8,7 @@
         </x-slot>
     </x-header-navigation>
 
-    <form class="form shift-content" wire:key="{{ time() }}">
+    <form class="form shift-content">
         @include('livewire.declaration.parts.main-information')
         @include('livewire.declaration.parts.authentication')
 
@@ -16,9 +17,11 @@
                 {{ __('forms.cancel') }}
             </a>
             @can('create', DeclarationRequest::class)
-                <button wire:click.prevent="createLocally" type="submit" class="button-primary-outline">
-                    {{ __('forms.create_locally') }}
-                </button>
+                @if($this instanceof DeclarationCreate)
+                    <button wire:click.prevent="createLocally" type="submit" class="button-primary-outline">
+                        {{ __('forms.create_locally') }}
+                    </button>
+                @endif
                 <button wire:click.prevent="create" type="submit" class="button-primary">
                     {{ __('declarations.create_an_application') }}
                 </button>
@@ -41,9 +44,7 @@
             @include('livewire.declaration.modals.sign')
         @endif
 
-        @if($showSignatureModal)
-            @include('livewire.declaration.modals.signature')
-        @endif
+        <x-signature-modal method="sign" />
     </form>
 
     <livewire:components.x-message :key="time()" />

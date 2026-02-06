@@ -9,6 +9,7 @@ use App\Jobs\EquipmentSync;
 use App\Jobs\HealthcareServiceSync;
 use App\Rules\TranslatedDateValidator;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
+use Fruitcake\LaravelDebugbar\ServiceProvider as DebugbarServiceProvider;
 use Illuminate\Bus\BatchRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
     {
         if ($this->app->isLocal()) {
             $this->app->register(IdeHelperServiceProvider::class);
+            $this->app->register(DebugbarServiceProvider::class);
         }
 
         /*

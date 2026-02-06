@@ -29,14 +29,13 @@ class DeclarationRequest extends Request
     /**
      * Create Declaration Request (as part of Declaration creation process) only for an existing person.
      *
-     * @param  string  $url
      * @param  array  $data
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function create(string $url = self::URL, array $data = []): PromiseInterface|EHealthResponse
+    public function create(array $data = []): PromiseInterface|EHealthResponse
     {
-        return $this->post($url, $data);
+        return $this->post(self::URL, $data);
     }
 
     /**

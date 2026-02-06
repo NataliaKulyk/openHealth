@@ -9,7 +9,8 @@
         >
             <div x-transition.opacity class="fixed inset-0 bg-black/30"></div>
             <div x-transition @click="showUploadingDocumentsModal = false" class="modal-wrapper">
-                <div @click.stop x-trap.noscroll.inert="showUploadingDocumentsModal"
+                <div @click.stop
+                     x-trap.noscroll.inert="showUploadingDocumentsModal"
                      class="modal-content w-full max-w-4xl mx-auto"
                 >
 
@@ -61,4 +62,3 @@
         </div>
     </template>
 </div>
-

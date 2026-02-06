@@ -36,9 +36,7 @@
                                 @endforeach
                             </select>
 
-                            <div wire:key="{{ time() }}">
-                                @error('form.knedp') <p class="text-error">{{ $message }}</p> @enderror
-                            </div>
+                            @error('form.knedp') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Key File --}}
@@ -60,9 +58,7 @@
                                 {{ __('general.loading') }}...
                             </div>
 
-                            <div wire:key="{{ time() }}">
-                                @error('form.keyContainerUpload') <p class="text-error">{{ $message }}</p> @enderror
-                            </div>
+                            @error('form.keyContainerUpload') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Password --}}
@@ -75,9 +71,7 @@
                                    name="password"
                             />
 
-                            <div wire:key="{{ time() }}">
-                                @error('form.password') <p class="text-error">{{ $message }}</p> @enderror
-                            </div>
+                            @error('form.password') <p class="text-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>

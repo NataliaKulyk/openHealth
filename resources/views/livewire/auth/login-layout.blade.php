@@ -1,5 +1,5 @@
 <div class="fragment">
-    <livewire:components.x-message :key="now()->timestamp"/>
+    <livewire:components.x-message :key="now()->timestamp" />
 
     <x-authentication-card>
 
@@ -51,7 +51,7 @@
                     <select wire:model="role" class="input-select peer">
                         <option value="" selected>{{ __('forms.select') }}</option>
                         @foreach($rolesList as $role)
-                            <option value="{{ $role }}">{{ __("auth.login.role.$role") }}</option>
+                            <option value="{{ $role }}">{{ __("users.role.$role") }}</option>
                         @endforeach
                     </select>
 
@@ -84,7 +84,7 @@
                            wire:navigate
                            class="hover:text-gray-700 text-gray-400 dark:text-gray-400"
                         >
-                            {{ __('forms.forgot_password') }}
+                            {{ __('auth.login.forgot_password') }}
                         </a>
                     @endif
                 </p>
@@ -92,5 +92,5 @@
         </form>
     </x-authentication-card>
 
-    <x-forms.loading/>
+    <x-forms.loading />
 </div>

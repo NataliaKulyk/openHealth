@@ -10,6 +10,7 @@ use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Enums\Employee\RequestStatus;
 use App\Enums\Employee\RevisionStatus;
+use App\Enums\User\Role;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Employee\BaseEmployee;
@@ -375,7 +376,7 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
         $isOwnerContext = false;
 
         // 1. If the OWNER type is selected right now
-        if ($this->form->employeeType === 'OWNER') {
+        if ($this->form->employeeType === Role::OWNER->value) {
             $isOwnerContext = true;
         }
         // 2. If not, check if there is already an active owner record in the database
@@ -385,7 +386,7 @@ abstract class AbstractEmployeeFormManager extends EmployeeComponent
             if ($partyId) {
                 // We use the Scope activeOwners, which we added to the Employee model
                 $isOwnerContext = Employee::query()
-                    ->where('party_id', $partyId)
+                    ->forParty($partyId)
                     ->activeOwners(legalEntity()->id)
                     ->exists();
             }

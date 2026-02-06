@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use App\Classes\Cipher\Exceptions\CipherApiException;
 use App\Classes\eHealth\EHealthResponse;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
@@ -259,5 +260,51 @@ trait FormTrait
             'exception_type' => get_class($exception),
             'error_message' => $exception->getDetails()
         ]);
+    }
+
+    /**
+     * Log validation and response error from Cipher.
+     *
+     * @param  CipherApiException  $exception
+     * @param  string  $message
+     * @return void
+     */
+    protected function logCipherError(CipherApiException $exception, string $message): void
+    {
+        Log::channel('api_errors')->error($message, [
+            'message' => $exception->response->json(['message']),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine()
+        ]);
+    }
+
+    /**
+     * Normalize date fields in an array (need for MySQL database)
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    protected function normalizeDate(array $data): array
+    {
+        return array_map(function ($item) {
+            if (isset($item['ehealth_inserted_at'])) {
+                $item['ehealth_inserted_at'] = convertToYmd($item['ehealth_inserted_at']);
+            }
+
+            if (isset($item['ehealth_updated_at'])) {
+                $item['ehealth_updated_at'] = convertToYmd($item['ehealth_updated_at']);
+            }
+
+            if (isset($item['end_date'])) {
+                $item['end_date'] = convertToYmd($item['end_date']);
+            }
+
+            if (isset($item['start_date'])) {
+                $item['start_date'] = convertToYmd($item['start_date']);
+            }
+
+            return $item;
+        }, $data);
     }
 }

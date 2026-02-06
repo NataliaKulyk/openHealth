@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\User\Role;
 use App\Models\User;
 use App\Models\LegalEntity;
 use Illuminate\Auth\Access\Response;
@@ -49,7 +50,7 @@ class LegalEntityPolicy
      */
     public function limitedAction(User $user): Response
     {
-        if ($user?->accessibleLegalEntities()->isEmpty()) {
+        if ($user->accessibleLegalEntities()->isEmpty()) {
             return Response::allow();
         }
 
@@ -60,12 +61,11 @@ class LegalEntityPolicy
      * Determine if the user can create a legal entities
      *
      * @param  User  $user
-     *
-     * @return true|Response
+     * @return Response
      */
     public function create(User $user): Response
     {
-        if ($user->hasAnyRole(['OWNER', 'ADMIN', 'HR'])) {
+        if ($user->hasAnyRole([Role::OWNER, Role::ADMIN, Role::HR])) {
             return Response::allow();
         }
 
@@ -79,7 +79,7 @@ class LegalEntityPolicy
             return Response::denyWithStatus(404);
         }
 
-        if ($user->hasRole(['OWNER']) && Auth::guard('ehealth')->check()) {
+        if ($user->hasRole([Role::OWNER]) && Auth::guard('ehealth')->check()) {
             return Response::allow();
         }
 
@@ -90,7 +90,6 @@ class LegalEntityPolicy
      * Determine if the user can sync data of a legal entities
      *
      * @param  User  $user
-     *
      * @return true|Response
      */
     public function sync(User $user, LegalEntity $legalEntity): true|Response
@@ -100,7 +99,7 @@ class LegalEntityPolicy
             return Response::denyWithStatus(404);
         }
 
-        if ($user->hasAnyRole(['OWNER', 'ADMIN', 'HR']) && Auth::guard('ehealth')->check()) {
+        if ($user->hasAnyRole([Role::OWNER, Role::ADMIN, Role::HR]) && Auth::guard('ehealth')->check()) {
             return Response::allow();
         }
 

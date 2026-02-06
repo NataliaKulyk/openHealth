@@ -17,9 +17,9 @@
         "spatie/laravel-permission": "^6.24.0"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.16.2",
         "barryvdh/laravel-ide-helper": "^3.6.1",
         "fakerphp/faker": "^1.24.1",
+        "fruitcake/laravel-debugbar": "^4.0.5",
         "laravel/pint": "^1.26.0",
         "laravel/sail": "^1.51.0",
         "mockery/mockery": "^1.6.12",
@@ -61,7 +61,8 @@
     "extra": {
         "laravel": {
             "dont-discover": [
-                "barryvdh/laravel-ide-helper"
+                "barryvdh/laravel-ide-helper",
+                "fruitcake/laravel-debugbar"
             ]
         }
     },

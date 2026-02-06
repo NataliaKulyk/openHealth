@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\Status;
+use App\Enums\User\Role;
 use App\Models\Employee\Employee;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -37,7 +38,7 @@ class EmployeePolicy
         }
 
         // 2. Prohibition of editing the owner of the establishment
-        if ($employee->employeeType === 'OWNER') {
+        if ($employee->employeeType === Role::OWNER->value) {
             return Response::deny(__('employees.policy.owner_no_edit'));
         }
 

@@ -7,7 +7,6 @@ namespace App\Livewire\LegalEntity;
 use Log;
 use Exception;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -58,6 +57,8 @@ class EditLegalEntity extends LegalEntity
         $this->getArchiveForm(); // Get the archive form data
         $this->getOwnerLegalEntity(); // Get the owner's legal entity data
         $this->getAccreditationForm(); // Get the accreditation form data status
+        $this->getBeneficiaryForm(); // Get the beneficiary form data status
+        $this->getReceiverFundsCodeForm(); // Get the receiver funds code form data status
     }
 
     /**
@@ -90,9 +91,8 @@ class EditLegalEntity extends LegalEntity
      */
     protected function getArchiveForm(): void
     {
-        // Extracting only 'date' and 'place' fields from the first element of the archive
+         // if the legal entity has an archive, the 'archivationShow' property is set to true
         if (!empty($this->legalEntityForm->archive)) {
-            // if the legal entity has an archive, the 'archivationShow' property is set to true
             $this->legalEntityForm->archivationShow = true;
         }
     }
@@ -107,6 +107,26 @@ class EditLegalEntity extends LegalEntity
     {
         if (!empty($this->legalEntityForm->accreditation) && $this->legalEntityForm->accreditation['category'] !== null) {
             $this->legalEntityForm->accreditationShow = true;
+        }
+    }
+
+    /**
+     * If the legal entity has an beneficiary, the 'beneficiaryShow' property is set to true
+     */
+    protected function getBeneficiaryForm(): void
+    {
+        if (!empty($this->legalEntityForm->beneficiary)) {
+            $this->legalEntityForm->beneficiaryShow = true;
+        }
+    }
+
+    /**
+     * If the legal entity has an beneficiary, the 'receiverFundsCodeShow' property is set to true
+     */
+    protected function getReceiverFundsCodeForm(): void
+    {
+        if (!empty($this->legalEntityForm->receiverFundsCode)) {
+            $this->legalEntityForm->receiverFundsCodeShow = true;
         }
     }
 

@@ -36,7 +36,7 @@
 
                   // Watch and sync filtered data to Livewire (strip 'working')
                   this.$watch('localAvailableTime', (value) => {
-                      const filtered = value.filter(item =>
+                      $wire.form.availableTime = value.filter(item =>
                           item.working &&
                           (item.availableStartTime || item.availableEndTime || item.allDay) &&
                           item.daysOfWeek && item.daysOfWeek.length > 0
@@ -51,8 +51,6 @@
 
                           return rest;
                       });
-
-                      $wire.form.availableTime = filtered;
                   }, { deep: true });
 
                   // sync

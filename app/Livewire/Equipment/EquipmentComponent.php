@@ -6,6 +6,7 @@ namespace App\Livewire\Equipment;
 
 use App\Classes\eHealth\EHealth;
 use App\Classes\eHealth\EHealthResponse;
+use App\Enums\User\Role;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\Equipment;
@@ -79,7 +80,7 @@ class EquipmentComponent extends Component
             ->toArray();
 
         // Skip check for verified party, if user has any of that role
-        $skip = Auth::user()->hasAnyRole(['OWNER', 'HR', 'ADMIN']);
+        $skip = Auth::user()->hasAnyRole([Role::OWNER, Role::HR, Role::ADMIN]);
 
         $recorderData = Auth::user()->employees()
             ->activeRecorders($legalEntity->id, $skip)

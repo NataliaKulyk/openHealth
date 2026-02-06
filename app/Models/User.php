@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use BackedEnum;
 use Exception;
 use App\Enums\Status;
+use App\Enums\User\Role;
 use InvalidArgumentException;
 use App\Models\Person\Person;
 use App\Models\Relations\Party;
@@ -238,7 +240,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getEncounterWriterEmployee(): ?Employee
     {
-        return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT', 'MED_COORDINATOR']);
+        return $this->getWriterEmployeeByRolePriority(Role::DOCTOR, Role::SPECIALIST, Role::ASSISTANT, Role::MED_COORDINATOR);
     }
 
     /**
@@ -248,7 +250,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getDiagnosticReportWriterEmployee(): ?Employee
     {
-        return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT', 'LABORANT']);
+        return $this->getWriterEmployeeByRolePriority(Role::DOCTOR, Role::SPECIALIST, Role::ASSISTANT, Role::LABORANT);
     }
 
     /**
@@ -258,7 +260,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getProcedureWriterEmployee(): ?Employee
     {
-        return $this->getWriterEmployeeByRolePriority(['DOCTOR', 'SPECIALIST', 'ASSISTANT']);
+        return $this->getWriterEmployeeByRolePriority(Role::DOCTOR, Role::SPECIALIST, Role::ASSISTANT);
     }
 
     /**
@@ -292,19 +294,20 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get employee by priority with specific write permission. Example: procedure:write.
      *
-     * @param  array  $priorityRoles  Ordered role from most valuable to least
+     * @param  Role  ...$priorityRoles  Ordered role from most valuable to least
      * @return Employee|null
      */
-    protected function getWriterEmployeeByRolePriority(array $priorityRoles): ?Employee
+    protected function getWriterEmployeeByRolePriority(Role ...$priorityRoles): ?Employee
     {
+        $roleValues = array_map(static fn (Role $role) => $role->value, $priorityRoles);
+
         $employees = $this->employees()
-            ->select(['id', 'uuid', 'party_id', 'employee_type'])
             ->with('party:id,first_name,last_name,second_name')
-            ->whereIn('employee_type', $priorityRoles)
-            ->get();
+            ->whereIn('employee_type', $roleValues)
+            ->get(['id', 'uuid', 'party_id', 'employee_type']);
 
         return $employees->sortBy(
-            fn (Employee $employee) => array_search($employee->employee_type, $priorityRoles, true)
+            fn (Employee $employee) => array_search($employee->employeeType, $roleValues, true)
         )->first();
     }
 
@@ -482,7 +485,16 @@ class User extends Authenticatable implements MustVerifyEmail
         // Normalize requested roles to names
         $requested = collect($roles)
             ->flatten()
-            ->map(fn ($role) => $role instanceof SpatieRole ? $role->name : (string) $role)
+            ->map(function ($role) {
+                if ($role instanceof SpatieRole) {
+                    return $role->name;
+                }
+                if ($role instanceof BackedEnum) {
+                    return $role->value;
+                }
+
+                return (string) $role;
+            })
             ->filter() // remove empty strings
             ->unique()
             ->values();
@@ -535,11 +547,11 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Determine if the model may perform the given permission.
      *
-     * @param  string|int|Permission|\BackedEnum  $permission
+     * @param  string|int|Permission|BackedEnum  $permission
      * @param  string|null  $guardName
      * @throws PermissionDoesNotExist
      */
-    public function hasPermissionTo(string|int|Permission|\BackedEnum $permission, ?string $guardName = null): bool
+    public function hasPermissionTo(string|int|Permission|BackedEnum $permission, ?string $guardName = null): bool
     {
         $guardName = $guardName ?: $this->getDefaultGuardName();
 

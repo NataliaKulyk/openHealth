@@ -1,3 +1,5 @@
+@use('App\Enums\JobStatus')
+
 <div>
     {{-- 1. DEFINE PERMISSIONS --}}
     @php
@@ -26,7 +28,7 @@
             >
                 <span wire:loading.remove wire:target="sync">@icon('refresh', 'w-4 h-4')</span>
                 <span wire:loading wire:target="sync" class="animate-spin">@icon('refresh', 'w-4 h-4')</span>
-                <span>{{ __('forms.sync_all') }}</span>
+                <span>{{ ($syncStatus === JobStatus::PAUSED->value || $syncStatus === JobStatus::FAILED->value) ? __('forms.sync_retry') : __('forms.sync_all') }}</span>
             </button>
         </div>
 

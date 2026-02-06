@@ -26,15 +26,21 @@ class DeclarationRequest extends Model
     ];
 
     #[Scope]
-    public function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
+    protected function filterByLegalEntityId(Builder $query, int $legalEntityId): Builder
     {
-        return $query->where('legal_entity_id', $legalEntityId);
+        return $query->whereLegalEntityId($legalEntityId);
     }
 
     #[Scope]
-    public function filterBySyncStatus(Builder $query, JobStatus $status): Builder
+    protected function filterBySyncStatus(Builder $query, JobStatus $status): Builder
     {
-        return $query->where('sync_status', $status);
+        return $query->whereSyncStatus($status);
+    }
+
+    #[Scope]
+    protected function forEmployees(Builder $query, array $employeeIds): Builder
+    {
+        return $query->whereIn('employee_id', $employeeIds);
     }
 
     public function person(): BelongsTo

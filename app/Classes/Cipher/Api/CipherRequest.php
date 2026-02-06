@@ -45,7 +45,7 @@ class CipherRequest extends PendingRequest
      * @param  string  $password
      * @param  string  $taxId
      * @param  string|null  $edrpou
-     * @return CipherResponse|PromiseInterface|null
+     * @return CipherResponse|PromiseInterface
      * @throws CipherApiException|ConnectionException|JsonException
      */
     public function signData(
@@ -55,7 +55,7 @@ class CipherRequest extends PendingRequest
         string $password,
         string $taxId,
         ?string $edrpou = null
-    ): null|CipherResponse|PromiseInterface {
+    ): CipherResponse|PromiseInterface {
         $ticketUuid = $this->createSession()->getTicketUuid();
 
         $this->loadSessionData($ticketUuid, base64_encode(json_encode($dataSignature, JSON_THROW_ON_ERROR)));
@@ -119,7 +119,7 @@ class CipherRequest extends PendingRequest
             return $cipherResponse;
         }
 
-        throw new CipherApiException('Cipher Api error: ', $response);
+        return $cipherResponse->throw();
     }
 
     /**

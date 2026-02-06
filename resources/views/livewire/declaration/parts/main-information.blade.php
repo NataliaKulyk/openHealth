@@ -37,6 +37,8 @@
                 <label for="employee" class="label">
                     {{ __('employees.doctor_full_name') }}
                 </label>
+
+                @error('form.employeeId') <p class="text-error">{{ $message }}</p> @enderror
             </div>
         </div>
     @else

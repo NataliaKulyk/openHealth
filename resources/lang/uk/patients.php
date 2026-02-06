@@ -140,8 +140,30 @@ return [
     'passport_data' => 'Паспортні дані',
     'confidant_person_not_exist' => 'Законний представник не був вказаний.',
     'add_legal_representative' => 'Додати законного представника',
+    'edit_legal_representative' => 'Редагувати законного представника',
     'age_insufficient_for_legal_representative' => 'Вік персони недостатній для набуття статусу законного представника',
+    'representative' => 'Представник',
+    'representative_description' => 'Після заповнення документа, додайте представника до запису пацієнта.',
+    'add_representative' => 'Додати представника',
     'authentication_methods' => 'Методи автентифікації',
+
+    // Legal representatives section
+    'legal_representatives' => 'Законні представники',
+    'sync_legal_representatives' => 'Синхронізувати дані про законних представників ЕСОЗ',
+    'relationship_active_until' => "Дата, до якої зв'язок активний",
+    'relationship_confirmation_document' => "Документ підтвердження зв'язку",
+    'deactivate_relationship' => "Деактивувати зв'язок",
+    'activate_relationship' => "Активувати зв'язок",
+    'passport' => 'Паспорт',
+    'mobile' => 'Мобільний',
+
+    // Requests section
+    'relationship_requests' => "Запити на створення зв'язків з законним представником",
+    'sync_requests' => 'Синхронізувати дані про запити',
+    'channel' => 'Канал',
+    'confirm_action' => 'Підтвердити',
+    'cancel_request' => 'Скасувати запит',
+    'status_new' => 'Новий',
 
     // Summary record
     'summary' => 'Зведені дані',

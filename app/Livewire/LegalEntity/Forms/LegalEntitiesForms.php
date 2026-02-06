@@ -2,6 +2,7 @@
 
 namespace App\Livewire\LegalEntity\Forms;
 
+use Carbon\Carbon;
 use Livewire\Form;
 use App\Rules\Name;
 use App\Models\User;
@@ -39,6 +40,10 @@ class LegalEntitiesForms extends Form
     public string $email = '';
 
     public ?array $residenceAddress = [];
+
+    public bool $beneficiaryShow = false;
+
+    public bool $receiverFundsCodeShow = false;
 
     public bool $archivationShow = false;
 
@@ -79,7 +84,21 @@ class LegalEntitiesForms extends Form
             'owner.taxId' => ['required_unless:owner.noTaxId,true', 'string', new TaxId()],
             'owner.documents.type' => ['required','string', new InDictionary('DOCUMENT_TYPE')],
             'owner.documents.number' => ['required', 'string', new DocumentNumber($this->owner['documents']['type'] ?? '')],
-            'owner.documents.issuedAt' => ['nullable', new DateFormat(), 'before_or_equal:today'],
+            'owner.documents.issuedAt' => [
+                'nullable',
+                new DateFormat(),
+                'before_or_equal:today',
+                function ($attribute, $value, $fail) {
+                    $birthDate = Carbon::parse($this->owner['birthDate']);
+                    $issuedAt = Carbon::parse($value);
+
+                    if ($issuedAt->lt($birthDate)) {
+                        $fail(__('validation.attributes.errors.documentIssuedAtBirth'));
+                    } elseif ($issuedAt->lt($birthDate->copy()->addYears(14))) {
+                        $fail(__('validation.attributes.errors.documentIssuedAtAge'));
+                    }
+                }
+            ],
             'owner.phones' => 'required|array',
             'owner.phones.*.number' => ['required', 'string', new PhoneNumber()],
             'owner.phones.*.type' => [
@@ -115,12 +134,12 @@ class LegalEntitiesForms extends Form
             'license.orderNo' => 'required|string',
             'license.licenseNumber' => ['nullable', 'string', 'regex:/^(?!.*[ЫЪЭЁыъэё@$^#])[a-zA-ZА-ЯҐЇІЄа-яґїіє0-9№\"!\^\*)\]\[(&._-].*$/'],
             'receiverFundsCode' => [
-                legalEntity()?->receiverFundsCode ? 'required' : 'nullable',
+                'nullable',
                 'string',
                 'regex:/^[0-9]+$/'
             ],
             'beneficiary' => [
-                legalEntity()?->beneficiary ? 'required' : 'nullable',
+                'nullable',
                 'string',
                 new Cyrillic(),
                 "regex:/^(?!.*[ЫЪЭЁыъэё@%&$^#])[А-ЯҐЇІЄа-яґїіє’\'\- ]+$/u",
@@ -360,5 +379,29 @@ class LegalEntitiesForms extends Form
             new PhoneDuplicates($this->phones),
             new PhoneDuplicates($this->owner['phones'])
         ];
+    }
+
+    /**
+     * Handles updates to the beneficiary value.
+     *
+     * @param string $value The updated beneficiary value.
+     *
+     * @return void
+     */
+    public function onBeneficiaryUpdated(string $value): void
+    {
+        $this->beneficiaryShow = !empty($value);
+    }
+
+    /**
+     * Handle updates to the receiver funds code value.
+     *
+     * @param string $value The updated receiver funds code.
+     *
+     * @return void
+     */
+    public function onReceiverFundsCodeUpdated(string $value): void
+    {
+        $this->receiverFundsCodeShow = !empty($value);
     }
 }

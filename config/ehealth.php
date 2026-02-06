@@ -740,7 +740,7 @@ return [
         'emails' => env('TEST_CLIENT_EMAILS') ? explode(',', env('TEST_CLIENT_EMAILS')) : [],
     ],
 
-    // https://e-health-ua.atlassian.net/wiki/spaces/EH/pages/583404101/Scopes+model#Roles-scopes
+    // https://e-health-ua.atlassian.net/wiki/spaces/ESOZ/pages/19600179308/All+Scopes+model
     'roles' => [
         'OWNER' => [
             'employee_role:write', 'employee_role:read', 'healthcare_service:write', 'healthcare_service:read', 'declaration:read', 'declaration_request:approve', 'declaration_request:read',

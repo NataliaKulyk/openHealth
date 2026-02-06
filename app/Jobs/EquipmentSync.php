@@ -45,7 +45,7 @@ class EquipmentSync extends EHealthJob
      */
     protected function processResponse(?EHealthResponse $response): void
     {
-        $healthcareServicesData = $response?->validate();
+        $healthcareServicesData = $this->normalizeDate($response?->validate());
 
         if (empty($healthcareServicesData)) {
             return;

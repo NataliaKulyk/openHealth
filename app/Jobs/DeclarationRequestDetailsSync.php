@@ -34,7 +34,7 @@ class DeclarationRequestDetailsSync extends EHealthJob
 
     public const string SCOPE_REQUIRED = 'declaration_request:read';
 
-    public const string ENTITY = LegalEntity::ENTITY_DECLARATION_REQUEST;
+    public const string ENTITY = LegalEntity::ENTITY_DECLARATION;
 
     public function __construct(
         public DeclarationRequest $declarationRequest,

@@ -75,5 +75,5 @@
     </x-header-navigation>
 
     {{ $slot }}
-    <x-messages/>
+    <livewire:components.x-message :key="time()" />
 </section>

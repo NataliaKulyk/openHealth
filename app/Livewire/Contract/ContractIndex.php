@@ -89,7 +89,7 @@ class ContractIndex extends Component
             $this->isFiltersApplied = true;
             session()->flash('success', 'Дані успішно синхронізовано (' . count($items) . ' записів).');
 
-            legalEntity()?->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_CONTRACT);
+            legalEntity()?->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_DOCUMENT);
         } catch (\Exception $e) {
             session()->flash('error', 'Помилка синхронізації: ' . $e->getMessage());
         }

@@ -113,7 +113,8 @@ class PersonUpdate extends PersonComponent
                 'documents',
                 'phones',
                 'authenticationMethods',
-                'confidantPerson.person:id,uuid,last_name,first_name,second_name,tax_id,unzr'
+                'confidantPerson.person:id,uuid,gender,last_name,first_name,second_name,tax_id,unzr',
+                'confidantPerson.documentsRelationship'
             ])->toArray()
         );
 
@@ -132,6 +133,13 @@ class PersonUpdate extends PersonComponent
         if ($person->confidantPerson) {
             $this->selectedConfidantPersonId = $person->confidantPerson->person->uuid;
             $confidantPersonData = $person->confidantPerson->person;
+
+            // Change id to uuid value
+            $confidantPerson = $confidantPersonData->toArray();
+            $confidantPerson['id'] = $confidantPerson['uuid'];
+            unset($confidantPerson['uuid']);
+
+            $this->confidantPerson = [$confidantPerson];
 
             $modifiedMethods = collect($authenticationMethods)->map(
                 function (array $method) use ($confidantPersonData) {

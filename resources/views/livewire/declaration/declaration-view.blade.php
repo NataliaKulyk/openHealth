@@ -11,8 +11,7 @@
         <div class="shrink-0">
             <button @click="
                         let printWindow = window.open('', '_blank');
-                        printWindow.document.write($wire.printableContent);
-                        printWindow.document.close();
+                        printWindow.document.body.innerHTML = $wire.printableContent;
                         printWindow.focus();
                         printWindow.print();
                     "

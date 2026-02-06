@@ -4,34 +4,37 @@ declare(strict_types=1);
 
 namespace App\Livewire\EmployeeRole;
 
+use Throwable;
+use App\Models\User;
+use Livewire\Component;
 use App\Enums\JobStatus;
-use App\Classes\eHealth\EHealth;
-use App\Exceptions\EHealth\EHealthResponseException;
-use App\Exceptions\EHealth\EHealthValidationException;
-use App\Jobs\EmployeeRoleSync;
-use App\Models\EmployeeRole;
-use App\Models\LegalEntity;
-use App\Notifications\SyncNotification;
-use App\Repositories\Repository;
 use App\Traits\FormTrait;
 use Illuminate\Bus\Batch;
+use Illuminate\View\View;
+use App\Models\LegalEntity;
+use App\Models\EmployeeRole;
+use Livewire\WithPagination;
+use App\Jobs\EmployeeRoleSync;
+use App\Repositories\Repository;
+use App\Classes\eHealth\EHealth;
+use Livewire\Attributes\Computed;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Session;
+use App\Traits\BatchLegalEntityQueries;
+use App\Notifications\SyncNotification;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
-use Illuminate\View\View;
-use Livewire\Attributes\Computed;
-use Livewire\Component;
-use Livewire\WithPagination;
-use Throwable;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
 
 class EmployeeRoleIndex extends Component
 {
-    use WithPagination;
-    use FormTrait;
+    use BatchLegalEntityQueries,
+        WithPagination,
+        FormTrait;
 
     protected const string BATCH_NAME = 'EmployeeRoleSync';
 
@@ -104,14 +107,10 @@ class EmployeeRoleIndex extends Component
         $this->syncStatus = $this->getSyncStatus();
 
         // Determine if either the Legal Entity's sync is in progress
-        $legalEntitySync = $legalEntitySyncStatus !== JobStatus::COMPLETED->value &&
-                           ($legalEntitySyncStatus !== JobStatus::PAUSED->value && !empty($legalEntitySyncStatus));
+        $legalEntitySync = $this->isEntitySyncIsInProgress($legalEntitySyncStatus, true);
 
         // Determine if either the Employee Role's sync is in progress
-        $employeeRoleSync = $this->syncStatus !== JobStatus::COMPLETED->value &&
-                               $this->syncStatus !== JobStatus::PAUSED->value &&
-                               $this->syncStatus !== JobStatus::FAILED->value &&
-                               !empty($this->syncStatus);
+        $employeeRoleSync = $this->isEntitySyncIsInProgress($this->syncStatus);
 
         // Return true if either sync is in progress
         return $legalEntitySync || $employeeRoleSync;
@@ -128,6 +127,8 @@ class EmployeeRoleIndex extends Component
         $this->getDictionary();
 
         $this->healthcareServiceSpecialityTypes = array_keys($this->dictionaries['SPECIALITY_TYPE']);
+
+        $this->syncStatus = $this->getSyncStatus();
     }
 
     public function applyFilters(): void
@@ -198,6 +199,20 @@ class EmployeeRoleIndex extends Component
             return;
         }
 
+        $user = Auth::user();
+        $token = Session::get(config('ehealth.api.oauth.bearer_token'));
+
+        if ($this->syncStatus === JobStatus::PAUSED->value || $this->syncStatus === JobStatus::FAILED->value) {
+
+            $this->resumeSynchronization($user, $token);
+
+            Session::flash('success', __('Відновлення попередньої синхронізації розпочато'));
+
+            $user->notify(new SyncNotification('employee_role', 'resumed'));
+
+            return;
+        }
+
         try {
             $response = EHealth::employeeRole()->getMany();
         } catch (ConnectionException $exception) {
@@ -213,7 +228,8 @@ class EmployeeRoleIndex extends Component
         }
 
         try {
-            $validated = $response->validate();
+            $validated = $this->normalizeDate($response->validate());
+
             Repository::employeeRole()->sync($response->map($validated));
         } catch (Throwable $exception) {
             Session::flash('error', 'Виникла помилка. Оновіть список співробітників і послуги та спробуйте ще раз');
@@ -226,7 +242,7 @@ class EmployeeRoleIndex extends Component
         if ($response->isNotLast()) {
             try {
                 Auth::user()->notify(new SyncNotification('employee_role', 'started'));
-                $this->dispatchNextSyncJobs();
+                $this->dispatchNextSyncJobs($user, $token);
                 Session::flash('success', __('Синхронізацію успішно розпочато.'));
             } catch (Throwable $exception) {
                 Log::error('Failed to dispatch EmployeeRole batch', ['exception' => $exception]);
@@ -234,6 +250,8 @@ class EmployeeRoleIndex extends Component
                 Auth::user()->notify(new SyncNotification('employee_role', 'failed'));
             }
         } else {
+            legalEntity()?->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_EMPLOYEE_ROLE);
+
             Session::flash('success', __('Інформацію успішно оновлено'));
         }
     }
@@ -249,17 +267,45 @@ class EmployeeRoleIndex extends Component
     }
 
     /**
+     * Resume the synchronization process for a user with the provided token.
+     *
+     * This method handles the continuation of a previously initiated synchronization
+     * operation for a specific user using an authentication or session token.
+     *
+     * @param User $user The user instance for whom synchronization should be resumed
+     * @param string $token The authentication or session token used to resume the sync process
+     * @return void
+     */
+    protected function resumeSynchronization(User $user, string $token): void
+    {
+        $encryptedToken = Crypt::encryptString($token);
+
+        // Find all the EmployeeRoles failed batches for this legal entity and retry them
+        $failedBatches = $this->findFailedBatchesByLegalEntity(legalEntity()->id, 'ASC');
+
+        foreach ($failedBatches as $batch) {
+            if ($batch->name === self::BATCH_NAME) {
+                Log::info('Resuming Employee sync batch: ' . $batch->name . ' id: ' . $batch->id);
+
+                legalEntity()?->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_EMPLOYEE_ROLE);
+
+                $this->restartBatch($batch, $user, $encryptedToken, legalEntity());
+
+                break;
+            }
+        }
+    }
+
+    /**
      * Dispatch next sync jobs for remaining pages.
      *
      * @return void
      * @throws Throwable
      */
-    protected function dispatchNextSyncJobs(): void
+    protected function dispatchNextSyncJobs(User $user, string $token): void
     {
-        $token = Session::get(config('ehealth.api.oauth.bearer_token'));
-        $user = Auth::user();
-
         Bus::batch([new EmployeeRoleSync(legalEntity(), page: 2)])
+            ->withOption('legal_entity_id', legalEntity()->id)
             ->withOption('token', Crypt::encryptString($token))
             ->withOption('user', $user)
             ->then(fn () => $user->notify(new SyncNotification('employee_role', 'completed')))

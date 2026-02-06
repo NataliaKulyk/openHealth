@@ -1,3 +1,5 @@
+@use('App\Livewire\Person\PersonUpdate')
+
 {{-- Document Drawer Overlay --}}
 <div x-show="showDocumentDrawer"
      x-transition:enter="transition ease-out duration-300"
@@ -228,14 +230,27 @@
                 >
                     {{ __('forms.cancel') }}
                 </button>
+                @if($this instanceof PersonUpdate)
+                <button type="button"
+                        class="button-primary"
+                        @click="showAuthDrawer = true"
+                >
+                    {{ __('patients.add_representative') }}
+                </button>
+                @else
                 <button type="button"
                         class="button-primary"
                         @click="addLegalRepresentative(); showDocumentDrawer = false;"
                         :disabled="!newDocument.type || !newDocument.number || !newDocument.issuedBy || !newDocument.issuedAt"
-                        x-text="isEditing ? '{{ __('forms.save_changes') }}' : '{{ __('forms.add_document') }}'"
                 >
+                    <span x-text="isEditing ? '{{ __('forms.save_changes') }}' : '{{ __('forms.add_document') }}'"></span>
                 </button>
+                @endif
             </div>
         </div>
     </div>
 </div>
+
+@if($this instanceof PersonUpdate)
+    @include('livewire.person.parts.drawers.add-auth-verification')
+@endif
