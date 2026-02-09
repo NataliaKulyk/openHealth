@@ -1,7 +1,8 @@
 {{-- Services Drawer --}}
 <template x-teleport="body">
     <div id="services-drawer-right"
-         class="fixed top-0 right-0 z-40 h-screen pt-20 p-4 overflow-y-auto transition-transform translate-x-full bg-white w-4/5 dark:bg-gray-800"
+         class="fixed top-0 right-0 h-screen pt-20 p-4 overflow-y-auto transition-transform translate-x-full bg-white w-4/5 dark:bg-gray-800"
+         style="z-index: 40;"
          tabindex="-1"
          aria-labelledby="services-drawer-label"
     >
@@ -17,7 +18,7 @@
                     {{ __('treatment-plan.main_data') }}
                 </legend>
 
-                {{-- Row 1: Service and Program --}}
+                {{-- Service and Program --}}
                 <div class="form-row-3">
                     <div class="form-group group">
                         <label for="service" class="label">
@@ -55,7 +56,7 @@
                     </div>
                 </div>
 
-                {{-- Row 2: Quantity, Start Date, Start Time --}}
+                {{-- Quantity, Start Date, Start Time --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                     <div class="form-group group">
                         <label for="quantity" class="label">
@@ -107,7 +108,7 @@
                     </div>
                 </div>
 
-                {{-- Row 3: Quantity per time, End Date, End Time --}}
+                {{-- Quantity per time, End Date, End Time --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                     <div class="form-group group">
                         <label for="quantity_per_time" class="label">
@@ -159,7 +160,7 @@
                     </div>
                 </div>
 
-                {{-- Row 4: Number of times, Duration --}}
+                {{-- Number of times, Duration --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="form-group group">
                         <label for="number_of_times" class="label">
@@ -224,7 +225,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{-- Example row --}}
                                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                                     <td class="px-4 py-3 text-gray-900 dark:text-white whitespace-nowrap">
                                         02.05.2025
@@ -279,7 +279,6 @@
                 </div>
             </fieldset>
 
-            {{-- Footer Buttons --}}
             <div class="mt-6 flex justify-start gap-3">
                 <button type="button"
                         class="button-minor"

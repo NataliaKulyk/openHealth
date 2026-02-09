@@ -1,4 +1,4 @@
-{{-- Medication Search Drawer Overlay --}}
+{{-- Medication Search Drawer Overlay (below header z-60) --}}
 <div x-show="showMedicationSearchDrawer"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
@@ -11,13 +11,21 @@
      data-drawer-hide="medication-search-drawer-right"
      aria-controls="medication-search-drawer-right"
      class="fixed top-0 right-0 h-screen pt-20 w-4/5 bg-gray-900/50"
-     style="z-index: 45;"
+     style="z-index: 44;"
 ></div>
 
-{{-- Medication Search Drawer (nested - 30px offset from parent) --}}
+{{-- Medication Search Drawer (30px gap on the LEFT) --}}
 <div id="medication-search-drawer-right"
-     class="fixed top-0 right-0 z-50 h-screen pt-20 p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800 shadow-2xl"
-     style="width: calc(80% - 30px);"
+     x-show="showMedicationSearchDrawer"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="translate-x-full"
+     x-transition:enter-end="translate-x-0"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="translate-x-0"
+     x-transition:leave-end="translate-x-full"
+     x-cloak
+     class="fixed top-0 right-0 h-screen pt-20 p-4 overflow-y-auto bg-white dark:bg-gray-800 shadow-2xl"
+     style="z-index: 45; width: calc(80% - 30px);"
      tabindex="-1"
      aria-labelledby="medication-search-drawer-label"
      x-data="{ showFilter: false }"
@@ -95,7 +103,6 @@
 
     {{-- Results --}}
     <div class="space-y-4 mb-6">
-        {{-- Example medication card 1 --}}
         <fieldset class="fieldset">
             <legend class="legend">
                 {{ __('treatment-plan.example_medication_name') }}
@@ -117,7 +124,6 @@
             </button>
         </fieldset>
 
-        {{-- Example medication card 2 --}}
         <fieldset class="fieldset">
             <legend class="legend">
                 {{ __('treatment-plan.example_medication_name') }}
@@ -140,7 +146,6 @@
         </fieldset>
     </div>
 
-    {{-- Pagination --}}
     <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
         {{--{{ $treatment-plan->links() }}--}}
     </div>

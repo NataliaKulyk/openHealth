@@ -1,4 +1,4 @@
-{{-- Medication Form Drawer Overlay --}}
+{{-- Medication Form Drawer Overlay (below header z-60) --}}
 <div x-show="showMedicationFormDrawer"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
@@ -9,10 +9,10 @@
      x-cloak
      @click="showMedicationFormDrawer = false"
      class="fixed top-0 right-0 h-screen pt-20 bg-gray-900/50"
-     style="z-index: 65; width: calc(80% - 30px);"
+     style="z-index: 46; width: calc(80% - 30px);"
 ></div>
 
-{{-- Medication Form Drawer (nested level 3 - 60px offset from first drawer) --}}
+{{-- Medication Form Drawer (60px gap on the LEFT — third drawer) --}}
 <div id="medication-form-drawer-right"
      x-show="showMedicationFormDrawer"
      x-transition:enter="transition ease-out duration-300"
@@ -22,8 +22,8 @@
      x-transition:leave-start="translate-x-0"
      x-transition:leave-end="translate-x-full"
      x-cloak
-     class="fixed top-0 right-0 z-70 h-screen pt-20 p-4 overflow-y-auto bg-white dark:bg-gray-800 shadow-2xl"
-     style="width: calc(80% - 60px);"
+     class="fixed top-0 right-0 h-screen pt-20 p-4 overflow-y-auto bg-white dark:bg-gray-800 shadow-2xl"
+     style="z-index: 47; width: calc(80% - 60px);"
      tabindex="-1"
 >
     <h3 class="modal-header">
@@ -38,7 +38,7 @@
                 {{ __('treatment-plan.main_data') }}
             </legend>
 
-            {{-- Row 1: Program and Medication --}}
+            {{-- Program and Medication --}}
             <div class="form-row-3">
                 <div class="form-group group">
                     <label for="med_program" class="label">
@@ -64,7 +64,7 @@
                 </div>
             </div>
 
-            {{-- Row 2: Quantity, Start Date, Start Time --}}
+            {{-- Quantity, Start Date, Start Time --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <div class="form-group group">
                     <label for="med_quantity" class="label">
@@ -116,7 +116,7 @@
                 </div>
             </div>
 
-            {{-- Row 3: Quantity per time, End Date, End Time --}}
+            {{-- Quantity per time, End Date, End Time --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <div class="form-group group">
                     <label for="med_quantity_per_time" class="label">
@@ -168,7 +168,7 @@
                 </div>
             </div>
 
-            {{-- Row 4: Number of times, Duration --}}
+            {{-- Number of times, Duration --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="form-group group">
                     <label for="med_number_of_times" class="label">
@@ -233,7 +233,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- Example row --}}
                             <tr>
                                 <td class="px-4 py-3 text-gray-900 dark:text-white whitespace-nowrap">
                                     02.05.2025
@@ -290,7 +289,6 @@
             </div>
         </fieldset>
 
-        {{-- Footer Buttons --}}
         <div class="mt-6 flex justify-start gap-3">
             <button type="button"
                     class="button-minor"

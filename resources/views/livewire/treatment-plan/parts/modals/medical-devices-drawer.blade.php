@@ -1,7 +1,8 @@
 {{-- Medical Devices Drawer --}}
 <template x-teleport="body">
     <div id="medical-devices-drawer-right"
-         class="fixed top-0 right-0 z-40 h-screen pt-20 p-4 overflow-y-auto transition-transform translate-x-full bg-white w-4/5 dark:bg-gray-800"
+         class="fixed top-0 right-0 h-screen pt-20 p-4 overflow-y-auto transition-transform translate-x-full bg-white w-4/5 dark:bg-gray-800"
+         style="z-index: 40;"
          tabindex="-1"
          aria-labelledby="medical-devices-drawer-label"
     >
@@ -32,7 +33,6 @@
                 </div>
             </fieldset>
 
-            {{-- Footer Buttons --}}
             <div class="mt-6 flex justify-start gap-3">
                 <button type="button"
                         class="button-minor"

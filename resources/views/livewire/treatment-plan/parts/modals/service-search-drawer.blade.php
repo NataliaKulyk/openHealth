@@ -11,13 +11,21 @@
      data-drawer-hide="service-search-drawer-right"
      aria-controls="service-search-drawer-right"
      class="fixed top-0 right-0 h-screen pt-20 w-4/5 bg-gray-900/50"
-     style="z-index: 45;"
+     style="z-index: 44;"
 ></div>
 
-{{-- Service Search Drawer (nested - 30px offset from parent) --}}
+{{-- Service Search Drawer --}}
 <div id="service-search-drawer-right"
-     class="fixed top-0 right-0 z-50 h-screen pt-20 p-4 overflow-y-auto transition-transform translate-x-full bg-white dark:bg-gray-800 shadow-2xl"
-     style="width: calc(80% - 30px);"
+     x-show="showServiceSearchDrawer"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="translate-x-full"
+     x-transition:enter-end="translate-x-0"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="translate-x-0"
+     x-transition:leave-end="translate-x-full"
+     x-cloak
+     class="fixed top-0 right-0 h-screen pt-20 p-4 overflow-y-auto bg-white dark:bg-gray-800 shadow-2xl"
+     style="z-index: 45; width: calc(80% - 30px);"
      tabindex="-1"
      aria-labelledby="service-search-drawer-label"
      x-data="{ showFilter: false }"
@@ -106,7 +114,6 @@
                 </tr>
             </thead>
             <tbody>
-                {{-- Example rows --}}
                 <tr>
                     <td class="px-4 py-3">
                         <div>
