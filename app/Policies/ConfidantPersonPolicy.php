@@ -7,10 +7,10 @@ namespace App\Policies;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class ConfidantPerson
+class ConfidantPersonPolicy
 {
     /**
-     * Determine whether the user can create person request.
+     * Determine whether the user can create confidant person relationship request.
      */
     public function create(User $user): Response
     {

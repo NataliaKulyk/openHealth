@@ -141,6 +141,8 @@ class Person extends Request
      */
     public function createConfidantRelationship(string $id, array $data): PromiseInterface|EHealthResponse
     {
+        $data = $this->formatter->format($data, ['activeTo', 'issuedAt']);
+
         return $this->post(self::URL . "/$id/confidant_person_relationship_requests", $data);
     }
 

@@ -16,11 +16,11 @@
     <div class="form-row-3 mt-4">
         <div class="form-group group">
             <input type="text"
-                   wire:model="code @error('code') input-error @enderror"
+                   wire:model="code"
                    inputmode="numeric"
                    name="code"
                    id="code"
-                   class="peer input"
+                   class="peer input @error('code') input-error @enderror"
                    placeholder=" "
                    autocomplete="off"
             />

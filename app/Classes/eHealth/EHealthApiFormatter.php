@@ -6,52 +6,44 @@ namespace App\Classes\eHealth;
 
 use App\Core\Arr;
 
+/**
+ * Class that formats data into API format.
+ */
 class EHealthApiFormatter
 {
     /**
      * Format data for eHealth API calls.
+     *
+     * @param  array  $data  The data to format
+     * @param  array  $dateFields  Array of field names that should be treated as dates (optional)
+     * @return array Formatted data
      */
-    public static function format(array $data): array
+    public function format(array $data, array $dateFields = []): array
     {
-        return removeEmptyKeys(Arr::toSnakeCase(self::convertDates($data)));
+        return removeEmptyKeys(Arr::toSnakeCase($this->convertDates($data, $dateFields)));
     }
 
     /**
      * Recursively convert dd.mm.yyyy date fields to ISO 8601 format.
+     *
+     * @param  array  $data  The data to process
+     * @param  array  $dateFields  Array of field names that should be treated as dates
+     * @return array Processed data with converted dates
      */
-    private static function convertDates(array $data): array
+    private function convertDates(array $data, array $dateFields): array
     {
-        $result = [];
+        return collect($data)
+            ->map(function ($value, $key) use ($dateFields) {
+                if (is_array($value)) {
+                    return $this->convertDates($value, $dateFields);
+                }
 
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $result[$key] = self::convertDates($value);
-            } elseif (is_string($value) && self::isDateField($key) && !empty($value)) {
-                $result[$key] = convertToYmd($value);
-            } else {
-                $result[$key] = $value;
-            }
-        }
+                if (is_string($value) && in_array($key, $dateFields, true) && filled($value)) {
+                    return convertToYmd($value);
+                }
 
-        return $result;
-    }
-
-    /**
-     * Check if field is a date field that needs conversion.
-     */
-    private static function isDateField(string $key): bool
-    {
-        $dateFields = [
-            'activeTo',
-            'issuedAt',
-            'manufactureDate',
-            'expirationDate',
-            'birthDate',
-            'startDate',
-            'endDate',
-            'expiryDate'
-        ];
-
-        return in_array($key, $dateFields, true);
+                return $value;
+            })
+            ->toArray();
     }
 }

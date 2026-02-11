@@ -108,6 +108,11 @@ class PersonUpdate extends PersonComponent
      */
     public string $alias;
 
+    /**
+     * Data about new confidant person.
+     *
+     * @var array
+     */
     public array $newConfidantPerson;
 
     public string $confidantPersonRelationshipRequestId;
@@ -301,11 +306,21 @@ class PersonUpdate extends PersonComponent
         }
     }
 
+    /**
+     * Create new OTP auth method.
+     *
+     * @return void
+     */
     public function createOtpAuthMethod(): void
     {
         $this->changePhoneNumber($this->newPhoneNumber);
     }
 
+    /**
+     * Create new OFFLINE auth method.
+     *
+     * @return void
+     */
     public function createOfflineAuthMethod(): void
     {
         try {
@@ -321,6 +336,11 @@ class PersonUpdate extends PersonComponent
         }
     }
 
+    /**
+     * Approve creating OFFLINE method.
+     *
+     * @return void
+     */
     public function approveCreatingOffline(): void
     {
         try {
@@ -375,7 +395,7 @@ class PersonUpdate extends PersonComponent
             // If you get error then it means that number is no verify, then initialize phone verification
             if ($exception->getCode() === 404) {
                 try {
-                    EHealth::verification()->initialize(Arr::toSnakeCase($validated));
+                    EHealth::verification()->initialize(['phone_number' => $validated['form']['phoneNumber']]);
                     $this->authStep = AuthStep::VERIFY_PHONE;
                 } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
                     $this->handleEHealthExceptions($exception, 'Error when initialize OTP verification request');
@@ -551,6 +571,11 @@ class PersonUpdate extends PersonComponent
         }
     }
 
+    /**
+     * Sync confidant persons with phones and documents.
+     *
+     * @return void
+     */
     public function syncConfidantPersons(): void
     {
         try {
@@ -593,6 +618,11 @@ class PersonUpdate extends PersonComponent
         Session::flash('success', __('Дані про законних представників успішно синхронізовано.'));
     }
 
+    /**
+     * First step for adding new confidant person relationship.
+     *
+     * @return void
+     */
     public function createNewConfidantPersonRelationshipRequest(): void
     {
         if (Auth::user()->cannot('create', ConfidantPerson::class)) {
@@ -615,10 +645,7 @@ class PersonUpdate extends PersonComponent
         }
 
         try {
-            $response = EHealth::person()->createConfidantRelationship(
-                $this->uuid,
-                EHealthApiFormatter::format($validated)
-            );
+            $response = EHealth::person()->createConfidantRelationship($this->uuid, $validated);
 
             $this->confidantPersonRelationshipRequestId = $response->getData()['id'];
             $this->uploadedDocuments = $response->getUrgent()['documents'];
@@ -631,6 +658,11 @@ class PersonUpdate extends PersonComponent
         $this->showAuthDrawer = true;
     }
 
+    /**
+     * Resend SMS code for new confidant person.
+     *
+     * @return void
+     */
     public function resendCodeOnConfidantPersonRelationship(): void
     {
         if (Auth::user()->cannot('create', ConfidantPerson::class)) {
@@ -652,6 +684,11 @@ class PersonUpdate extends PersonComponent
         }
     }
 
+    /**
+     * Second step of creating new confidant person relationship in which we approve by providing confidence documents.
+     *
+     * @return void
+     */
     public function approveConfidantPersonRelationshipRequest(): void
     {
         if (Auth::user()->cannot('create', ConfidantPerson::class)) {
@@ -688,6 +725,11 @@ class PersonUpdate extends PersonComponent
         $this->showSignatureDrawer = true;
     }
 
+    /**
+     * Sign with KEP data about new confidant person relationship.
+     *
+     * @return void
+     */
     public function signConfidantPersonRelationship(): void
     {
         if (Auth::user()->cannot('create', ConfidantPerson::class)) {
@@ -780,8 +822,8 @@ class PersonUpdate extends PersonComponent
                 AuthenticationMethod::OTP,
                 $validated['newPhoneNumber']
             );
-            $this->requestId = $response->validate()['id'];
-            $this->uploadedDocuments = $response->validate()['documents'];
+            $this->requestId = $response->getData()['id'];
+            $this->uploadedDocuments = $response->getUrgent()['documents'];
 
             // If the change type from OTP to Offline, then show the step, request to change the phone number
             if ($this->selectedAuthMethodType === AuthenticationMethod::OFFLINE->value) {

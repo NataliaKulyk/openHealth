@@ -471,7 +471,7 @@ class PersonForm extends BaseForm
         foreach ($this->person['documents'] as $document) {
             if (!in_array($document['type'], (array)$allAllowedTypes, true)) {
                 throw ValidationException::withMessages([
-                    'person.documents' => "Submitted document type is not allowed: {$document['type']}."
+                    'person.documents' => "Тип поданого документа не допускається: {$document['type']}."
                 ]);
             }
         }

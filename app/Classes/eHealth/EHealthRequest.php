@@ -25,11 +25,16 @@ abstract class EHealthRequest extends PendingRequest
     public const int TIMEOUT = 100;
 
     protected ?Closure $validator = null;
+
     protected ?Closure $mapper = null;
+
+    protected EHealthApiFormatter $formatter;
 
     public function __construct(?Factory $factory = null, $middleware = [])
     {
         parent::__construct($factory, $middleware);
+
+        $this->formatter = app(EHealthApiFormatter::class);
 
         $this->withHeaders([
             'X-Custom-PSK' => config('ehealth.api.token'),

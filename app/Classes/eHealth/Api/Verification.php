@@ -55,7 +55,7 @@ class Verification extends Request
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      *
-     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/otp-verification/complete-otp-verification
+     * @see https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/otp-verification/find-verifications-by-phone-number
      */
     public function findByPhoneNumber(string $phoneNumber, array $query = []): PromiseInterface|EHealthResponse
     {
