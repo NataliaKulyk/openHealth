@@ -5,7 +5,8 @@
         <x-slot name="title">{{ $equipment->names()->first()->name }}</x-slot>
     </x-header-navigation>
 
-    <fieldset class="fieldset form shift-content">
+    <div class="form shift-content">
+    <fieldset class="fieldset form">
         <legend class="legend">
             {{ __('forms.main_information') }}
         </legend>
@@ -164,7 +165,7 @@
 
     @include('livewire.equipment.parts.additional-data', ['context' => 'view'])
 
-    <div class="shift-content mt-6 flex flex-row items-center gap-4 pt-6">
+    <div class="mt-6 flex flex-row items-center gap-4 pt-6">
         <div class="flex items-center space-x-3">
             <a href="{{ url()->previous() }}" class="button-minor">
                 {{ __('forms.cancel') }}
@@ -200,6 +201,8 @@
                 @endif
             @endcan
         </div>
+    </div>
+
     </div>
 
     @include('livewire.equipment.modals.update-status-modal')

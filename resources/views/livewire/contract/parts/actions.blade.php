@@ -15,7 +15,7 @@
             class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-white"
             type="button">
             {{-- Using the same icon style as Employees --}}
-            @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-white')
+            @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-gray-300')
         </button>
 
         <div x-show="open" x-transition
@@ -49,7 +49,7 @@
                     <li>
                         <a href="#"
                            class="flex items-center gap-2 py-2 px-5 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-600 dark:text-red-400">
-                            @icon('trash', 'w-5 h-5 text-red-600 dark:text-red-400')
+                            @icon('delete', 'w-5 h-5 text-red-600 dark:text-red-400')
                             <span>{{ __('forms.delete') }}</span>
                         </a>
                     </li>

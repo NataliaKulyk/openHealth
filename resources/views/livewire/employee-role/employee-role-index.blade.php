@@ -9,7 +9,7 @@
             {{ __('employee-roles.label') }}
         </x-slot>
 
-        <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start">
+        <div class="mt-3 ml-0 flex flex-col sm:flex-row sm:flex-wrap gap-2 self-start pl-4 sm:pl-0">
             @can('create', EmployeeRole::class)
                 <a href="{{ route('employee-role.create', [legalEntity()]) }}"
                    class="button-primary flex items-center gap-2"
@@ -219,7 +219,7 @@
                                                         type="button"
                                                         class="hover:text-primary cursor-pointer"
                                                 >
-                                                    @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-white')
+                                                    @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-gray-300')
                                                 </button>
 
                                                 <div x-show="open"
@@ -228,13 +228,13 @@
                                                      x-transition.origin.top.left
                                                      @click.outside="close($refs.button)"
                                                      :id="$id('dropdown-button')"
-                                                     class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white shadow-md z-50"
+                                                     class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-md z-50"
                                                 >
                                                     @can('deactivate', $employeeRole)
                                                         <button @click.prevent="show = true"
-                                                                class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                                                                class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600"
                                                         >
-                                                            @icon('delete', 'w-5 h-5 text-red-600')
+                                                            @icon('delete', 'w-5 h-5 text-red-600 dark:text-red-400')
                                                             {{ __('forms.deactivate') }}
                                                         </button>
 

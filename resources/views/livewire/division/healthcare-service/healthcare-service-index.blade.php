@@ -22,7 +22,7 @@
                 <div class="flex flex-wrap items-end justify-between gap-4 max-w-6xl">
                     <div class="flex items-end gap-4"></div>
 
-                    <div class="ml-auto flex items-center gap-6 self-start -mt-22 translate-x-10">
+                    <div class="ml-auto flex items-center gap-6 self-start -mt-22 pl-4 sm:pl-0 translate-x-0 sm:translate-x-10">
                         {{-- Show the create button if a division is selected in the filter and has an active status --}}
                         @if(isset($divisionId, $divisionFilter))
                             @php
@@ -186,7 +186,7 @@
                                                         type="button"
                                                         class="hover:text-primary cursor-pointer"
                                                 >
-                                                    @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-white')
+                                                    @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-gray-300')
                                                 </button>
 
                                                 <div x-show="open"
@@ -196,23 +196,23 @@
                                                      x-transition.origin.top.left
                                                      @click.outside="close($refs.button)"
                                                      :id="$id('dropdown-button')"
-                                                     class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white shadow-md z-50"
+                                                     class="absolute right-0 mt-2 w-auto min-w-[10rem] max-w-[20rem] rounded-md bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-md z-50"
                                                 >
                                                     @if ($service->status === Status::ACTIVE)
                                                         @can('view', $service)
                                                             <a href="{{ route('healthcare-service.view', [legalEntity(), $service->division, $service->id]) }}"
-                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                                                             >
-                                                                @icon('eye', 'w-5 h-5 text-gray-600')
+                                                                @icon('eye', 'w-5 h-5 text-gray-600 dark:text-gray-300')
                                                                 {{ __('forms.view') }}
                                                             </a>
                                                         @endcan
 
                                                         @can('update', $service)
                                                             <a href="{{ route('healthcare-service.update', [legalEntity(), $service->division, $service->id]) }}"
-                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                                                             >
-                                                                @icon('edit', 'w-5 h-5 text-gray-600')
+                                                                @icon('edit', 'w-5 h-5 text-gray-600 dark:text-gray-300')
                                                                 {{ __('forms.update') }}
                                                             </a>
                                                         @endcan
@@ -228,18 +228,18 @@
                                                                         actionButtonText = @js(__('forms.deactivate'));
                                                                         open = !open;
                                                                     "
-                                                                    class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                                                                    class="cursor-pointer flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600"
                                                             >
-                                                                @icon('delete', 'w-5 h-5 text-red-600')
-                                                                {{ __('forms.deactivate') }}
+@icon('delete', 'w-5 h-5 text-red-600 dark:text-red-400')
+                                                            {{ __('forms.deactivate') }}
                                                             </button>
                                                         @endcan
                                                     @elseif($service->status === Status::DRAFT)
                                                         @can('edit', $service)
                                                             <a href="{{ route('healthcare-service.edit', [legalEntity(), $service->division->id, $service->id]) }}"
-                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                               class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                                                             >
-                                                                @icon('edit', 'w-5 h-5 text-gray-600')
+                                                                @icon('edit', 'w-5 h-5 text-gray-600 dark:text-gray-300')
                                                                 {{ __('healthcare-services.continue') }}
                                                             </a>
                                                         @endcan
@@ -248,9 +248,9 @@
                                                             <button wire:click="delete({{ $service->getKey() }}); toggle()"
                                                                     @click="openDropdown = false"
                                                                     type="button"
-                                                                    class="cursor-pointer text-nowrap text-red-500 flex gap-3 items-center py-2 pl-4 pr-5"
+                                                                    class="cursor-pointer text-nowrap text-red-500 dark:text-red-400 flex gap-3 items-center py-2 pl-4 pr-5 hover:bg-gray-50 dark:hover:bg-gray-600"
                                                             >
-                                                                @icon('delete', 'w-5 h-5')
+                                                                @icon('delete', 'w-5 h-5 text-red-600 dark:text-red-400')
                                                                 {{ __('healthcare-services.delete') }}
                                                             </button>
                                                         @endcan

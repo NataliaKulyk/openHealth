@@ -1,4 +1,4 @@
-<fieldset class="fieldset shift-content"
+<fieldset class="fieldset"
           x-data="{
               working: $wire.entangle('working'),
               localAvailableTime: [],

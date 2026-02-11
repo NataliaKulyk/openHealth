@@ -1,6 +1,6 @@
 @use('App\Enums\Equipment\AvailabilityStatus')
 
-<fieldset class="fieldset form shift-content">
+<fieldset class="fieldset form">
     <legend class="legend">
         {{ __('equipments.additional_data') }}
     </legend>

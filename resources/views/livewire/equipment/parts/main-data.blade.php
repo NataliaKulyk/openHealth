@@ -1,6 +1,6 @@
 @use('App\Enums\Equipment\{Status, Type}')
 
-<fieldset class="fieldset form shift-content">
+<fieldset class="fieldset form">
     <legend class="legend">
         {{ __('forms.main_information') }}
     </legend>

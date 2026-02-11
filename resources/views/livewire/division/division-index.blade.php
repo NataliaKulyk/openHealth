@@ -14,7 +14,7 @@
 
     <x-header-navigation x-data="{ showFilter: false }">
         <x-slot name="title">{{ __('forms.divisions') }}</x-slot>
-        <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0">
+        <div class="ml-auto flex items-center gap-2 mt-2 lg:mt-0 pl-4 sm:pl-0">
             @can('create', Division::class)
                 <a href="{{ route('division.create', [legalEntity()]) }}"
                    type="button"
@@ -148,7 +148,7 @@
                                                     outline="none"
                                                     id="menu-{{ $division->id }}"
                                             >
-                                                <svg class="svg-hover-action w-6 h-6 text-gray-800 dark:text-white"
+                                                <svg class="svg-hover-action w-6 h-6 text-gray-800 dark:text-gray-300"
                                                      aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18"
                                                      height="18" fill="none" viewBox="0 0 24 24">
                                                     <path stroke="currentColor" stroke-linecap="round"
@@ -165,32 +165,32 @@
                                                 x-transition.origin.top.left
                                                 @click.outside="close($refs.button)"
                                                 :id="$id('dropdown-button')"
-                                                class="absolute right-0 mt-2 w-40 rounded-md bg-white shadow-md z-50"
+                                                class="absolute right-0 mt-2 w-40 rounded-md bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-md z-50"
                                                 wire:key="menu-{{ $division->id }}-{{ is_string($division->status) ? $division->status : ($division->status?->value ?? 'unknown') }}"
                                             >
                                                 @if($division->status !== Status::DRAFT)
                                                     @can('viewAny', HealthcareService::class)
                                                         <a href="{{ route('healthcare-service.index', [legalEntity(), 'division' => $division->id]) }}"
-                                                           class="flex items-center gap-2 w-full first-of-type:rounded-t-md px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                           class="flex items-center gap-2 w-full first-of-type:rounded-t-md px-4 py-2.5 text-left text-sm text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                                                         >
-                                                            @icon('settings', 'w-5 h-5 text-gray-600')
+                                                            @icon('settings', 'w-5 h-5 text-gray-600 dark:text-gray-300')
                                                             {{ __('forms.services') }}
                                                         </a>
                                                     @endcan
                                                 @endif
 
                                                 <a href="{{ route('division.view', [legalEntity(), $division]) }}"
-                                                   class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                   class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                                                 >
-                                                    @icon('eye', 'w-5 h-5 text-gray-600')
+                                                    @icon('eye', 'w-5 h-5 text-gray-600 dark:text-gray-300')
                                                     {{ __('forms.view') }}
                                                 </a>
 
                                                 @can('update', $division)
                                                     <a href="{{ route('division.edit', [legalEntity(), $division]) }}"
-                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50"
+                                                       class="flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                                                     >
-                                                        @icon('edit', 'w-5 h-5 text-gray-600')
+                                                        @icon('edit', 'w-5 h-5 text-gray-600 dark:text-gray-300')
                                                         {{ __('forms.edit') }}
                                                     </a>
                                                 @endcan
@@ -206,9 +206,9 @@
                                                        actionButtonText = @js(__('forms.activate'));
                                                        open = !open;
                                                     "
-                                                       class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 hover:bg-green-50"
+                                                       class="flex items-center gap-2 w-full first-of-type:rounded-t-md last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-gray-600"
                                                     >
-                                                        @icon('check-circle', 'w-5 h-5 text-green-600')
+                                                        @icon('check-circle', 'w-5 h-5 text-green-600 dark:text-green-400')
                                                         {{ __('forms.activate') }}
                                                     </a>
                                                 @endcan
@@ -224,10 +224,10 @@
                                                        actionButtonText = @js(__('forms.deactivate'));
                                                        open = !open;
                                                     "
-                                                       class="flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+class="flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600"
                                                     >
-                                                        @icon('delete', 'w-5 h-5 text-red-600')
-                                                        {{ __('forms.deactivate') }}
+                                                        @icon('delete', 'w-5 h-5 text-red-600 dark:text-red-400')
+                                                            {{ __('forms.deactivate') }}
                                                     </a>
                                                 @endcan
 
@@ -241,9 +241,9 @@
                                                        actionButtonText = @js(__('forms.delete'));
                                                        open = !open;
                                                     "
-                                                       class="flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                                                       class="flex items-center gap-2 w-full last-of-type:rounded-b-md px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600"
                                                     >
-                                                        <svg class="w-5 h-5 text-red-600" aria-hidden="true"
+                                                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" aria-hidden="true"
                                                              xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                              fill="none" viewBox="0 0 24 24">
                                                             <path stroke="currentColor" stroke-linecap="round"
