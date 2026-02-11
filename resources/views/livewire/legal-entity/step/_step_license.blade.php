@@ -34,7 +34,7 @@
                 aria-describedby="{{ $hasLicenseTypeError ? 'licenseTypeErrorHelp' : '' }}"
                 class="input-select  {{ $hasLicenseTypeError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
                 :class="isDisabled ? 'text-gray-400 border-gray-200 dark:text-gray-500' : 'text-gray-900 border-gray-300'"
-                :disabled="isDisabled"
+                :disabled="{{ $isEdit ? 'true' : 'false' }}"
             >
                 <option value="_placeholder_" selected hidden>-- {{ __('forms.select') }} --</option>
 
