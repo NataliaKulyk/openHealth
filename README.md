@@ -5,7 +5,7 @@ The software is distributed under [GPL version 3](https://www.gnu.org/licenses/g
 ## Requirements
 * PHP 8.4+
 * PostgreSQL 17.5+
-  - Other SQL databases also supported, full list at [Laravel Documentation](https://laravel.com/docs/11.x/database)
+    - Other SQL databases also supported, full list at [Laravel Documentation](https://laravel.com/docs/11.x/database)
 * Access to the [eHealth API](https://uaehealthapi.docs.apiary.io/#reference/public.-medical-service-provider-integration-layer/oauth/login?console=1)
 * [Composer](https://getcomposer.org), [npm](https://www.npmjs.com), [git](https://git-scm.com)
 ## Installation for development
@@ -81,7 +81,7 @@ Successful start of the server will output something like:
 
  Press Ctrl+C to stop the server
 ```
-By default, the application doesn't have any registered legal entities (medical service providers). 
+By default, the application doesn't have any registered legal entities (medical service providers).
 To create the first legal entity, register a user with email and password on the registration page. Go to the registration page available at:
 ```
 http://localhost:8000/register
@@ -90,7 +90,7 @@ The following page should appear:
 
 ![screenshot](docs/registration_page.png)
 
-The next step is to fill the form and submit it. After that, on the specified email address, a confirmation email will be sent. Follow the link in the email to confirm the email address. 
+The next step is to fill the form and submit it. After that, on the specified email address, a confirmation email will be sent. Follow the link in the email to confirm the email address.
 Note, that the mailer credentials should be configured properly in the `.env` file to enable email sending. E.g., if using [Mailtrap](https://mailtrap.io/) for development, the configuration may look like this:
 ```
 MMAIL_MAILER=smtp
@@ -110,7 +110,7 @@ http://localhost:8000/login
 ```
 ![screenshot](docs/login_page.png)
 
-To register the first legal entity, check the box "Без авторизації у eHealth" ("Without eHealth authorization"). 
+To register the first legal entity, check the box "Без авторизації у eHealth" ("Without eHealth authorization").
 Then, enter credentials. If all is configured properly, after login, the user should be redirected to the dashboard page with the only option to register a legal entity:
 
 ![screenshot](docs/register_legal_entity.png)
@@ -147,29 +147,34 @@ stdout_logfile=/Users/myuser/mis/storage/logs/worker.log
 stopwaitsecs=3600
 ```
 ## First login
-After registering the first legal entity, the user should receive the email from eHealth with the instructions. 
-Following the instructions, the user should set eHealth login password. 
-The next step is to log in to the application once again but with eHealth authorization. 
-The checkbox "Без авторизації у eHealth" ("Without eHealth authorization") should be unchecked this time and the registered legal entity should be chosen in the correspondent input field:
-```
-http://localhost:8000/login
-```
-![screenshot](docs/login_through_ehealth.png)
+After the initial setup, you can access the application using one of the following methods:
 
-After pressing the login button, the user will be redirected to the eHealth authentication page.
+### Local Login for Developers
+This method is intended for local development and testing. It allows you to bypass the external eHealth authentication flow and work with local data.
 
-![screenshot](docs/ehealth_login_page.png)
+1. Ensure your database is seeded with test users or you have registered a user via the `/register` page.
+2. Navigate to the login page: `http://localhost:8000/login`.
+3. Check the box **"Без авторизації у eHealth"** (Without eHealth authorization).
+4. Enter your email and password.
+5. Click **Вхід** (Login).
 
-Finally, after successful authentication, the user will be redirected back to the application dashboard page.
+![Local Login](docs/local_login_page.png)
 
-![screenshot](docs/dashboard_page.png)
+### Standard Login (via eHealth)
+This is the official authentication flow used for production-like environments and integration testing.
 
-Note, for eHealth login to work properly, the eHealth redirect URL should point to the real URL of the application login endpoint. 
-There should be a MIS instance running at that URL, otherwise, the eHealth authentication will fail. 
-E.g., if in the `.env` file, the `EHEALTH_REDIRECT_URI` is set to `https://mydomain.com/ehealth/oauth`, 
-there should be instance of the application running at `https://mydomain.com`. For local development, 
-you may set `EHEALTH_CALLBACK_PROD` to `true` in the `.env` of that MIS instance and configure `EHEALTH_URL_DEV` to your local development URL, e.g., `http://localhost:8000`.
+After registering the first legal entity, you should receive an email from eHealth with instructions. Follow them to set your eHealth password.
 
+1. Navigate to the login page: `http://localhost:8000/login`.
+2. Ensure the checkbox **"Без авторизації у eHealth"** is **unchecked**.
+3. Select the registered legal entity in the corresponding field.
+4. Click the login button; you will be redirected to the eHealth authentication page.
+
+![eHealth Login](docs/login_through_ehealth.png)
+
+5. After successful authentication, you will be redirected back to the application dashboard.
+
+> **Note:** For eHealth login to work properly, the `EHEALTH_REDIRECT_URI` in your `.env` must point to a real, accessible URL of your application. For local development, you may set `EHEALTH_CALLBACK_PROD=true` and configure `EHEALTH_URL_DEV` to `http://localhost:8000`.
 
 ## Code Style
 - view file names: kebab-case
