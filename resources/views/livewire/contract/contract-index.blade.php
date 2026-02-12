@@ -36,7 +36,7 @@
                         </thead>
                         <tbody class="index-table-tbody">
                         @foreach($contracts as $item)
-                            <tr>
+                            <tr wire:key="contract-{{ $item->uuid }}">
                                 <td class="index-table-td">
                                     <div class="text-sm text-gray-900 font-medium">
                                         {{ $item->contract_number }}
@@ -59,14 +59,56 @@
                                 <td class="index-table-td text-sm text-gray-500">
                                     {{ $item->start_date?->format('d.m.Y') ?? $item->created_at?->format('d.m.Y') }}
                                 </td>
-                                <td class="index-table-td-actions text-right">
-                                    <a href="{{ route('contract.show', [legalEntity(), $item->uuid]) }}"
-                                       class="text-gray-400 hover:text-blue-600 transition-colors"
-                                       wire:navigate
-                                       title="{{ __('Перегляд') }}"
-                                    >
-                                        @icon('eye', 'w-5 h-5')
-                                    </a>
+
+                                <td class="index-table-td-actions">
+                                    <div class="flex justify-center relative">
+                                        <div x-data="{
+                                                 open: false,
+                                                 toggle() {
+                                                     if (this.open) return this.close();
+                                                     this.$refs.button.focus();
+                                                     this.open = true;
+                                                 },
+                                                 close(focusAfter) {
+                                                     if (!this.open) return;
+                                                     this.open = false;
+                                                     focusAfter && focusAfter.focus();
+                                                 }
+                                             }"
+                                             @keydown.escape.prevent.stop="close($refs.button)"
+                                             @focusin.window="!$refs.panel.contains($event.target) && close()"
+                                             x-id="['dropdown-button']"
+                                             class="relative"
+                                        >
+                                            <button @click="toggle()"
+                                                    x-ref="button"
+                                                    :aria-expanded="open"
+                                                    :aria-controls="$id('dropdown-button')"
+                                                    type="button"
+                                                    class="hover:text-primary cursor-pointer outline-none"
+                                            >
+                                                @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-gray-200')
+                                            </button>
+
+                                            <div
+                                                x-show="open"
+                                                x-cloak
+                                                x-ref="panel"
+                                                x-transition.origin.top.left
+                                                @click.outside="close($refs.button)"
+                                                :id="$id('dropdown-button')"
+                                                class="absolute right-0 mt-2 w-44 rounded-md bg-white shadow-md z-50 border border-gray-100"
+                                            >
+                                                <a href="{{ route('contract.show', [legalEntity(), $item->uuid]) }}"
+                                                   wire:navigate
+                                                   class="flex items-center gap-2 w-full rounded-md px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    @icon('eye', 'w-5 h-5 text-gray-600')
+                                                    {{ __('contracts.view') }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
