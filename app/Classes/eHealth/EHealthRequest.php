@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Classes\eHealth;
 
-use Closure;
 use App\Exceptions\EHealth\EHealthResponseException;
 use App\Exceptions\EHealth\EHealthValidationException;
+use App\Traits\EHealthApiFormatter;
+use Closure;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\HigherOrderTapProxy;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\HigherOrderTapProxy;
 
 abstract class EHealthRequest extends PendingRequest
 {
+    use EHealthApiFormatter;
+
     public const string QUERY_PARAM_PAGE_SIZE = 'page_size';
 
     /**
@@ -28,13 +31,9 @@ abstract class EHealthRequest extends PendingRequest
 
     protected ?Closure $mapper = null;
 
-    protected EHealthApiFormatter $formatter;
-
     public function __construct(?Factory $factory = null, $middleware = [])
     {
         parent::__construct($factory, $middleware);
-
-        $this->formatter = app(EHealthApiFormatter::class);
 
         $this->withHeaders([
             'X-Custom-PSK' => config('ehealth.api.token'),

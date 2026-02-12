@@ -31,7 +31,7 @@ class DocumentRepository
         }
 
         foreach ($documents as $documentData) {
-            $phone = Document::updateOrCreate(
+            $document = Document::updateOrCreate(
                 [
                 'documentable_type' => get_class($model),
                 'documentable_id' => $model->id,
@@ -40,7 +40,7 @@ class DocumentRepository
                 $documentData
             );
 
-            $model->documents()->save($phone);
+            $model->documents()->save($document);
         }
     }
 }

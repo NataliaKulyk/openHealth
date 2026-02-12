@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Classes\eHealth;
+namespace App\Traits;
 
 use App\Core\Arr;
 
 /**
- * Class that formats data into API format.
+ * Trait that formats data into API format.
  */
-class EHealthApiFormatter
+trait EHealthApiFormatter
 {
     /**
      * Format data for eHealth API calls.
@@ -18,7 +18,7 @@ class EHealthApiFormatter
      * @param  array  $dateFields  Array of field names that should be treated as dates (optional)
      * @return array Formatted data
      */
-    public function format(array $data, array $dateFields = []): array
+    protected function format(array $data, array $dateFields = []): array
     {
         return removeEmptyKeys(Arr::toSnakeCase($this->convertDates($data, $dateFields)));
     }
