@@ -286,7 +286,6 @@ class TestUserMigrate extends Seeder
                     'is_active' => true,
                     'legal_entity_id' => $legalEntityId,
                     'division_id' => null,
-                    'user_id' => $ownerUserId,
                     'party_id' => $partyId,
                     'created_at' => new Carbon('2024-11-14T10:37:35.000000Z'),
                     'updated_at' => new Carbon('2024-11-14T10:37:35.000000Z'),

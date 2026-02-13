@@ -29,7 +29,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(false);
             $table->foreignId('legal_entity_id')->nullable()->constrained('legal_entities')->onDelete('cascade');
             $table->foreignId('division_id')->nullable()->constrained('divisions')->onDelete('cascade');
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('party_id')->nullable()->constrained('parties')->onDelete('cascade');
             $table->timestamps();
         });

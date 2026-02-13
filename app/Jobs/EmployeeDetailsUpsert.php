@@ -63,11 +63,6 @@ class EmployeeDetailsUpsert extends EHealthJob
         $validatedData = $response->validate();
 
         Log::info('Processing EmployeeDetailsUpsert for employee:' . $this->employee->id . ', LE:' . ($this->legalEntity->id ?? 'N/A'));
-//        $ownerEmployee = Employee::with('party')->where('employee_type', 'OWNER')->where('legal_entity_id', $this->legalEntity->id)->first();
-//        // This need for OWNER that has a more than one employee_types for the same party
-//        if ($validatedData['party']['uuid'] === $ownerEmployee->party->uuid && !$this->employee?->userId) {
-//            $this->employee->userId = $ownerEmployee->userId;
-//        }
 
         $this->employee->legalEntityUuid = $this->legalEntity?->uuid;
 
@@ -87,10 +82,10 @@ class EmployeeDetailsUpsert extends EHealthJob
         $this->employee->setSyncStatus(JobStatus::COMPLETED);
         $this->employee->refresh();
 
-        $user = $this->employee->user;
+        $users = $this->employee->party->users;
 
-        if (!$user) {
-            Log::info('Employee sync: User is not associated with this employee record yet.', [
+        if ($users->isEmpty()) {
+            Log::info('Employee sync: no any users associated with this employee record yet.', [
                 'employee_id' => $this->employee->id,
                 'employee_uuid' => $this->employee->uuid,
             ]);
@@ -103,13 +98,15 @@ class EmployeeDetailsUpsert extends EHealthJob
 
         setPermissionsTeamId($legalEntityId);
 
-        if (!$user->hasRole($roleName)) {
-            foreach ($this->getGuardsForRole($roleName) as $guard) {
-                Log::info("Assigning role '{$roleName}' to user ID {$user->id} for guard '{$guard}'.");
+        foreach ($users as $user) {
+            if (!$user->hasRole($roleName)) {
+                foreach ($this->getGuardsForRole($roleName) as $guard) {
+                    Log::info("Assigning role '{$roleName}' to user ID {$user->id} for guard '{$guard}'.");
 
-                Auth::shouldUse($guard);
+                    Auth::shouldUse($guard);
 
-                $user->assignRole($roleName);
+                    $user->assignRole($roleName);
+                }
             }
         }
     }

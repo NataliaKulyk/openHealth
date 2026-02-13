@@ -34,8 +34,8 @@ class UniqueEmailInLegalEntity implements ValidationRule
             return;
         }
 
-        $query = User::where('email', $value)
-            ->whereHas('employees', function ($query) {
+        $query = User::with('party.employees')->where('email', $value)
+            ->whereHas('party.employees', function ($query) {
                 $query->where('legal_entity_id', legalEntity()->id);
             });
 

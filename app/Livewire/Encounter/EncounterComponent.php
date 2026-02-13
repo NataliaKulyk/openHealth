@@ -347,7 +347,7 @@ class EncounterComponent extends Component
             throw new RuntimeException('Authenticated user not found');
         }
 
-        $employees = $authUser->employees()
+        $employees = $authUser->party->employees()
             ->whereEmployeeType(Role::DOCTOR)
             ->select(['uuid', 'position', 'party_id'])
             ->with('party:id,last_name,first_name,second_name')

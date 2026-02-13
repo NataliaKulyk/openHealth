@@ -130,7 +130,7 @@ readonly class EmployeeRepository
                 'employees' => fn ($q) => $q
                     ->where('legal_entity_id', $legalEntityId)
                     ->orderByDesc('updated_at')
-                    ->with(['division', 'user']),
+                    ->with(['division']),
                 'employeeRequests' => fn ($q) => $q
                     ->where('legal_entity_id', $legalEntityId)
                     ->whereIn('status', [Status::NEW->value, Status::SIGNED->value, Status::APPROVED->value])

@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Livewire\Auth;
 
-use App\Classes\eHealth\EHealth;
-use App\Models\LegalEntity;
+use Exception;
 use App\Models\Role;
 use App\Models\User;
-use Exception;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Session;
-use Livewire\Attributes\Layout;
+use App\Models\LegalEntity;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Layout;
+use App\Classes\eHealth\EHealth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Features\SupportRedirects\Redirector;
 
 #[Layout('layouts.guest')]
@@ -81,6 +82,8 @@ class LoginDev extends Login
         try {
             $code = EHealth::auth()->authorize($accessToken, $scopes, $credentials['legalEntityUUID']);
         } catch (Exception $e) {
+            Log::channel('e_health_errors')->error('Authorization error: ' . $e->details['error']['message'] ?? $e->getMessage(), ['exception' => $e]);
+
             session()->flash('error', $e->getMessage());
 
             return back();

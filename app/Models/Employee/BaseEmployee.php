@@ -77,7 +77,7 @@ abstract class BaseEmployee extends Model
 
     protected function isVerified(): Attribute
     {
-        return Attribute::get(fn () => $this->user?->email_verified_at !== null);
+        return Attribute::get(fn () => $this->party?->users()->first()?->email_verified_at !== null);
     }
 
     // --- COMMON RELATIONS ---
@@ -95,11 +95,6 @@ abstract class BaseEmployee extends Model
     public function party(): BelongsTo
     {
         return $this->belongsTo(Party::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     #[Scope]

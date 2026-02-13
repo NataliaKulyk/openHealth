@@ -193,7 +193,7 @@ class EmployeeIndex extends EmployeeComponent
         // 3. Filter: Email (via Users)
         if (!empty($this->filter['email'])) {
             // ILIKE for emails too
-            $query->whereHas('users', fn ($q) => $q->where('email', 'ILIKE', '%' . $this->filter['email'] . '%'));
+            $query->whereHas('party.users', fn ($q) => $q->where('email', 'ILIKE', '%' . $this->filter['email'] . '%'));
         }
 
         // 4. Filter: Phone
@@ -306,8 +306,11 @@ class EmployeeIndex extends EmployeeComponent
 
                 // 4. Safe User Cleanup: Remove a role from a user (if binding exists)
                 // This handles cases where email might be 'N/A' or user doesn't exist locally
-                if ($user = $employee->user) {
+                $users = $employee->party->users;
+
+                foreach ($users as $user) {
                     $roleToRemove = $employee->employee_type;
+
                     if ($user->hasRole($roleToRemove)) {
                         $user->removeRole($roleToRemove);
                     }
@@ -514,7 +517,7 @@ class EmployeeIndex extends EmployeeComponent
      */
     public function syncOne(int $employeeId): void
     {
-        $employee = Employee::with(['user', 'party'])->find($employeeId);
+        $employee = Employee::with(['party'])->find($employeeId);
 
         if (!$employee) {
             $this->dispatch('flashMessage', ['message' => 'Співробітника не знайдено', 'type' => 'error']);

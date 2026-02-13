@@ -185,7 +185,7 @@ class DeclarationIndex extends Component
     {
         $user = Auth::user();
 
-        $this->employeeIds = $user->employees()->filterByLegalEntityId($legalEntity->id)->pluck('id')->all();
+        $this->employeeIds = $user->party->employees()->filterByLegalEntityId($legalEntity->id)->pluck('id')->all();
 
         if ($user->hasRole(Role::OWNER)) {
             $this->doctors = $this->getDoctors();
@@ -357,7 +357,7 @@ class DeclarationIndex extends Component
 
         // If user is doctor, get only his declarations
         if ($user->hasRole(Role::DOCTOR) && !$user->hasRole(Role::OWNER)) {
-            $query['employee_id'] = Auth::user()
+            $query['employee_id'] = Auth::user()->party
                 ->employees()
                 ->forParty(Auth::user()->party->id)
                 ->first()->uuid;
@@ -610,7 +610,7 @@ class DeclarationIndex extends Component
             ->doctor()
             ->filterByLegalEntityId(legalEntity()->id)
             ->whereHas('declarations')
-            ->get(['id', 'uuid', 'user_id', 'party_id'])
+            ->get(['id', 'uuid', 'party_id'])
             ->map(fn (Employee $doctor) => [
                 'uuid' => $doctor->uuid,
                 'full_name' => trim($doctor->party->fullName)

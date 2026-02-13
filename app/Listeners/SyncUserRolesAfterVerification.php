@@ -25,7 +25,7 @@ class SyncUserRolesAfterVerification
         setPermissionsTeamId($legalEntityId);
         $user->unsetRelation('roles');
 
-        $roleNames = $user->employees()
+        $roleNames = $user->party->employees()
             ->where('legal_entity_id', $legalEntityId)
             ->where('status', 'APPROVED')
             ->pluck('employee_type')
