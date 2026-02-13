@@ -281,30 +281,41 @@ class EmployeeIndex extends EmployeeComponent
 
     public function deactivate(): void
     {
-        // 1. Get the ID (must match the name in showModalDeactivate)
+        // 1. Get the employee record from the database
         $employee = Employee::find($this->employeeIdToDeactivate);
 
         if (!$employee) {
-            // If the employee is not found, just close and clean
+            // If the employee is not found, just close and clean UI state
             $this->resetDeactivateState();
 
             return;
         }
 
-        try {
-            $endDate = Carbon::now('UTC')->format('Y-m-d');
+        // eHealth requires: end_date >= start_date.
+        $startDate = Carbon::parse($employee->start_date)->startOfDay();
+        $endDate = Carbon::now('UTC')->startOfDay();
 
-            // 2. eHealth API Call
-            $response = EHealth::employee()->deactivate($employee->uuid, $endDate);
+        // If 'today' is earlier than 'start_date', use 'start_date' as the dismissal date
+        if ($endDate->lt($startDate)) {
+            $endDate = $startDate;
+        }
+
+        // Standardize the date format for API and Database
+        $formattedEndDate = $endDate->format('Y-m-d');
+
+        try {
+            // 2. eHealth API Call using formatted string
+            $response = EHealth::employee()->deactivate($employee->uuid, $formattedEndDate);
 
             if (!empty($response)) {
-                // 3. Updates in the database
+                // 3. Updates in the local database
                 $employee->update([
                     'status' => Status::STOPPED->value,
-                    'end_date' => $endDate,
+                    'end_date' => $formattedEndDate,
                 ]);
 
-                // 4. Remove a role from a user (if there is a binding)
+                // 4. Safe User Cleanup: Remove a role from a user (if binding exists)
+                // This handles cases where email might be 'N/A' or user doesn't exist locally
                 if ($user = $employee->user) {
                     $roleToRemove = $employee->employee_type;
                     if ($user->hasRole($roleToRemove)) {
@@ -320,14 +331,19 @@ class EmployeeIndex extends EmployeeComponent
                 );
             }
         } catch (\Exception $e) {
+            // Log the error for debugging purposes
+            Log::error('Employee deactivation failed', [
+                'employee_id' => $employee->id,
+                'error' => $e->getMessage()
+            ]);
+
             $this->dispatch(
                 'flashMessage',
                 ['message' => __('employees.requestError', ['error' => $e->getMessage()]), 'type' => 'error']
             );
         }
 
-        // 5. Reset UI State
-        // This will ensure that the modal opens "clean" the next time
+        // 5. Reset UI State to ensure modal is clean for the next action
         $this->resetDeactivateState();
     }
 
