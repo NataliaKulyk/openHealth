@@ -69,7 +69,6 @@
                       this.confidantPerson = { ...this.confidantPerson };
                   }
               },
-
               editDocument(index) {
                   if (!this.confidantPerson || !this.confidantPerson.documentsRelationship) return;
 
@@ -152,7 +151,7 @@
             </div>
 
             {{-- Combined table for both PersonUpdate and PersonCreate --}}
-            <div class="overflow-x-auto" x-show="@if($this instanceof PersonUpdate) confidantPersons && confidantPersons.length > 0 @else confidantPerson && confidantPerson.documentsRelationship && confidantPerson.documentsRelationship.length > 0 @endif" wire:ignore>
+            <div x-show="@if($this instanceof PersonUpdate) confidantPersons && confidantPersons.length > 0 @else confidantPerson && confidantPerson.documentsRelationship && confidantPerson.documentsRelationship.length > 0 @endif" wire:ignore>
                 <table class="table-input w-full">
                     <thead class="thead-input">
                     <tr>
@@ -399,11 +398,23 @@
                 </table>
             </div>
 
-            @unless(($this instanceof \App\Livewire\Person\PersonCreate || $this instanceof \App\Livewire\Person\PersonRequestEdit) && $this->selectedConfidantPersonId)
-                <button type="button" @click="resetForm(); showLegalRepDrawer = true" class="item-add my-5">
-                    {{ __('patients.add_legal_representative') }}
+            <div class="flex items-center justify-between my-5">
+                @unless(($this instanceof \App\Livewire\Person\PersonCreate || $this instanceof \App\Livewire\Person\PersonRequestEdit) && $this->selectedConfidantPersonId)
+                    <button type="button" @click="resetForm(); showLegalRepDrawer = true" class="item-add">
+                        {{ __('patients.add_legal_representative') }}
+                    </button>
+                @else
+                    <div></div>
+                @endunless
+
+                <button type="button"
+                        class="button-minor flex items-center gap-2"
+                        @click="showLegalRepDrawer = true"
+                >
+                    @icon('delete', 'w-4 h-4')
+                    {{ __('patients.deactivate_relationship') }}
                 </button>
-            @endunless
+            </div>
         </div>
 
         @if($this instanceof PersonUpdate)
@@ -412,4 +423,16 @@
 
         @include('livewire.person.parts.drawers.add-confidant-person')
     </div>
+
+    <div x-show="showLegalRepDrawer"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         x-cloak
+         @click="resetForm()"
+         class="fixed inset-0 bg-black/25 z-30"
+    ></div>
 </fieldset>

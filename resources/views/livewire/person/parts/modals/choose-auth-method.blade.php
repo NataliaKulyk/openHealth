@@ -26,54 +26,63 @@
                         <div class="flex items-center justify-between mb-8">
                             <legend class="legend !mb-0">{{ __('patients.authentication_methods') }}</legend>
 
-                            <div x-data="{ openAdd: false }" class="relative">
-                                <button @click="openAdd = !openAdd"
-                                        type="button"
-                                        class="item-add"
-                                >
-                                    <span>{{ __('patients.add_authentication_method') }}</span>
-                                </button>
-
-                                <div x-show="openAdd"
-                                     @click.away="openAdd = false"
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     style="display: none"
-                                     class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 p-1 border border-gray-100"
-                                >
-                                    {{-- Can add method if none exist --}}
-                                    <template x-if="authenticationMethods.length === 0">
-                                        <button type="button"
-                                                @click="localStep = {{ AuthStep::ADD_NEW_BY_SMS }}; openAdd = false"
-                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
-                                        >
-                                            Автентифікація через СМС
-                                        </button>
-
-                                        <button type="button"
-                                                wire:click.prevent="createOfflineAuthMethod"
-                                                @click="openAdd = false"
-                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
-                                        >
-                                            Автентифікація через документи
-                                        </button>
-                                    </template>
-
-                                    {{-- Can add only when for the same auth method --}}
-                                    <template x-if="
-                                                  authenticationMethods.length === 0 ||
-                                                  authenticationMethods.some(method => method.type === '{{ AuthenticationMethod::THIRD_PERSON->value }}')
-                                              "
+                            <div class="flex items-center gap-3">
+                                <div x-data="{ openAdd: false }" class="relative">
+                                    <button @click="Alpine.store('authDrawer').showSignatureDrawer = true; showAuthMethodModal = false"
+                                            type="button"
+                                            class="item-add"
                                     >
-                                        <button type="button"
-                                                @click="localStep = 4; openAdd = false"
-                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
+                                        <span>{{ __('patients.add_authentication_method') }}</span>
+                                    </button>
+
+                                    <div x-show="openAdd"
+                                         @click.away="openAdd = false"
+                                         x-transition:enter="transition ease-out duration-100"
+                                         x-transition:enter-start="opacity-0 scale-95"
+                                         x-transition:enter-end="opacity-100 scale-100"
+                                         style="display: none"
+                                         class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 p-1 border border-gray-100"
+                                    >
+                                        {{-- Can add method if none exist --}}
+                                        <template x-if="authenticationMethods.length === 0">
+                                            <button type="button"
+                                                    @click="localStep = {{ AuthStep::ADD_NEW_BY_SMS }}; openAdd = false"
+                                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
+                                            >
+                                                Автентифікація через СМС
+                                            </button>
+
+                                            <button type="button"
+                                                    wire:click.prevent="createOfflineAuthMethod"
+                                                    @click="openAdd = false"
+                                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
+                                            >
+                                                Автентифікація через документи
+                                            </button>
+                                        </template>
+
+                                        {{-- Can add only when for the same auth method --}}
+                                        <template x-if="
+                                                      authenticationMethods.length === 0 ||
+                                                      authenticationMethods.some(method => method.type === '{{ AuthenticationMethod::THIRD_PERSON->value }}')
+                                                  "
                                         >
-                                            Автентифікація через третю особу
-                                        </button>
-                                    </template>
+                                            <button type="button"
+                                                    @click="localStep = 4; openAdd = false"
+                                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
+                                            >
+                                                Автентифікація через третю особу
+                                            </button>
+                                        </template>
+                                    </div>
                                 </div>
+
+                                <button type="button"
+                                        class="button-minor flex items-center gap-2"
+                                >
+                                    @icon('delete', 'w-4 h-4')
+                                    {{ __('patients.deactivate_relationship') }}
+                                </button>
                             </div>
                         </div>
 

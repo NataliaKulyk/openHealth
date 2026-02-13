@@ -1,5 +1,5 @@
 {{-- Signature Drawer Overlay --}}
-<div x-show="showSignatureDrawer"
+<div x-show="Alpine.store('authDrawer').showSignatureDrawer"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -7,13 +7,13 @@
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
      x-cloak
-     @click="showSignatureDrawer = false"
-     class="fixed inset-0 bg-gray-900/50"
-     style="z-index: 75;"
+     @click="Alpine.store('authDrawer').showSignatureDrawer = false"
+     class="fixed left-0 right-0 bottom-0 bg-gray-900/50"
+     style="z-index: 75; top: 64px;"
 ></div>
 
 {{-- Signature Drawer --}}
-<div x-show="showSignatureDrawer"
+<div x-show="Alpine.store('authDrawer').showSignatureDrawer"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="translate-x-full"
      x-transition:enter-end="translate-x-0"
@@ -21,8 +21,8 @@
      x-transition:leave-start="translate-x-0"
      x-transition:leave-end="translate-x-full"
      x-cloak
-     class="fixed top-0 right-0 h-screen pt-16 bg-white dark:bg-gray-800 shadow-2xl"
-     style="z-index: 80; width: calc(80% - 95px);"
+     class="fixed right-0 bg-white dark:bg-gray-800 shadow-2xl"
+     style="z-index: 80; width: calc(80% - 65px); top: 64px; height: calc(100vh - 64px);"
      id="signature-drawer"
      tabindex="-1"
      x-data="{ fileUploaded: false, fileName: '' }"
@@ -112,14 +112,15 @@
 
         <div class="flex gap-3 mt-8">
             <button type="button"
-                    @click="showSignatureDrawer = false"
+                    @click="Alpine.store('authDrawer').showSignatureDrawer = false"
                     class="button-minor"
             >
-                {{ __('forms.cancel') }}
+                {{ __('forms.back') }}
             </button>
 
             <button type="button"
-                    wire:click.prevent="signConfidantPersonRelationship"
+                    @click="Alpine.store('authDrawer').showTerminateModal = true"
+                    {{-- wire:click.prevent="signConfidantPersonRelationship" --}}
                     class="button-primary"
             >
                 {{ __('forms.sign') }}

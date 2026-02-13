@@ -48,7 +48,9 @@
                 {{ __('forms.back') }}
             </button>
 
-            <button type="button" @click="localStep = 0" class="button-outline-primary">
+            <button type="button" 
+                    @click="localStep = 0; if (typeof showAuthMethodModal !== 'undefined') showAuthMethodModal = false" 
+                    class="button-outline-primary">
                 {{ __('patients.to_authentication_methods') }}
             </button>
 

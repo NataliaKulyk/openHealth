@@ -68,7 +68,10 @@
             </table>
         </div>
 
-        <button type="button" class="item-add" @click.prevent="resetForm(); showDocumentDrawer = true">
+        <button type="button"
+                class="item-add"
+                @click.prevent="resetForm(); showDocumentDrawer = true"
+        >
             {{ __('forms.add_document') }}
         </button>
     </fieldset>

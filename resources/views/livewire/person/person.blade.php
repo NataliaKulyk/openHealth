@@ -1,7 +1,15 @@
 @use('App\Models\Person\PersonRequest')
 @use('App\Livewire\Person\PersonUpdate')
 
-<div>
+<div x-data="{}" x-init="
+    if (!Alpine.store('authDrawer')) {
+        Alpine.store('authDrawer', { 
+            showAuthSmsDrawer: false,
+            showSignatureDrawer: false,
+            showTerminateModal: false
+        });
+    }
+">
     <x-header-navigation class="breadcrumb-form">
         <x-slot name="title">{{ __('patients.add_patient') }}</x-slot>
     </x-header-navigation>
@@ -68,6 +76,10 @@
     @can('create', PersonRequest::class)
         <x-signature-modal method="sign" />
     @endcan
+
+    @include('livewire.person.parts.drawers.auth-sms-drawer')
+    @include('livewire.person.parts.drawers.add-signature')
+    @include('livewire.person.parts.modals.terminate-relationship')
 
     <livewire:components.x-message :key="time()" />
     <x-forms.loading />

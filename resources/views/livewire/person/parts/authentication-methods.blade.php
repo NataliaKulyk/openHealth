@@ -56,8 +56,8 @@
 >
     <legend class="legend">{{ __('forms.authentication') }}</legend>
 
-    <div class="form-row-3">
-        <div class="form-group group">
+    <div class="form-row-3 items-end justify-between">
+        <div class="form-group group flex-1">
             <label for="relationType" class="sr-only">
                 {{ __('forms.authentication') }}
             </label>
@@ -77,6 +77,14 @@
 
             @error('form.person.authenticationMethods.*.type') <p class="text-error">{{ $message }}</p> @enderror
         </div>
+
+        <button type="button"
+                class="button-minor flex items-center justify-center gap-2 mb-2 ml-4"
+                @click="Alpine.store('authDrawer').showAuthSmsDrawer = true"
+        >
+            @icon('delete', 'w-4 h-4 flex-shrink-0')
+            <span class="leading-none">{{ __('patients.deactivate_relationship') }}</span>
+        </button>
     </div>
 
     <template x-if="authenticationMethods[0]?.type === '{{ AuthenticationMethod::OTP->value }}'">
