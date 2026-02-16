@@ -256,18 +256,25 @@
                                         <div x-show="openDropdown"
                                              x-transition
                                              x-cloak
-                                             class="absolute right-0 z-10 w-44 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
+                                             class="absolute right-0 z-10 w-52 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
                                         >
                                             <div class="py-1">
                                                 <button type="button"
-                                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
+                                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 whitespace-nowrap"
                                                         @click="selectedConfidantIndex = confidantIndex; editLegalRepresentative(docIndex); openDropdown = false"
                                                 >
-                                                    @icon('file-edit', 'w-4 h-4')
+                                                    @icon('edit', 'w-4 h-4')
                                                     {{ __('forms.edit') }}
                                                 </button>
                                                 <button type="button"
-                                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400"
+                                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 whitespace-nowrap"
+                                                        @click="Alpine.store('authDrawer').showAuthSmsDrawer = true; openDropdown = false"
+                                                >
+                                                    @icon('close-circle', 'w-4 h-4')
+                                                    {{ __('patients.deactivate_relationship') }}
+                                                </button>
+                                                <button type="button"
+                                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400 whitespace-nowrap"
                                                         @click="confidantPersons && confidantPersons[confidantIndex] && confidantPersons[confidantIndex].documentsRelationship.splice(docIndex, 1); openDropdown = false"
                                                 >
                                                     @icon('delete', 'w-4 h-4')
@@ -370,18 +377,25 @@
                                     <div x-show="openDropdown"
                                          x-transition
                                          x-cloak
-                                         class="absolute right-0 z-10 w-44 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
+                                         class="absolute right-0 z-10 w-52 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
                                     >
                                         <div class="py-1">
                                             <button type="button"
-                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
+                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 whitespace-nowrap"
                                                     @click="editLegalRepresentative(docIndex); openDropdown = false"
                                             >
-                                                @icon('file-edit', 'w-4 h-4')
+                                                @icon('edit', 'w-4 h-4')
                                                 {{ __('forms.edit') }}
                                             </button>
                                             <button type="button"
-                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400"
+                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 whitespace-nowrap"
+                                                    @click="Alpine.store('authDrawer').showAuthSmsDrawer = true; openDropdown = false"
+                                            >
+                                                @icon('close-circle', 'w-4 h-4')
+                                                {{ __('patients.deactivate_relationship') }}
+                                            </button>
+                                            <button type="button"
+                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400 whitespace-nowrap"
                                                     @click="confidantPerson.documentsRelationship.splice(docIndex, 1); confidantPerson = { ...confidantPerson }; openDropdown = false"
                                             >
                                                 @icon('delete', 'w-4 h-4')

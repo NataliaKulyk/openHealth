@@ -45,7 +45,7 @@
     {{-- Results of founded --}}
     <div class="space-y-6 mt-6" x-show="showResults" x-transition x-cloak>
         <template x-for="patient in $wire.confidantPerson" :key="patient.id">
-            <fieldset class="fieldset" :class="{ 'ring-2 ring-blue-500': selectedPatient?.id === patient.id }">
+            <fieldset class="fieldset min-h-[280px]" :class="{ 'ring-2 ring-blue-500': selectedPatient?.id === patient.id }">
                 <legend class="legend"
                         x-text="`${patient.lastName} ${patient.firstName} ${patient.secondName || ''}`"
                 ></legend>
@@ -148,7 +148,7 @@
         </template>
 
         <template x-if="$wire.confidantPerson.length === 0">
-            <fieldset class="fieldset mx-auto">
+            <fieldset class="fieldset mx-auto min-h-[280px]">
                 <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
                 <div class="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-start mb-4">
                     <div class="flex items-start gap-3">

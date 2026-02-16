@@ -33,12 +33,29 @@
         <div x-data="{
             timer: 60,
             verificationCode: '',
+            timerInterval: null,
             init() {
-                setInterval(() => { if(this.timer > 0) this.timer-- }, 1000)
+                this.startTimer();
+                this.$watch(() => Alpine.store('authDrawer').showAuthSmsDrawer, (value) => {
+                    if(value) {
+                        this.startTimer();
+                    }
+                });
+            },
+            startTimer() {
+                this.timer = 60;
+                if(this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => { 
+                    if(this.timer > 0) {
+                        this.timer--;
+                    } else {
+                        clearInterval(this.timerInterval);
+                    }
+                }, 1000);
             },
             resetTimer() {
                 if(this.timer === 0) {
-                    this.timer = 60;
+                    this.startTimer();
                 }
             }
         }">
@@ -68,7 +85,7 @@
                     @icon('mail', 'w-4 h-4 mr-2')
                     <span>{{ __('forms.send_again') }}</span>
                     <template x-if="timer > 0">
-                        <span x-text="`(${timer}c)`"></span>
+                        <span x-text="`(через ${timer} c)`"></span>
                     </template>
                 </button>
             </div>

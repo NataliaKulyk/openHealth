@@ -1,7 +1,6 @@
 {{-- Documents inside drawer --}}
 <div>
-    <fieldset
-        class="p-4 sm:p-8 sm:pb-10 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-full">
+    <fieldset class="fieldset mt-6">
         <legend class="legend">
             {{ __('patients.confidant_person_documents_relationship') }}
         </legend>
