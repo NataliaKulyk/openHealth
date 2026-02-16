@@ -7,7 +7,7 @@ namespace App\Models\Person;
 use App\Enums\Person\Status;
 use App\Models\Relations\ConfidantPerson;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PersonRequest extends BasePerson
 {
@@ -24,9 +24,10 @@ class PersonRequest extends BasePerson
 
         // Cascade delete
         static::deleting(static function (PersonRequest $personRequest) {
-            if ($personRequest->confidantPerson) {
-                $personRequest->confidantPerson->documentsRelationship()->delete();
-                $personRequest->confidantPerson->delete();
+            // Delete all confidant persons and their documents
+            foreach ($personRequest->confidantPersons as $confidantPerson) {
+                $confidantPerson->documentsRelationship()->delete();
+                $confidantPerson->delete();
             }
 
             $personRequest->addresses()->delete();
@@ -41,8 +42,8 @@ class PersonRequest extends BasePerson
         return $this->belongsTo(Person::class);
     }
 
-    public function confidantPerson(): HasOne
+    public function confidantPersons(): HasMany
     {
-        return $this->hasOne(ConfidantPerson::class);
+        return $this->hasMany(ConfidantPerson::class);
     }
 }

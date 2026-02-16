@@ -283,6 +283,7 @@ class TestUserMigrate extends Seeder
                     'employee_type' => Role::OWNER->value,
                     'inserted_at' => null,
                     'status' => 'APPROVED',
+                    'is_active' => true,
                     'legal_entity_id' => $legalEntityId,
                     'division_id' => null,
                     'user_id' => $ownerUserId,

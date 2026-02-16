@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Person;
 
+use App\Classes\Cipher\Api\CipherRequest;
+use App\Classes\Cipher\Exceptions\CipherApiException;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Enums\Person\Status;
@@ -24,6 +26,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use JsonException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -127,6 +130,8 @@ class PersonComponent extends Component
 
     public bool $showLeafletModal = false;
 
+    public array $selectedConfidantPersonData;
+
     public array $dictionaryNames = [
         'DOCUMENT_TYPE',
         'DOCUMENT_RELATIONSHIP_TYPE',
@@ -158,8 +163,12 @@ class PersonComponent extends Component
         $this->invalidPersonId = null;
 
         $this->selectedConfidantPersonId = $personData['id'];
-        $this->form->person['confidantPerson']['personId'] = $personData['id'];
-        $this->form->person['authenticationMethods'][0]['value'] = $personData['id'];
+
+        if (!$this instanceof PersonUpdate) {
+            $this->form->person['confidantPerson']['personId'] = $personData['id'];
+            $this->selectedConfidantPersonData = $personData;
+            $this->form->person['authenticationMethods'][0]['value'] = $personData['id'];
+        }
     }
 
     /**
@@ -576,13 +585,30 @@ class PersonComponent extends Component
 
         $personRequestData['patient_signed'] = $this->form->patientSigned;
 
-        $signedContent = signatureService()->signData(
-            $personRequestData,
-            $validated['password'],
-            $validated['knedp'],
-            $validated['keyContainerUpload'],
-            Auth::user()->party->taxId
-        );
+        try {
+            $signedContent = new CipherRequest()->signData(
+                $personRequestData,
+                $validated['knedp'],
+                $validated['keyContainerUpload'],
+                $validated['password'],
+                Auth::user()->party->taxId
+            );
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting to Cipher when signing data');
+            Session::flash('error', __('validation.custom.connection_exception'));
+
+            return;
+        } catch (CipherApiException $exception) {
+            $this->logCipherError($exception, 'Cipher API error when signing data');
+            Session::flash('error', $exception->getMessage());
+
+            return;
+        } catch (JsonException $exception) {
+            $this->logDatabaseErrors($exception, 'JSON encoding error when signing data');
+            Session::flash('error', 'Помилка обробки даних. Зверніться до адміністратора.');
+
+            return;
+        }
 
         try {
             $signResponse = EHealth::personRequest()

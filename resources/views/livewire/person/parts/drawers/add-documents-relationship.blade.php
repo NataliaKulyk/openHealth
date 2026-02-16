@@ -1,4 +1,4 @@
-@use('App\Livewire\Person\PersonUpdate')
+{{-- Document drawer works for both PersonUpdate and PersonCreate --}}
 
 {{-- Document Drawer Overlay --}}
 <div x-show="showDocumentDrawer"
@@ -108,6 +108,7 @@
                 <div class="form-group group">
                     <div class="datepicker-wrapper">
                         <input type="text"
+                               datepicker-min-date="{{ now()->format('d.m.Y') }}"
                                datepicker-format="dd.mm.yyyy"
                                name="documentExpiryDate"
                                id="documentExpiryDate"
@@ -223,29 +224,22 @@
 --}}
 
             <div class="mt-6 flex justify-start gap-3">
-                <button
-                    type="button"
-                    class="button-minor"
-                    @click="resetForm()"
+                <button type="button"
+                        class="button-minor"
+                        @click="showDocumentDrawer = false"
                 >
                     {{ __('forms.cancel') }}
                 </button>
-                @if($this instanceof PersonUpdate)
+
                 <button type="button"
                         class="button-primary"
-                        @click="showAuthDrawer = true"
-                >
-                    {{ __('patients.add_representative') }}
-                </button>
-                @else
-                <button type="button"
-                        class="button-primary"
-                        @click="addLegalRepresentative(); showDocumentDrawer = false;"
                         :disabled="!newDocument.type || !newDocument.number || !newDocument.issuedBy || !newDocument.issuedAt"
+                        @click="addNewConfidant(); showDocumentDrawer = false"
                 >
-                    <span x-text="isEditing ? '{{ __('forms.save_changes') }}' : '{{ __('forms.add_document') }}'"></span>
+                    <span x-text="isEditing ? '{{ __('forms.save_changes') }}' : '{{ __('forms.add_document') }}'">
+                        {{ __('forms.add_document') }}
+                    </span>
                 </button>
-                @endif
             </div>
         </div>
     </div>

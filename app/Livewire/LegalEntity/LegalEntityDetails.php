@@ -148,7 +148,11 @@ class LegalEntityDetails extends LegalEntityComponent
      */
     protected function getLicenseForm(): void
     {
-        $license = $this->legalEntity->licenses()?->first();
+        $licenses = $this->legalEntity->licenses()->get();
+
+        $license = $licenses->filter(function ($item) {
+            return $item->type->name === LegalEntity::TYPE_MSP || $item->type->name === LegalEntity::TYPE_PHARMACY;
+        })->first();
 
         if ($license) {
             $this->legalEntityForm->license = Arr::only(

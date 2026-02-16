@@ -42,7 +42,7 @@ class PersonRequestRepository
             }
 
             if (!empty($personData['confidant_person'])) {
-                $confidant = $personRequest->confidantPerson()->create([
+                $confidant = $personRequest->confidantPersons()->create([
                     'person_id' => $personData['confidant_person']['person_id'], // Who is a confidant person
                     'subject_person_id' => $personRequest->personId // Who needs a confidant person
                 ]);
@@ -93,16 +93,17 @@ class PersonRequestRepository
                 $personRequest->phones()->createMany($personData['phones']);
             }
 
-            // Confidant person
-            $existingConfidant = $personRequest->confidantPerson;
+            // Confidant persons - now using HasMany relationship
+            $existingConfidants = $personRequest->confidantPersons;
 
             if (!empty($personData['confidant_person'])) {
-                if ($existingConfidant) {
+                // Delete existing confidant persons
+                foreach ($existingConfidants as $existingConfidant) {
                     $existingConfidant->documentsRelationship()->delete();
                     $existingConfidant->delete();
                 }
 
-                $confidant = $personRequest->confidantPerson()->create([
+                $confidant = $personRequest->confidantPersons()->create([
                     'person_id' => $personData['confidant_person']['person_id'],
                     'subject_person_id' => $personRequest->personId
                 ]);
@@ -112,9 +113,12 @@ class PersonRequestRepository
                         $personData['confidant_person']['documents_relationship']
                     );
                 }
-            } elseif ($existingConfidant) {
-                $existingConfidant->documentsRelationship()->delete();
-                $existingConfidant->delete();
+            } elseif ($existingConfidants->isNotEmpty()) {
+                // Delete all existing confidant persons
+                foreach ($existingConfidants as $existingConfidant) {
+                    $existingConfidant->documentsRelationship()->delete();
+                    $existingConfidant->delete();
+                }
             }
         });
     }

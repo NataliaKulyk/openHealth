@@ -42,7 +42,6 @@
         </div>
     </div>
 
-
     {{-- Results of founded --}}
     <div class="space-y-6 mt-6" x-show="showResults" x-transition x-cloak>
         <template x-for="patient in $wire.confidantPerson" :key="patient.id">
@@ -54,40 +53,40 @@
                 <div
                     class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                     <div class="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mt-2">
-                            <span class="flex items-center gap-1.5" x-show="patient.birthDate">
-                                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
-                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
-                                     viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
-                                          d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H8z" />
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
-                                          d="M16 2v4M8 2v4M3 10h18" />
-                                </svg>
-                                <span x-text="patient.birthDate"></span>
-                            </span>
+                        <span class="flex items-center gap-1.5" x-show="patient.birthDate">
+                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                 viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                                      d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H8z" />
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                                      d="M16 2v4M8 2v4M3 10h18" />
+                            </svg>
+                            <span x-text="patient.birthDate"></span>
+                        </span>
 
                         <span class="flex items-center gap-1.5 min-w-0" x-show="patient.phone">
-                                @icon('tabler-phone', 'w-6 h-6 text-gray-800 dark:text-white')
-                                <a :href="'tel:' + patient.phone"
-                                   class="truncate hover:underline font-medium text-gray-900 dark:text-gray-200 text-base"
-                                   x-text="patient.phone"
-                                ></a>
-                            </span>
+                            @icon('tabler-phone', 'w-6 h-6 text-gray-800 dark:text-white')
+                            <a :href="'tel:' + patient.phone"
+                               class="truncate hover:underline font-medium text-gray-900 dark:text-gray-200 text-base"
+                               x-text="patient.phone"
+                            ></a>
+                        </span>
 
                         <span class="flex items-center gap-1.5" x-show="patient.gender">
-                                <template x-if="patient.gender === 'male'">
-                                    <span class="flex items-center gap-1.5">
-                                        @icon('men', 'w-6 h-6 text-gray-800 dark:text-white')
-                                        <span>{{ __('patients.male') }}</span>
-                                    </span>
-                                </template>
-                                <template x-if="patient.gender === 'female'">
-                                    <span class="flex items-center gap-1.5">
-                                        @icon('women', 'w-6 h-6 text-gray-800 dark:text-white')
-                                        <span>{{ __('patients.female') }}</span>
-                                    </span>
-                                </template>
-                            </span>
+                            <template x-if="patient.gender === 'male'">
+                                <span class="flex items-center gap-1.5">
+                                    @icon('men', 'w-6 h-6 text-gray-800 dark:text-white')
+                                    <span>{{ __('patients.male') }}</span>
+                                </span>
+                            </template>
+                            <template x-if="patient.gender === 'female'">
+                                <span class="flex items-center gap-1.5">
+                                    @icon('women', 'w-6 h-6 text-gray-800 dark:text-white')
+                                    <span>{{ __('patients.female') }}</span>
+                                </span>
+                            </template>
+                        </span>
                     </div>
 
                     <button type="button"
@@ -170,86 +169,14 @@
         </template>
     </div>
 
-    {{-- Documents --}}
-    @if($selectedConfidantPersonId !== null)
-        <fieldset
-            class="p-4 sm:p-8 sm:pb-10 mt-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 max-w-full">
-            <legend class="legend">
-                {{ __('patients.confidant_person_documents_relationship') }}
-            </legend>
+    {{-- Documents inside drawer --}}
+    @include('livewire.person.parts.drawers.modals.documents')
 
-            <div class="overflow-x-auto mb-4" x-show="documentsRelationship.length > 0">
-                <table class="table-input w-full">
-                    <thead class="thead-input">
-                    <tr>
-                        <th scope="col" class="th-input">{{ __('forms.type') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.number') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.issued_by') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.issued_at') }}</th>
-                        <th scope="col" class="th-input">{{ __('forms.active_to') }}</th>
-                        <th scope="col" class="th-input text-center">{{ __('forms.action') }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <template x-for="(doc, index) in documentsRelationship" :key="doc.type + '_' + index">
-                        <tr>
-                            <td class="td-input" x-text="documentTypes[doc.type] || doc.type"></td>
-                            <td class="td-input" x-text="doc.number"></td>
-                            <td class="td-input" x-text="doc.issuedBy"></td>
-                            <td class="td-input" x-text="doc.issuedAt"></td>
-                            <td class="td-input" x-text="doc.activeTo || '-'"></td>
-                            <td class="td-input text-center">
-                                <div class="relative"
-                                     x-data="{ openDropdown: false }"
-                                     @click.outside="openDropdown = false"
-                                >
-                                    <button @click="openDropdown = !openDropdown"
-                                            type="button"
-                                            class="cursor-pointer"
-                                    >
-                                        @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-gray-200')
-                                    </button>
-
-                                    <div x-show="openDropdown"
-                                         x-transition
-                                         x-cloak
-                                         class="absolute right-0 z-10 w-36 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
-                                    >
-                                        <div class="py-1">
-                                            <button type="button"
-                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                    @click="editDocument(index); openDropdown = false"
-                                            >
-                                                @icon('file-edit', 'w-4 h-4')
-                                                {{ __('forms.edit') }}
-                                            </button>
-                                            <button type="button"
-                                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400"
-                                                    @click="documentsRelationship.splice(index, 1); openDropdown = false"
-                                            >
-                                                @icon('delete', 'w-4 h-4')
-                                                {{ __('forms.delete') }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </template>
-                    </tbody>
-                </table>
-            </div>
-
-            <button type="button" class="item-add" @click.prevent="showDocumentDrawer = true">
-                {{ __('forms.add_document') }}
-            </button>
-        </fieldset>
-    @endif
-
+    {{-- Drawer for adding documents that confirm confidant --}}
     @include('livewire.person.parts.drawers.add-documents-relationship')
 
     <div class="flex gap-3 mt-6">
-    <button class="button-minor" type="button" @click="showLegalRepDrawer = false">{{ __('forms.cancel') }}</button>
+        <button class="button-minor" type="button" @click="showLegalRepDrawer = false">{{ __('forms.cancel') }}</button>
         <button x-show="isEditingLegalRep && selectedPatient"
                 class="button-primary"
                 type="button"
@@ -257,5 +184,21 @@
         >
             {{ __('forms.save_changes') }}
         </button>
+
+        @if($this instanceof \App\Livewire\Person\PersonUpdate)
+            <button type="button"
+                    class="button-primary"
+                    wire:click.prevent="createNewConfidantPersonRelationshipRequest"
+            >
+                {{ __('patients.add_representative') }}
+            </button>
+        @else
+            <button type="button"
+                    class="button-primary"
+                    @click="addConfidantPersonToForm(); showLegalRepDrawer = false"
+            >
+                {{ __('patients.add_representative') }}
+            </button>
+        @endif
     </div>
 </div>

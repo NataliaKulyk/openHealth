@@ -46,7 +46,7 @@ class PersonRepository
         }
 
         if (!empty($personData['confidant_person'])) {
-            $confidant = $person->confidantPerson()->create(
+            $confidant = $person->confidantPersons()->create(
                 Arr::only($personData['confidant_person'], 'person_id')
             );
 

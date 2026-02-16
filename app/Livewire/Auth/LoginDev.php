@@ -10,8 +10,6 @@ use App\Models\Role;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Session;
@@ -46,12 +44,11 @@ class LoginDev extends Login
             ]));
         }
 
-        $user = User::where('email', $this->email)->first();
-
         try {
             $accessToken = EHealth::auth()->login($credentials['email'], $credentials['password']);
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return back();
         }
 
@@ -66,7 +63,7 @@ class LoginDev extends Login
             $scopes = $user->getScopes();
             Session::put(config('ehealth.api.auth_ehealth'), $user->id);
         } else {
-            if(empty($this->role)) {
+            if (empty($this->role)) {
                 $this->showRoleSelect = true;
 
                 $this->addError('role', __('Будь ласка, оберіть роль.'));
@@ -85,6 +82,7 @@ class LoginDev extends Login
             $code = EHealth::auth()->authorize($accessToken, $scopes, $credentials['legalEntityUUID']);
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return back();
         }
 

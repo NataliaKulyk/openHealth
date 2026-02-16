@@ -66,7 +66,11 @@ class EditLegalEntity extends LegalEntity
      */
     protected function getLicenseForm(): void
     {
-        $license = $this->legalEntity->licenses()?->first();
+        $licenses = $this->legalEntity->licenses()->get();
+
+        $license = $licenses->filter(function ($item) {
+            return $item->type->name === LegalEntityModel::TYPE_MSP || $item->type->name === LegalEntityModel::TYPE_PHARMACY;
+        })->first();
 
         if ($license) {
             $this->legalEntityForm->license = Arr::only(

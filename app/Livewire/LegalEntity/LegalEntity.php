@@ -940,7 +940,7 @@ abstract class LegalEntity extends Component
 
         $license = License::firstOrNew(['uuid' => $data['uuid']]);
         $license->fill($data);
-        $license->is_primary = true;
+        $license->is_primary = $data['type'] === LegalEntityModel::TYPE_MSP || $data['type'] === LegalEntityModel::TYPE_PHARMACY;
 
         if (isset($this->legalEntity)) {
             $this->legalEntity->licenses()->save($license);

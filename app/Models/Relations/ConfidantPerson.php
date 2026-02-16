@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Relations;
 
+use App\Casts\EHealthDateCast;
 use App\Enums\JobStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,15 +28,17 @@ class ConfidantPerson extends Model
         'person_request_id',
         'person_id',
         'subject_person_id',
+        'active_to',
         'sync_status'
     ];
+
+    protected $casts = ['active_to' => EHealthDateCast::class];
 
     /**
      * Scope a query to filter confidant persons by legal entity ID.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     * @param int $legalEntityId The ID of the legal entity to filter by
-     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query  The query builder instance
+     * @param  int  $legalEntityId  The ID of the legal entity to filter by
      * @return \Illuminate\Database\Eloquent\Builder The modified query builder instance
      */
     public function scopeFilterByLegalEntityId(Builder $query, int $legalEntityId): Builder
@@ -50,9 +53,8 @@ class ConfidantPerson extends Model
     /**
      * Scope a query to filter confidant persons by their synchronization status.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     * @param \App\Enums\JobStatus $status The job status to filter by
-     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query  The query builder instance
+     * @param  \App\Enums\JobStatus  $status  The job status to filter by
      * @return \Illuminate\Database\Eloquent\Builder The modified query builder instance
      */
     public function scopeFilterBySyncStatus(Builder $query, JobStatus $status): Builder
@@ -93,8 +95,7 @@ class ConfidantPerson extends Model
     /**
      * Set the synchronization status for the confidant person.
      *
-     * @param JobStatus $status The job status to be set for synchronization
-     *
+     * @param  JobStatus  $status  The job status to be set for synchronization
      * @return void
      */
     public function setSyncStatus(JobStatus $status): void

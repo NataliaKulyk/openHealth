@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\Status;
-use App\Models\LegalEntity;
 use Illuminate\Support\Arr;
-use App\Models\LegalEntityType;
 use Illuminate\Support\Facades\DB;
+use Override;
 use Spatie\Permission\Models\Role as SpatieRole;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -23,6 +24,7 @@ class Role extends SpatieRole
      * - legal_entity_type_permissions (permissions allowed for the current LegalEntity type)
      * based on the active team (legal_entity_id) from Spatie's PermissionRegistrar.
      */
+    #[Override]
     public function permissions(): BelongsToMany
     {
         $relation = parent::permissions();
@@ -39,16 +41,16 @@ class Role extends SpatieRole
                 $typeId = cache()->remember("le_type:$teamId", now()->addMinutes(5), function () use ($teamId) {
                     $status = LegalEntity::whereKey($teamId)->value('status') ?? '';
 
-                    if($status === Status::REORGANIZED->value) {
+                    if ($status === Status::REORGANIZED->value) {
                         return LegalEntityType::where('name', 'MSP_LIMITED')->value('id');
-                    } else {
-                        return LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
                     }
+
+                    return LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
                 });
 
                 if ($typeId) {
                     // Intersect with permissions whitelisted for this LegalEntity type
-                    $relation->whereHas('legalEntityTypes', fn($perm) => $perm->where('legal_entity_type_id', $typeId));
+                    $relation->whereHas('legalEntityTypes', fn ($perm) => $perm->where('legal_entity_type_id', $typeId));
                 } else {
                     // No LegalEntity type resolved for current team: return no permissions
                     $relation->whereRaw('1 = 0');
@@ -72,6 +74,7 @@ class Role extends SpatieRole
      * - If a team type cannot be resolved and no types were passed, the role will be created without
      *   any type association.
      */
+    #[Override]
     public static function create(array $attributes = [])
     {
         // Extract optional type hints before persisting the role
@@ -85,24 +88,22 @@ class Role extends SpatieRole
             // Normalize desired type IDs
             $desiredTypeIds = [];
 
-            if (is_array($typeIds) && ! empty($typeIds)) {
+            if (is_array($typeIds) && !empty($typeIds)) {
                 $desiredTypeIds = array_values(array_unique(array_filter(array_map('intval', $typeIds), fn ($v) => $v > 0)));
-            } elseif (is_array($typeNames) && ! empty($typeNames)) {
+            } elseif (is_array($typeNames) && !empty($typeNames)) {
                 $desiredTypeIds = LegalEntityType::whereIn('name', $typeNames)->pluck('id')->all();
-            } else {
+            } elseif (config('permission.teams')) {
                 // Fallback: attach to current team's LegalEntity type if resolvable
-                if (config('permission.teams')) {
-                    $teamId = getPermissionsTeamId();
+                $teamId = getPermissionsTeamId();
 
-                    if ($teamId) {
-                        $typeId = LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
+                if ($teamId) {
+                    $typeId = LegalEntity::whereKey($teamId)->value('legal_entity_type_id');
 
-                        $desiredTypeIds = [$typeId];
-                    }
+                    $desiredTypeIds = [$typeId];
                 }
             }
 
-            if (! empty($desiredTypeIds)) {
+            if (!empty($desiredTypeIds)) {
                 $role->legalEntityTypes()->syncWithoutDetaching($desiredTypeIds);
             }
 

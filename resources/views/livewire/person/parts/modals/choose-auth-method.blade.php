@@ -110,7 +110,7 @@
                                                             type="button"
                                                             class="text-blue-600 hover:underline text-sm whitespace-nowrap"
                                                     >
-                                                        {{ __('Змінити') }}
+                                                        {{ __('patients.change') }}
                                                     </button>
 
                                                     <div x-show="open"

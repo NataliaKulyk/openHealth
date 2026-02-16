@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire\Person;
 
+use App\Classes\Cipher\Api\CipherRequest;
+use App\Classes\Cipher\Exceptions\CipherApiException;
 use App\Classes\eHealth\EHealth;
 use App\Core\Arr;
 use App\Enums\Person\AuthStep;
+use App\Models\ConfidantPersonRelationshipRequest;
 use App\Models\Relations\AuthenticationMethod as AuthenticationMethodModel;
 use App\Enums\Person\AuthenticationMethod;
 use App\Exceptions\EHealth\EHealthResponseException;
@@ -14,14 +17,19 @@ use App\Exceptions\EHealth\EHealthValidationException;
 use App\Models\LegalEntity;
 use App\Models\Person\Person;
 use App\Models\Person\PersonRequest;
+use App\Models\Relations\ConfidantPerson;
 use App\Repositories\Repository;
 use App\Rules\PhoneNumber;
+use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use JsonException;
 use Livewire\Attributes\Locked;
 use Throwable;
 
@@ -101,6 +109,37 @@ class PersonUpdate extends PersonComponent
      */
     public string $alias;
 
+    /**
+     * Data about new confidant person.
+     *
+     * @var array
+     */
+    public array $newConfidantPerson;
+
+    public string $confidantPersonRelationshipRequestId;
+
+    public string $confidantPersonId;
+
+    public array $documentsRelationship = [];
+
+    public bool $showSignatureDrawer = false;
+
+    public bool $showAuthDrawer = false;
+
+    /**
+     * List of confidant person relationship requests for current person.
+     *
+     * @var Collection
+     */
+    public Collection $confidantPersonRelationshipRequests;
+
+    /**
+     * Data for signing confidant person relationship.
+     *
+     * @var array
+     */
+    public array $approvedData;
+
     public function mount(LegalEntity $legalEntity, Person $person): void
     {
         $this->personId = $person->id;
@@ -113,8 +152,10 @@ class PersonUpdate extends PersonComponent
                 'documents',
                 'phones',
                 'authenticationMethods',
-                'confidantPerson.person:id,uuid,gender,last_name,first_name,second_name,tax_id,unzr',
-                'confidantPerson.documentsRelationship'
+                'confidantPersons.person:id,uuid,gender,last_name,first_name,second_name,tax_id,unzr',
+                'confidantPersons.documentsRelationship',
+                'confidantPersons.person.phones',
+                'confidantPersons.person.documents'
             ])->toArray()
         );
 
@@ -130,16 +171,10 @@ class PersonUpdate extends PersonComponent
 
         $authenticationMethods = $person->authenticationMethods->toArray();
 
-        if ($person->confidantPerson) {
-            $this->selectedConfidantPersonId = $person->confidantPerson->person->uuid;
-            $confidantPersonData = $person->confidantPerson->person;
+        if ($person->confidantPersons->isNotEmpty()) {
+            $this->confidantPersonRelationshipRequests = $person->confidantPersonRelationshipRequests()->get();
 
-            // Change id to uuid value
-            $confidantPerson = $confidantPersonData->toArray();
-            $confidantPerson['id'] = $confidantPerson['uuid'];
-            unset($confidantPerson['uuid']);
-
-            $this->confidantPerson = [$confidantPerson];
+            $confidantPersonData = $person->confidantPersons->first()->person;
 
             $modifiedMethods = collect($authenticationMethods)->map(
                 function (array $method) use ($confidantPersonData) {
@@ -183,17 +218,24 @@ class PersonUpdate extends PersonComponent
             $person = Person::whereUuid($this->uuid)->firstOrFail();
             $incomingTypes = collect($newAuthMethods)->pluck('type')->filter()->values();
 
-            // Delete unrelated
-            $person->authenticationMethods()
-                ->whereNotIn('type', $incomingTypes)
-                ->delete();
+            try {
+                // Delete unrelated
+                $person->authenticationMethods()
+                    ->whereNotIn('type', $incomingTypes)
+                    ->delete();
 
-            // Update or create actual by type
-            foreach ($newAuthMethods as $method) {
-                $person->authenticationMethods()->updateOrCreate(
-                    ['type' => $method['type']],
-                    $method
-                );
+                // Update or create actual by type
+                foreach ($newAuthMethods as $method) {
+                    $person->authenticationMethods()->updateOrCreate(
+                        ['type' => $method['type']],
+                        $method
+                    );
+                }
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to update authentication methods');
+                Session::flash('error', 'Виникла помилка при оновленні методів автентифікації. Зверніться до адміністратора.');
+
+                return;
             }
 
             $this->authenticationMethods = Arr::toCamelCase($response->map($response->validate()));
@@ -281,11 +323,21 @@ class PersonUpdate extends PersonComponent
         }
     }
 
+    /**
+     * Create new OTP auth method.
+     *
+     * @return void
+     */
     public function createOtpAuthMethod(): void
     {
         $this->changePhoneNumber($this->newPhoneNumber);
     }
 
+    /**
+     * Create new OFFLINE auth method.
+     *
+     * @return void
+     */
     public function createOfflineAuthMethod(): void
     {
         try {
@@ -301,16 +353,28 @@ class PersonUpdate extends PersonComponent
         }
     }
 
+    /**
+     * Approve creating OFFLINE method.
+     *
+     * @return void
+     */
     public function approveCreatingOffline(): void
     {
         try {
             $this->uploadDocuments();
             $response = EHealth::person()->approveAuthMethod($this->uuid, $this->requestId);
 
-            // Update uuid and type with approved
-            Person::whereUuid($this->uuid)->firstOrFail()
-                ->authenticationMethods()
-                ->create($response->validate());
+            try {
+                // Update uuid and type with approved
+                Person::whereUuid($this->uuid)->firstOrFail()
+                    ->authenticationMethods()
+                    ->create($response->validate());
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to create authentication method');
+                Session::flash('error', 'Виникла помилка при збереженні методу автентифікації. Зверніться до адміністратора.');
+
+                return;
+            }
 
             $this->showAuthMethodModal = false;
             Session::flash('success', __('Метод автентифікації через документи успішно додано'));
@@ -355,7 +419,7 @@ class PersonUpdate extends PersonComponent
             // If you get error then it means that number is no verify, then initialize phone verification
             if ($exception->getCode() === 404) {
                 try {
-                    EHealth::verification()->initialize(Arr::toSnakeCase($validated));
+                    EHealth::verification()->initialize(['phone_number' => $validated['form']['phoneNumber']]);
                     $this->authStep = AuthStep::VERIFY_PHONE;
                 } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
                     $this->handleEHealthExceptions($exception, 'Error when initialize OTP verification request');
@@ -418,11 +482,18 @@ class PersonUpdate extends PersonComponent
                 Arr::toSnakeCase($validated)
             );
 
-            // Update uuid with approved
-            Person::whereUuid($this->uuid)->firstOrFail()
-                ->authenticationMethods()
-                ->whereType(AuthenticationMethod::OTP)
-                ->update(['uuid' => $response->validate()['id']]);
+            try {
+                // Update uuid with approved
+                Person::whereUuid($this->uuid)->firstOrFail()
+                    ->authenticationMethods()
+                    ->whereType(AuthenticationMethod::OTP)
+                    ->update(['uuid' => $response->validate()['id']]);
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to update authentication method UUID');
+                Session::flash('error', 'Виникла помилка при оновленні методу автентифікації. Зверніться до адміністратора.');
+
+                return;
+            }
 
             $this->showAuthMethodModal = false;
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
@@ -443,11 +514,18 @@ class PersonUpdate extends PersonComponent
             $this->uploadDocuments();
             $response = EHealth::person()->approveAuthMethod($this->uuid, $this->requestId);
 
-            // Update uuid and type with approved
-            Person::whereUuid($this->uuid)->firstOrFail()
-                ->authenticationMethods()
-                ->whereType(AuthenticationMethod::OFFLINE)
-                ->update(['uuid' => $response->validate()['id'], 'type' => AuthenticationMethod::OTP]);
+            try {
+                // Update uuid and type with approved
+                Person::whereUuid($this->uuid)->firstOrFail()
+                    ->authenticationMethods()
+                    ->whereType(AuthenticationMethod::OFFLINE)
+                    ->update(['uuid' => $response->validate()['id'], 'type' => AuthenticationMethod::OTP]);
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to update authentication method type');
+                Session::flash('error', 'Виникла помилка при зміні методу автентифікації. Зверніться до адміністратора.');
+
+                return;
+            }
 
             $this->showAuthMethodModal = false;
             Session::flash('success', __('Метод автентифікації успішно змінений із документів на СМС'));
@@ -502,8 +580,15 @@ class PersonUpdate extends PersonComponent
                 EHealth::person()->approveAuthMethod($this->uuid, $this->requestId, Arr::toSnakeCase($validated));
             }
 
-            // Update alias value
-            AuthenticationMethodModel::whereUuid($this->selectedAuthMethodUuid)->update(['alias' => $this->alias]);
+            try {
+                // Update alias value
+                AuthenticationMethodModel::whereUuid($this->selectedAuthMethodUuid)->update(['alias' => $this->alias]);
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to update authentication method alias');
+                Session::flash('error', 'Виникла помилка при оновленні назви методу автентифікації. Зверніться до адміністратора.');
+
+                return;
+            }
 
             $this->showAuthMethodModal = false;
             Session::flash('success', __('Назва методу автентифікації успішно змінена.'));
@@ -532,6 +617,292 @@ class PersonUpdate extends PersonComponent
     }
 
     /**
+     * Sync confidant persons with phones and documents.
+     *
+     * @return void
+     */
+    public function syncConfidantPersons(): void
+    {
+        try {
+            $response = EHealth::person()->getConfidantPersonRelationships($this->uuid);
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error when getting auth methods');
+            Session::flash('error', "Виникла помилка. Відсутній зв'язок із ЕСОЗ");
+
+            return;
+        } catch (EHealthValidationException|EHealthResponseException $exception) {
+            $this->logEHealthException($exception, 'Error when getting auth methods');
+
+            if ($exception instanceof EHealthValidationException) {
+                Session::flash('error', $exception->getFormattedMessage());
+            } else {
+                Session::flash('error', 'Помилка від ЕСОЗ: ' . $exception->getMessage());
+            }
+
+            return;
+        }
+
+        // Map the API response to the form structure
+        $confidantPersonsData = collect($response->getData())->map(function ($relationship) {
+            $person = $relationship['confidant_person'];
+            $person['documents'] = $relationship['confidant_person']['documents_person'];
+
+            return [
+                'person' => $person,
+                'documentsRelationship' => $relationship['documents_relationship'],
+                'activeTo' => $relationship['active_to']
+            ];
+        })->toArray();
+
+        // Assign to the form
+        $this->form->person['confidantPersons'] = $confidantPersonsData;
+
+        // Sync to database
+        Repository::confidantPerson()->syncFromApiResponse($response->getData(), $this->uuid);
+
+        Session::flash('success', __('Дані про законних представників успішно синхронізовано.'));
+    }
+
+    /**
+     * First step for adding new confidant person relationship.
+     *
+     * @return void
+     */
+    public function createNewConfidantPersonRelationshipRequest(): void
+    {
+        if (Auth::user()->cannot('create', ConfidantPerson::class)) {
+            Session::flash('error', __('patients.policy.create_confidant'));
+
+            return;
+        }
+
+        // Set the properties that validation expects
+        $this->confidantPersonId = $this->selectedConfidantPersonId ?? '';
+        $this->documentsRelationship = $this->newConfidantPerson['documentsRelationship'] ?? [];
+
+        try {
+            $validated = $this->validate($this->form->rulesForCreateNewConfidantPersonRelationshipRequest());
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
+            return;
+        }
+
+        try {
+            $response = EHealth::person()->createConfidantRelationship($this->uuid, $validated);
+
+            $this->confidantPersonRelationshipRequestId = $response->validate()['id'];
+            $this->uploadedDocuments = $response->getUrgent()['documents'];
+
+            try {
+                ConfidantPersonRelationshipRequest::create($response->getData());
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to create confidant person relationship request');
+                Session::flash('error', 'Виникла помилка при збереженні. Зверніться до адміністратора.');
+
+                return;
+            }
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            $this->handleEHealthExceptions($exception, 'Error when creating confidant person relationship');
+
+            return;
+        }
+
+        $this->showAuthDrawer = true;
+    }
+
+    /**
+     * Resend SMS code for new confidant person.
+     *
+     * @return void
+     */
+    public function resendCodeOnConfidantPersonRelationship(): void
+    {
+        if (Auth::user()->cannot('create', ConfidantPerson::class)) {
+            Session::flash('error', __('patients.policy.resend_sms'));
+
+            return;
+        }
+
+        try {
+            EHealth::person()->resendAuthOtpOnConfidantPersonRelationship(
+                $this->uuid,
+                $this->confidantPersonRelationshipRequestId
+            );
+            Session::flash('success', __('Код був повторно надісланий на телефон'));
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            $this->handleEHealthExceptions($exception, 'Error when resending SMS');
+
+            return;
+        }
+    }
+
+    /**
+     * Second step of creating new confidant person relationship in which we approve by providing confidence documents.
+     *
+     * @return void
+     */
+    public function approveConfidantPersonRelationshipRequest(): void
+    {
+        if (Auth::user()->cannot('create', ConfidantPerson::class)) {
+            Session::flash('error', __('patients.policy.approve_confidant'));
+
+            return;
+        }
+
+        try {
+            $validated = $this->form->validate($this->form->rulesForApprove());
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
+            return;
+        }
+
+        try {
+            $this->uploadDocuments();
+
+            $response = EHealth::person()->approveConfidantPersonRelationshipRequest(
+                $this->uuid,
+                $this->confidantPersonRelationshipRequestId,
+                Arr::toSnakeCase($validated)
+            );
+
+            $this->approvedData = $response->getData();
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            $this->handleEHealthExceptions($exception, 'Error when approving confidant person relationship');
+
+            return;
+        }
+
+        $this->showSignatureDrawer = true;
+    }
+
+    /**
+     * Sign with KEP data about new confidant person relationship.
+     *
+     * @return void
+     */
+    public function signConfidantPersonRelationship(): void
+    {
+        if (Auth::user()->cannot('create', ConfidantPerson::class)) {
+            Session::flash('error', __('patients.policy.sign_confidant'));
+
+            return;
+        }
+
+        try {
+            $validated = $this->form->validate($this->form->signingRules());
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
+            return;
+        }
+
+        try {
+            $signedContent = new CipherRequest()->signData(
+                $this->approvedData,
+                $validated['knedp'],
+                $validated['keyContainerUpload'],
+                $validated['password'],
+                Auth::user()->party->taxId
+            );
+        } catch (ConnectionException $exception) {
+            $this->logConnectionError($exception, 'Error connecting to Cipher when signing data');
+            Session::flash('error', __('validation.custom.connection_exception'));
+
+            return;
+        } catch (CipherApiException $exception) {
+            $this->logCipherError($exception, 'Cipher API error when signing data');
+            Session::flash('error', $exception->getMessage());
+
+            return;
+        } catch (JsonException $exception) {
+            $this->logDatabaseErrors($exception, 'JSON encoding error when signing data');
+            Session::flash('error', 'Помилка обробки даних. Зверніться до адміністратора.');
+
+            return;
+        }
+
+        try {
+            $response = EHealth::person()->signConfidantPersonRelationshipRequest(
+                $this->uuid,
+                $this->confidantPersonRelationshipRequestId,
+                ['signed_content' => $signedContent->getBase64Data()]
+            );
+
+            // Save confidant person relationship to database using repository
+            try {
+                $personData = collect($this->confidantPerson)->firstWhere('id', $this->selectedConfidantPersonId);
+                Repository::confidantPerson()->createFromSignedResponse($response->getData(), $this->uuid, $personData);
+
+                $this->showSignatureDrawer = false;
+                Session::flash('success', __('Нового законного представника успішно додано.'));
+            } catch (Exception $exception) {
+                Log::error('Failed to create confidant person relationship', [
+                    'message' => $exception->getMessage(),
+                    'uuid' => $this->uuid,
+                    'response_data' => $response->getData()
+                ]);
+                Session::flash('error', 'Виникла помилка при збереженні. Зверніться до адміністратора.');
+
+                return;
+            }
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            $this->handleEHealthExceptions($exception, 'Error when signing confidant person relationship');
+
+            return;
+        }
+    }
+
+    /**
+     * Sync list of requests for adding confidant person.
+     *
+     * @return void
+     */
+    public function syncConfidantPersonRelationshipRequestsList(): void
+    {
+        try {
+            $response = EHealth::person()->getConfidantPersonRelationshipRequestsList($this->uuid);
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            $this->handleEHealthExceptions(
+                $exception,
+                'Error when getting confidant person relationship requests list'
+            );
+
+            return;
+        }
+
+        try {
+            $person = Person::whereUuid($this->uuid)->firstOrFail();
+            $data = $response->validate();
+
+            Repository::confidantPersonRelationshipRequestRepository()->sync($person, $data);
+
+            // Refresh the property to show updated data
+            $this->confidantPersonRelationshipRequests = $person->confidantPersonRelationshipRequests()->get();
+
+            Session::flash('success', __('Список даних про запити на створення законних представників оновлено'));
+        } catch (Exception $exception) {
+            Log::error('Failed to sync confidant person relationship requests', [
+                'person_uuid' => $this->uuid,
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString()
+            ]);
+
+            Session::flash('error', __('Помилка при синхронізації запитів на створення законних представників'));
+        }
+    }
+
+    public function deactivateConfidantPersonRelationshipRequest(string $relationshipId): void
+    {
+        // TBD
+        //        $response = EHealth::person()->deactivateConfidantRelationship($this->uuid, $relationshipId);
+    }
+
+    /**
      * Change phone number with new one.
      *
      * @param  string  $phoneNumber
@@ -550,8 +921,8 @@ class PersonUpdate extends PersonComponent
                 AuthenticationMethod::OTP,
                 $validated['newPhoneNumber']
             );
-            $this->requestId = $response->validate()['id'];
-            $this->uploadedDocuments = $response->validate()['documents'];
+            $this->requestId = $response->getData()['id'];
+            $this->uploadedDocuments = $response->getUrgent()['documents'];
 
             // If the change type from OTP to Offline, then show the step, request to change the phone number
             if ($this->selectedAuthMethodType === AuthenticationMethod::OFFLINE->value) {

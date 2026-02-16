@@ -183,7 +183,6 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Retrieves the scopes assigned to a specific user.
      *
-     * @param  string  $legalEntityClientId
      * @return string The concatenated string of user's scopes
      */
     public function getScopes(): string
@@ -549,7 +548,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @param  string|int|Permission|BackedEnum  $permission
      * @param  string|null  $guardName
-     * @throws PermissionDoesNotExist
+     * @return bool
      */
     public function hasPermissionTo(string|int|Permission|BackedEnum $permission, ?string $guardName = null): bool
     {

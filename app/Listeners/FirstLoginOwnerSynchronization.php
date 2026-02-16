@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use App\Enums\User\Role;
 use Throwable;
+use App\Enums\User\Role;
 use App\Enums\JobStatus;
 use App\Jobs\EmployeeSync;
 use App\Jobs\DivisionSync;
 use App\Jobs\EquipmentSync;
+use App\Models\LegalEntity;
 use App\Jobs\LegalEntitySync;
 use App\Jobs\DeclarationsSync;
 use App\Jobs\EmployeeRoleSync;
@@ -48,41 +49,47 @@ class FirstLoginOwnerSynchronization implements ShouldQueue
         // TODO: remove it after testing
         echo 'First login synchronization started. ' . 'legalEntity:' . $event->legalEntity->id. PHP_EOL;
 
+        $legalEntityType = $event->legalEntity->type->name;
+
         // Create a chain of jobs for synchronization
 
         // This is the last job in the chain
-        $legalEntityJob = new LegalEntitySync(
+        $nextJob = new LegalEntitySync(
             legalEntity: $event->legalEntity,
             isFirstLogin: true
         );
 
-        $equipmentJob = new EquipmentSync(
+        if ($legalEntityType !== LegalEntity::TYPE_PHARMACY) {
+            $nextJob = new EquipmentSync(
+                legalEntity: $event->legalEntity,
+                nextEntity: $nextJob,
+                isFirstLogin: true
+            );
+        }
+
+        if ($legalEntityType !== LegalEntity::TYPE_PHARMACY && $legalEntityType !== LegalEntity::TYPE_EMERGENCY) {
+            $nextJob = new DeclarationsSync(
+                legalEntity: $event->legalEntity,
+                nextEntity: $nextJob,
+                isFirstLogin: true
+            );
+        }
+
+        $nextJob = new EmployeeRoleSync(
             legalEntity: $event->legalEntity,
-            nextEntity: $legalEntityJob,
+            nextEntity: $nextJob,
             isFirstLogin: true
         );
 
-        $declarationJob = new DeclarationsSync(
+        $nextJob = new EmployeeSync(
             legalEntity: $event->legalEntity,
-            nextEntity: $equipmentJob,
-            isFirstLogin: true
-        );
-
-        $employeeRoleJob = new EmployeeRoleSync(
-            legalEntity: $event->legalEntity,
-            nextEntity: $declarationJob,
-            isFirstLogin: true
-        );
-
-        $employeeJob = new EmployeeSync(
-            legalEntity: $event->legalEntity,
-            nextEntity: $employeeRoleJob,
+            nextEntity: $nextJob,
             isFirstLogin: true
         );
 
         $initialJob = new DivisionSync(
             legalEntity: $event->legalEntity,
-            nextEntity: $employeeJob,
+            nextEntity: $nextJob,
             isFirstLogin: true
         );
 

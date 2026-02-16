@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Classes\Cipher\Api\CipherApi;
+use App\Classes\Cipher\Api\CipherRequest;
 use App\Classes\Cipher\Exceptions\ApiException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -88,7 +89,7 @@ class SignatureService
     {
         return Cache::remember('knedp_certificate_authority', now()->addDays(7), function () {
             try {
-                return $this->cipherApi->getCertificateAuthorityApi();
+                return new CipherRequest()->getCertificateAuthority()->response['ca'];
             } catch (ApiException $e) {
                 Log::error("Error fetching certificate authorities from Cipher API: " . $e->getMessage(), ['errors' => $e->getErrors()]);
 

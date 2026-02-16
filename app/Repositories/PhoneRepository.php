@@ -11,7 +11,6 @@ class PhoneRepository
     /**
      * @param  object  $model
      * @param  array  $phones
-     *
      * @return void
      */
     public function addPhones(object $model, array $phones): void
@@ -40,12 +39,11 @@ class PhoneRepository
      *
      * @param  object  $model
      * @param  array  $phones
-     *
      * @return void
      */
     public function syncPhones(object $model, array $phones): void
     {
-        //Remove all phones records belongs to the $model
+        // Remove all phones records belongs to the $model
         Phone::where([
             'phoneable_type' => get_class($model),
             'phoneable_id' => $model->id

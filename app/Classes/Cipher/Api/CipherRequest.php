@@ -277,6 +277,17 @@ class CipherRequest extends PendingRequest
         return $this->delete("/ticket/$ticketUuid");
     }
 
+    /**
+     * Obtain information about KNEDP, which is supported by the Service.
+     *
+     * @return CipherResponse|PromiseInterface
+     * @throws ConnectionException|CipherApiException
+     */
+    public function getCertificateAuthority(): CipherResponse|PromiseInterface
+    {
+        return $this->get('/certificateAuthority/supported');
+    }
+
     protected function convertFileToBase64(TemporaryUploadedFile $keyContainerUpload): ?string
     {
         $fileExtension = $keyContainerUpload->getClientOriginalExtension();

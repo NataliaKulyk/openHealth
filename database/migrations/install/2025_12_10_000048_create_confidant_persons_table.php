@@ -23,6 +23,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('persons');
             $table->foreignId('person_request_id')->nullable()->constrained();
+            $table->date('active_to')->nullable();
             $table->enum('sync_status', JobStatus::values())->nullable();
             $table->timestamps();
         });

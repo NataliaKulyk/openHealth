@@ -49,26 +49,47 @@
     </div>
 
     <div class="overflow-y-auto p-6 bg-white dark:bg-gray-800" style="height: calc(100% - 70px);">
-        <div class="mt-4 bg-gray-100 dark:bg-slate-800 rounded-lg p-4 mb-8 flex items-start">
-            @icon('alert-circle', 'w-5 h-5 text-slate-600 dark:text-slate-400 mr-3 mt-0.5')
-            <p class="text-sm text-gray-800 dark:text-gray-200">
-                {{ __('patients.please_check_patient_number') }}
-                <span class="font-bold text-slate-900 dark:text-white">+380931823****</span>
-            </p>
-        </div>
-
         <legend class="legend">{{ __('patients.code_sms') }}</legend>
+
+        @foreach($this->uploadedDocuments as $key => $document)
+            <div class="pb-4 flex" wire:key="{{ $key }}">
+                <div class="flex-grow">
+                    <label class="block mb-3 text-sm font-medium text-gray-900 dark:text-white" for="fileInput-{{ $key }}">
+                        {{ __('patients.documents.' . Str::lower(Str::afterLast($document['type'], '.'))) }}
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="file"
+                               class="xl:w-1/2 block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                               id="fileInput-{{ $key }}"
+                               wire:model.live="form.uploadedDocuments.{{ $key }}"
+                               accept=".jpeg,.jpg"
+                        >
+                    </div>
+
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                        {{ __('forms.max_file_size_and_format') }}
+                    </p>
+
+                    @error("form.uploadedDocuments.$key")
+                    <p class="text-error">
+                        {{ $message }}
+                    </p>
+                    @enderror
+                </div>
+            </div>
+        @endforeach
 
         <div class="form-row-3">
             <div class="form-group group">
                 <input type="text"
-                       x-model="verificationCode"
+                       wire:model="form.verificationCode"
                        inputmode="numeric"
                        name="authVerificationCode"
                        id="authVerificationCode"
                        class="peer input"
                        placeholder=" "
                        autocomplete="off"
+                       maxlength="4"
                 />
                 <label for="authVerificationCode" class="label">
                     {{ __('forms.confirmation_code_from_SMS') }}
@@ -76,7 +97,7 @@
             </div>
 
             <button type="button"
-                    @click="resetTimer()"
+                    wire:click.prevent="resendCodeOnConfidantPersonRelationship"
                     :disabled="localTimer > 0"
                     class="button-minor flex items-end gap-4 mt-4 mb-8 flex-1 max-w-xs"
             >
@@ -104,7 +125,7 @@
             </button>
 
             <button type="button"
-                    @click="showSignatureDrawer = true"
+                    wire:click.prevent="approveConfidantPersonRelationshipRequest"
                     class="button-primary"
             >
                 {{ __('forms.confirm') }}

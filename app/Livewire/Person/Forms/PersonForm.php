@@ -246,6 +246,19 @@ class PersonForm extends BaseForm
         return ['uploadedDocuments.*' => ['required', 'file', 'mimes:jpeg,jpg', 'max:10000']];
     }
 
+    public function rulesForCreateNewConfidantPersonRelationshipRequest(): array
+    {
+        return [
+            'confidantPersonId' => ['required', 'uuid'],
+            'documentsRelationship' => ['required', 'array'],
+            'documentsRelationship.*.type' => ['required', new InDictionary('DOCUMENT_RELATIONSHIP_TYPE')],
+            'documentsRelationship.*.number' => ['required', 'string', 'max:255'],
+            'documentsRelationship.*.issuedBy' => ['required', 'string', 'max:255'],
+            'documentsRelationship.*.issuedAt' => ['required', 'date_format:d.m.Y'],
+            'documentsRelationship.*.activeTo' => ['nullable', 'date_format:d.m.Y']
+        ];
+    }
+
     public function messages(): array
     {
         return [
@@ -458,7 +471,7 @@ class PersonForm extends BaseForm
         foreach ($this->person['documents'] as $document) {
             if (!in_array($document['type'], (array)$allAllowedTypes, true)) {
                 throw ValidationException::withMessages([
-                    'person.documents' => "Submitted document type is not allowed: {$document['type']}."
+                    'person.documents' => "Тип поданого документа не допускається: {$document['type']}."
                 ]);
             }
         }
