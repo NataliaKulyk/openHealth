@@ -23,8 +23,8 @@ use Illuminate\Support\Facades\Log;
 
 class ConfidantPersonSync extends EHealthJob
 {
-    use Dispatchable,
-        SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     protected const int RATE_LIMIT_DELAY = 3;
 
@@ -59,8 +59,8 @@ class ConfidantPersonSync extends EHealthJob
 
     /**
      * Store or update declaration data in the database
-     * @param EHealthResponse|null $response
      *
+     * @param  EHealthResponse|null  $response
      * @throws Throwable
      */
     protected function processResponse(?EHealthResponse $response): void
@@ -83,7 +83,16 @@ class ConfidantPersonSync extends EHealthJob
             return;
         }
 
-        $this->person->update(['uuid' => $personData['id']]);
+        // Check if this UUID already exists on another person
+        $existingPerson = Person::whereUuid($personData['id'])->where('id', '!=', $this->person->id)->first();
+
+        if ($existingPerson) {
+            Log::warning("UUID {$personData['id']} already exists on person $existingPerson->id, skipping UUID update for person {$this->person->id}");
+            echo "Warning: UUID {$personData['id']} already exists, skipping update" . PHP_EOL;
+        } else {
+            // Only update UUID if it doesn't exist on another person
+            $this->person->update(['uuid' => $personData['id']]);
+        }
 
         $this->confidantPerson->setSyncStatus(JobStatus::COMPLETED);
 
@@ -115,8 +124,7 @@ class ConfidantPersonSync extends EHealthJob
      * This method checks whether the provided data array contains valid person information
      * required for synchronization with the Confidant system.
      *
-     * @param array $data The person data array to validate
-     *
+     * @param  array  $data  The person data array to validate
      * @return bool Returns true if the data is valid, false otherwise
      */
     protected function checkPersonData(array $data): bool
@@ -153,15 +161,15 @@ class ConfidantPersonSync extends EHealthJob
      * Queries Spatie\Permission\Models\Role by name and guard_name.
      * Returns an empty collection if the role is not defined for any of the checked guards.
      *
-     * @param string $role The role name to check across guards.
-     *
+     * @param  string  $role  The role name to check across guards.
      * @return Collection<int, string> Collection of guard names that have this role defined.
      */
     protected function getGuardsForRole(string $role): Collection
     {
         $guards = collect(['web', 'ehealth']);
 
-        return $guards->filter(fn ($guard) =>
+        return $guards->filter(
+            fn ($guard) =>
                 Role::where('name', $role)
                     ->where('guard_name', $guard)
                     ->exists()

@@ -79,7 +79,7 @@ class DeclarationRepository
                 DeclarationRequest::upsert($declarationRequestsData, uniqueBy: ['uuid']);
 
                 // Data for upserting declaration requests
-                $declarationsData = $this->mapDeclarationDataToUpsert($declarations,  $relationData, $legalEntity);
+                $declarationsData = $this->mapDeclarationDataToUpsert($declarations, $relationData, $legalEntity);
 
                 Declaration::upsert($declarationsData, uniqueBy: ['declaration_number']);
 
@@ -93,17 +93,17 @@ class DeclarationRepository
 
     protected function mapRelationDataToUpsert(array $declarations): array
     {
-        $relataionData = [];
+        $relationData = [];
 
         foreach ($declarations as $declaration) {
-            $relataionData['division'][$declaration['division']['uuid']] = Division::where('uuid', $declaration['division']['uuid'])->firstOrFail()?->id;
+            $relationData['division'][$declaration['division']['uuid']] = Division::where('uuid', $declaration['division']['uuid'])->firstOrFail()?->id;
 
-            $relataionData['employee'][$declaration['employee']['uuid']] = Employee::where('uuid', $declaration['employee']['uuid'])->firstOrFail()?->id;
+            $relationData['employee'][$declaration['employee']['uuid']] = Employee::where('uuid', $declaration['employee']['uuid'])->firstOrFail()?->id;
 
-            $relataionData['person'][$declaration['person']['uuid']] = Person::where('uuid', $declaration['person']['uuid'])->firstOrFail()?->id;
+            $relationData['person'][$declaration['person']['uuid']] = Person::where('uuid', $declaration['person']['uuid'])->firstOrFail()?->id;
         }
 
-        return $relataionData;
+        return $relationData;
     }
 
     public function mapPersonDataToUpsert(array $declarations): array
@@ -172,7 +172,7 @@ class DeclarationRepository
             $data['person_id'] = $relationData['person'][$declaration['person']['uuid']];
             $data['end_date'] = $declaration['end_date'];
             $data['inserted_at'] = Carbon::parse($declaration['inserted_at'])->format('Y-m-d H:i:s');
-            $data['signed_at'] = Carbon::createFromDate(1900, 1 ,1)->format('Y-m-d');
+            $data['signed_at'] = Carbon::createFromDate(1900, 1, 1)->format('Y-m-d');
             $data['reason'] = $declaration['reason'];
             $data['reason_description'] = $declaration['reason_description'];
             $data['start_date'] = $declaration['start_date'];

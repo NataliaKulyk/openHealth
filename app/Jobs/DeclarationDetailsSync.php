@@ -28,9 +28,8 @@ use Illuminate\Http\Client\ConnectionException;
 class DeclarationDetailsSync extends EHealthJob
 {
     use BatchLegalEntityQueries;
-
-    use Dispatchable,
-        SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     protected const int RATE_LIMIT_DELAY = 3;
 
@@ -61,8 +60,8 @@ class DeclarationDetailsSync extends EHealthJob
 
     /**
      * Store or update declaration data in the database
-     * @param EHealthResponse|null $response
      *
+     * @param  EHealthResponse|null  $response
      * @throws Throwable
      */
     protected function processResponse(?EHealthResponse $response): void
@@ -73,7 +72,7 @@ class DeclarationDetailsSync extends EHealthJob
         $validatedData['inserted_at'] = Carbon::parse($validatedData['inserted_at'])->format('Y-m-d H:i:s');
         $validatedData['updated_at'] = Carbon::parse($validatedData['updated_at'])->format('Y-m-d H:i:s');
 
-        $urgentData=  $response->getUrgent();
+        $urgentData = $response->getUrgent();
 
         $person = $validatedData['person']; // Extract person data for separate processing
         $confidantPerson = $person['confidant_person'] ?? [];
@@ -152,22 +151,21 @@ class DeclarationDetailsSync extends EHealthJob
             : $nextEntity;
     }
 
-
     /**
      * Determine which authentication guards define the given role.
      * Checks only the 'web' and 'ehealth' guards.
      * Queries Spatie\Permission\Models\Role by name and guard_name.
      * Returns an empty collection if the role is not defined for any of the checked guards.
      *
-     * @param string $role The role name to check across guards.
-     *
+     * @param  string  $role  The role name to check across guards.
      * @return Collection<int, string> Collection of guard names that have this role defined.
      */
     protected function getGuardsForRole(string $role): Collection
     {
         $guards = collect(['web', 'ehealth']);
 
-        return $guards->filter(fn ($guard) =>
+        return $guards->filter(
+            fn ($guard) =>
                 Role::where('name', $role)
                     ->where('guard_name', $guard)
                     ->exists()

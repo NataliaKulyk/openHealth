@@ -19,10 +19,10 @@ class PersonRequestEdit extends PersonComponent
         $this->baseMount();
 
         $this->personId = $personRequest->id;
-        $this->isIncapacitated = PersonRequest::whereId($this->personId)->whereHas('confidantPerson')->exists();
+        $this->isIncapacitated = PersonRequest::whereId($this->personId)->whereHas('confidantPersons')->exists();
 
         if ($this->isIncapacitated) {
-            $person = $personRequest->confidantPerson->person->toArray();
+            $person = $personRequest->confidantPersons->first()->person->toArray();
 
             // Change id to uuid
             $person['id'] = $person['uuid'];
@@ -38,7 +38,7 @@ class PersonRequestEdit extends PersonComponent
                 'documents',
                 'phones',
                 'authenticationMethods',
-                'confidantPerson.documentsRelationship'
+                'confidantPersons.documentsRelationship'
             ])->toArray()
         );
 
@@ -53,7 +53,7 @@ class PersonRequestEdit extends PersonComponent
         }
 
         if ($this->form->person['confidantPerson']) {
-            $this->form->person['confidantPerson']['personId'] = $personRequest->confidantPerson->person->uuid;
+            $this->form->person['confidantPerson']['personId'] = $personRequest->confidantPersons->first()->person->uuid;
         } else {
             $this->form->person['confidantPerson']['documentsRelationship'] = [];
         }

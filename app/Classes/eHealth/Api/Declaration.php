@@ -13,7 +13,6 @@ use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class Declaration extends Request
 {
@@ -27,12 +26,12 @@ class Declaration extends Request
     /**
      * Get shortened details about declarations.
      *
-     * @param  string  $url
      * @param  $query
+     * @param  bool  $groupByEntities
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
-    public function getMany(string $url = self::URL, $query = null, bool $groupByEntities = false): PromiseInterface|EHealthResponse
+    public function getMany($query = null, bool $groupByEntities = false): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateMany(...));
 
@@ -45,31 +44,28 @@ class Declaration extends Request
             $query ?? []
         );
 
-        return parent::get($url, $mergedQuery);
+        return $this->get(self::URL, $mergedQuery);
     }
 
     /**
      * Receive detailed information about person Declaration by declaration ID.
      *
      * @param  string  $uuid  Request identifier
-     * @param  $query Optional query parameters
-     *
+     * @param  $query  Optional query parameters
      * @return PromiseInterface|EHealthResponse
-     *
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      */
     public function getDeclarationById(string $uuid, $query = null): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateOne(...));
 
-        return parent::get(self::URL . "/$uuid" , $query);
+        return parent::get(self::URL . "/$uuid", $query);
     }
 
     /**
      * Validates the response for a list of declarations
      *
-     * @param EHealthResponse $response The response from the eHealth API
-     *
+     * @param  EHealthResponse  $response  The response from the eHealth API
      * @return array The validated and transformed data.
      */
     protected function validateMany(EHealthResponse $response): array
@@ -143,8 +139,7 @@ class Declaration extends Request
     /**
      * Validates the response for a single declaration
      *
-     * @param EHealthResponse $response The response from the eHealth API
-     *
+     * @param  EHealthResponse  $response  The response from the eHealth API
      * @return array The validated and transformed data.
      */
     protected function validateOne(EHealthResponse $response): array
@@ -248,7 +243,7 @@ class Declaration extends Request
     /**
      * Replaces eHealth property names with the ones used in the application (e.g., id -> uuid).
      *
-     * @param array $properties Raw properties from a single API item.
+     * @param  array  $properties  Raw properties from a single API item.
      * @return array Properties with application-friendly names.
      */
     protected static function replaceEHealthPropNames(array $properties): array
