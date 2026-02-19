@@ -76,9 +76,14 @@ final class Repository
         return app(LegalEntityRepository::class);
     }
 
-    public static function contract()
+    public static function contract(): ContractRepository
     {
         return app(ContractRepository::class);
+    }
+
+    public static function authenticationMethod(): AuthenticationMethodRepository
+    {
+        return app(AuthenticationMethodRepository::class);
     }
 
     public static function confidantPerson(): ConfidantPersonRepository

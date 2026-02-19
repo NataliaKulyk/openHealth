@@ -553,13 +553,7 @@ class Person extends Request
      */
     protected function mapAuthMethods(array $validated): array
     {
-        return collect($validated)->map(function ($method) {
-            if (!empty($method['ehealth_ended_at'])) {
-                $method['ehealth_ended_at'] = convertToAppDateFormat($method['ehealth_ended_at']);
-            }
-
-            return $method;
-        })->toArray();
+        return $this->format($validated, ['ehealth_ended_at']);
     }
 
     private function validateConfidantRelationshipData(EHealthResponse $response, bool $isArray): array

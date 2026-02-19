@@ -10,6 +10,7 @@ use App\Models\Person\Person;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Document;
 use App\Models\Relations\ConfidantPerson;
+use Exception;
 use Illuminate\Support\Collection;
 
 class ConfidantPersonRepository
@@ -85,11 +86,11 @@ class ConfidantPersonRepository
      *
      * @param  array  $responseData  The signed response data from eHealth API
      * @param  string  $subjectPersonUuid  The UUID of the person who needs a confidant
-     * @param  Collection  $personData  Data for creating person if it's not exist in our DB
+     * @param  array  $personData  Data for creating person if it's not exist in our DB
      * @return ConfidantPerson
-     * @throws \Exception
+     * @throws Exception
      */
-    public function createFromSignedResponse(array $responseData, string $subjectPersonUuid, Collection $personData): ConfidantPerson
+    public function createFromSignedResponse(array $responseData, string $subjectPersonUuid, array $personData): ConfidantPerson
     {
         // Find the confidant person by UUID from the API response
         $confidantPersonUuid = $responseData['confidant_person_id'];
@@ -97,7 +98,7 @@ class ConfidantPersonRepository
 
         if (!$confidantPerson) {
             // Create new person if it doesn't exist in our DB
-            $personDataArray = $personData->toArray();
+            $personDataArray = $personData;
             $phones = Arr::pull($personDataArray, 'phones', []);
 
             // Set the UUID from the API response to ensure consistency
@@ -155,29 +156,31 @@ class ConfidantPersonRepository
      * @param  string  $subjectPersonUuid  The UUID of the person who needs confidants
      * @return Collection
      */
-    public function syncFromApiResponse(array $responseData, string $subjectPersonUuid): Collection
+    public function sync(array $responseData, string $subjectPersonUuid): Collection
     {
         // Find the subject person (the person who needs confidants)
         $subjectPerson = Person::whereUuid($subjectPersonUuid)->firstOrFail();
 
-        // Get current confidant person UUIDs from API response
-        $apiConfidantPersonUuids = collect($responseData)->pluck('confidant_person.person_id')->filter();
-
-        // Remove confidant persons that are no longer in the API response
-        ConfidantPerson::where('subject_person_id', $subjectPerson->id)
-            ->whereHas('person', function ($query) use ($apiConfidantPersonUuids) {
-                $query->whereNotIn('uuid', $apiConfidantPersonUuids->toArray());
-            })
-            ->delete();
+        // First, completely remove all existing confidant person relationships for this subject
+        // to ensure a clean sync without duplicates
+        ConfidantPerson::where('subject_person_id', $subjectPerson->id)->delete();
 
         $syncedConfidantPersons = collect();
 
-        foreach ($responseData as $relationshipData) {
-            $confidantPersonData = $relationshipData['confidant_person'];
-            $confidantPersonUuid = $confidantPersonData['person_id'];
+        // Group relationships by confidant person UUID to handle multiple documents per person
+        $groupedData = collect($responseData)->groupBy('confidant_person.person_id');
 
-            // Find or create the confidant person
-            $confidantPerson = Person::whereUuid($confidantPersonUuid)->firstOrFail();
+        foreach ($groupedData as $confidantPersonUuid => $relationships) {
+            $firstRelationship = $relationships->first();
+            $confidantPersonData = $firstRelationship['confidant_person'];
+
+            // Find the confidant person
+            $confidantPerson = Person::whereUuid($confidantPersonUuid)->first();
+
+            if (!$confidantPerson) {
+                // If person doesn't exist, skip this relationship
+                continue;
+            }
 
             // Sync phones if provided
             if (!empty($confidantPersonData['phones'])) {
@@ -189,30 +192,26 @@ class ConfidantPersonRepository
                 Repository::document()->sync($confidantPerson, $confidantPersonData['documents_person']);
             }
 
-            // Create or update the confidant person relationship
-            $confidantPersonRelation = ConfidantPerson::updateOrCreate(
-                [
-                    'person_id' => $confidantPerson->id,
-                    'subject_person_id' => $subjectPerson->id,
-                ],
-                [
-                    'active_to' => $relationshipData['active_to'] ?? null,
-                    'sync_status' => JobStatus::COMPLETED
-                ]
-            );
+            // Create the confidant person relationship (fresh creation since we deleted all above)
+            $confidantPersonRelation = ConfidantPerson::create([
+                'person_id' => $confidantPerson->id,
+                'subject_person_id' => $subjectPerson->id,
+                'active_to' => $firstRelationship['active_to'] ?? null,
+                'sync_status' => JobStatus::COMPLETED
+            ]);
 
-            // Clear existing relationship documents and add new ones
-            $confidantPersonRelation->documentsRelationship()->delete();
-
-            if (!empty($relationshipData['documents_relationship'])) {
-                foreach ($relationshipData['documents_relationship'] as $document) {
-                    $confidantPersonRelation->documentsRelationship()->create([
-                        'type' => $document['type'],
-                        'number' => $document['number'],
-                        'issued_by' => $document['issued_by'] ?? null,
-                        'issued_at' => $document['issued_at'] ?? null,
-                        'active_to' => $document['active_to'] ?? null
-                    ]);
+            // Add all relationship documents for this confidant person
+            foreach ($relationships as $relationshipData) {
+                if (!empty($relationshipData['documents_relationship'])) {
+                    foreach ($relationshipData['documents_relationship'] as $document) {
+                        $confidantPersonRelation->documentsRelationship()->create([
+                            'type' => $document['type'],
+                            'number' => $document['number'],
+                            'issued_by' => $document['issued_by'] ?? null,
+                            'issued_at' => $document['issued_at'] ?? null,
+                            'active_to' => $document['active_to'] ?? null
+                        ]);
+                    }
                 }
             }
 

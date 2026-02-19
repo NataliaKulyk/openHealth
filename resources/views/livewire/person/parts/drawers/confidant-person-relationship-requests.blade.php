@@ -20,56 +20,58 @@
         </tr>
         </thead>
         <tbody>
-        @foreach($this->confidantPersonRelationshipRequests as $index => $request)
-            <tr>
-                <td class="td-input text-sm text-gray-600 dark:text-gray-400">{{ $request->uuid }}</td>
-                <td class="td-input">
-                    <span class="text-gray-700 dark:text-gray-300">
-                        {{ $request->status->label() }}
-                    </span>
-                </td>
-                <td class="td-input text-gray-700 dark:text-gray-300">
-                    {{ $request->action === 'INSERT' ? __('patients.activate_relationship') : __('patients.deactivate_relationship') }}
-                </td>
-                <td class="td-input text-gray-700 dark:text-gray-300">
-                    {{ $request->channel === 'MIS' ? __('МІС') : $request->channel }}
-                </td>
-                <td class="td-input text-center">
-                    <div class="relative"
-                         x-data="{ openRequestDropdown: false }"
-                         @click.outside="openRequestDropdown = false"
-                    >
-                        <button @click="openRequestDropdown = !openRequestDropdown"
-                                type="button"
-                                class="cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        @if($this->confidantPersonRelationshipRequests->isNotEmpty())
+            @foreach($this->confidantPersonRelationshipRequests as $index => $request)
+                <tr>
+                    <td class="td-input text-sm text-gray-600 dark:text-gray-400">{{ $request->uuid }}</td>
+                    <td class="td-input">
+                        <span class="text-gray-700 dark:text-gray-300">
+                            {{ $request->status->label() }}
+                        </span>
+                    </td>
+                    <td class="td-input text-gray-700 dark:text-gray-300">
+                        {{ $request->action === 'INSERT' ? __('patients.activate_relationship') : __('patients.deactivate_relationship') }}
+                    </td>
+                    <td class="td-input text-gray-700 dark:text-gray-300">
+                        {{ $request->channel === 'MIS' ? __('МІС') : $request->channel }}
+                    </td>
+                    <td class="td-input text-center">
+                        <div class="relative"
+                             x-data="{ openRequestDropdown: false }"
+                             @click.outside="openRequestDropdown = false"
                         >
-                            @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-gray-200')
-                        </button>
+                            <button @click="openRequestDropdown = !openRequestDropdown"
+                                    type="button"
+                                    class="cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                @icon('edit-user-outline', 'w-6 h-6 text-gray-800 dark:text-gray-200')
+                            </button>
 
-                        <div x-show="openRequestDropdown"
-                             x-transition
-                             x-cloak
-                             class="absolute right-0 z-10 w-44 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                            <div class="py-1">
-                                <button type="button"
-                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                        @click="openRequestDropdown = false"
-                                >
-                                    {{ __('forms.confirm') }}
-                                </button>
-                                <button type="button"
-                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400"
-                                        wire:click.prevent="deactivateConfidantPersonRelationshipRequest('{{ $request->uuid }}')"
-                                >
-                                    {{ __('patients.cancel_request') }}
-                                </button>
+                            <div x-show="openRequestDropdown"
+                                 x-transition
+                                 x-cloak
+                                 class="absolute right-0 z-10 w-44 bg-white rounded shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
+                            >
+                                <div class="py-1">
+                                    <button type="button"
+                                            class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
+                                            @click="openRequestDropdown = false"
+                                    >
+                                        {{ __('forms.confirm') }}
+                                    </button>
+                                    <button type="button"
+                                            class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400"
+                                            wire:click.prevent="deactivateConfidantPersonRelationshipRequest('{{ $request->uuid }}')"
+                                    >
+                                        {{ __('patients.cancel_request') }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </td>
-            </tr>
-        @endforeach
+                    </td>
+                </tr>
+            @endforeach
+        @endif
         </tbody>
     </table>
 </div>

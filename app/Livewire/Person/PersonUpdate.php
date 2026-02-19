@@ -140,6 +140,20 @@ class PersonUpdate extends PersonComponent
      */
     public array $approvedData;
 
+    /**
+     * Show a message about success deactivation.
+     *
+     * @var bool
+     */
+    public bool $showTerminateModal = false;
+
+    /**
+     * Mode for the auth drawer - 'create' or 'deactivate'
+     *
+     * @var string|null
+     */
+    public ?string $authDrawerMode = null;
+
     public function mount(LegalEntity $legalEntity, Person $person): void
     {
         $this->personId = $person->id;
@@ -174,17 +188,28 @@ class PersonUpdate extends PersonComponent
         if ($person->confidantPersons->isNotEmpty()) {
             $this->confidantPersonRelationshipRequests = $person->confidantPersonRelationshipRequests()->get();
 
-            $confidantPersonData = $person->confidantPersons->first()->person;
+            // Create a lookup map of confidant persons by their UUID
+            $confidantPersonsLookup = $person->confidantPersons->keyBy(function ($confidantPerson) {
+                return $confidantPerson->person->uuid;
+            });
 
             $modifiedMethods = collect($authenticationMethods)->map(
-                function (array $method) use ($confidantPersonData) {
+                function (array $method) use ($confidantPersonsLookup) {
                     if ($method['type'] === AuthenticationMethod::THIRD_PERSON->value) {
-                        $method['confidantPerson'] = [
-                            'name' => $confidantPersonData->fullName,
-                            'taxId' => $confidantPersonData->taxId,
-                            'unzr' => $confidantPersonData->unzr,
-                            'documentsPerson' => $confidantPersonData->documents->toArray()
-                        ];
+                        // Find the corresponding confidant person using the authentication method's 'value' field
+                        $confidantPersonRelation = $confidantPersonsLookup->get($method['value']);
+
+                        if ($confidantPersonRelation && $confidantPersonRelation->person) {
+                            $confidantPersonData = $confidantPersonRelation->person;
+                            $method['confidantPerson'] = [
+                                'name' => $confidantPersonData->fullName,
+                                'taxId' => $confidantPersonData->taxId,
+                                'unzr' => $confidantPersonData->unzr,
+                                'documentsPerson' => $confidantPersonData->documents->toArray(),
+                                'phones' => $confidantPersonData->phones->first() ?
+                                    ['number' => $confidantPersonData->phones->first()->number] : null
+                            ];
+                        }
                     }
 
                     return $method;
@@ -210,39 +235,28 @@ class PersonUpdate extends PersonComponent
     {
         $this->showAuthMethodModal = true;
         $this->authStep = AuthStep::INITIAL;
+    }
 
+    public function syncAuthMethods(): void
+    {
         try {
             $response = EHealth::person()->getAuthMethods($this->uuid);
-            $newAuthMethods = collect($response->validate())
-                ->map(fn (array $item) => Arr::except($item, 'confidant_person'));
+            $newAuthMethods = collect($response->validate());
             $person = Person::whereUuid($this->uuid)->firstOrFail();
-            $incomingTypes = collect($newAuthMethods)->pluck('type')->filter()->values();
 
             try {
-                // Delete unrelated
-                $person->authenticationMethods()
-                    ->whereNotIn('type', $incomingTypes)
-                    ->delete();
+                Repository::authenticationMethod()->sync($person, $newAuthMethods->toArray());
 
-                // Update or create actual by type
-                foreach ($newAuthMethods as $method) {
-                    $person->authenticationMethods()->updateOrCreate(
-                        ['type' => $method['type']],
-                        $method
-                    );
-                }
+                $this->authenticationMethods = Arr::toCamelCase($newAuthMethods->toArray());
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to update authentication methods');
-                Session::flash('error', 'Виникла помилка при оновленні методів автентифікації. Зверніться до адміністратора.');
-
-                return;
+                Session::flash(
+                    'error',
+                    'Виникла помилка при оновленні методів автентифікації. Зверніться до адміністратора.'
+                );
             }
-
-            $this->authenticationMethods = Arr::toCamelCase($response->map($response->validate()));
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when getting auth methods');
-
-            return;
         }
     }
 
@@ -371,7 +385,10 @@ class PersonUpdate extends PersonComponent
                     ->create($response->validate());
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to create authentication method');
-                Session::flash('error', 'Виникла помилка при збереженні методу автентифікації. Зверніться до адміністратора.');
+                Session::flash(
+                    'error',
+                    'Виникла помилка при збереженні методу автентифікації. Зверніться до адміністратора.'
+                );
 
                 return;
             }
@@ -490,7 +507,10 @@ class PersonUpdate extends PersonComponent
                     ->update(['uuid' => $response->validate()['id']]);
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to update authentication method UUID');
-                Session::flash('error', 'Виникла помилка при оновленні методу автентифікації. Зверніться до адміністратора.');
+                Session::flash(
+                    'error',
+                    'Виникла помилка при оновленні методу автентифікації. Зверніться до адміністратора.'
+                );
 
                 return;
             }
@@ -522,7 +542,10 @@ class PersonUpdate extends PersonComponent
                     ->update(['uuid' => $response->validate()['id'], 'type' => AuthenticationMethod::OTP]);
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to update authentication method type');
-                Session::flash('error', 'Виникла помилка при зміні методу автентифікації. Зверніться до адміністратора.');
+                Session::flash(
+                    'error',
+                    'Виникла помилка при зміні методу автентифікації. Зверніться до адміністратора.'
+                );
 
                 return;
             }
@@ -585,7 +608,10 @@ class PersonUpdate extends PersonComponent
                 AuthenticationMethodModel::whereUuid($this->selectedAuthMethodUuid)->update(['alias' => $this->alias]);
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to update authentication method alias');
-                Session::flash('error', 'Виникла помилка при оновленні назви методу автентифікації. Зверніться до адміністратора.');
+                Session::flash(
+                    'error',
+                    'Виникла помилка при оновленні назви методу автентифікації. Зверніться до адміністратора.'
+                );
 
                 return;
             }
@@ -658,7 +684,7 @@ class PersonUpdate extends PersonComponent
         $this->form->person['confidantPersons'] = $confidantPersonsData;
 
         // Sync to database
-        Repository::confidantPerson()->syncFromApiResponse($response->getData(), $this->uuid);
+        Repository::confidantPerson()->sync($response->getData(), $this->uuid);
 
         Session::flash('success', __('Дані про законних представників успішно синхронізовано.'));
     }
@@ -692,11 +718,14 @@ class PersonUpdate extends PersonComponent
         try {
             $response = EHealth::person()->createConfidantRelationship($this->uuid, $validated);
 
-            $this->confidantPersonRelationshipRequestId = $response->validate()['id'];
+            $this->confidantPersonRelationshipRequestId = $response->validate()['uuid'];
             $this->uploadedDocuments = $response->getUrgent()['documents'];
 
             try {
-                ConfidantPersonRelationshipRequest::create($response->getData());
+                $dataForCreate = $response->validate();
+                $dataForCreate['person_id'] = Person::whereUuid($this->confidantPersonId)->value('id');
+
+                ConfidantPersonRelationshipRequest::create($dataForCreate);
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to create confidant person relationship request');
                 Session::flash('error', 'Виникла помилка при збереженні. Зверніться до адміністратора.');
@@ -709,6 +738,7 @@ class PersonUpdate extends PersonComponent
             return;
         }
 
+        $this->authDrawerMode = 'create';
         $this->showAuthDrawer = true;
     }
 
@@ -776,6 +806,7 @@ class PersonUpdate extends PersonComponent
             return;
         }
 
+        $this->authDrawerMode = null;
         $this->showSignatureDrawer = true;
     }
 
@@ -893,6 +924,42 @@ class PersonUpdate extends PersonComponent
             ]);
 
             Session::flash('error', __('Помилка при синхронізації запитів на створення законних представників'));
+        }
+    }
+
+    public function deactivateConfidantPerson(string $authMethodUuid, array $documents): void
+    {
+        try {
+            $resp = EHealth::person()->deactivateAuthMethod($this->uuid, $authMethodUuid);
+            $this->requestId = $resp->getData()['id'];
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            $this->handleEHealthExceptions($exception, 'Error when deactivating auth method');
+        }
+
+        // Set mode to deactivate and show the auth drawer
+        $this->authDrawerMode = 'deactivate';
+        $this->showAuthDrawer = true;
+    }
+
+    public function approveDeactivatingAuthMethod(): void
+    {
+        try {
+            $validated = $this->form->validate($this->form->rulesForApprove());
+        } catch (ValidationException $exception) {
+            Session::flash('error', $exception->validator->errors()->first());
+            $this->setErrorBag($exception->validator->getMessageBag());
+
+            return;
+        }
+
+        try {
+            EHealth::person()->approveAuthMethod($this->uuid, $this->requestId, Arr::toSnakeCase($validated));
+
+            Session::flash('success', __('Законний представник успішно деактивований.'));
+        } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+            $this->handleEHealthExceptions($exception, 'Error when approve deactivating auth method');
+
+            return;
         }
     }
 

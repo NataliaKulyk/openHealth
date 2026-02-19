@@ -34,6 +34,10 @@
                                     <span>{{ __('patients.add_authentication_method') }}</span>
                                 </button>
 
+                                <button type="button" class="button-sync" wire:click.prevent="syncAuthMethods">
+                                    <span>{{ __('Синхронізувати методи автентифікації') }}</span>
+                                </button>
+
                                 <div x-show="openAdd"
                                      @click.away="openAdd = false"
                                      x-transition:enter="transition ease-out duration-100"
@@ -90,7 +94,7 @@
 
                         <template x-if="authenticationMethods && authenticationMethods.length > 0">
                             <div class="space-y-4">
-                                <template x-for="method in authenticationMethods" :key="method.uuid">
+                                <template x-for="(method, methodIndex) in authenticationMethods" :key="method.uuid">
                                     <div class="fieldset border dark:border-white p-3 rounded space-y-3">
                                         <div class="flex items-start justify-between">
                                             <div class="shrink"
@@ -181,13 +185,14 @@
                                                 <div class="space-y-4">
                                                     <div class="form-row-2">
                                                         <div class="form-group">
-                                                            <label for="alias" class="label-modal">
+                                                            <label :for="'alias-' + methodIndex" class="label-modal">
                                                                 {{ __('patients.alias') }}
                                                             </label>
                                                             <input type="text"
                                                                    :value="method.alias"
                                                                    class="input-modal"
                                                                    name="alias"
+                                                                   :id="'alias-' + methodIndex"
                                                                    readonly
                                                             >
                                                         </div>
@@ -197,7 +202,7 @@
                                                         >
                                                             @icon('calendar-month', 'w-5 h-5 svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none')
 
-                                                            <label for="endedAt" class="label-modal">
+                                                            <label :for="'endedAt-' + methodIndex" class="label-modal">
                                                                 {{ __('patients.ended_at') }}
                                                                 <span class="text-red-600"></span>
                                                             </label>
@@ -207,7 +212,7 @@
                                                                    datepicker-format="dd.mm.yyyy"
                                                                    type="text"
                                                                    name="endedAt"
-                                                                   id="endedAt"
+                                                                   :id="'endedAt-' + methodIndex"
                                                                    class="input-modal datepicker-input"
                                                                    autocomplete="off"
                                                                    readonly
@@ -217,7 +222,7 @@
 
                                                     <div class="form-row-2">
                                                         <div class="form-group">
-                                                            <label for="confidantPersonFullName"
+                                                            <label :for="'confidantPersonFullName-' + methodIndex"
                                                                    class="label-modal"
                                                             >
                                                                 {{ __('patients.confidant_full_name') }}
@@ -225,21 +230,21 @@
                                                             <input type="text"
                                                                    :value="method.confidantPerson.name"
                                                                    class="input-modal"
-                                                                   id="confidantPersonFullName"
+                                                                   :id="'confidantPersonFullName-' + methodIndex"
                                                                    name="confidantPersonFullName"
                                                                    readonly
                                                             >
                                                         </div>
 
                                                         <div class="form-group">
-                                                            <label for="taxId" class="label-modal">
+                                                            <label :for="'taxId-' + methodIndex" class="label-modal">
                                                                 {{ __('forms.rnokpp') }}
                                                                 <span class="text-red-600"></span>
                                                             </label>
                                                             <input :value="method.confidantPerson.taxId"
                                                                    type="text"
                                                                    name="taxId"
-                                                                   id="taxId"
+                                                                   :id="'taxId-' + methodIndex"
                                                                    class="input-modal"
                                                                    autocomplete="off"
                                                                    readonly
@@ -249,20 +254,21 @@
 
                                                     <div class="form-row-2">
                                                         <div class="form-group">
-                                                            <label for="unzr" class="label-modal">
+                                                            <label :for="'unzr-' + methodIndex" class="label-modal">
                                                                 {{ __('patients.unzr') }}
                                                             </label>
                                                             <input type="text"
                                                                    :value="method.confidantPerson.unzr"
                                                                    class="input-modal"
                                                                    name="unzr"
+                                                                   :id="'unzr-' + methodIndex"
                                                                    readonly
                                                             >
                                                         </div>
                                                     </div>
 
                                                     <template :key="method.uuid"
-                                                              x-for="document in method.confidantPerson.documentsPerson"
+                                                              x-for="(document, index) in method.confidantPerson.documentsPerson"
                                                     >
                                                         <div class="form-row-2">
                                                             <div class="form-group"
@@ -273,14 +279,14 @@
                                                                      }
                                                                  }"
                                                             >
-                                                                <label for="documentType" class="label-modal">
+                                                                <label :for="'documentType-' + index" class="label-modal">
                                                                     {{ __('forms.document_type') }}
                                                                     <span class="text-red-600"></span>
                                                                 </label>
                                                                 <input :value="getDocumentLabel(document.type)"
                                                                        type="text"
                                                                        name="documentType"
-                                                                       id="documentType"
+                                                                       :id="'documentType-' + index"
                                                                        class="input-modal"
                                                                        autocomplete="off"
                                                                        readonly
@@ -288,13 +294,14 @@
                                                             </div>
 
                                                             <div class="form-group">
-                                                                <label for="documentNumber" class="label-modal">
+                                                                <label :for="'documentNumber-' + index" class="label-modal">
                                                                     {{ __('forms.document_number') }}
                                                                 </label>
                                                                 <input type="text"
                                                                        :value="document.number"
                                                                        class="input-modal"
                                                                        name="documentNumber"
+                                                                       :id="'documentNumber-' + index"
                                                                        readonly
                                                                 >
                                                             </div>
@@ -303,14 +310,14 @@
 
                                                     <div class="form-row-2">
                                                         <div class="form-group">
-                                                            <label for="phoneNumber" class="label-modal">
+                                                            <label :for="'phoneNumber-' + methodIndex" class="label-modal">
                                                                 {{ __('forms.phone_number') }}
                                                                 <span class="text-red-600"></span>
                                                             </label>
                                                             <input :value="method.confidantPerson.phones.number"
                                                                    type="tel"
                                                                    name="phoneNumber"
-                                                                   id="phoneNumber"
+                                                                   :id="'phoneNumber-' + methodIndex"
                                                                    class="input-modal"
                                                                    autocomplete="off"
                                                                    readonly

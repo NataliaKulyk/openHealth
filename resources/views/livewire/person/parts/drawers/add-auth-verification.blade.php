@@ -9,7 +9,7 @@
      x-cloak
      @click="showAuthDrawer = false"
      class="fixed inset-0 bg-gray-900/50"
-     style="z-index: 65;"
+     style="z-index: 35;"
 ></div>
 
 {{-- Auth Drawer --}}
@@ -22,7 +22,7 @@
      x-transition:leave-end="translate-x-full"
      x-cloak
      class="fixed top-0 right-0 h-screen pt-16 bg-white dark:bg-gray-800 shadow-2xl"
-     style="z-index: 70; width: calc(80% - 65px);"
+     style="z-index: 40; width: calc(80% - 65px);"
      id="auth-drawer"
      tabindex="-1"
      x-data="{
@@ -44,7 +44,13 @@
 >
     <div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4">
         <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-            {{ __('patients.authentication_SMS') }}
+            @if($this->authDrawerMode === 'create')
+                {{ __('patients.authentication_SMS') }}
+            @elseif($this->authDrawerMode === 'deactivate')
+                {{ __('patients.deactivate_authentication_method') }}
+            @else
+                {{ __('patients.authentication_SMS') }}
+            @endif
         </h2>
     </div>
 
@@ -117,19 +123,28 @@
                 {{ __('forms.back') }}
             </button>
 
-            <button type="button"
-                    @click="showAuthDrawer = false; showDocumentDrawer = false; showLegalRepDrawer = false"
-                    class="button-outline-primary"
-            >
-                {{ __('patients.to_authentication_methods') }}
-            </button>
+            @if($this->authDrawerMode === 'create')
+                <button type="button"
+                        @click="showDocumentDrawer = false; showLegalRepDrawer = false; showSignatureDrawer = true"
+                        class="button-outline-primary"
+                >
+                    {{ __('patients.to_authentication_methods') }}
+                </button>
 
-            <button type="button"
-                    wire:click.prevent="approveConfidantPersonRelationshipRequest"
-                    class="button-primary"
-            >
-                {{ __('forms.confirm') }}
-            </button>
+                <button type="button"
+                        wire:click.prevent="approveConfidantPersonRelationshipRequest"
+                        class="button-primary"
+                >
+                    {{ __('forms.confirm') }}
+                </button>
+            @elseif($this->authDrawerMode === 'deactivate')
+                <button type="button"
+                        wire:click.prevent="approveDeactivatingAuthMethod"
+                        class="button-danger"
+                >
+                    {{ __('patients.confirm_deactivation') }}
+                </button>
+            @endif
         </div>
     </div>
 </div>
