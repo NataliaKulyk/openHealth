@@ -47,6 +47,8 @@ class Person extends Request
     {
         $this->setValidator($this->validateSearch(...));
 
+        $query = $this->format($query, ['birthDate']);
+
         return $this->get(self::URL, $query);
     }
 

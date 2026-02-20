@@ -185,9 +185,10 @@ class PersonUpdate extends PersonComponent
 
         $authenticationMethods = $person->authenticationMethods->toArray();
 
-        if ($person->confidantPersons->isNotEmpty()) {
-            $this->confidantPersonRelationshipRequests = $person->confidantPersonRelationshipRequests()->get();
+        // Initialize confidant person relationship requests for all cases
+        $this->confidantPersonRelationshipRequests = $person->confidantPersonRelationshipRequests()->get();
 
+        if ($person->confidantPersons->isNotEmpty()) {
             // Create a lookup map of confidant persons by their UUID
             $confidantPersonsLookup = $person->confidantPersons->keyBy(function ($confidantPerson) {
                 return $confidantPerson->person->uuid;
@@ -309,14 +310,12 @@ class PersonUpdate extends PersonComponent
             return;
         }
 
-        $formatted = $this->form->formatForPersonCreationApi(
-            array_merge($validated, ['addresses' => $this->form->addresses])
-        );
-        $formatted['person']['id'] = $this->uuid;
+        $validated = array_merge($validated, ['addresses' => $this->form->addresses]);
+        $validated['person']['id'] = $this->uuid;
 
         try {
             // update
-            $response = EHealth::personRequest()->create($formatted);
+            $response = EHealth::personRequest()->create($validated);
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when updating a person request');
 

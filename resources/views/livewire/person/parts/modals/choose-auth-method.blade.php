@@ -310,7 +310,8 @@
                                                                  }"
                                                             >
                                                                 <label :for="'documentType-' + index"
-                                                                       class="label-modal">
+                                                                       class="label-modal"
+                                                                >
                                                                     {{ __('forms.document_type') }}
                                                                     <span class="text-red-600"></span>
                                                                 </label>
@@ -326,7 +327,8 @@
 
                                                             <div class="form-group">
                                                                 <label :for="'documentNumber-' + index"
-                                                                       class="label-modal">
+                                                                       class="label-modal"
+                                                                >
                                                                     {{ __('forms.document_number') }}
                                                                 </label>
                                                                 <input type="text"

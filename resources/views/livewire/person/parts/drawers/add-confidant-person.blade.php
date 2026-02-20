@@ -182,7 +182,7 @@
                 type="button"
                 @click="saveConfidantPerson()"
         >
-            {{ __('forms.save_changes') }}
+            {{ __('forms.save') }}
         </button>
 
         @if($this instanceof \App\Livewire\Person\PersonUpdate)

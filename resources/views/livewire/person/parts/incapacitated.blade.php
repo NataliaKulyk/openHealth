@@ -333,8 +333,7 @@
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         <span>{{ __('forms.rnokpp') }} </span>
-                                        <span
-                                            x-text="confidantPerson.taxId || '-'"></span>
+                                        <span x-text="confidantPerson.taxId || '-'"></span>
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400"
                                          x-show="confidantPerson.unzr"
@@ -370,7 +369,7 @@
                                               x-for="(phone, phoneIndex) in (confidantPerson.phones || [])"
                                     >
                                         <div>
-                                            <div class="text-gray-900 dark:text-white" x-text="phone.type || '-'"></div>
+                                            <div class="text-gray-900 dark:text-white" x-text="phoneTypes[phone.type] || '-'"></div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400"
                                                  x-text="phone.number || '-'"
                                             ></div>
@@ -415,18 +414,6 @@
                                                     {{ __('forms.edit') }}
                                                 </button>
                                                 <button type="button"
-                                                        class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 whitespace-nowrap"
-                                                        @click.prevent="
-                                                            authDrawerMode = 'deactivate_relationship';
-                                                            deactivateDocIndex = docIndex;
-                                                            showAuthDrawer = true;
-                                                            openDropdown = false
-                                                        "
-                                                >
-                                                    @icon('close-circle', 'w-4 h-4 text-gray-600 dark:text-gray-300')
-                                                    {{ __('patients.deactivate_relationship') }}
-                                                </button>
-                                                <button type="button"
                                                         class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 text-red-600 dark:text-red-400 whitespace-nowrap"
                                                         @click="confidantPerson.documentsRelationship.splice(docIndex, 1); confidantPerson = { ...confidantPerson }; openDropdown = false"
                                                 >
@@ -453,12 +440,10 @@
 
         @if($this instanceof PersonUpdate)
             @include('livewire.person.parts.drawers.confidant-person-relationship-requests')
+            @include('livewire.person.parts.drawers.add-auth-verification')
+            @include('livewire.person.parts.modals.terminate-relationship')
         @endif
 
         @include('livewire.person.parts.drawers.add-confidant-person')
     </div>
-
-    @include('livewire.person.parts.drawers.add-auth-verification')
-
-    @include('livewire.person.parts.modals.terminate-relationship')
 </fieldset>

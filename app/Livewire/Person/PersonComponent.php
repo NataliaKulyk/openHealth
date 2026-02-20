@@ -124,6 +124,13 @@ class PersonComponent extends Component
      */
     public int $resendCooldown = 60;
 
+    /**
+     * Track if SMS has already been resent (allow only single resend per session).
+     *
+     * @var bool
+     */
+    public bool $smsAlreadyResent = false;
+
     public bool $showInformationMessageModal = false;
 
     public bool $showSignatureModal = false;
@@ -142,6 +149,12 @@ class PersonComponent extends Component
     public function baseMount(): void
     {
         $this->getDictionary();
+
+        // Show only documents that are used to register person in the system.
+        $this->dictionaries['DOCUMENT_TYPE'] = array_intersect_key(
+            $this->dictionaries['DOCUMENT_TYPE'],
+            array_flip(config('ehealth.person_registration_document_types'))
+        );
     }
 
     /**
@@ -208,9 +221,7 @@ class PersonComponent extends Component
 
         try {
             $this->confidantPerson = Arr::toCamelCase(
-                EHealth::person()
-                    ->searchForPersonByParams($this->form->formatForConfidantSearchApi($validated))
-                    ->getData()
+                EHealth::person()->searchForPersonByParams($validated)->getData()
             );
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when searching for person');
@@ -250,10 +261,8 @@ class PersonComponent extends Component
             return;
         }
 
-        $formatted = $this->form->formatForPersonCreationApi($validated);
-
         try {
-            $response = EHealth::personRequest()->create($formatted);
+            $response = EHealth::personRequest()->create($validated);
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when creating a person request');
 
@@ -282,7 +291,7 @@ class PersonComponent extends Component
                 }
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to store person request');
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                Session::flash('error', __('validation.custom.database_error'));
 
                 return;
             }
@@ -338,17 +347,17 @@ class PersonComponent extends Component
                     removeEmptyKeys(Arr::toSnakeCase($validated)),
                     $selectedConfidantPersonData
                 );
-                $successMessage = 'Заявка на створення пацієнта успішно оновлена.';
+                $successMessage = __('patients.messages.person_request_updated');
             } else {
                 Repository::personRequest()->create(
                     removeEmptyKeys(Arr::toSnakeCase($validated)),
                     $selectedConfidantPersonData
                 );
-                $successMessage = 'Заявка на створення пацієнта успішно створена.';
+                $successMessage = __('patients.messages.person_request_created');
             }
         } catch (Throwable $exception) {
             $this->logDatabaseErrors($exception, 'Failed to store person request');
-            Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+            Session::flash('error', __('messages.database_error'));
 
             return;
         }
@@ -432,7 +441,7 @@ class PersonComponent extends Component
      */
     public function getDocumentLabel(array $document): string
     {
-        return __('patients.documents.' . Str::lower(Str::afterLast($document['type'], '.')));
+        return __('patients.documents.' . Str::afterLast($document['type'], '.'));
     }
 
     /**
@@ -452,6 +461,13 @@ class PersonComponent extends Component
             return;
         }
 
+        // Check if SMS has already been resent (single resend rule)
+        if ($this->smsAlreadyResent) {
+            Session::flash('error', __('validation.custom.person.sms_already_resent'));
+
+            return;
+        }
+
         try {
             $response = EHealth::personRequest()->resendAuthOtp($this->form->person['id']);
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
@@ -461,8 +477,9 @@ class PersonComponent extends Component
         }
 
         if ($response->getData()['status'] === 'new') {
-            Session::flash('success', 'SMS успішно надіслано!');
+            Session::flash('success', __('patients.messages.sms_sent_successfully'));
             $this->resendCooldown = 60;
+            $this->smsAlreadyResent = true; // Mark SMS as resent
         }
     }
 
@@ -494,6 +511,7 @@ class PersonComponent extends Component
 
         try {
             $this->approvePersonRequest(['verification_code' => $validated['verificationCode']]);
+            Session::flash('success', __('patients.messages.person_request_approved'));
             $this->showLeafletModal = true;
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when approving person request');
@@ -542,12 +560,12 @@ class PersonComponent extends Component
                 Repository::personRequest()->updateStatusByUuid($response->getData());
             } catch (Exception|Throwable $exception) {
                 $this->logDatabaseErrors($exception, $exception->getMessage());
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                Session::flash('error', __('messages.database_error'));
 
                 return;
             }
 
-            Session::flash('success', 'Заявку успішно відхилено.');
+            Session::flash('success', __('patients.messages.person_request_rejected'));
             $this->redirectRoute('persons.index', [legalEntity()], navigate: true);
         }
     }
@@ -595,7 +613,7 @@ class PersonComponent extends Component
             );
         } catch (ConnectionException $exception) {
             $this->logConnectionError($exception, 'Error connecting to Cipher when signing data');
-            Session::flash('error', __('validation.custom.connection_exception'));
+            Session::flash('error', __('messages.connection_exception'));
 
             return;
         } catch (CipherApiException $exception) {
@@ -605,7 +623,7 @@ class PersonComponent extends Component
             return;
         } catch (JsonException $exception) {
             $this->logDatabaseErrors($exception, 'JSON encoding error when signing data');
-            Session::flash('error', 'Помилка обробки даних. Зверніться до адміністратора.');
+            Session::flash('error', __('patients.messages.data_processing_error'));
 
             return;
         }
@@ -632,18 +650,18 @@ class PersonComponent extends Component
                             $approvedPersonRequest->map($approvedPersonRequest->validate()),
                             $responseData['person_id']
                         );
-                        $successMessage = 'Пацієнт успішно оновлений';
+                        $successMessage = __('patients.messages.person_updated');
                     } else {
                         Repository::person()->create(
                             $approvedPersonRequest->map($approvedPersonRequest->validate()),
                             $responseData['person_id']
                         );
-                        $successMessage = 'Пацієнт успішно створений';
+                        $successMessage = __('patients.messages.person_created');
                     }
                 });
             } catch (Exception|Throwable $exception) {
                 $this->logDatabaseErrors($exception, $exception->getMessage());
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                Session::flash('error', __('messages.database_error'));
 
                 return;
             }
@@ -680,7 +698,7 @@ class PersonComponent extends Component
         $totalFiles = count($this->form->uploadedDocuments);
         // Check that all provided files were uploaded
         if ($totalFiles !== count($this->uploadedDocuments)) {
-            Session::flash('error', 'Будь ласка завантажте всі файли!');
+            Session::flash('error', __('patients.messages.upload_all_files'));
 
             return;
         }
@@ -702,12 +720,12 @@ class PersonComponent extends Component
 
                     $this->uploadedFiles[$key] = true;
                 } else {
-                    Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                    Session::flash('error', __('messages.database_error'));
 
                     $this->uploadedFiles[$key] = false;
                 }
             } catch (Exception) {
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                Session::flash('error', __('messages.database_error'));
 
                 $this->uploadedFiles[$key] = false;
             }
@@ -715,7 +733,7 @@ class PersonComponent extends Component
 
         // Show final status message
         if ($successCount === $totalFiles) {
-            Session::flash('success', 'Всі файли успішно завантажено');
+            Session::flash('success', __('patients.messages.files_uploaded_successfully'));
         }
     }
 
@@ -732,7 +750,7 @@ class PersonComponent extends Component
     ): void {
         if ($exception instanceof ConnectionException) {
             $this->logConnectionError($exception, $logMessage);
-            Session::flash('error', __('validation.custom.connection_exception'));
+            Session::flash('error', __('messages.connection_exception'));
 
             return;
         }
@@ -740,7 +758,7 @@ class PersonComponent extends Component
         $this->logEHealthException($exception, $logMessage);
         $errorMessage = $exception instanceof EHealthValidationException
             ? $exception->getFormattedMessage()
-            : 'Помилка від ЕСОЗ: ' . $exception->getMessage();
+            : __('patients.messages.ehealth_error', ['message' => $exception->getMessage()]);
         Session::flash('error', $errorMessage);
     }
 
@@ -761,7 +779,7 @@ class PersonComponent extends Component
                 Repository::personRequest()->updateStatusByUuid($responseData);
             } catch (Exception $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to update person request status');
-                Session::flash('error', 'Виникла помилка. Зверніться до адміністратора.');
+                Session::flash('error', __('messages.database_error'));
 
                 return;
             }

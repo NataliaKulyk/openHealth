@@ -236,7 +236,7 @@
                         :disabled="!newDocument.type || !newDocument.number || !newDocument.issuedBy || !newDocument.issuedAt"
                         @click="addNewConfidant(); showDocumentDrawer = false"
                 >
-                    <span x-text="isEditing ? '{{ __('forms.save_changes') }}' : '{{ __('forms.add_document') }}'">
+                    <span x-text="isEditing ? '{{ __('forms.save') }}' : '{{ __('forms.add_document') }}'">
                         {{ __('forms.add_document') }}
                     </span>
                 </button>
