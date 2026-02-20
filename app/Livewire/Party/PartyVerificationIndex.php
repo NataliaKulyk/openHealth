@@ -20,6 +20,13 @@ class PartyVerificationIndex extends Component
 
     public LegalEntity $legalEntity;
 
+    public string $dracsDeathStatus = '';
+
+    public function updatedDracsDeathStatus(): void
+    {
+        $this->resetPage();
+    }
+
     public function mount(LegalEntity $legalEntity): void
     {
         $this->legalEntity = $legalEntity;
@@ -34,12 +41,18 @@ class PartyVerificationIndex extends Component
     {
         $token = session()->get(config('ehealth.api.oauth.bearer_token'));
 
+        $filters = [];
+
+        if (!empty($this->dracsDeathStatus)) {
+            $filters['verification_status'] = $this->dracsDeathStatus;
+        }
+
+        // Запит тепер має проходити без 422 Unprocessable Entity
         $apiResponse = EHealth::party()
             ->withToken($token)
-            ->getMany([], $this->getPage());
+            ->getMany($filters, $this->getPage());
 
         $apiData = $apiResponse->json();
-
         $paging = $apiData['paging'] ?? [];
         $totalFromApi = $paging['total_entries'] ?? 0;
 
@@ -55,6 +68,7 @@ class PartyVerificationIndex extends Component
             $uuid = $item['party_id'];
             $localParty = $localPartiesObjects->get($uuid);
 
+            //If it is not found locally, skip (or show it as it is, depends on your logic)
             if (!$localParty) {
                 return null;
             }

@@ -18,6 +18,9 @@ return [
     'details' => 'Деталі верифікації',
     'subject_verification' => 'Предмет верифікації',
     'verification_list' => 'Список верифікацій співробітників',
+    'update_verification_status' => 'Оновлення статусу верифікації',
+    'new_status' => 'Новий статус',
+    'reason' => 'Причина',
 
     // General statuses
     'verified' => 'Верифіковано',
@@ -65,6 +68,8 @@ return [
         'RULES_PASSED' => 'Не потребує ручної верифікації',
         'RULES_TRIGGERED' => 'Потребує ручної верифікації',
         'TAX_ID_AND_PASSPORT_DOCUMENT_ABSENT' => 'Встановлено по причині відсутності ІПН та паспортного документу',
+        'manual_confirmed' => 'Підтверджено вручну (документи наявні)',
+        'manual_not_confirmed' => 'Не підтверджено вручну (помилка в даних)',
     ],
 
     // Recommendations and tips

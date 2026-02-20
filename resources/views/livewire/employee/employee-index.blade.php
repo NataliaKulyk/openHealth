@@ -207,20 +207,6 @@
                                                         <span>{{ __('forms.dismissed') }}</span>
                                                     </label>
                                                 </li>
-                                                <li>
-                                                    <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" value="VERIFIED" wire:model="status"
-                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
-                                                        <span>{{ __('forms.verified') }}</span>
-                                                    </label>
-                                                </li>
-                                                <li>
-                                                    <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" value="NOT_VERIFIED" wire:model="status"
-                                                               class="rounded-sm text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:checked:bg-blue-600 dark:checked:border-transparent">
-                                                        <span>{{ __('forms.not_verified') }}</span>
-                                                    </label>
-                                                </li>
                                             </ul>
                                         </div>
                                     </div>

@@ -23,11 +23,12 @@
                 </tr>
                 </thead>
                 <tbody>
+                {{-- String filtering occurs at the PHP level (drfo/dracs_death), so here we simply output --}}
                 @forelse($verificationDetails['details'] ?? [] as $key => $details)
                     @php
                         $status = data_get($details, 'verification_status');
                         $reason = data_get($details, 'verification_reason');
-                        $comment = data_get($details, 'verification_comment');
+                        $comment = data_get($details, 'verification_comment'); // Або 'reason' з API
                         $result = data_get($details, 'result');
                     @endphp
                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200" wire:key="details-{{ $key }}">
@@ -86,20 +87,12 @@
         </div>
 
         {{-- 2. Warning Block --}}
-        @if($this->hasVerificationWarnings)
+        @if(data_get($verificationDetails, 'details.dracs_death.verification_status') === 'NOT_VERIFIED')
             <div class="p-4 mt-6 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
                 <h4 class="font-bold">{{ __('party_verification.warning.header') }}</h4>
-
                 <ul class="mt-2 list-disc list-inside space-y-1">
-                    @if($this->drfoNotVerified)
-                        <li>{{ __('party_verification.warning.drfo') }}</li>
-                    @endif
-
-                    @if($this->dracsDeathNotVerified)
-                        <li>{{ __('party_verification.warning.dracs_death') }}</li>
-                    @endif
+                    <li>{{ __('party_verification.warning.dracs_death') }}</li>
                 </ul>
-
                 <p class="mt-3">{{ __('party_verification.warning.footer') }}</p>
             </div>
         @endif
@@ -110,18 +103,17 @@
                 {{ __('forms.back') }}
             </a>
 
-            {{-- Update Data (Modal Trigger) --}}
+            {{-- The button is only active if it allows canUpdateVerification with PHP --}}
             <button type="button"
                     wire:click="checkAndOpenModal"
-                    class="button-primary-outline"
+                    @class([
+                        'button-primary-outline' => $this->canUpdateVerification,
+                        'button-disabled' => !$this->canUpdateVerification
+                    ])
+                    @if(!$this->canUpdateVerification) disabled @endif
             >
                 {{ __('forms.update_data') }}
             </button>
-
-            {{-- Go to Profile --}}
-            <a href="{{ route('party.edit', ['legalEntity' => $legalEntity->id, 'party' => $party->id]) }}" class="button-primary">
-                {{ __('forms.go_to_party_profile') }}
-            </a>
         </div>
     </x-section>
 
@@ -152,7 +144,7 @@
                 {{-- Modal Header --}}
                 <div class="flex items-center justify-between p-4 border-b border-gray-200 rounded-t dark:border-gray-600">
                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                        {{ __('forms.update_verification_status_dracs') }}
+                        {{ __('forms.update_data') }}
                     </h3>
 
                     <button type="button"
@@ -162,42 +154,35 @@
                     </button>
                 </div>
 
-                {{-- Modal Content (без змін) --}}
                 <div class="p-6 space-y-6">
-
                     {{-- 1. Subject of verification --}}
                     <div class="form-group group">
-                        <select wire:model.live="stream" id="stream" class="input peer px-4 py-2">
+                        <select wire:model.live="verificationStream" id="verificationStream" class="input peer px-4 py-2">
                             <option value="dracs_death">{{ __('party_verification.types.dracs_death') }}</option>
-                            <option value="dracs_name_change">{{ __('party_verification.types.dracs_name_change') }}</option>
                         </select>
-
-                        <label for="stream" class="label">{{ __('party_verification.subject_verification') }}</label>
+                        <label for="verificationStream" class="label">{{ __('party_verification.subject_verification') }}</label>
                     </div>
 
-                    {{-- 2. Status (Always VERIFIED for manual update) --}}
+                    {{-- 2. Status --}}
                     <div class="form-group group">
                         <select wire:model.defer="status" id="status" class="input peer px-4 py-2">
                             <option value="">{{ __('forms.select_statuse') }}</option>
                             <option value="VERIFIED">{{ __('party_verification.statuses.VERIFIED') }}</option>
+                            <option value="NOT_VERIFIED">{{ __('party_verification.statuses.NOT_VERIFIED') }}</option>
                         </select>
                         <label for="status" class="label">{{ __('party_verification.status') }}</label>
                         @error('status') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    {{-- 3.Cause (DYNAMIC) --}}
-                    <div class="form-group group" wire:key="reason-select-for-{{ $stream }}">
-                        <select wire:model.defer="reason" id="reason" class="input peer px-4 py-2">
+                    {{-- 3. Reason --}}
+                    <div class="form-group group">
+                        <select wire:model="reason" id="reason" class="input peer px-4 py-2">
                             <option value="">{{ __('forms.choose_reason') }}</option>
-
-                            @foreach($this->availableReasons as $reasonCode)
-                                <option value="{{ $reasonCode }}">
-                                    {{ __('party_verification.reasons.' . $reasonCode) }}
-                                </option>
-                            @endforeach
-
+                            <option value="MANUAL_NOT_CONFIRMED">
+                                {{ __('party_verification.reasons.manual_not_confirmed') }}
+                            </option>
                         </select>
-                        <label for="reason" class="label">{{ __('forms.reason_verification') }}</label>
+                        <label for="reason" class="label">{{ __('forms.reason_code') }}</label>
                         @error('reason') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
 
@@ -216,7 +201,6 @@
 
                 {{-- Modal Footer --}}
                 <div class="flex items-center justify-start gap-4 p-6 border-t border-gray-200 dark:border-gray-600">
-
                     <button type="button"
                             @click="$wire.closeUpdateModal()"
                             class="button-minor">

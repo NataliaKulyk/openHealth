@@ -200,16 +200,6 @@ class EmployeeIndex extends EmployeeComponent
         if (!empty($this->filter['phone'])) {
             $query->whereHas('phones', fn ($q) => $q->where('number', 'like', '%' . $this->filter['phone'] . '%'));
         }
-
-        // 5. Filter: Verification Status
-        $showVerified = in_array('VERIFIED', $this->status, true);
-        $showNotVerified = in_array('NOT_VERIFIED', $this->status, true);
-
-        if ($showVerified && !$showNotVerified) {
-            $query->where('verification_status', 'VERIFIED');
-        } elseif (!$showVerified && $showNotVerified) {
-            $query->where('verification_status', '!=', 'VERIFIED');
-        }
     }
 
     /**
