@@ -105,6 +105,7 @@
                        class="default-input w-full"
                        id="drawerPassword"
                        name="drawerPassword"
+                       autocomplete="current-password"
                 />
 
                 @error('form.password') <p class="text-error">{{ $message }}</p> @enderror

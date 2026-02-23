@@ -19,8 +19,10 @@
                    class="peer input @error('form.phoneNumber') input-error @enderror"
                    wire:model="form.phoneNumber"
                    x-mask="+380999999999"
+                   id="phoneNumber"
+                   name="phoneNumber"
             />
-            <label class="label">{{ __('patients.enter_a_new_phone_number') }}</label>
+            <label for="phoneNumber" class="label">{{ __('patients.enter_a_new_phone_number') }}</label>
 
             @error('form.phoneNumber') <p class="text-error">{{ $message }} </p>@enderror
         </div>

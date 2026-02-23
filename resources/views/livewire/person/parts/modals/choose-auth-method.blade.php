@@ -48,20 +48,22 @@
                                 >
                                     {{-- Can add method if none exist --}}
                                     <template x-if="authenticationMethods.length === 0">
-                                        <button type="button"
-                                                @click="localStep = {{ AuthStep::ADD_NEW_BY_SMS }}; openAdd = false"
-                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
-                                        >
-                                            Автентифікація через СМС
-                                        </button>
+                                        <div>
+                                            <button type="button"
+                                                    @click="localStep = {{ AuthStep::ADD_NEW_BY_SMS }}; openAdd = false"
+                                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
+                                            >
+                                                Автентифікація через СМС
+                                            </button>
 
-                                        <button type="button"
-                                                wire:click.prevent="createOfflineAuthMethod"
-                                                @click="openAdd = false"
-                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
-                                        >
-                                            Автентифікація через документи
-                                        </button>
+                                            <button type="button"
+                                                    wire:click.prevent="createOfflineAuthMethod"
+                                                    @click="openAdd = false"
+                                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
+                                            >
+                                                Автентифікація через документи
+                                            </button>
+                                        </div>
                                     </template>
 
                                     {{-- Can add only when for the same auth method --}}
@@ -71,7 +73,7 @@
                                               "
                                     >
                                         <button type="button"
-                                                @click="localStep = 4; openAdd = false"
+                                                @click="localStep = {{ AuthStep::COMPLETE_VERIFICATION }}; openAdd = false"
                                                 class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
                                         >
                                             Автентифікація через третю особу
@@ -94,7 +96,7 @@
 
                         <template x-if="authenticationMethods && authenticationMethods.length > 0">
                             <div class="space-y-4">
-                                <template x-for="(method, methodIndex) in authenticationMethods" :key="method.uuid">
+                                <template x-for="(method, methodIndex) in authenticationMethods" :key="methodIndex">
                                     <div class="fieldset border dark:border-white p-3 rounded space-y-3">
                                         <div class="flex items-start justify-between">
                                             <div class="shrink"
@@ -122,18 +124,20 @@
                                                          style="display: none"
                                                          class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-50 p-2 border border-gray-100"
                                                     >
-                                                        <template x-if="method.type === '{{ AuthenticationMethod::OTP->value }}'">
+                                                        <template
+                                                            x-if="method.type === '{{ AuthenticationMethod::OTP->value }}'">
                                                             <button type="button"
-                                                                    wire:click.prevent="selectAuthMethod(method.uuid, method.type, 1)"
+                                                                    wire:click.prevent="selectAuthMethod(method.uuid, method.type, {{ AuthStep::CHANGE_PHONE_INITIAL }})"
                                                                     class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                             >
                                                                 {{ __('patients.change_phone_number') }}
                                                             </button>
                                                         </template>
 
-                                                        <template x-if="method.type === '{{ AuthenticationMethod::OFFLINE->value }}'">
+                                                        <template
+                                                            x-if="method.type === '{{ AuthenticationMethod::OFFLINE->value }}'">
                                                             <button type="button"
-                                                                    wire:click.prevent="selectAuthMethod(method.uuid, method.type, 1)"
+                                                                    wire:click.prevent="selectAuthMethod(method.uuid, method.type, {{ AuthStep::CHANGE_PHONE_INITIAL }})"
                                                                     class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                             >
                                                                 {{ __('patients.change_method_to_sms') }}
@@ -141,13 +145,14 @@
                                                         </template>
 
                                                         <button @click="open = false"
-                                                                wire:click.prevent="selectAuthMethod(method.uuid, method.type, 7)"
+                                                                wire:click.prevent="selectAuthMethod(method.uuid, method.type, {{ AuthStep::CHANGE_ALIAS }})"
                                                                 class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                         >
                                                             {{ __('patients.change_method_alias') }}
                                                         </button>
 
-                                                        <button @click="localStep = 5; open = false"
+                                                        <button type="button"
+                                                                @click="localStep = {{ AuthStep::CHANGE_FROM_OFFLINE }}; open = false;"
                                                                 class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                         >
                                                             {{ __('patients.deactivate_method') }}
@@ -155,14 +160,22 @@
                                                     </div>
                                                 </div>
 
-                                                <button wire:click="update"
-                                                        class="button-primary whitespace-nowrap"
-                                                        @click="selectedMethod = method.id || method.uuid; showAuthMethodModal = false; localStep = 0"
+                                                <button class="button-primary whitespace-nowrap"
+                                                        @click="selectedMethod = method.id || method.uuid; localStep = {{ AuthStep::ASK_OTP_PERMISSION }}"
                                                 >
                                                     {{ __('forms.select') }}
                                                 </button>
                                             </div>
                                         </div>
+
+                                        <template
+                                            x-if="method.type !== '{{ AuthenticationMethod::THIRD_PERSON->value}}'">
+                                            <div>
+                                                <p class="default-p">Назва методу автентифікації:
+                                                    <span x-text="method.alias || '-'"></span>
+                                                </p>
+                                            </div>
+                                        </template>
 
                                         <div class="space-y-2">
                                             <template x-if="method.type === '{{ AuthenticationMethod::OTP->value }}'">
@@ -181,7 +194,8 @@
                                                 </div>
                                             </template>
 
-                                            <template x-if="method.type === '{{ AuthenticationMethod::THIRD_PERSON->value }}'">
+                                            <template
+                                                x-if="method.type === '{{ AuthenticationMethod::THIRD_PERSON->value }}'">
                                                 <div class="space-y-4">
                                                     <div class="form-row-2">
                                                         <div class="form-group">
@@ -197,23 +211,39 @@
                                                             >
                                                         </div>
 
-                                                        <div class="form-group"
-                                                             x-data="{ endedAt: method.ehealthEndedAt || method.endedAt }"
-                                                        >
+                                                        <div class="form-group">
                                                             @icon('calendar-month', 'w-5 h-5 svg-input absolute left-1 !top-2/3 transform -translate-y-1/2 pointer-events-none')
 
                                                             <label :for="'endedAt-' + methodIndex" class="label-modal">
                                                                 {{ __('patients.ended_at') }}
                                                                 <span class="text-red-600"></span>
                                                             </label>
-                                                            <input x-model="endedAt"
-                                                                   x-init="$nextTick(() => { if (endedAt) $el.value = endedAt })"
-                                                                   datepicker-max-date="{{ now()->format('d.m.Y') }}"
-                                                                   datepicker-format="dd.mm.yyyy"
+                                                            <input x-data="{
+                                                                       get displayDate() {
+                                                                           // Check both camelCase (after sync) and snake_case (initial load)
+                                                                           const date = method.ehealthEndedAt || method.endedAt ||
+                                                                                      method.ehealth_ended_at || method.ended_at;
+                                                                           if (!date) return '';
+                                                                           // If already in dd.mm.yyyy format, return as-is
+                                                                           if (date.match(/^\d{2}\.\d{2}\.\d{4}$/)) return date;
+                                                                           // Otherwise try to parse and format
+                                                                           try {
+                                                                               const parsed = new Date(date);
+                                                                               return parsed.toLocaleDateString('uk-UA', {
+                                                                                   day: '2-digit',
+                                                                                   month: '2-digit',
+                                                                                   year: 'numeric'
+                                                                               });
+                                                                           } catch (e) {
+                                                                               return date;
+                                                                           }
+                                                                       }
+                                                                   }"
+                                                                   :value="displayDate"
                                                                    type="text"
                                                                    name="endedAt"
                                                                    :id="'endedAt-' + methodIndex"
-                                                                   class="input-modal datepicker-input"
+                                                                   class="input-modal"
                                                                    autocomplete="off"
                                                                    readonly
                                                             >
@@ -267,7 +297,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <template :key="method.uuid"
+                                                    <template :key="`${method.uuid}-doc-${index}`"
                                                               x-for="(document, index) in method.confidantPerson.documentsPerson"
                                                     >
                                                         <div class="form-row-2">
@@ -275,11 +305,12 @@
                                                                  x-data="{
                                                                      documentLabels: @js(__('patients.documents')),
                                                                      getDocumentLabel(type) {
-                                                                         return this.documentLabels[type?.toLowerCase()] ?? type
+                                                                         return this.documentLabels[type] ?? type
                                                                      }
                                                                  }"
                                                             >
-                                                                <label :for="'documentType-' + index" class="label-modal">
+                                                                <label :for="'documentType-' + index"
+                                                                       class="label-modal">
                                                                     {{ __('forms.document_type') }}
                                                                     <span class="text-red-600"></span>
                                                                 </label>
@@ -294,7 +325,8 @@
                                                             </div>
 
                                                             <div class="form-group">
-                                                                <label :for="'documentNumber-' + index" class="label-modal">
+                                                                <label :for="'documentNumber-' + index"
+                                                                       class="label-modal">
                                                                     {{ __('forms.document_number') }}
                                                                 </label>
                                                                 <input type="text"
@@ -310,11 +342,13 @@
 
                                                     <div class="form-row-2">
                                                         <div class="form-group">
-                                                            <label :for="'phoneNumber-' + methodIndex" class="label-modal">
+                                                            <label :for="'phoneNumber-' + methodIndex"
+                                                                   class="label-modal"
+                                                            >
                                                                 {{ __('forms.phone_number') }}
                                                                 <span class="text-red-600"></span>
                                                             </label>
-                                                            <input :value="method.confidantPerson.phones.number"
+                                                            <input :value="method.confidantPerson.phones?.number"
                                                                    type="tel"
                                                                    name="phoneNumber"
                                                                    :id="'phoneNumber-' + methodIndex"
@@ -345,6 +379,7 @@
                     @php
                         $modalSteps = [
                              AuthStep::CHANGE_PHONE_INITIAL->value => 'livewire.person.parts.modals.init-phone-verification',
+                             AuthStep::ASK_OTP_PERMISSION->value => 'livewire.person.parts.modals.ask-otp-permission',
                              AuthStep::VERIFY_PHONE->value => 'livewire.person.parts.modals.complete-otp-verification',
                              AuthStep::NO_PHONE_ACCESS->value => 'livewire.person.parts.modals.no-phone-access',
                              AuthStep::COMPLETE_VERIFICATION->value => 'livewire.person.parts.modals.create-new-phone-number',

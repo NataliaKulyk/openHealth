@@ -1,3 +1,5 @@
+@use('App\Enums\Person\AuthStep')
+
 <div>
     <div x-data="{
         timer: 60,
@@ -44,11 +46,11 @@
         </div>
 
         <div class="flex gap-4">
-            <button type="button" @click="localStep = 4" class="button-minor">
+            <button type="button" @click="localStep = {{ AuthStep::COMPLETE_VERIFICATION }}" class="button-minor">
                 {{ __('forms.back') }}
             </button>
 
-            <button type="button" @click="localStep = 0" class="button-outline-primary">
+            <button type="button" @click="localStep = {{ AuthStep::INITIAL }}" class="button-outline-primary">
                 {{ __('patients.to_authentication_methods') }}
             </button>
 
