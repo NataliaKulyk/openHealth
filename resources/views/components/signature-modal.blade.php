@@ -21,59 +21,62 @@
 
                 {{-- Content --}}
                 <div class="p-6">
-                    <div class="flex flex-col gap-6">
-                        {{-- KEP Provider --}}
-                        <div>
-                            <label for="knedp" class="default-label">{{ __('forms.knedp') }} *</label>
-                            <select class="input-modal" wire:model="form.knedp" name="knedp" id="knedp">
-                                <option value="" selected>{{__('forms.select')}}</option>
-                                @foreach(signatureService()->getCertificateAuthorities() as $certificateType)
-                                    <option value="{{ $certificateType['id'] }}"
-                                            wire:key="{{ $certificateType['id'] }}"
-                                    >
-                                        {{ $certificateType['name'] }}
-                                    </option>
-                                @endforeach
-                            </select>
+                    <form>
+                        <div class="flex flex-col gap-6">
+                            {{-- KEP Provider --}}
+                            <div>
+                                <label for="knedp" class="default-label">{{ __('forms.knedp') }} *</label>
+                                <select class="input-modal" wire:model="form.knedp" name="knedp" id="knedp">
+                                    <option value="" selected>{{__('forms.select')}}</option>
+                                    @foreach(signatureService()->getCertificateAuthorities() as $certificateType)
+                                        <option value="{{ $certificateType['id'] }}"
+                                                wire:key="{{ $certificateType['id'] }}"
+                                        >
+                                            {{ $certificateType['name'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
 
-                            @error('form.knedp') <p class="text-error">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Key File --}}
-                        <div>
-                            <label for="keyContainerUpload" class="default-label">
-                                {{ __('forms.key_container_upload') }} *
-                            </label>
-                            <input type="file"
-                                   wire:model="form.keyContainerUpload"
-                                   class="default-input cursor-pointer"
-                                   id="keyContainerUpload"
-                                   name="keyContainerUpload"
-                                   accept=".dat,.pfx,.pk8,.zs2,.jks,.p7s"
-                            >
-                            <div wire:loading
-                                 wire:target="form.keyContainerUpload"
-                                 class="text-sm text-gray-500 mt-2"
-                            >
-                                {{ __('general.loading') }}...
+                                @error('form.knedp') <p class="text-error">{{ $message }}</p> @enderror
                             </div>
 
-                            @error('form.keyContainerUpload') <p class="text-error">{{ $message }}</p> @enderror
-                        </div>
+                            {{-- Key File --}}
+                            <div>
+                                <label for="keyContainerUpload" class="default-label">
+                                    {{ __('forms.key_container_upload') }} *
+                                </label>
+                                <input type="file"
+                                       wire:model="form.keyContainerUpload"
+                                       class="default-input cursor-pointer"
+                                       id="keyContainerUpload"
+                                       name="keyContainerUpload"
+                                       accept=".dat,.pfx,.pk8,.zs2,.jks,.p7s"
+                                >
+                                <div wire:loading
+                                     wire:target="form.keyContainerUpload"
+                                     class="text-sm text-gray-500 mt-2"
+                                >
+                                    {{ __('general.loading') }}...
+                                </div>
 
-                        {{-- Password --}}
-                        <div>
-                            <label for="password" class="default-label">{{ __('forms.password') }} *</label>
-                            <input type="password"
-                                   wire:model="form.password"
-                                   class="default-input"
-                                   id="password"
-                                   name="password"
-                            />
+                                @error('form.keyContainerUpload') <p class="text-error">{{ $message }}</p> @enderror
+                            </div>
 
-                            @error('form.password') <p class="text-error">{{ $message }}</p> @enderror
+                            {{-- Password --}}
+                            <div>
+                                <label for="password" class="default-label">{{ __('forms.password') }} *</label>
+                                <input type="password"
+                                       wire:model="form.password"
+                                       class="default-input"
+                                       id="password"
+                                       name="password"
+                                       autocomplete="current-password"
+                                />
+
+                                @error('form.password') <p class="text-error">{{ $message }}</p> @enderror
+                            </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 <div class="modal-footer">

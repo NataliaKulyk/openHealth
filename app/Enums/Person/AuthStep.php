@@ -15,14 +15,15 @@ enum AuthStep: int
 
     case INITIAL = 0;
     case CHANGE_PHONE_INITIAL = 1;
-    case VERIFY_PHONE = 2;
-    case NO_PHONE_ACCESS = 3;
-    case COMPLETE_VERIFICATION = 4;
-    case CHANGE_FROM_OFFLINE = 5;
-    case CHANGE_PHONE = 6;
-    case CHANGE_ALIAS = 7;
-    case UPDATE_ALIAS = 8;
-    case ADD_NEW_BY_SMS = 9;
-    case APPROVE_ADDING_BY_SMS = 10;
-    case ADD_NEW_BY_DOCUMENT = 11;
+    case ASK_OTP_PERMISSION = 2;
+    case VERIFY_PHONE = 3;
+    case NO_PHONE_ACCESS = 4;
+    case COMPLETE_VERIFICATION = 5;
+    case CHANGE_FROM_OFFLINE = 6;
+    case CHANGE_PHONE = 7;
+    case CHANGE_ALIAS = 8;
+    case UPDATE_ALIAS = 9;
+    case ADD_NEW_BY_SMS = 10;
+    case APPROVE_ADDING_BY_SMS = 11;
+    case ADD_NEW_BY_DOCUMENT = 12;
 }

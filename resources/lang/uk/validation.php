@@ -248,6 +248,7 @@ return [
         'form.doctor.specialities.min' => 'Для ролі лікаря необхідно заповнити розділ "Спеціальності".',
         'form.party.email.unique' => 'Користувач з такою поштою вже зареєстрований у цій мед. організації.',
         'form.documents' => __('forms.documents'),
+        'form.phoneNumber' => __('forms.phone_number'),
         'form.doctor.educations' => __('forms.education'),
         'form.doctor.specialities' => __('forms.specialities'),
         'form.doctor.qualifications' => __('forms.qualifications'),

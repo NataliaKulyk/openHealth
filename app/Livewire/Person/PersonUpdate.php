@@ -248,6 +248,7 @@ class PersonUpdate extends PersonComponent
                 Repository::authenticationMethod()->sync($person, $newAuthMethods->toArray());
 
                 $this->authenticationMethods = Arr::toCamelCase($newAuthMethods->toArray());
+                Session::flash('success', __('Методи автентифікації успішно синхронізовані.'));
             } catch (Throwable $exception) {
                 $this->logDatabaseErrors($exception, 'Failed to update authentication methods');
                 Session::flash(
@@ -257,6 +258,8 @@ class PersonUpdate extends PersonComponent
             }
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when getting auth methods');
+
+            return;
         }
     }
 
@@ -493,20 +496,18 @@ class PersonUpdate extends PersonComponent
         $validated = $this->validate(['verificationCode' => ['required', 'digits:4']]);
 
         try {
-            $response = EHealth::person()->approveAuthMethod(
-                $this->uuid,
-                $this->requestId,
-                Arr::toSnakeCase($validated)
-            );
+            EHealth::person()->approveAuthMethod($this->uuid, $this->requestId, Arr::toSnakeCase($validated));
 
             try {
                 // Update uuid with approved
                 Person::whereUuid($this->uuid)->firstOrFail()
                     ->authenticationMethods()
                     ->whereType(AuthenticationMethod::OTP)
-                    ->update(['uuid' => $response->validate()['id']]);
+                    ->update(['phone_number' => $this->form->phoneNumber]);
+
+                Session::flash('success', __('Номер телефону успішно змінено.'));
             } catch (Throwable $exception) {
-                $this->logDatabaseErrors($exception, 'Failed to update authentication method UUID');
+                $this->logDatabaseErrors($exception, 'Failed to update authentication method phone number');
                 Session::flash(
                     'error',
                     'Виникла помилка при оновленні методу автентифікації. Зверніться до адміністратора.'
@@ -574,12 +575,25 @@ class PersonUpdate extends PersonComponent
                 $this->selectedAuthMethodUuid,
                 $validated['alias']
             );
+
             $this->requestId = $response->validate()['id'];
 
-            if ($this->selectedAuthMethodType === AuthenticationMethod::OFFLINE->value) {
-                $this->uploadedDocuments = $response->validate()['documents'];
+            try {
+                // Update alias
+                AuthenticationMethodModel::whereUuid($this->selectedAuthMethodUuid)
+                    ->update(['alias' => $validated['alias']]);
+            } catch (Throwable $exception) {
+                $this->logDatabaseErrors($exception, 'Failed to update authentication method type');
+                Session::flash(
+                    'error',
+                    'Виникла помилка при зміні методу автентифікації. Зверніться до адміністратора.'
+                );
+
+                return;
             }
+
             $this->authStep = AuthStep::UPDATE_ALIAS;
+            Session::flash('success', __('Назва методу успішно оновлена.'));
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when updating alias auth method');
 
@@ -989,7 +1003,7 @@ class PersonUpdate extends PersonComponent
                 $validated['newPhoneNumber']
             );
             $this->requestId = $response->getData()['id'];
-            $this->uploadedDocuments = $response->getUrgent()['documents'];
+            $this->uploadedDocuments = $response->getUrgent()['documents'] ?? [];
 
             // If the change type from OTP to Offline, then show the step, request to change the phone number
             if ($this->selectedAuthMethodType === AuthenticationMethod::OFFLINE->value) {

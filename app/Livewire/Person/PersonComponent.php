@@ -613,7 +613,7 @@ class PersonComponent extends Component
         try {
             $signResponse = EHealth::personRequest()
                 ->withHeaders(['msp_drfo' => Auth::user()->party->taxId])
-                ->signed($this->form->person['id'], ['signed_content' => $signedContent]);
+                ->signed($this->form->person['id'], ['signed_content' => $signedContent->getBase64Data()]);
             $responseData = $signResponse->getData();
         } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
             $this->handleEHealthExceptions($exception, 'Error when sign person request');

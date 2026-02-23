@@ -175,7 +175,7 @@ class PersonIndex extends Component
             $this->patients = array_merge($persons, $personRequests);
         } else {
             // Otherwise search in eHealth
-            $buildSearchRequest = removeEmptyKeys(Arr::toSnakeCase($validated));
+            $buildSearchRequest = removeEmptyKeys($validated);
             try {
                 $validatedEhealth = EHealth::person()->searchForPersonByParams($buildSearchRequest)->validate();
                 $validatedEhealth = $this->setPersonSource($validatedEhealth, 'ehealth');
