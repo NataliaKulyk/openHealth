@@ -268,10 +268,16 @@ class EmployeeRequestProcessor
     }
 
     /**
-     * [EN: Processes a batch of remote Employee Request data from eHealth.]
+     * Processes a batch of remote Employee Request data from eHealth.
      */
     public function processBatch(array $eHealthData, LegalEntity $legalEntity): void
     {
+        // Fix for single object response vs array response
+        // If eHealth returns a single associative array (has 'uuid' or 'id'), wrap it in a list.
+        if (!empty($eHealthData) && (isset($eHealthData['uuid']) || isset($eHealthData['id']))) {
+            $eHealthData = [$eHealthData];
+        }
+
         $eHealthRequests = collect($eHealthData)->keyBy('uuid');
 
         if ($eHealthRequests->isEmpty()) {
@@ -280,7 +286,6 @@ class EmployeeRequestProcessor
 
         $localPendingRequests = EmployeeRequest::query()
             ->where('legal_entity_id', $legalEntity->id)
-            ->where('status', LocalStatus::SIGNED)
             ->whereNull('applied_at')
             ->whereIn('uuid', $eHealthRequests->keys())
             ->with(['revision', 'employee', 'party', 'division'])
@@ -288,17 +293,15 @@ class EmployeeRequestProcessor
 
         $approvedCount = 0;
 
-        // [EN: Process each local request]
         foreach ($localPendingRequests as $localRequest) {
-            /** @var EmployeeRequest $localRequest */
 
-            $eHealthData = $eHealthRequests->get($localRequest->uuid);
+            $remoteRequestData = $eHealthRequests->get($localRequest->uuid);
 
-            if (!$eHealthData) {
+            if (!$remoteRequestData) {
                 continue;
             }
 
-            $remoteStatus = $eHealthData['status'] ?? null;
+            $remoteStatus = $remoteRequestData['status'] ?? null;
 
             if (!$remoteStatus) {
                 Log::warning(
@@ -309,7 +312,8 @@ class EmployeeRequestProcessor
 
             try {
                 if ($remoteStatus === 'APPROVED') {
-                    $this->applyApprovedRequest($localRequest, $eHealthData);
+                    // Pass the specific item data, not the whole array
+                    $this->applyApprovedRequest($localRequest, $remoteRequestData);
                     $approvedCount++;
                     Log::info(
                         "[EmployeeRequestProcessor] Request APPROVED and applied successfully. Request ID: {$localRequest->id}"
@@ -346,27 +350,35 @@ class EmployeeRequestProcessor
             }
         }
 
+        // Logic to insert missing requests from eHealth that don't exist locally
         $localEmployeeRequestUuids = EmployeeRequest::where('legal_entity_id', $legalEntity->id)
             ->pluck('uuid')
             ->toArray();
 
         $employeeRequestsUpsertData = [];
 
-        foreach($eHealthData as $ehealthEmployeeRequest) {
+        foreach ($eHealthData as $ehealthEmployeeRequest) {
             if (in_array($ehealthEmployeeRequest['uuid'], $localEmployeeRequestUuids) || $ehealthEmployeeRequest['status'] !== Status::APPROVED->value) {
                 continue;
             }
 
+            // Check if 'inserted_at' exists, otherwise use current time
+            $insertedAt = isset($ehealthEmployeeRequest['inserted_at'])
+                ? Carbon::parse($ehealthEmployeeRequest['inserted_at'])->format('Y-m-d H:i:s')
+                : now();
+
             $employeeRequestsUpsertData[] = [
                 'uuid' => $ehealthEmployeeRequest['uuid'],
-                'inserted_at' => Carbon::parse($ehealthEmployeeRequest['inserted_at'])->format('Y-m-d H:i:s'),
+                'inserted_at' => $insertedAt,
                 'status' => $ehealthEmployeeRequest['status'],
                 'legal_entity_id' => $legalEntity->id,
                 'sync_status' => JobStatus::PARTIAL->value
             ];
         }
 
-        EmployeeRequest::insert($employeeRequestsUpsertData);
+        if (!empty($employeeRequestsUpsertData)) {
+            EmployeeRequest::insert($employeeRequestsUpsertData);
+        }
     }
 
     /**

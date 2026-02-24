@@ -130,6 +130,40 @@ class EmployeeForm extends Form
         ];
     }
 
+    /**
+     * Custom attributes for validation errors.
+     */
+    public function validationAttributes(): array
+    {
+        $attributes = [
+            'party.first_name' => __('forms.party.first_name'),
+            'party.last_name' => __('forms.party.last_name'),
+            'party.second_name' => __('forms.party.second_name'),
+            'party.tax_id' => __('forms.party.tax_id'),
+            'party.phones' => __('forms.party.phones'),
+            'documents' => __('forms.documents'),
+            'position' => __('forms.position'),
+            'start_date' => __('forms.start_date'),
+        ];
+
+        // Add attributes for dynamic fields of documents and phones
+        if (!empty($this->party['phones'])) {
+            foreach ($this->party['phones'] as $index => $phone) {
+                $attributes["party.phones.{$index}.number"] = __('forms.phone_number') . ' #' . ($index + 1);
+                $attributes["party.phones.{$index}.type"] = __('forms.phone_type');
+            }
+        }
+
+        if (!empty($this->documents)) {
+            foreach ($this->documents as $index => $doc) {
+                $attributes["documents.{$index}.number"] = __('forms.document_number');
+                $attributes["documents.{$index}.type"] = __('forms.document_type');
+            }
+        }
+
+        return $attributes;
+    }
+
     protected function partyRules(): array
     {
         return [

@@ -11,6 +11,7 @@ use App\Traits\BatchLegalEntityQueries;
 use GuzzleHttp\Promise\PromiseInterface;
 use App\Classes\eHealth\EHealthResponse;
 use Illuminate\Queue\Middleware\RateLimited;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\PermissionRegistrar;
 
 class EmployeeSync extends EHealthJob
@@ -31,9 +32,20 @@ class EmployeeSync extends EHealthJob
             ->getMany(['legal_entity_id' => $this->legalEntity->uuid], $this->page);
     }
 
-    // Store or update data in the database
+    /**
+     * Store or update data in the database.
+     * * @param EHealthResponse|null $response
+     */
     protected function processResponse(?EHealthResponse $response): void
     {
+        if ($response) {
+            Log::info('[EHealth Sync] Received Employee data structure:', [
+                'legal_entity_id' => $this->legalEntity->id,
+                'page' => $this->page,
+                'data' => $response->json('data')
+            ]);
+        }
+
         $employees = $response->validate();
 
         data_forget($employees, '*.party');

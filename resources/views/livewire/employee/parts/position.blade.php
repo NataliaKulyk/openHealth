@@ -28,9 +28,15 @@
                     x-model="employeeType"
                     :disabled="$wire.isPositionDataLocked">
                 <option value="" disabled selected hidden>{{ __('forms.role_choose') }}</option>
-                @foreach($this->dictionaries['EMPLOYEE_TYPE'] as $k => $employeeTypeOption)
-                    <option value="{{ $k }}">{{ $employeeTypeOption }}</option>
+
+                @foreach($this->dictionaries['EMPLOYEE_TYPE'] as $employeeTypes => $employeeTypeOption)
+                    @if($employeeTypes === 'OWNER')
+                        @continue
+                    @endif
+
+                    <option value="{{ $employeeTypes }}">{{ $employeeTypeOption }}</option>
                 @endforeach
+
             </select>
             <label for="employeeType" class="label">{{ __('forms.role') }}</label>
             @error('form.employeeType') <p class="text-error">{{ $message }}</p> @enderror

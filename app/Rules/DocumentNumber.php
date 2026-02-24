@@ -1,49 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Translation\PotentiallyTranslatedString;
-
 
 class DocumentNumber implements ValidationRule
 {
-    protected array $dictionary;
-
-    protected string $documentType;
-
-    /**
-     * Create a new rule instance.
-     *
-     * @param  string  $documentType
-     *
-     * @return void
-     */
-    public function __construct(string $documentType = '')
+    public function __construct(protected string $type)
     {
-        $this->documentType = $documentType;
-
-        $this->dictionary = dictionary()->getDictionary('DOCUMENT_TYPE', true);
     }
 
-    /**
-     * Перевіряє, чи номер документа відповідає формату його типу.
-     *
-     * @param  \Closure(string): PotentiallyTranslatedString  $fail
-     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $regex = match ($this->documentType) {
-            'NATIONAL_ID' => '/^[0-9]{9}$/',
-            'PASSPORT', 'REFUGEE_CERTIFICATE', 'COMPLEMENTARY_PROTECTION_CERTIFICATE' => '/^((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{6}$/u',
-            'TEMPORARY_CERTIFICATE', 'PERMANENT_RESIDENCE_PERMIT' => '/^(((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{4,6}|[0-9]{9}|((?![ЫЪЭЁ])([А-ЯҐЇІЄ])){2}[0-9]{5}\/[0-9]{5})$/u',
-            'TEMPORARY_PASSPORT', 'BIRTH_CERTIFICATE', 'BIRTH_CERTIFICATE_FOREIGN' => '/^((?![ЫЪЭЁыъэё@%&$^#`~:,.*|}{?!])[A-ZА-ЯҐЇІЄ0-9№\\/()-]){2,25}$/u',
-            default => ''
+        //If the type is not selected, skip (this will catch the validation required on the type field)
+        if (empty($this->type)) {
+            return;
+        }
+
+        $isValid = match ($this->type) {
+            'PASSPORT' => (bool) preg_match('/^([А-ЯІЄЇ]{2}\d{6}|\d{9})$/u', $value), // Old passport or ID card
+            'BIRTH_CERTIFICATE' => (bool) preg_match('/^((I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|[0-9А-ЯІЄЇ-]{2,})\-?[А-ЯІЄЇ]{2})?\d{6}$/u', $value),
+            'MARRIAGE_CERTIFICATE' => (bool) preg_match('/^((I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|[0-9А-ЯІЄЇ-]{2,})\-?[А-ЯІЄЇ]{2})?\d{6}$/u', $value),
+            'TAX_ID' => (bool) preg_match('/^\d{10}$/', $value),
+            // For other documents, we allow almost everything so as not to block unnecessary if there is no clear specification
+            default => (bool) preg_match('/^[a-zA-Z0-9А-ЯІЄЇ\-\s]+$/u', $value),
         };
 
-        if (!$regex || !preg_match($regex, $value)) {
-            $fail(__('forms.document') . ': ' . __('validation.attributes.errors.wrongNumberFormat'));
+        if (!$isValid) {
+            $fail(__('validation.custom.document_number_format', ['type' => $this->type]));
         }
     }
 }
