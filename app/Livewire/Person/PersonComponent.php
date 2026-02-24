@@ -23,6 +23,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -37,6 +38,8 @@ class PersonComponent extends Component
     use FormTrait;
     use WithFileUploads;
     use AddressSearch;
+
+    private const int SMS_RESEND_LIMIT = 1;
 
     #[Locked]
     public int $personId;
@@ -116,20 +119,6 @@ class PersonComponent extends Component
      * @var object|null
      */
     public ?object $file = null;
-
-    /**
-     * Time to resend SMS in seconds.
-     *
-     * @var int
-     */
-    public int $resendCooldown = 60;
-
-    /**
-     * Track if SMS has already been resent (allow only single resend per session).
-     *
-     * @var bool
-     */
-    public bool $smsAlreadyResent = false;
 
     public bool $showInformationMessageModal = false;
 
@@ -457,12 +446,10 @@ class PersonComponent extends Component
             return;
         }
 
-        if ($this->resendCooldown > 0) {
-            return;
-        }
+        $rateLimitKey = 'resend-sms-session:' . Auth::id() . ':' . $this->form->person['id'];
 
-        // Check if SMS has already been resent (single resend rule)
-        if ($this->smsAlreadyResent) {
+        // Check if SMS has already been resent in this session (single resend rule)
+        if (RateLimiter::tooManyAttempts($rateLimitKey, self::SMS_RESEND_LIMIT)) {
             Session::flash('error', __('validation.custom.person.sms_already_resent'));
 
             return;
@@ -477,9 +464,10 @@ class PersonComponent extends Component
         }
 
         if ($response->getData()['status'] === 'new') {
+            // Mark SMS as sent for this session (no expiration - persists until cache clear)
+            RateLimiter::hit($rateLimitKey);
+
             Session::flash('success', __('patients.messages.sms_sent_successfully'));
-            $this->resendCooldown = 60;
-            $this->smsAlreadyResent = true; // Mark SMS as resent
         }
     }
 
