@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\JobStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -22,7 +23,7 @@ return new class extends Migration
             $table->uuid('contractor_owner_id');
             $table->string('contractor_base')->nullable();
             $table->jsonb('contractor_payment_details')->nullable();
-            $table->integer('contractor_rmsp_amount')->nullable(); // Changed to integer/nullable
+            $table->string('contractor_rmsp_amount')->nullable();
 
             $table->boolean('external_contractor_flag')->default(false);
             $table->jsonb('external_contractors')->nullable();
@@ -42,6 +43,12 @@ return new class extends Migration
             $table->uuid('contract_id')->nullable();
             $table->uuid('assignee_id')->nullable();
             $table->string('status');
+
+            // Sync Status
+            $table->enum('sync_status', JobStatus::values())
+                ->default(JobStatus::COMPLETED->value)
+                ->nullable();
+
             $table->string('status_reason')->nullable();
             $table->string('nhs_payment_method')->nullable();
             $table->date('nhs_signed_date')->nullable();

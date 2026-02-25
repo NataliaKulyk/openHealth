@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\JobStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -30,21 +31,29 @@ return new class extends Migration
             $table->string('contract_number')->nullable();
             $table->string('id_form')->nullable();
             $table->string('status')->default('NEW')->index();
-            $table->text('status_reason')->nullable();
-            $table->string('type')->nullable(); // CAPITATION / REIMBURSEMENT
-            $table->string('issue_city')->nullable(); // City of stacking
-            $table->text('printout_content')->nullable(); // HTML Printed Form
 
-            // Details
-            $table->integer('contractor_rmsp_amount')->nullable(); // POPULATION
+            // Added field for Hybrid Sync
+            $table->enum('sync_status', JobStatus::values())
+                ->default(JobStatus::COMPLETED->value)
+                ->nullable();
+
+            $table->text('status_reason')->nullable();
+            $table->string('type')->nullable();
+
+            // Added fields for detailed representation
+            $table->string('issue_city')->nullable();
+            $table->text('printout_content')->nullable();
+            $table->string('contractor_rmsp_amount')->nullable();
             $table->boolean('external_contractor_flag')->default(false);
 
             // JSONB fields
             $table->jsonb('contractor_payment_details')->nullable();
             $table->jsonb('external_contractors')->nullable();
             $table->jsonb('contractor_employee_divisions')->nullable();
+
+            // Added divisions and programs
             $table->jsonb('contractor_divisions')->nullable();
-            $table->jsonb('medical_programs')->nullable(); // List of programs
+            $table->jsonb('medical_programs')->nullable();
 
             // Raw response data storage
             $table->jsonb('data')->nullable();
@@ -67,13 +76,12 @@ return new class extends Migration
             $table->timestamp('ehealth_inserted_at')->nullable();
             $table->uuid('ehealth_updated_by')->nullable();
             $table->timestamp('ehealth_updated_at')->nullable();
-
             $table->boolean('contractor_signed')->default(false);
 
             // Standard timestamps for DB (inserted_at comes from API)
             $table->timestamp('inserted_at')->nullable();
             $table->timestamp('updated_at')->nullable();
-            $table->timestamp('created_at')->useCurrent(); // Local creation time
+            $table->timestamp('created_at')->useCurrent();
         });
     }
 
