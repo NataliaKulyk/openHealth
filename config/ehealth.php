@@ -80,7 +80,7 @@ return [
             'person_verification:details', 'person_verification:write', 'device_definition:read', 'device_request:write', 'device_request:read', 'device_request:resend', 'device_request:revoke',
             'specimen:write', 'specimen:read', 'specimen:process', 'specimen:cancel', 'specimen:reject', 'specimen:invalidate', 'service_request:read_impersonal', 'device_request:mark_in_error',
             'device_request:complete', 'device_dispense:read', 'device_association:read', 'detected_issue:read', 'confidant_person_relationship_request:write',
-            'confidant_person_relationship:read', 'personal_data:read', 'care_team:read', 'care_team:write', 'person_request:sign'
+            'confidant_person_relationship:read', 'personal_data:read', 'care_team:read', 'care_team:write', 'person_request:sign', 'confidant_person_relationship_request:read',
         ],
         'PHARMACY' => [
             'employee_role:write', 'employee_role:read', 'healthcare_service:write', 'healthcare_service:read', 'division:activate', 'division:deactivate', 'division:details', 'division:read',

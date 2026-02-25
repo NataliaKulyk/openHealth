@@ -1,10 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Actions;
 
+use App\Classes\eHealth\EHealth;
+use App\Exceptions\EHealth\EHealthResponseException;
+use App\Exceptions\EHealth\EHealthValidationException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use App\Classes\eHealth\Request as eHealthRequest;
 
 class Logout
 {
@@ -13,11 +20,19 @@ class Logout
      */
     public function __invoke(bool $redirect = true)
     {
-        if (auth('ehealth')->check()
-            && (session()->has(config('ehealth.api.auth_ehealth'))
-            || session()->has(config('ehealth.api.oauth.bearer_token')))
+        if (Auth::guard('ehealth')->check()
+            && (Session::has(config('ehealth.api.auth_ehealth'))
+                || Session::has(config('ehealth.api.oauth.bearer_token')))
         ) {
-            new eHealthRequest('POST', config('ehealth.api.oauth.logout'), [])->sendRequest();
+            try {
+                EHealth::auth()->logout(Session::get('auth_token'));
+            } catch (ConnectionException|EHealthValidationException|EHealthResponseException $exception) {
+                // Log the error but don't prevent logout
+                Log::channel('e_health_errors')->error("Error while logout: {$exception->getMessage()}", [
+                    'exception' => $exception,
+                    'user_id' => Auth::id()
+                ]);
+            }
         }
 
         $sessionId = request()->session()->getId();
@@ -28,9 +43,11 @@ class Logout
 
         Auth::logout();
 
-        session()->invalidate();
-        session()->regenerateToken();
+        Session::invalidate();
+        Session::regenerateToken();
 
-        return $redirect ? redirect('/login') : true;
+        $redirectRoute = redirect()->route(App::isLocal() ? 'dev.login' : 'login');
+
+        return $redirect ? $redirectRoute : true;
     }
 }

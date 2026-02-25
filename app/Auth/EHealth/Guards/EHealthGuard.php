@@ -12,6 +12,7 @@ use Illuminate\Contracts\Session\Session;
 use App\Auth\EHealth\Services\TokenStorage;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Override;
 
 class EHealthGuard extends SessionGuard
 {
@@ -22,18 +23,20 @@ class EHealthGuard extends SessionGuard
 
     public function __construct(string $name, UserProvider $provider, Session $session, Request $request, TokenStorage $tokenStorage)
     {
-        parent::__construct($name, $provider, $session, $request ?? request());
+        parent::__construct($name, $provider, $session, $request);
 
         $this->tokenStorage = $tokenStorage;
     }
 
     /**
-     * Get the currently authenticated user.
+     * {@inheritDoc}
+     *
      * Depends on it's UUID
      *
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
+     * @return Authenticatable|null
      */
-    public function user()
+    #[Override]
+    public function user(): Authenticatable|null
     {
         if (!empty($this->user)) {
             return $this->user;
@@ -60,14 +63,16 @@ class EHealthGuard extends SessionGuard
     }
 
     /**
-     * Log a user into the application.
+     * {@inheritDoc}
+     *
      * Add additional checks for Bearer token presents
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  Authenticatable  $user
      * @param  bool  $remember
      * @return void
      */
-    public function login(Authenticatable $user, $remember = false)
+    #[Override]
+    public function login(Authenticatable $user, $remember = false): void
     {
         if (!$this->tokenStorage->hasBearerToken()) {
             Log::error(__('Bearer token missing in session', [], 'en'));
@@ -82,7 +87,13 @@ class EHealthGuard extends SessionGuard
         $this->setUser($user);
     }
 
-    public function logout()
+    /**
+     * {@inheritDoc}
+     *
+     * Additionally, clears eHealth token storage.
+     */
+    #[Override]
+    public function logout(): void
     {
         parent::logout();
 

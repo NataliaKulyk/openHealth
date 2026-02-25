@@ -49,6 +49,7 @@ class Auth extends EHealthRequest
      * This endpoint is used to terminate users authenticated session based on a valid access token.
      * Refresh token from authenticated session will also be expired.
      *
+     * @param  string  $accessToken
      * @return PromiseInterface|EHealthResponse
      * @throws ConnectionException|EHealthValidationException|EHealthResponseException
      *
