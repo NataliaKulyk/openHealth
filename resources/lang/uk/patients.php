@@ -39,8 +39,8 @@ return [
     'conclusion' => 'Заключення',
     'patient_birth_date' => 'Дата народження пацієнта',
     'patient_full_name' => 'ПІБ пацієнта',
-    'deactivate_communication' => 'Деактивувати звʼязок',
-    'relationship_terminated' => 'Зв’язок з представником розірвано',
+    'resend_again_in_seconds' => 'Відправити ще раз (через',
+    'seconds_short' => 'с)',
 
     'relation_type' => [
         'primary' => 'Основний',
@@ -157,12 +157,17 @@ return [
     'relationship_confirmation_document' => "Документ підтвердження зв'язку",
     'deactivate_relationship' => "Деактивувати зв'язок",
     'activate_relationship' => "Активувати зв'язок",
+    'relationship_terminated' => "Зв'язок з представником розірвано",
+    'no_available_confidants' => 'Немає доступних законних представників',
+    'new_confidant_person' => 'Новий законний представник',
+    'all_confidants_have_auth' => 'Усі законні представники вже мають методи автентифікації або відсутні у системі',
 
     // Requests section
     'confidant_relationship_requests' => "Запити на створення зв'язків із законним представником",
     'sync_requests' => 'Синхронізувати дані про запити',
     'channel' => 'Канал',
     'cancel_request' => 'Скасувати запит',
+    'mis_system' => 'МІС',
 
     // Summary record
     'summary' => 'Зведені дані',
@@ -354,6 +359,10 @@ return [
     'resend_code' => 'Відправити ще раз (через 60 с)',
     'terminate_relationship_warning_1' => 'При розірванні зв’язку з законним представником, буде деактивовано метод автентифікації "Автентифікація через іншу особу", пов’язаний з даним законним представником.',
     'terminate_relationship_warning_2' => 'Якщо пацієнт не має інших законних представників - необхідно створити зв’язок принаймні з одним законним представником для продовження роботи з даним недієздатним пацієнтом.',
+    'auth_method_name_title' => 'Назва методу автентифікації',
+    'add_auth_method_third_person' => 'Додавання методу автентифікації - через третю особу',
+    'add_auth_method_documents' => 'Додавання методу автентифікації - через документи',
+    'sync_auth_methods' => 'Синхронізувати методи автентифікації',
 
     'errors' => [
         'authMethod' => [
@@ -388,5 +397,18 @@ return [
         'data_processing_error' => 'Помилка обробки даних. Зверніться до адміністратора.',
         'upload_all_files' => 'Будь ласка завантажте всі файли!',
         'ehealth_error' => 'Помилка від ЕСОЗ: :message',
+        'auth_methods_synced' => 'Методи автентифікації успішно синхронізовані.',
+        'offline_auth_method_added' => 'Метод автентифікації через документи успішно додано.',
+        'phone_number_changed' => 'Номер телефону успішно змінено.',
+        'auth_method_changed_offline_to_sms' => 'Метод автентифікації успішно змінений із документів на СМС',
+        'method_name_updated' => 'Назва методу успішно оновлена.',
+        'auth_method_name_changed' => 'Назва методу автентифікації успішно змінена.',
+        'auth_method_deactivated' => 'Метод автентифікації успішно деактивований.',
+        'new_auth_method_added' => 'Новий метод автентифікації успішно доданий.',
+        'code_resent_to_phone' => 'Код був повторно надісланий на телефон.',
+        'confidant_persons_synced' => 'Дані про законних представників успішно синхронізовано.',
+        'new_confidant_person_added' => 'Нового законного представника успішно додано.',
+        'confidant_requests_list_updated' => 'Список даних про запити на створення законних представників оновлено.',
+        'sync_auth_methods_and_try_again' => 'Будь ласка, синхронізуйте методи автентифікації та спробуйте знову.',
     ]
 ];

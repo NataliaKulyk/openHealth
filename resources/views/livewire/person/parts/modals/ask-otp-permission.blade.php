@@ -12,16 +12,12 @@
     </div>
 
     <div class="flex gap-4">
-        <button type="button" @click="localStep = {{ AuthStep::CHANGE_PHONE_INITIAL }}" class="button-minor">
-            {{ __('forms.back') }}
+        <button type="button" @click="localStep = {{ AuthStep::INITIAL }}" class="button-primary-outline-red">
+            {{ __('patients.no_access') }}
         </button>
 
-        <button type="button" @click="localStep = {{ AuthStep::INITIAL }}" class="button-outline-primary">
-            {{ __('patients.to_authentication_methods') }}
-        </button>
-
-        <button type="button" wire:click="update" class="button-primary">
-            {{ __('forms.confirm') }}
+        <button type="button" wire:click="update" @click="showAuthMethodModal = false;" class="button-primary">
+            {{ __('patients.available_access') }}
         </button>
     </div>
 </div>

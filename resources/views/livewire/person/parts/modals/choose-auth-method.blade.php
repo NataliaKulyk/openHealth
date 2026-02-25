@@ -35,7 +35,7 @@
                                 </button>
 
                                 <button type="button" class="button-sync" wire:click.prevent="syncAuthMethods">
-                                    <span>{{ __('Синхронізувати методи автентифікації') }}</span>
+                                    <span>{{ __('patients.sync_auth_methods') }}</span>
                                 </button>
 
                                 <div x-show="openAdd"
@@ -73,7 +73,7 @@
                                               "
                                     >
                                         <button type="button"
-                                                @click="localStep = {{ AuthStep::COMPLETE_VERIFICATION }}; openAdd = false"
+                                                @click="localStep = {{ AuthStep::ADD_NEW_BY_THIRD_PERSON }}; openAdd = false"
                                                 class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-700 transition-colors"
                                         >
                                             Автентифікація через третю особу
@@ -127,6 +127,7 @@
                                                         <template
                                                             x-if="method.type === '{{ AuthenticationMethod::OTP->value }}'">
                                                             <button type="button"
+                                                                    @click="open = false"
                                                                     wire:click.prevent="selectAuthMethod(method.uuid, method.type, {{ AuthStep::CHANGE_PHONE_INITIAL }})"
                                                                     class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                             >
@@ -134,9 +135,9 @@
                                                             </button>
                                                         </template>
 
-                                                        <template
-                                                            x-if="method.type === '{{ AuthenticationMethod::OFFLINE->value }}'">
+                                                        <template x-if="method.type === '{{ AuthenticationMethod::OFFLINE->value }}'">
                                                             <button type="button"
+                                                                    @click="open = false"
                                                                     wire:click.prevent="selectAuthMethod(method.uuid, method.type, {{ AuthStep::CHANGE_PHONE_INITIAL }})"
                                                                     class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                             >
@@ -144,19 +145,23 @@
                                                             </button>
                                                         </template>
 
-                                                        <button @click="open = false"
+                                                        <button type="button"
+                                                                @click="open = false"
                                                                 wire:click.prevent="selectAuthMethod(method.uuid, method.type, {{ AuthStep::CHANGE_ALIAS }})"
                                                                 class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
                                                         >
                                                             {{ __('patients.change_method_alias') }}
                                                         </button>
 
-                                                        <button type="button"
-                                                                @click="localStep = {{ AuthStep::CHANGE_FROM_OFFLINE }}; open = false;"
-                                                                class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
-                                                        >
-                                                            {{ __('patients.deactivate_method') }}
-                                                        </button>
+                                                        <template x-if="method.type === '{{ AuthenticationMethod::THIRD_PERSON->value }}'">
+                                                            <button type="button"
+                                                                    @click="open = false"
+                                                                    wire:click.prevent="deactivateAuthMethod(method.uuid)"
+                                                                    class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded text-gray-700"
+                                                            >
+                                                                {{ __('patients.deactivate_method') }}
+                                                            </button>
+                                                        </template>
                                                     </div>
                                                 </div>
 
@@ -392,6 +397,10 @@
                              AuthStep::ADD_NEW_BY_SMS->value => 'livewire.person.parts.modals.add-by-sms',
                              AuthStep::APPROVE_ADDING_BY_SMS->value => 'livewire.person.parts.modals.approve-adding-by-sms',
                              AuthStep::ADD_NEW_BY_DOCUMENT->value => 'livewire.person.parts.modals.authentication-from-documents',
+                             AuthStep::ADD_NEW_BY_THIRD_PERSON->value => 'livewire.person.parts.modals.authentication-from-third-person',
+                             AuthStep::ADD_ALIAS_FOR_THIRD_PERSON->value => 'livewire.person.parts.modals.add-alias-for-third-person',
+                             AuthStep::APPROVE_ADDING_NEW_METHOD->value => 'livewire.person.parts.modals.approve-adding-new-method',
+                             AuthStep::APPROVE_DEACTIVATING_METHOD->value => 'livewire.person.parts.modals.approve-deactivating-method',
                          ];
                     @endphp
 

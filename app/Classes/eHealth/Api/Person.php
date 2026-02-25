@@ -328,7 +328,7 @@ class Person extends Request
     /**
      * Adding an authentication method to an existing person.
      *
-     * @param  string  $id
+     * @param  string  $id  Person identifier
      * @param  AuthenticationMethod  $type
      * @param  string|null  $phoneNumber
      * @param  string|null  $value

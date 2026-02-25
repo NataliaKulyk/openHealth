@@ -33,7 +33,7 @@
                         {{ $request->action === 'INSERT' ? __('patients.activate_relationship') : __('patients.deactivate_relationship') }}
                     </td>
                     <td class="td-input text-gray-700 dark:text-gray-300">
-                        {{ $request->channel === 'MIS' ? __('МІС') : $request->channel }}
+                        {{ $request->channel === 'MIS' ? __('patients.mis_system') : $request->channel }}
                     </td>
                     <td class="td-input text-center">
                         <div class="relative"

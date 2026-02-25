@@ -2,7 +2,7 @@
 
 <div>
     <legend class="legend">
-        {{ __('Додавання методу автентифікації - через документи') }}
+        {{ __('patients.add_auth_method_documents') }}
     </legend>
 
     @foreach($this->uploadedDocuments as $key => $document)

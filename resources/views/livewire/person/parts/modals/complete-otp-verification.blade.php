@@ -45,5 +45,4 @@
             {{ __('forms.confirm') }}
         </button>
     </div>
-
 </div>

@@ -22,14 +22,14 @@
                                  printWindow.focus();
                                  printWindow.print();
                              }
-                        }"
+                         }"
                     >
 
                         <div class="mb-4.5 flex flex-col gap-6 xl:flex-container">
                             {!! $leafletContent !!}
                         </div>
 
-                        <button @click="printContent"
+                        <button @click="printContent()"
                                 class="mb-6 underline font-medium text-sm cursor-pointer dark:text-white"
                         >
                             {{ __('patients.print_leaflet_for_patient') }}

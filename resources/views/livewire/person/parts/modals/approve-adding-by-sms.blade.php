@@ -28,14 +28,14 @@
                            wire:model="form.methodName"
                            id="add_sms_name"
                     />
-                    <label class="label" for="add_sms_name">{{ __('patients.authentication_method_name') }}}</label>
+                    <label class="label" for="add_sms_name">{{ __('patients.authentication_method_name') }}</label>
                 </div>
             </div>
         </div>
 
         <div class="pt-4">
             <h3 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">
-                {{ __('patients.code_SMS') }}}
+                {{ __('patients.code_SMS') }}
             </h3>
 
             <div class="form-row-4 flex items-end gap-4" style="display: flex; align-items: flex-end;">
@@ -50,14 +50,16 @@
                 </div>
 
                 <div x-data="{
-                    timer: 60,
-                    init() {
-                        let interval = setInterval(() => {
-                            if (this.timer > 0) this.timer--;
-                            else clearInterval(interval);
-                        }, 1000);
-                    }
-                }" class="shrink-0">
+                         timer: 60,
+                         init() {
+                             let interval = setInterval(() => {
+                                 if (this.timer > 0) this.timer--;
+                                 else clearInterval(interval);
+                             }, 1000);
+                         }
+                     }"
+                     class="shrink-0"
+                >
                     <button type="button"
                             :disabled="timer > 0"
                             class="bg-white border border-gray-200 rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm transition-colors disabled:opacity-70 whitespace-nowrap"
@@ -66,8 +68,8 @@
                     >
                         @icon('mail', 'w-4 h-4 text-gray-600')
                         <span class="text-gray-700">
-                            <span x-show="timer > 0">{{ __('Відправити ще раз (через') }} <span x-text="timer"></span> {{ __('с)') }}</span>
-                            <span x-show="timer === 0">{{ __('patients.send_again') }}</span>
+                            <span x-show="timer > 0">{{ __('patients.resend_again_in_seconds') }} <span x-text="timer"></span> {{ __('patients.seconds_short') }}</span>
+                            <span x-show="timer === 0">{{ __('forms.send_again') }}</span>
                         </span>
                     </button>
                 </div>
