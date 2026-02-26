@@ -27,11 +27,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 abstract class EHealthJob implements ShouldQueue
 {
-    use Queueable,
-        Batchable,
-        FormTrait,
-        InteractsWithQueue,
-        BatchLegalEntityQueries;
+    use Queueable;
+    use Batchable;
+    use FormTrait;
+    use InteractsWithQueue;
+    use BatchLegalEntityQueries;
 
     public const string BATCH_NAME = 'FirstLoginSync';
 
@@ -136,7 +136,7 @@ abstract class EHealthJob implements ShouldQueue
             echo "Scheduling next page job: " . static::BATCH_NAME . " Page: " . $this->page . " Next Page: " . ($this->page + 1) . PHP_EOL;
             $this->batch()
                 ?->add(new static(legalEntity: $this->legalEntity, page: $this->page + 1, isFirstLogin: $this->isFirstLogin, nextEntity: $this->nextEntity, standalone: $this->standalone)
-                ->delay(now()->addSeconds(self::RATE_LIMIT_DELAY)));
+                    ->delay(now()->addSeconds(self::RATE_LIMIT_DELAY)));
 
             return;
         }
@@ -214,7 +214,7 @@ abstract class EHealthJob implements ShouldQueue
                 ->withOption('token', Crypt::encryptString($this->token)) // Passing the same token to the next job
                 ->withOption('user', $this->user)
                 ->onQueue('sync')
-                ->finally(function(Batch $batch) use ($failedJobUuids) {
+                ->finally(function (Batch $batch) use ($failedJobUuids) {
                     if (!empty($failedJobUuids)) {
                         // Clean up failed jobs from previous batch to avoid clutter
                         DB::table('failed_jobs')->whereIn('uuid', $failedJobUuids)->delete();
@@ -256,9 +256,6 @@ abstract class EHealthJob implements ShouldQueue
 
         $token = $payload['auth_token'] ?? '';
 
-        // TODO: Remove echoing & logging of token after testing
-        \Log::info('Session token : ', ['token' => $token]);
-
         return $token;
     }
 
@@ -271,8 +268,7 @@ abstract class EHealthJob implements ShouldQueue
     /**
      * Sets the job entity synchronization status.
      *
-     * @param JobStatus $status The new status to be set for the job entity
-     *
+     * @param  JobStatus  $status  The new status to be set for the job entity
      * @return void
      */
     protected function setEntityStatus(JobStatus $status): void
@@ -290,9 +286,8 @@ abstract class EHealthJob implements ShouldQueue
     /**
      * Send a synchronization notification to the user for a specific entity and action.
      *
-     * @param string|null $entityType The type of entity being synchronized (e.g., 'legal_entity', 'division', etc.)
-     * @param string $action The action performed (e.g., 'started', 'completed', 'failed', 'paused')
-     *
+     * @param  string|null  $entityType  The type of entity being synchronized (e.g., 'legal_entity', 'division', etc.)
+     * @param  string  $action  The action performed (e.g., 'started', 'completed', 'failed', 'paused')
      * @return void
      */
     protected function sendEntityNotification(?string $entityType, string $action): void
@@ -323,7 +318,7 @@ abstract class EHealthJob implements ShouldQueue
         // Execute complex query to find users matching three criteria
         $users = User::with('roles', 'permissions')
             // FIRST CRITERIA: Exclude current user from search (if it still logined but does not have valid token)
-            ->whereNot('users.id',  $user->id ?? 0)
+            ->whereNot('users.id', $user->id ?? 0)
             // SECOND CRITERIA: User must be employee of this legal entity
             // This creates a LEFT JOIN with employees table and filters by legal_entity_id
             // SQL equivalent: LEFT JOIN employees ON users.id = employees.user_id WHERE employees.legal_entity_id = ?
@@ -332,7 +327,8 @@ abstract class EHealthJob implements ShouldQueue
             // This creates an EXISTS subquery to check sessions table
             // Using SELECT 1 for performance - we only need to verify existence, not retrieve data
             // SQL equivalent: EXISTS (SELECT 1 FROM sessions WHERE sessions.user_id = users.id)
-            ->whereExists(fn ($query) => $query->select(DB::raw(1))
+            ->whereExists(
+                fn ($query) => $query->select(DB::raw(1))
                     ->from('sessions')
                     // whereColumn creates correlation between main query and subquery
                     // This ensures we check sessions for the specific user from outer query
@@ -343,7 +339,7 @@ abstract class EHealthJob implements ShouldQueue
         echo "Found " . $users->count() . " users with active sessions for legal entity {$legalEntity->id}" . PHP_EOL;
 
         // $users here is a Collection of User models. $userKey is the key/index of the first user that has the required scope/permission
-        $userKey = $users->search(fn(User $user) => $user->hasPermissionTo($this->requiredScope(), 'ehealth'));
+        $userKey = $users->search(fn (User $user) => $user->hasPermissionTo($this->requiredScope(), 'ehealth'));
 
         // If no user found with required scope, return null
         return $users->get($userKey);
