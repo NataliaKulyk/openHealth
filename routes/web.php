@@ -241,6 +241,11 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                         });
                 });
 
+            Route::get('/treatment-plan', \App\Livewire\TreatmentPlan\TreatmentPlanIndex::class)
+                ->name('treatmentPlan.index');
+            Route::get('/treatment-plan/create', \App\Livewire\TreatmentPlan\TreatmentPlanCreate::class)
+                ->name('treatmentPlan.create');
+
             Route::prefix('equipment')->name('equipment.')->group(static function () {
                 Route::get('/', EquipmentIndex::class)->name('index')->can('viewAny', Equipment::class);
                 Route::get('/create', EquipmentCreate::class)->name('create')->can('create', Equipment::class);
@@ -265,6 +270,8 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                         Route::get('/{patientId}/episodes', PersonEpisodes::class)->name('episodes');
                     });
                 });
+
+
 
                 Route::name('declaration.')->group(static function () {
                     Route::get('/declaration/{declaration}', DeclarationView::class)
