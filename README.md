@@ -146,36 +146,45 @@ redirect_stderr=true
 stdout_logfile=/Users/myuser/mis/storage/logs/worker.log
 stopwaitsecs=3600
 ```
-## First login
-After the initial setup, you can access the application using one of the following methods:
+## Login Methods
+After the initial setup and legal entity registration, you can access the application using one of the following methods:
 
-### Local Login for Developers
-This method is intended for local development and testing. It allows you to bypass the external eHealth authentication flow and work with local data.
-
-1. Ensure your database is seeded with test users or you have registered a user via the `/register` page.
-2. Navigate to the login page: `http://localhost:8000/login`.
-3. Check the box **"Без авторизації у eHealth"** (Without eHealth authorization).
-4. Enter your email and password.
-5. Click **Вхід** (Login).
-
-![Local Login](docs/local_login_page.png)
-
-### Standard Login (via eHealth)
+### 1. Standard Login (via eHealth)
 This is the official authentication flow used for production-like environments and integration testing.
 
-After registering the first legal entity, you should receive an email from eHealth with instructions. Follow them to set your eHealth password.
-
-1. Navigate to the login page: `http://localhost:8000/login`.
-2. Ensure the checkbox **"Без авторизації у eHealth"** is **unchecked**.
+1. Navigate to the login page: http://localhost:8000/login.
+2. Ensure the checkbox "Без авторизації у eHealth" is unchecked.
+ ![login_page.png](docs/login_page.png)
 3. Select the registered legal entity in the corresponding field.
-4. Click the login button; you will be redirected to the eHealth authentication page.
+4. Click the login button. You will be redirected to the eHealth authentication page.
+![ehealth_login_page.png](docs/ehealth_login_page.png)
+5. Enter your credentials on the eHealth gateway.
+6. After successful authentication, you will be redirected back to the dashboard.
 
-![eHealth Login](docs/login_through_ehealth.png)
+### 2. Developer Login (via eHealth)
+A specialized entry point for developers that follows the eHealth authentication flow but is optimized for local development and debugging.
 
-5. After successful authentication, you will be redirected back to the application dashboard.
+![dev_login_page.png](docs/dev_login_page.png)
+
+- URL: http://localhost:8000/dev/login
+
+### 3. Local Login
+This method is intended for local development to bypass external eHealth authentication.
+
+![local_login_page.png](docs/local_login_page.png)
+
+1. Navigate to the login page: http://localhost:8000/login.
+2. Check the box "Без авторизації у eHealth".
+3. Enter your local email and password.
+
+> **Current Status:** This feature is in testing mode and is currently non-functional.
+> The development of algorithms for full offline operation (without eHealth connectivity) is still in progress. Please use eHealth-based login methods for now.
+
+After successful authentication, the user is automatically redirected to the application dashboard.
+
+![dashboard_page.png](docs/dashboard_page.png)
 
 > **Note:** For eHealth login to work properly, the `EHEALTH_REDIRECT_URI` in your `.env` must point to a real, accessible URL of your application. For local development, you may set `EHEALTH_CALLBACK_PROD=true` and configure `EHEALTH_URL_DEV` to `http://localhost:8000`.
-
 ## Code Style
 - view file names: kebab-case
 - lang key: snake_case
