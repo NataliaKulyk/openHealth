@@ -27,52 +27,50 @@
         </div>
     </x-header-navigation>
 
-    <div class="flow-root mt-4 shift-content pl-3.5" wire:key="{{ time() }}">
+    <div class="flow-root mt-8 shift-content pl-3.5" wire:key="{{ time() }}">
         <div class="max-w-screen-xl">
             @if($licenses->isNotEmpty())
-                <div class="relative shadow-md sm:rounded-lg">
-                    <table
-                        class="w-full min-w-[1100px] text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <div class="index-table-wrapper">
+                    <table class="index-table">
+                        <thead class="index-table-thead">
                         <tr>
-                            <th scope="col" class="px-6 py-3">{{ __('licenses.type.label') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ __('licenses.active_from_date_label') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ __('licenses.expiry_date_label') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ __('licenses.activity') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ __('licenses.kind') }}</th>
-                            <th scope="col" class="px-6 py-3 text-center">{{ __('forms.action') }}</th>
+                            <th class="index-table-th w-[20%]">{{ __('licenses.type.label') }}</th>
+                            <th class="index-table-th w-[15%]">{{ __('licenses.active_from_date_label') }}</th>
+                            <th class="index-table-th w-[15%]">{{ __('licenses.expiry_date_label') }}</th>
+                            <th class="index-table-th w-[25%]">{{ __('licenses.activity') }}</th>
+                            <th class="index-table-th w-[14%]">{{ __('licenses.kind') }}</th>
+                            <th class="index-table-th w-[6%]">{{ __('forms.action') }}</th>
                         </tr>
                         </thead>
                         <tbody>
                         @foreach($licenses as $license)
-                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                            <tr class="index-table-tr">
+                                <td class="index-table-td">
                                     {{ $license->type->label() }}
                                 </td>
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                                <td class="index-table-td">
                                     {{ $license->activeFromDate }}
                                 </td>
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                                <td class="index-table-td">
                                     {{ $license->expiryDate }}
                                 </td>
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                                <td class="index-table-td">
                                     {{ $license->whatLicensed }}
                                 </td>
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                                <td class="index-table-td">
                                     @if($license->isPrimary)
                                         <span class="badge-green">{{ __('licenses.primary') }}</span>
                                     @else
                                         <span class="badge-yellow">{{ __('licenses.not_primary') }}</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center align-top">
+                                <td class="index-table-td-actions">
                                     @if($license->isPrimary)
                                         @can('view', $license)
                                             <a href="{{ route('license.view', [legalEntity(), $license->id]) }}"
-                                               class="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white"
                                                title="{{ __('forms.view') }}"
                                             >
-                                                @icon('eye', 'w-5 h-5 svg-hover-action')
+                                                @icon('eye', 'w-5 h-5 text-gray-600 hover:text-blue-600')
                                             </a>
                                         @endcan
                                     @else
@@ -81,14 +79,7 @@
                                                     @click.outside="open = false"
                                                     class="cursor-pointer text-gray-500 hover:text-gray-800 dark:hover:text-white focus:outline-none"
                                             >
-                                                <svg class="w-5 h-5" aria-hidden="true" fill="none"
-                                                     stroke="currentColor"
-                                                     viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2"
-                                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"
-                                                    />
-                                                </svg>
+                                                @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-white')
                                             </button>
 
                                             <div x-show="open"
@@ -101,7 +92,7 @@
                                                         <a href="{{ route('license.view', [legalEntity(), $license->id]) }}"
                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                                                         >
-                                                            @icon('eye', 'w-5 h-5 svg-hover-action')
+                                                            @icon('eye', 'w-5 h-5 text-gray-600')
                                                             {{ __('forms.view') }}
                                                         </a>
                                                     @endcan
@@ -110,16 +101,7 @@
                                                         <a href="{{ route('license.edit', [legalEntity(), $license->id]) }}"
                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                                                         >
-                                                            <svg class="w-4 h-4"
-                                                                 fill="none"
-                                                                 stroke="currentColor"
-                                                                 viewBox="0 0 24 24"
-                                                            >
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                      stroke-width="2"
-                                                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"
-                                                                />
-                                                            </svg>
+                                                            @icon('edit', 'w-5 h-5 text-gray-600')
                                                             {{ __('forms.update') }}
                                                         </a>
                                                     @endcan
@@ -134,7 +116,7 @@
                     </table>
                 </div>
 
-                <div class="mt-4">
+                <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
                     {{ $licenses->links() }}
                 </div>
             @else

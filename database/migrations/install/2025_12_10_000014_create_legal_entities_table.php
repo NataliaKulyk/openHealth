@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('client_id')->nullable();
             $table->string('client_secret')->nullable();
             $table->string('website')->nullable();
+
             $table->enum('sync_status', JobStatus::values())->nullable();
             $table->enum('division_sync_status', JobStatus::values())->nullable();
             $table->enum('hcs_sync_status', JobStatus::values())->nullable();
@@ -45,7 +46,13 @@ return new class extends Migration
             $table->enum('license_sync_status', JobStatus::values())->nullable();
             $table->enum('document_sync_status', JobStatus::values())->nullable();
             $table->enum('declaration_sync_status', JobStatus::values())->nullable();
+            $table->enum('declaration_request_sync_status', JobStatus::values())->nullable();
             $table->enum('equipment_sync_status', JobStatus::values())->nullable();
+
+            // Added fields for Contracts Sync
+            $table->enum('contract_sync_status', JobStatus::values())->nullable();
+            $table->enum('contract_request_sync_status', JobStatus::values())->nullable();
+
             $table->timestamp('inserted_at')->nullable();
             $table->date('ehealth_inserted_at')->nullable();
             $table->uuid('ehealth_inserted_by')->nullable();
@@ -55,9 +62,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('legal_entities');

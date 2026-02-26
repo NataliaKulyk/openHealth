@@ -7,8 +7,10 @@ namespace App\Livewire\Contract;
 use App\Classes\eHealth\Api\MedicalProgram;
 use App\Livewire\Contract\Forms\ReimbursementContractRequestForm as Form;
 use App\Models\LegalEntity;
+use App\Repositories\Repository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Log;
 
@@ -16,6 +18,11 @@ class ReimbursementContractCreate extends ContractComponent
 {
     public Form $form;
     public array $medicalProgramsList = [];
+
+    /**
+     * Stores the UUID of the current draft to prevent duplicates.
+     */
+    public ?string $savedUuid = null;
 
     protected array $dictionaryNames = [
         'REIMBURSEMENT_CONTRACT_TYPE',
@@ -28,32 +35,24 @@ class ReimbursementContractCreate extends ContractComponent
         $this->loadMedicalPrograms();
     }
 
-
     protected function loadMedicalPrograms(): void
     {
+        Cache::forget('ehealth_medical_programs_reimbursement');
 
-         Cache::forget('ehealth_medical_programs_reimbursement');
-
-        $programs = Cache::remember('ehealth_medical_programs_reimbursement', 3600, function () { //Cache for 1 hour is enough
+        $programs = Cache::remember('ehealth_medical_programs_reimbursement', 3600, function () {
             try {
-                // Create a new instance of the request right here
                 $request = new MedicalProgram();
 
-                // Switching to the context of MIS
-                $response = $request->asMis()->getMany(
-                    [
-                        'page_size' => 100,
-                    ]
-                );
+                $response = $request->asMis()->getMany([
+                    'page_size' => 100,
+                ]);
 
                 return $response->getData();
-
             } catch (\Exception $e) {
                 Log::error('Medical Programs Fetch Error: ' . $e->getMessage());
                 return [];
             }
         });
-
 
         $formattedList = [];
         foreach ($programs as $item) {
@@ -84,20 +83,20 @@ class ReimbursementContractCreate extends ContractComponent
 
         $payload = [
             'contractor_owner_id' => $this->form->contractorOwnerId,
-            'contractor_base'     => $data['contractorBase'],
+            'contractor_base' => $data['contractorBase'],
             'contractor_payment_details' => [
                 'payer_account' => $payerAccount,
-                'bank_name'     => $data['contractorPaymentDetails']['bankName'] ?? '',
+                'bank_name' => $data['contractorPaymentDetails']['bankName'] ?? '',
             ],
-            'start_date'      => Carbon::now()->addDay()->format('Y-m-d'),
-            'end_date'        => Carbon::parse($data['endDate'])->format('Y-m-d'),
+            'start_date' => Carbon::now()->addDay()->format('Y-m-d'),
+            'end_date' => Carbon::parse($data['endDate'])->format('Y-m-d'),
 
-            'id_form'         => $idForm,
+            'id_form' => $idForm,
 
-            'statute_md5'             => $data['statuteMd5'] ?? null,
+            'statute_md5' => $data['statuteMd5'] ?? null,
             'additional_document_md5' => $data['additionalDocumentMd5'] ?? null,
 
-            'consent_text'    => $consentTextString,
+            'consent_text' => $consentTextString,
 
             'medical_programs' => $insulinProgramId,
         ];
@@ -109,15 +108,56 @@ class ReimbursementContractCreate extends ContractComponent
         return $payload;
     }
 
-    /** Helper to generate a dummy number if NULL is rejected.
-     *  Pattern: 4 digits - 4 letters - 4 digits
+    /**
+     * Saves or updates the draft using the repository.
+     */
+    public function save(): void
+    {
+        $validatedData = $this->form->validate();
+        $payload = $this->collectPayload($validatedData);
+
+        if ($this->savedUuid) {
+            $payload['id'] = $this->savedUuid;
+            $payload['status'] = 'NEW';
+        } else {
+            $newUuid = Str::uuid()->toString();
+            $payload['id'] = $newUuid;
+            $payload['contract_number'] = $this->generateContractNumber();
+            $payload['status'] = 'NEW';
+        }
+
+        try {
+            // Here it is saved/updated in the database
+            $contractRequest = Repository::contractRequest()->saveFromEHealth($payload, 'REIMBURSEMENT');
+
+            $this->savedUuid = $contractRequest->uuid;
+
+            // Add "?? ''" to convert NULL to an empty string
+            // This is critical for editing drafts where the number is not yet available
+            $this->form->contractNumber = $contractRequest->contract_number ?? '';
+
+            $this->dispatch('flashMessage', [
+                'message' => 'Чернетку успішно збережено.',
+                'type' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving contract request: ' . $e->getMessage());
+            $this->dispatch('flashMessage', [
+                'message' => 'Помилка збереження: ' . $e->getMessage(),
+                'type' => 'error'
+            ]);
+        }
+    }
+
+    /**
+     * Helper to generate a dummy number if NULL is rejected.
      */
     private function generateContractNumber(): string
     {
         return sprintf(
             '%04d-%s-%04d',
             rand(1000, 9999),
-            strtoupper(\Illuminate\Support\Str::random(4)),
+            strtoupper(Str::random(4)),
             rand(1000, 9999)
         );
     }

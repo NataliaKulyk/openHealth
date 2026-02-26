@@ -30,9 +30,14 @@ class ContractRequest extends EHealthRequest
         $this->setValidator($this->validateMany(...));
         $this->setDefaultPageSize();
 
+        // Combining existing query parameters with passed ones
         $mergedQuery = array_merge($this->options['query'], $query ?? []);
 
-        return $this->get(self::URL . '/' . $contractType, $mergedQuery);
+        // Pass the type as a query parameter, not part of the URL
+        $mergedQuery['type'] = strtoupper($contractType);
+
+        // We use the base URL (self::URL), the parameters will go to the query string
+        return $this->get(self::URL, $mergedQuery);
     }
 
     /**
@@ -100,13 +105,15 @@ class ContractRequest extends EHealthRequest
     }
 
     /**
-     * Gets the details of a single contract request from E-Health.
+     * Get details of a contract request
+     *
+     * @throws ConnectionException
      */
-    public function getDetails(string $uuid): PromiseInterface|EHealthResponse
+    public function getDetails(string $contractType, string $uuid): PromiseInterface|EHealthResponse
     {
         $this->setValidator($this->validateDetails(...));
 
-        return $this->get(self::URL . '/' . $uuid);
+        return $this->get(self::URL . '/' . $contractType . '/' . $uuid);
     }
 
     /**

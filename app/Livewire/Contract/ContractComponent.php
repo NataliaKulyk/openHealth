@@ -6,13 +6,14 @@ namespace App\Livewire\Contract;
 
 use App\Classes\eHealth\EHealth;
 use App\Exceptions\EHealth\EHealthValidationException;
-use App\Models\ContractRequest;
+use App\Models\Contracts\ContractRequest;
 use App\Models\LegalEntity;
 use App\Repositories\Repository;
 use App\Traits\FormTrait;
 use Carbon\Carbon;
 use Http;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -32,8 +33,6 @@ abstract class ContractComponent extends Component
 
     public function baseMount(LegalEntity $legalEntity): void
     {
-
-
         $this->getDictionary();
 
         $legalEntity = $legalEntity->fresh();
@@ -47,8 +46,8 @@ abstract class ContractComponent extends Component
         $this->legalEntityName = $edrData['name'] ?? 'Невідома назва';
 
       $this->form->contractorPaymentDetails = [
-            'bankName'     => '',
-            'MFO'          => '',
+            'bankName' => '',
+            'MFO' => '',
             'payerAccount' => '',
         ];
 
@@ -68,7 +67,7 @@ abstract class ContractComponent extends Component
 
       $contractorData = Auth::user()->employees()
             ->contractors($legalEntity->id)
-            ->with('party') // Підвантажуємо Party, щоб взяти ПІБ
+            ->with('party')
             ->first();
 
         if (empty($contractorData)) {
@@ -87,7 +86,7 @@ abstract class ContractComponent extends Component
         $this->showSignatureModal = true;
     }
 
-    public function createLocally(): void
+    public function save(): void
     {
         try {
             $validatedData = $this->form->validate();
@@ -101,18 +100,21 @@ abstract class ContractComponent extends Component
             }
 
             ContractRequest::create([
-                                        'contractor_legal_entity_id' => $this->form->contractorLegalEntityId,
-                                        'contractor_owner_id'        => $this->form->contractorOwnerId,
-                                        'data'                       => json_encode($dataToSave, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-                                        'status'                     => 'DRAFT',
-                                        'contractor_base'            => $dataToSave['contractorBase'] ?? 'N/A',
-                                        'contractor_payment_details' => json_encode($dataToSave['contractorPaymentDetails'] ?? [], JSON_UNESCAPED_UNICODE),
-                                        'start_date'                 => Carbon::parse($dataToSave['startDate']),
-                                        'end_date'                   => Carbon::parse($dataToSave['endDate']),
-                                        'id_form'                    => $dataToSave['idForm'] ?? 'unknown',
-                                        'type'                       => $this->getContractType(),
-                                        'contractor_signed'          => false,
-                                    ]);
+                'contractor_legal_entity_id' => $this->form->contractorLegalEntityId,
+                'contractor_owner_id' => $this->form->contractorOwnerId,
+                'data' => json_encode($dataToSave, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                'status' => 'DRAFT',
+                'contractor_base' => $dataToSave['contractorBase'] ?? 'N/A',
+                'contractor_payment_details' => json_encode(
+                    $dataToSave['contractorPaymentDetails'] ?? [],
+                    JSON_UNESCAPED_UNICODE
+                ),
+                'start_date' => Carbon::parse($dataToSave['startDate']),
+                'end_date' => Carbon::parse($dataToSave['endDate']),
+                'id_form' => $dataToSave['idForm'] ?? 'unknown',
+                'type' => $this->getContractType(),
+                'contractor_signed' => false,
+            ]);
 
             Session::flash('success', __('Чернетку збережено успішно (локально).'));
 
@@ -141,8 +143,8 @@ abstract class ContractComponent extends Component
             $eHealthData = $response->getData();
 
             $contractRequestId = $eHealthData['uuid'] ?? $eHealthData['id'] ?? null;
-            $statuteUrl        = $eHealthData['statute_url'] ?? null;
-            $additionalDocUrl  = $eHealthData['additional_document_url'] ?? null;
+            $statuteUrl = $eHealthData['statute_url'] ?? null;
+            $additionalDocUrl = $eHealthData['additional_document_url'] ?? null;
 
             if (!$contractRequestId) {
                 throw new \RuntimeException('Не вдалося отримати ID запиту від ЕСОЗ.');
@@ -157,8 +159,8 @@ abstract class ContractComponent extends Component
         try {
             // --- STATUS ---
             if ($statuteUrl && isset($this->form->statuteMd5)) { // In form, it is a file object
-                $fileObject  = $this->form->statuteMd5;
-                $filePath    = $fileObject->getRealPath();
+                $fileObject = $this->form->statuteMd5;
+                $filePath = $fileObject->getRealPath();
                 $fileContent = file_get_contents($filePath);
 
                 // Counting the MD5 of a real file for payload
@@ -180,8 +182,8 @@ abstract class ContractComponent extends Component
 
             // --- Additional document ---
             if ($additionalDocUrl && isset($this->form->additionalDocumentMd5)) {
-                $fileObject  = $this->form->additionalDocumentMd5;
-                $filePath    = $fileObject->getRealPath();
+                $fileObject = $this->form->additionalDocumentMd5;
+                $filePath = $fileObject->getRealPath();
                 $fileContent = file_get_contents($filePath);
 
                 $md5Hash = md5_file($filePath);
@@ -234,8 +236,8 @@ abstract class ContractComponent extends Component
                 $contractRequestId,
                 $this->getContractType(),
                 [
-                    'signed_content'          => $signedContent,
-                    'signed_content_encoding' => 'base64'
+                    'signed_content' => $signedContent,
+                    'signed_content_encoding' => 'base64',
                 ]
             );
 

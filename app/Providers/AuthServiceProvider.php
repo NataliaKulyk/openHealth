@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate; // Не забудьте додати цей імпорт
 use App\Auth\EHealth\Guards\EHealthGuard;
 use App\Auth\EHealth\Services\TokenStorage;
 use Illuminate\Contracts\Foundation\Application;
@@ -19,6 +20,12 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->registerPolicies();
+
+        Gate::guessPolicyNamesUsing(function ($modelClass) {
+            return 'App\\Policies\\' . class_basename($modelClass) . 'Policy';
+        });
+
         Auth::extend('ehealth', static function (Application $app, string $name, array $config) {
             $provider = Auth::createUserProvider($config['provider']);
             $tokenStorage = $app->make(TokenStorage::class);

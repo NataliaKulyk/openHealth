@@ -231,48 +231,45 @@
          wire:key="equipments-table-page-{{ $equipments->total() }}-{{ $equipments->currentPage() }}"
     >
         <div class="max-w-screen-xl">
-            <div class="relative shadow-md sm:rounded-lg">
-                @if($equipments->isNotEmpty())
-                    <table
-                        class="w-full table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            @if($equipments->isNotEmpty())
+                <div class="index-table-wrapper">
+                    <table class="index-table">
+                        <thead class="index-table-thead">
                         <tr>
-                            <th class="px-6 py-3 w-[15%] text-left">{{ __('forms.name') }}</th>
-                            <th class="px-6 py-3 w-[10%] text-left">{{ __('equipments.inventory_number') }}</th>
-                            <th class="px-6 py-3 w-[25%] text-left">{{ __('forms.type') }}</th>
-                            <th class="px-6 py-3 w-[15%] text-left">{{ __('forms.institution') }}</th>
-                            <th class="px-6 py-3 w-[10%] text-left">{{ __('forms.created_at') }}</th>
-                            <th class="px-6 py-3 w-[10%] text-left">{{ __('forms.status.label') }}</th>
-                            <th class="px-6 py-3 w-[10%] text-left">{{ __('equipments.availability_status.label') }}</th>
-                            <th class="px-6 py-3 w-[6%] text-center">{{ __('forms.action') }}</th>
+                            <th class="index-table-th w-[15%]">{{ __('forms.name') }}</th>
+                            <th class="index-table-th w-[10%]">{{ __('equipments.inventory_number') }}</th>
+                            <th class="index-table-th w-[20%]">{{ __('forms.type') }}</th>
+                            <th class="index-table-th w-[15%]">{{ __('forms.institution') }}</th>
+                            <th class="index-table-th w-[10%]">{{ __('forms.created_at') }}</th>
+                            <th class="index-table-th w-[10%]">{{ __('forms.status.label') }}</th>
+                            <th class="index-table-th w-[14%]">{{ __('equipments.availability_status.label') }}</th>
+                            <th class="index-table-th w-[6%]">{{ __('forms.action') }}</th>
                         </tr>
                         </thead>
 
                         <tbody>
                         @foreach ($equipments as $equipment)
-                            <tr wire:key="equipment-{{ $equipment->id }}"
-                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
-                            >
-                                <td class="td-input">
-                                    <ul class="font-semibold text-gray-900 dark:text-white">
+                            <tr wire:key="equipment-{{ $equipment->id }}" class="index-table-tr">
+                                <td class="index-table-td-primary">
+                                    <ul>
                                         @foreach ($equipment->names as $name)
                                             <li>{{ $name->name }}</li>
                                         @endforeach
                                     </ul>
                                 </td>
-                                <td class="td-input">
+                                <td class="index-table-td">
                                     {{ $equipment->inventoryNumber ?? '-' }}
                                 </td>
-                                <td class="td-input">
+                                <td class="index-table-td">
                                     {{ dictionary()->getDictionary('device_definition_classification_type')[$equipment->type] }}
                                 </td>
-                                <td class="td-input">
+                                <td class="index-table-td">
                                     {{ $equipment->division?->name ?? '-' }}
                                 </td>
-                                <td class="td-input">
+                                <td class="index-table-td">
                                     {{ $equipment->ehealthInsertedAt?->format('d.m.Y') ?? $equipment->createdAt->format('d.m.Y') }}
                                 </td>
-                                <td class="td-input">
+                                <td class="index-table-td">
                                     <span class="{{
                                         match($equipment->status) {
                                             Status::DRAFT => 'badge-dark',
@@ -284,7 +281,7 @@
                                         {{ $equipment->status->label() }}
                                     </span>
                                 </td>
-                                <td class="td-input">
+                                <td class="index-table-td">
                                     <span class="{{
                                         match($equipment->availabilityStatus) {
                                             AvailabilityStatus::AVAILABLE => 'badge-green',
@@ -295,7 +292,7 @@
                                         {{ $equipment->availabilityStatus->label() }}
                                     </span>
                                 </td>
-                                <td class="td-input">
+                                <td class="index-table-td-actions">
                                     <div class="flex justify-center relative">
                                         <div x-data="{
                                                  open: false,
@@ -392,30 +389,27 @@
                         @endforeach
                         </tbody>
                     </table>
-
-                @else
-                    <div class="p-12">
-                        <fieldset class="fieldset shift-content">
-                            <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
-                            <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex-shrink-0 mt-0.5">
-                                        @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-bold text-blue-800">
-                                            {{ __('forms.nothing_found') }}
-                                        </p>
-                                        <p class="text-sm text-blue-600">
-                                            {{ __('forms.changing_search_parameters') }}
-                                        </p>
-                                    </div>
-                                </div>
+                </div>
+            @else
+                <fieldset class="fieldset !mx-auto mt-8 shift-content">
+                    <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                    <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
                             </div>
-                        </fieldset>
+                            <div class="flex-1">
+                                <p class="font-bold text-blue-800">
+                                    {{ __('forms.nothing_found') }}
+                                </p>
+                                <p class="text-sm text-blue-600">
+                                    {{ __('forms.changing_search_parameters') }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                @endif
-            </div>
+                </fieldset>
+            @endif
 
             <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
                 {{ $equipments->links() }}

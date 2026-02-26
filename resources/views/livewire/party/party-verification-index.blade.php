@@ -5,99 +5,104 @@
         </x-slot>
     </x-header-navigation>
 
-    <x-section class="-mt-8 form shift-content">
+    <div class="flow-root mt-8 shift-content pl-3.5">
+        <div class="max-w-screen-xl">
+            @if($verifications->isNotEmpty())
+                <div class="index-table-wrapper">
+                    <table class="index-table">
+                        <thead class="index-table-thead">
+                        <tr>
+                            <th class="index-table-th w-[18%]">{{ __('forms.employee') }}</th>
+                            <th class="index-table-th w-[12%]">{{ __('party_verification.status') }}</th>
+                            <th class="index-table-th w-[12%]">{{ __('party_verification.types.drfo') }}</th>
+                            <th class="index-table-th w-[12%]">{{ __('party_verification.types.dracs_death') }}</th>
+                            <th class="index-table-th w-[18%]">{{ __('party_verification.types.mvs_passport') }} / {{ __('party_verification.types.dms_passport') }}</th>
+                            <th class="index-table-th w-[14%]">{{ __('party_verification.types.dracs_name_change') }}</th>
+                            <th class="index-table-th w-[8%]">{{ __('forms.action') }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($verifications as $item)
+                            <tr class="index-table-tr" wire:key="verif-{{ $item['party_id'] }}">
+                                <td class="index-table-td-primary">
+                                    {{ $item['party_name'] }}
+                                </td>
 
-        {{-- 7.5.1: Death Status Filter (DRACS Death) --}}
-        <div class="mb-4 flex justify-end">
-            <div class="w-64">
-                <label for="dracs_filter" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                    {{ __('party_verification.types.dracs_death') }}
-                </label>
-                <select wire:model.live="dracsDeathStatus" id="dracs_filter" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="">{{ __('forms.all') }}</option>
-                    <option value="NOT_VERIFIED">{{ __('party_verification.statuses.NOT_VERIFIED') }}</option>
-                    <option value="VERIFIED">{{ __('party_verification.statuses.VERIFIED') }}</option>
-                </select>
+                                <td class="index-table-td">
+                                    <x-verification-status-badge :status="$item['verification_status'] ?? '-'" />
+                                </td>
+
+                                <td class="index-table-td">
+                                    <x-verification-status-badge :status="$item['details']['drfo']['verification_status'] ?? '-'" />
+                                </td>
+
+                                <td class="index-table-td">
+                                    <x-verification-status-badge :status="$item['details']['dracs_death']['verification_status'] ?? '-'" />
+                                </td>
+
+                                <td class="index-table-td">
+                                    <div class="flex flex-col space-y-2">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {{ __('party_verification.types.mvs_passport') }}
+                                            </span>
+                                            <x-verification-status-badge :status="$item['details']['mvs_passport']['verification_status'] ?? '-'" />
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {{ __('party_verification.types.dms_passport') }}
+                                            </span>
+                                            <x-verification-status-badge :status="$item['details']['dms_passport']['verification_status'] ?? '-'" />
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="index-table-td">
+                                    <x-verification-status-badge :status="$item['details']['dracs_name_change']['verification_status'] ?? '-'" />
+                                </td>
+
+                                <td class="index-table-td-actions">
+                                    @if($item['local_id'])
+                                        <a href="{{ route('party.verification.show', ['legalEntity' => $legalEntity->id, 'party' => $item['local_id']]) }}"
+                                           title="{{ __('forms.details') }}"
+                                        >
+                                            @icon('eye', 'w-5 h-5 text-gray-600 hover:text-blue-600')
+                                        </a>
+                                    @else
+                                        <span class="text-xs text-gray-400 italic" title="{{ __('forms.party_not_found_locally') }}">
+                                            N/A
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <fieldset class="fieldset !mx-auto mt-8 shift-content">
+                    <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                    <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-blue-800">
+                                    {{ __('forms.nothing_found') }}
+                                </p>
+                                <p class="text-sm text-blue-600">
+                                    {{ __('forms.changing_search_parameters') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            @endif
+
+            <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
+                {{ $verifications->links() }}
             </div>
         </div>
-
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-            <table class="w-full min-w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="px-6 py-3 whitespace-nowrap">
-                        {{ __('forms.employee') }}
-                    </th>
-
-                    {{-- 7.4.2: We leave only DRFO and DRACS Death --}}
-
-                    {{-- DRFO --}}
-                    <th scope="col" class="px-6 py-3 whitespace-nowrap">
-                        {{ __('party_verification.types.drfo') }}
-                    </th>
-
-                    {{-- DRACS (Death) --}}
-                    <th scope="col" class="px-6 py-3 whitespace-nowrap">
-                        {{ __('party_verification.types.dracs_death') }}
-                    </th>
-
-                    <th scope="col" class="px-6 py-3">
-                        {{-- Actions column --}}
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                @forelse($verifications as $item)
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
-                        wire:key="verif-{{ $item['party_id'] }}">
-
-                        {{-- Employee Name --}}
-                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                            {{ $item['party_name'] ?? 'Unknown' }}
-                        </td>
-
-                        {{-- DRFO Status --}}
-                        <td class="px-6 py-4">
-                            <x-verification-status-badge :status="$item['details']['drfo']['verification_status'] ?? '-'" />
-                        </td>
-
-                        {{-- DRACS Death Status --}}
-                        <td class="px-6 py-4">
-                            <x-verification-status-badge :status="$item['details']['dracs_death']['verification_status'] ?? '-'" />
-                        </td>
-
-                        {{-- Details Button --}}
-                        <td class="px-6 py-4 text-right">
-                            @if($item['local_id'])
-                                <a href="{{ route('party.verification.show', ['legalEntity' => $legalEntity->id, 'party' => $item['local_id']]) }}"
-                                   class="button-primary-outline-sm whitespace-nowrap">
-                                    {{ __('forms.details') }}
-                                </a>
-                            @else
-                                <span class="text-xs text-gray-400 italic" title="{{ __('forms.party_not_found_locally') }}">
-                                    N/A
-                                </span>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                        <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                            <div class="flex flex-col items-center justify-center gap-2">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                <span>{{ __('forms.nothing_found') }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-4">
-            {{ $verifications->links() }}
-        </div>
-    </x-section>
+    </div>
 </div>

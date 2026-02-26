@@ -145,49 +145,44 @@
          wire:key="employee-roles-table-page-{{ $employeeRoles->total() }}-{{ $employeeRoles->currentPage() }}"
     >
         <div class="max-w-screen-xl">
-            <div class="relative shadow-md sm:rounded-lg">
-                @if($employeeRoles->isNotEmpty())
-                    <table
-                        class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            @if($employeeRoles->isNotEmpty())
+                <div class="index-table-wrapper">
+                    <table class="index-table">
+                        <thead class="index-table-thead">
                         <tr>
-                            <th class="px-6 py-3 w-[25%]">{{ __('employees.doctor_full_name') }}</th>
-                            <th class="px-6 py-3 w-[15%]">{{ __('employee-roles.speciality_type') }}</th>
-                            <th class="px-6 py-3 w-[20%]">{{ __('forms.divisions') }}</th>
-                            <th class="px-6 py-3 w-[15%]">{{ __('employee-roles.providing_condition') }}</th>
-                            <th class="px-6 py-3 w-[15%]">{{ __('forms.created_at') }}</th>
-                            <th class="px-6 py-3 w-[10%]">{{ __('employee-roles.end_date') }}</th>
-                            <th class="px-6 py-3 w-[10%]">{{ __('employee-roles.status') }}</th>
-                            <th class="px-6 py-3 w-[10%] text-center">{{ __('forms.action') }}</th>
+                            <th class="index-table-th w-[20%]">{{ __('employees.doctor_full_name') }}</th>
+                            <th class="index-table-th w-[15%]">{{ __('employee-roles.speciality_type') }}</th>
+                            <th class="index-table-th w-[18%]">{{ __('forms.divisions') }}</th>
+                            <th class="index-table-th w-[15%]">{{ __('employee-roles.providing_condition') }}</th>
+                            <th class="index-table-th w-[10%]">{{ __('forms.created_at') }}</th>
+                            <th class="index-table-th w-[10%]">{{ __('employee-roles.end_date') }}</th>
+                            <th class="index-table-th w-[10%]">{{ __('employee-roles.status') }}</th>
+                            <th class="index-table-th w-[6%]">{{ __('forms.action') }}</th>
                         </tr>
                         </thead>
                         <tbody>
 
                         @foreach ($employeeRoles as $employeeRole)
-                            <tr wire:key="{{ $employeeRole->id }}"
-                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
-                            >
-                                <th scope="row"
-                                    class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white align-top"
-                                >
+                            <tr wire:key="{{ $employeeRole->id }}" class="index-table-tr">
+                                <td class="index-table-td-primary">
                                     {{ $employeeRole->employee->fullName }}
-                                </th>
-                                <td class="px-6 py-4 align-top">
+                                </td>
+                                <td class="index-table-td">
                                     {{ $dictionaries['SPECIALITY_TYPE'][$employeeRole->healthcareService->specialityType] }}
                                 </td>
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                                <td class="index-table-td">
                                     {{ $employeeRole->healthcareService->division->name }}
                                 </td>
-                                <td class="px-6 py-4 align-top">
+                                <td class="index-table-td">
                                     {{ $dictionaries['PROVIDING_CONDITION'][$employeeRole->healthcareService->providingCondition] }}
                                 </td>
-                                <td class="px-6 py-4 align-top">
+                                <td class="index-table-td">
                                     {{ $employeeRole->startDate->format('d.m.Y') }}
                                 </td>
-                                <td class="px-6 py-4 align-top">
+                                <td class="index-table-td">
                                     {{ $employeeRole->endDate?->format('d.m.Y') }}
                                 </td>
-                                <td class="px-6 py-4 align-top whitespace-nowrap">
+                                <td class="index-table-td">
                                     <span class="{{
                                         match($employeeRole->status) {
                                             Status::ACTIVE => 'badge-green',
@@ -195,10 +190,10 @@
                                             default => ''
                                         }
                                     }}">
-                                    {{ $employeeRole->status->label() }}
-                                </span>
+                                        {{ $employeeRole->status->label() }}
+                                    </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="index-table-td-actions">
                                     @if($employeeRole->status === Status::ACTIVE)
                                         <div class="flex justify-center relative">
                                             <div x-data="{
@@ -249,30 +244,27 @@
                         @endforeach
                         </tbody>
                     </table>
-
-                @else
-                    <div class="p-12">
-                        <fieldset class="fieldset shift-content">
-                            <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
-                            <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex-shrink-0 mt-0.5">
-                                        @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-bold text-blue-800">
-                                            {{ __('forms.nothing_found') }}
-                                        </p>
-                                        <p class="text-sm text-blue-600">
-                                            {{ __('forms.changing_search_parameters') }}
-                                        </p>
-                                    </div>
-                                </div>
+                </div>
+            @else
+                <fieldset class="fieldset !mx-auto mt-8 shift-content">
+                    <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                    <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
                             </div>
-                        </fieldset>
+                            <div class="flex-1">
+                                <p class="font-bold text-blue-800">
+                                    {{ __('forms.nothing_found') }}
+                                </p>
+                                <p class="text-sm text-blue-600">
+                                    {{ __('forms.changing_search_parameters') }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                @endif
-            </div>
+                </fieldset>
+            @endif
 
             <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
                 {{ $employeeRoles->links() }}

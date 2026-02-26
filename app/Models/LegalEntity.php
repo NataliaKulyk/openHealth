@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\User\Role;
 use App\Enums\JobStatus;
+use App\Models\Contracts\ContractRequest;
 use App\Models\Relations\Phone;
 use App\Models\Relations\Address;
 use App\Models\Employee\Employee;
@@ -40,8 +41,10 @@ class LegalEntity extends Model
     public const string ENTITY_EMPLOYEE_ROLE = 'employee_role_';
     public const string ENTITY_EMPLOYEE_REQUEST = 'employee_request_';
     public const string ENTITY_LICENSE = 'license_';
-    public const string ENTITY_DOCUMENT = 'document_';
+    public const string ENTITY_CONTRACT = 'contract_';
+    public const string ENTITY_CONTRACT_REQUEST = 'contract_request_';
     public const string ENTITY_DECLARATION = 'declaration_';
+    public const string ENTITY_DECLARATION_REQUEST = 'declaration_request_';
     public const string ENTITY_EQUIPMENT = 'equipment_';
 
     protected $fillable = [
@@ -81,6 +84,8 @@ class LegalEntity extends Model
         'updated_at' => 'datetime',
         'inserted_by' => 'string',
         'updated_by' => 'string',
+        'contract_sync_status' => JobStatus::class,
+        'contract_request_sync_status' => JobStatus::class,
     ];
 
     protected $attributes = [
@@ -114,9 +119,14 @@ class LegalEntity extends Model
         return $this->hasMany(Division::class);
     }
 
-    public function contract(): HasMany
+    public function contracts(): HasMany
     {
-        return $this->hasMany(Contract::class, 'legal_entity_id', 'id');
+        return $this->hasMany(\App\Models\Contracts\Contract::class, 'legal_entity_id');
+    }
+
+    public function contractRequests(): HasMany
+    {
+        return $this->hasMany(ContractRequest::class, 'contractor_legal_entity_id', 'uuid');
     }
 
     public function licenses(): HasMany

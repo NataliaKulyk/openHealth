@@ -19,6 +19,9 @@ use App\Livewire\Contract\CapitationContractCreate;
 use App\Livewire\Contract\ContractIndex;
 use App\Livewire\Contract\ContractShow;
 use App\Livewire\Contract\ReimbursementContractCreate;
+use App\Livewire\ContractRequest\ContractRequestEdit;
+use App\Livewire\ContractRequest\ContractRequestIndex;
+use App\Livewire\ContractRequest\ContractRequestShow;
 use App\Livewire\Dashboard;
 use App\Livewire\Declaration\DeclarationCreate;
 use App\Livewire\Declaration\DeclarationEdit;
@@ -217,15 +220,23 @@ Route::middleware(['auth:web,ehealth', 'verified'])->group(function () {
                 ->name('employee-role.create')
                 ->can('create', EmployeeRole::class);
 
-            Route::get('contract', ContractIndex::class)
-                ->name('contract.index');
-            Route::get('contract/capitation/create', CapitationContractCreate::class)
-                ->name('contract-capitation.create');
-            Route::get('contract/reimbursement/create', ReimbursementContractCreate::class)
-                ->name('contract-reimbursement.create');
-            Route::get('contract/{contract}', ContractShow::class)
-                ->name('contract.show')
-                ->middleware('can:view,contract');
+            // --- Group of Contracts (Already signed/active) ---
+            Route::prefix('contract')->name('contract.')->group(function () {
+                // Main page of existing contracts
+                Route::get('/', ContractIndex::class)->name('index');
+
+                // View (default type = 'contract')
+                Route::get('/{contract:uuid}', ContractShow::class)->name('show');
+            });
+
+            // --- Contract Request Group (Contract Requests) ---
+            Route::prefix('contract-request')->name('contract-request.')->group(function () {
+                Route::get('/', ContractRequestIndex::class)->name('index');
+                Route::get('/{contract}', ContractRequestShow::class)->name('show');
+                Route::get('/{contract}/edit', ContractRequestEdit::class)->name('edit');
+                Route::get('/create/capitation', CapitationContractCreate::class)->name('capitation.create');
+                Route::get('/create/reimbursement', ReimbursementContractCreate::class)->name('reimbursement.create');
+            });
 
             // Routes related to legal entity licenses; primary license can't be edited
             Route::prefix('license')->middleware(['permission:license:read|license:write'])

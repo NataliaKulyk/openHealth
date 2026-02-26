@@ -81,6 +81,11 @@ final class Repository
         return app(ContractRepository::class);
     }
 
+    public static function contractRequest(): ContractRequestRepository
+    {
+        return app(ContractRequestRepository::class);
+    }
+
     public static function authenticationMethod(): AuthenticationMethodRepository
     {
         return app(AuthenticationMethodRepository::class);

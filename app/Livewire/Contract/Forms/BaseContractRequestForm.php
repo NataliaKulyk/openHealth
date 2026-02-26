@@ -66,15 +66,7 @@ abstract class BaseContractRequestForm extends BaseForm
             'endDate' => [
                 'required',
                 'date_format:d.m.Y',
-                // When contract number not provided
-                Rule::unless($hasContractNumber, static fn () => ['after_or_equal:startDate']),
-
-                // When contract number exist
-                Rule::when($hasContractNumber, function () {
-                    return [
-                        'before_or_equal:startDate',
-                    ];
-                }),
+                'after_or_equal:startDate',
             ],
             'contractorPaymentDetails' => ['required', 'array'],
             'contractorPaymentDetails.payerAccount' => ['required', 'string', 'max:255'],

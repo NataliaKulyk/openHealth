@@ -28,7 +28,7 @@ use App\Classes\eHealth\Api\PersonRequest;
 use App\Classes\eHealth\Api\RuleEngineRules;
 use App\Classes\eHealth\Api\Service;
 use App\Classes\eHealth\Api\Verification;
-use App\Models\Contract;
+use App\Classes\eHealth\Api\Contract;
 use App\Models\MedicalEvents\Sql\Condition;
 use App\Models\MedicalEvents\Sql\DiagnosticReport;
 use App\Models\MedicalEvents\Sql\Episode;

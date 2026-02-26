@@ -4,30 +4,39 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use App\Classes\eHealth\Api\ContractRequest;
-use App\Models\Contract;
+use App\Classes\eHealth\Api\Contract as ContractMapper; // ФІКС: Правильний мапер
+use App\Models\Contracts\Contract;
 
 class ContractRepository
 {
     /**
      * Saves or updates a contract based on data received from E-Health API.
-     * Uses the API class mapper to normalize the data structure.
-     *
-     * @param  array  $eHealthData  Raw data from eHealth API response.
-     * @return Contract
      */
     public function saveFromEHealth(array $eHealthData): Contract
     {
-        // 1. Use the mapper from the API class
-        // Laravel container automatically resolves ContractRequest dependency
-        $mapper = app(ContractRequest::class);
+        // 1. Using the right mapper for Contracts
+        $mapper = app(ContractMapper::class);
         $attributes = $mapper->mapCreate($eHealthData);
 
-        // 2. Add local context (legal_entity_id) which is missing in API response
-        // Assumes 'legalEntity()' global helper is available
+        // 2. API returns 'id' and in the database it is 'uuid'
+        if (isset($eHealthData['id'])) {
+            $attributes['uuid'] = $eHealthData['id'];
+            unset($attributes['id']); // Прибираємо, щоб не плутати з внутрішнім id
+        }
+
+        // 3. Adding local context
         $attributes['legal_entity_id'] = legalEntity()->id;
 
-        // 3. Persist to Database (Update existing by UUID or Create new)
+        // 4. Additional fields that may not pass through the mapper
+        if (isset($eHealthData['contract_number'])) {
+            $attributes['contract_number'] = $eHealthData['contract_number'];
+        }
+
+        // Save raw data for display (if necessary)
+        // $attributes['data'] = $eHealthData;
+
+        // 5.Using updateOrCreate by UUID
+        //This does NOT cause the "invalid input syntax" error, because we search for the uuid column
         return Contract::updateOrCreate(
             ['uuid' => $attributes['uuid']],
             $attributes

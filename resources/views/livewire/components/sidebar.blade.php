@@ -1,7 +1,7 @@
 @php
-    use App\Models\{Contract, Declaration, DeclarationRequest, HealthcareService, LegalEntity, Division, License, EmployeeRole, Equipment};
-    use App\Models\Employee\{Employee, EmployeeRequest};
-    use App\Models\Person\{Person, PersonRequest};
+    use App\Models\{Contracts\Contract,Contracts\ContractRequest,Declaration,DeclarationRequest,Division,Equipment,HealthcareService,LegalEntity,License};
+    use App\Models\Employee\{Employee,EmployeeRequest};
+    use App\Models\Person\{Person,PersonRequest};
 @endphp
 
 <aside id="drawer-navigation"
@@ -113,7 +113,8 @@
                 @endcan
 
                 @if(Auth::user()->can('viewAny', Employee::class) || Auth::user()->can('viewAny', EmployeeRequest::class))
-                    <li x-data="{ open: {{ (request()->routeIs('employee.*') || request()->routeIs('party.verification.*')) ? 'true' : 'false' }} }" class="space-y-2">
+                    <li x-data="{ open: {{ (request()->routeIs('employee.*') || request()->routeIs('party.verification.*')) ? 'true' : 'false' }} }"
+                        class="space-y-2">
                         <button @click="open = !open"
                                 type="button"
                                 class="menu-item"
@@ -154,26 +155,26 @@
                                 </a>
                             </li>
 
-                                {{-- Register of applications --}}
-                                @can('viewAny', \App\Models\Employee\EmployeeRequest::class)
-                                    <li>
-                                        <a href="{{ route('employee-request.index', [legalEntity()]) }}"
-                                           class="submenu-item"
-                                        >
-                                            @icon('pencil-clipboard',)
-                                            <span class="ml-3">Реєстр заявок</span>
-                                        </a>
-                                    </li>
-                                @endcan
+                            {{-- Register of applications --}}
+                            @can('viewAny', EmployeeRequest::class)
+                                <li>
+                                    <a href="{{ route('employee-request.index', [legalEntity()]) }}"
+                                       class="submenu-item"
+                                    >
+                                        @icon('pencil-clipboard',)
+                                        <span class="ml-3">Реєстр заявок</span>
+                                    </a>
+                                </li>
+                            @endcan
 
-                                    <li>
-                                        <a href="{{ route('employee-role.index', [legalEntity()]) }}"
-                                           class="submenu-item"
-                                        >
-                                            @icon('users-roles')
-                                            <span class="ml-3">{{ __('employee-roles.label') }}</span>
-                                        </a>
-                                    </li>
+                            <li>
+                                <a href="{{ route('employee-role.index', [legalEntity()]) }}"
+                                   class="submenu-item"
+                                >
+                                    @icon('users-roles')
+                                    <span class="ml-3">{{ __('employee-roles.label') }}</span>
+                                </a>
+                            </li>
 
                             <li>
                                 <a href="{{ route('party.verification.index', [legalEntity()]) }}"
@@ -187,16 +188,61 @@
                     </li>
                 @endif
 
-                @can('viewAny', Contract::class)
-                    <li>
-                        <a href="{{ route('contract.index', [legalEntity()]) }}"
-                           class="menu-item-simple"
+                {{-- Section of Contracts (Dropdown) --}}
+                @if(Auth::user()->can('viewAny', Contract::class) || Auth::user()->can('viewAny', ContractRequest::class))
+                    <li x-data="{ open: {{ request()->routeIs('contract*') ? 'true' : 'false' }} }"
+                        class="space-y-2">
+                        <button @click="open = !open"
+                                type="button"
+                                class="menu-item"
+                                aria-controls="dropdown-contracts"
+                                :aria-expanded="open"
                         >
                             @icon('contracts')
-                            <span>{{ __('forms.contracts') }}</span>
-                        </a>
+                            <span>{{ __('Договори') }}</span>
+
+                            <svg fill="currentColor" viewBox="0 0 20 20"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 :class="{ 'rotate-180': open, 'rotate-0': !open }"
+                            >
+                                <path fill-rule="evenodd"
+                                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                      clip-rule="evenodd"
+                                ></path>
+                            </svg>
+                        </button>
+
+                        <ul id="dropdown-contracts"
+                            x-cloak
+                            class="py-2 space-y-2"
+                            x-show="open"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                        >
+                            <li>
+                                <a href="{{ route('contract-request.index', [legalEntity()]) }}"
+                                   class="submenu-item"
+                                >
+                                    @icon('hugeicons-contracts')
+                                    <span>{{ __('contracts.contract_requests') }}</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="{{ route('contract.index', [legalEntity()]) }}"
+                                   class="submenu-item"
+                                >
+                                    @icon('document-catch-up')
+                                    <span>{{ __('contracts.contracts_list') }}</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                @endcan
+                @endif
 
                 @can('viewAny', License::class)
                     <li>

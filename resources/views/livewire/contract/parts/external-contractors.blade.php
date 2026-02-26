@@ -202,7 +202,7 @@
                          class="modal-content h-fit w-full max-w-6xl rounded-2xl shadow-lg bg-white"
                     >
                         <h3 class="modal-header" :id="$id('modal-title')">
-                            <span x-text="editingIndex !== null ? 'Редагувати залучених осіб' : '{{ __('contracts.new_external_contractor') }}'"></span>
+                            <span x-text="editingIndex !== null ? '{{ __('contracts.edit_external_contractor') }}' : '{{ __('contracts.new_external_contractor') }}'"></span>
                         </h3>
 
                         <form>

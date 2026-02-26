@@ -22,7 +22,7 @@
 
                 <button type="submit"
                         class="button-primary-outline flex items-center gap-2 px-4 py-2"
-                        wire:click="createLocally"
+                        wire:click="save"
                 >
                     @icon('archive', 'w-4 h-4')
                     {{ __('forms.save') }}

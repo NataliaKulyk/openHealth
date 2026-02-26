@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use App\Jobs\ContractRequestDetailsUpsert;
+use App\Models\Contracts\ContractRequest;
 use stdClass;
 use Exception;
 use App\Models\User;
@@ -432,5 +434,32 @@ trait BatchLegalEntityQueries
 
         // Here $job is the first job in the chain (or null if no employees)
         return $job ?? $previousJob;
+    }
+
+    /**
+     * Generates a chain of jobs to fetch details for all PARTIAL contract requests.
+     */
+    public function getContractRequestDetailsStartJob(LegalEntity $legalEntityModel, ?EHealthJob $nextEntityModel = null): ?EHealthJob
+    {
+        $partialRequestsList = ContractRequest::where('contractor_legal_entity_id', $legalEntityModel->uuid)
+            ->where('sync_status', JobStatus::PARTIAL->value)
+            ->get();
+
+        if ($partialRequestsList->isEmpty()) {
+            return $nextEntityModel;
+        }
+
+        // Build the chain of jobs from the bottom up
+        $chainedJob = $nextEntityModel;
+
+        foreach ($partialRequestsList as $requestModel) {
+            $chainedJob = new ContractRequestDetailsUpsert(
+                contractRequestModel: $requestModel,
+                legalEntity: $legalEntityModel,
+                nextEntity: $chainedJob
+            );
+        }
+
+        return $chainedJob;
     }
 }

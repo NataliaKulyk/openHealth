@@ -109,51 +109,40 @@
          wire:key="healthcare-services-table-page-{{ $healthcareServices->total() }}-{{ $healthcareServices->currentPage() }}"
     >
         <div class="max-w-screen-xl">
-            <div class="relative shadow-md sm:rounded-lg">
-                @if($healthcareServices->isNotEmpty())
-                    <table
-                        class="w-full min-w-[1100px] table-fixed text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            @if($healthcareServices->isNotEmpty())
+                <div class="index-table-wrapper">
+                    <table class="index-table">
+                        <thead class="index-table-thead">
                         <tr>
-                            <th class="px-6 py-3 w-[24%]">{{ __('healthcare-services.specialisation') }}</th>
-                            <th class="px-6 py-3 w-[24%]">{{ __('forms.division_name') }}</th>
-                            <th class="px-6 py-3 w-[18%]">{{ __('healthcare-services.providing_condition') }}</th>
-                            <th class="px-6 py-3 w-[14%] whitespace-nowrap">{{ __('forms.created_at') }}</th>
-                            <th class="px-6 py-3 w-[14%]">{{ __('healthcare-services.status') }}</th>
-                            <th class="px-6 py-3 w-[6%] whitespace-nowrap">{{ __('forms.action') }}</th>
+                            <th class="index-table-th w-[24%]">{{ __('healthcare-services.specialisation') }}</th>
+                            <th class="index-table-th w-[24%]">{{ __('forms.division_name') }}</th>
+                            <th class="index-table-th w-[18%]">{{ __('healthcare-services.providing_condition') }}</th>
+                            <th class="index-table-th w-[14%]">{{ __('forms.created_at') }}</th>
+                            <th class="index-table-th w-[14%]">{{ __('healthcare-services.status') }}</th>
+                            <th class="index-table-th w-[6%]">{{ __('forms.action') }}</th>
                         </tr>
                         </thead>
 
                         <tbody>
                         @foreach ($healthcareServices as $service)
-                            <tr wire:key="healthcare-service-{{ $service->id }}"
-                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200"
-                            >
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                    <p class="font-semibold text-gray-900 dark:text-white">
-                                        {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] ?? '-' }}
-                                    </p>
+                            <tr wire:key="healthcare-service-{{ $service->id }}" class="index-table-tr">
+                                <td class="index-table-td-primary">
+                                    {{ $dictionaries['SPECIALITY_TYPE'][$service->specialityType] ?? '-' }}
                                 </td>
 
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                    <p class="font-medium text-gray-600 dark:text-gray-500">
-                                        {{ $service->division->name }}
-                                    </p>
+                                <td class="index-table-td">
+                                    {{ $service->division->name }}
                                 </td>
 
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                    <p class="font-medium text-gray-600 dark:text-gray-500">
-                                        {{ $dictionaries['PROVIDING_CONDITION'][$service->providingCondition] ?? '-' }}
-                                    </p>
+                                <td class="index-table-td">
+                                    {{ $dictionaries['PROVIDING_CONDITION'][$service->providingCondition] ?? '-' }}
                                 </td>
 
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
-                                    <p class="text-gray-900 dark:text-white">
-                                        {{ $service->ehealthInsertedAt?->format('d.m.Y') ?? $service->createdAt->format('d.m.Y') }}
-                                    </p>
+                                <td class="index-table-td">
+                                    {{ $service->ehealthInsertedAt?->format('d.m.Y') ?? $service->createdAt->format('d.m.Y') }}
                                 </td>
 
-                                <td class="px-6 py-4 break-words whitespace-normal align-top">
+                                <td class="index-table-td">
                                     <span class="{{
                                         match($service->status) {
                                             Status::DRAFT => 'badge-dark',
@@ -166,7 +155,7 @@
                                     </span>
                                 </td>
 
-                                <td class="px-6 py-4 text-center">
+                                <td class="index-table-td-actions">
                                     @if($service->division->status === Status::ACTIVE)
                                         <div class="flex justify-center relative">
                                             <div x-data="{
@@ -282,30 +271,27 @@
                         @endforeach
                         </tbody>
                     </table>
-
-                @else
-                    <div class="p-12">
-                        <fieldset class="fieldset shift-content">
-                            <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
-                            <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex-shrink-0 mt-0.5">
-                                        @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-bold text-blue-800">
-                                            {{ __('forms.nothing_found') }}
-                                        </p>
-                                        <p class="text-sm text-blue-600">
-                                            {{ __('forms.changing_search_parameters') }}
-                                        </p>
-                                    </div>
-                                </div>
+                </div>
+            @else
+                <fieldset class="fieldset !mx-auto mt-8 shift-content">
+                    <legend class="legend relative -top-5">@icon('nothing-found', 'w-28 h-28')</legend>
+                    <div class="p-4 rounded-lg bg-blue-100 flex items-start mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                @icon('alert-circle', 'w-5 h-5 text-blue-500 mr-3 mt-1')
                             </div>
-                        </fieldset>
+                            <div class="flex-1">
+                                <p class="font-bold text-blue-800">
+                                    {{ __('forms.nothing_found') }}
+                                </p>
+                                <p class="text-sm text-blue-600">
+                                    {{ __('forms.changing_search_parameters') }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                @endif
-            </div>
+                </fieldset>
+            @endif
 
             <div class="mt-8 pl-3.5 pb-8 lg:pl-8 2xl:pl-5">
                 {{ $healthcareServices->links() }}

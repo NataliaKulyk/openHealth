@@ -7,15 +7,20 @@ namespace App\Livewire\Contract;
 use App\Classes\eHealth\EHealth;
 use App\Enums\Contract\Type;
 use App\Enums\JobStatus;
-use App\Models\Contract;
+use App\Jobs\ContractSync;
+use App\Models\Contracts\Contract;
 use App\Models\LegalEntity;
+use App\Notifications\SyncNotification;
 use App\Repositories\Repository;
 use App\Traits\FormTrait;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\View\View;
-use Livewire\Attributes\Computed;
+use Auth;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Log;
 
 class ContractIndex extends Component
 {
@@ -25,7 +30,7 @@ class ContractIndex extends Component
     public array $typeFilter = [];
     public bool $isFiltersApplied = false;
 
-    public function mount(LegalEntity $legalEntity): void
+    public function mount(): void
     {
         $this->typeFilter = Type::values();
     }
@@ -38,67 +43,82 @@ class ContractIndex extends Component
 
     public function resetFilters(): void
     {
-        $this->reset();
+        $this->reset(['typeFilter', 'isFiltersApplied']);
+        $this->typeFilter = Type::values();
     }
 
-    #[Computed]
-    public function contracts(): LengthAwarePaginator
-    {
-        // Filtering by the current Legal Entity ID in our DB
-        $query = Contract::whereLegalEntityId(legalEntity()->id)
-            ->orderBy('inserted_at', 'desc'); // Show newest first
-
-        if ($this->isFiltersApplied) {
-            // Add custom filters here if needed
-        }
-
-        return $query->paginate(config('pagination.per_page', 15));
-    }
-
-    /**
-     * Synchronizes contracts from eHealth API.
-     * Automatically determines the contract type based on Legal Entity type.
-     */
     public function sync(): void
     {
+        $currentLegalEntity = legalEntity();
+
+        if ($currentLegalEntity->getEntityStatus(LegalEntity::ENTITY_CONTRACT) === JobStatus::PROCESSING) {
+            Session::flash('error', 'Синхронізація вже триває.');
+            return;
+        }
+
+        $user = Auth::user();
+        $token = session()->get(config('ehealth.api.oauth.bearer_token'));
+
+        $this->dispatch('flashMessage', ['message' => 'Синхронізацію контрактів розпочато...', 'type' => 'success']);
+
         try {
-            // 1. Determine contract type (Reimbursement vs Capitation)
-            // Assuming LegalEntity model has constants TYPE_PHARMACY and TYPE_MSP
-            $contractType = legalEntity()->type->name === LegalEntity::TYPE_PHARMACY
-                ? 'reimbursement'
-                : 'capitation';
+            // Request first page
+            $response = EHealth::contract()
+                ->withToken($token)
+                ->getMany([
+                    // Using the correct filter key according to the Apiary documentation
+                    'contractor_legal_entity_id' => $currentLegalEntity->uuid,
+                ]);
 
-            // 2. Fetch list from eHealth
-            $response = EHealth::contractRequest()->getMany($contractType, [
-                'page_size' => 50,
-                'contractor_legal_entity_id' => legalEntity()->uuid
-            ]);
+            $contractsData = $response->validate();
 
-            $items = $response->getData();
-
-            // 3. Loop and Save using Repository
-            foreach ($items as $item) {
-                // Determine 'type' explicitly if API doesn't return it in the list view
-                if (!isset($item['type'])) {
-                    $item['type'] = strtoupper($contractType);
-                }
-
+            foreach ($contractsData as $item) {
                 Repository::contract()->saveFromEHealth($item);
             }
 
-            $this->isFiltersApplied = true;
-            session()->flash('success', 'Дані успішно синхронізовано (' . count($items) . ' записів).');
+            if ($response->isNotLast()) {
+                Bus::batch([
+                    new ContractSync(
+                        legalEntity: $currentLegalEntity,
+                        page: 2,
+                        standalone: false
+                    )
+                ])
+                    ->withOption('legal_entity_id', $currentLegalEntity->id)
+                    ->withOption('token', Crypt::encryptString($token))
+                    ->withOption('user', $user)
+                    ->then(function (Batch $batch) use ($user) {
+                        $user->notify(new SyncNotification('contract', 'completed'));
+                    })
+                    ->catch(function (Batch $batch, \Throwable $e) use ($user) {
+                        Log::error('Contract sync batch failed', ['error' => $e->getMessage()]);
+                        $user->notify(new SyncNotification('contract', 'failed'));
+                    })
+                    ->onQueue('sync')
+                    ->name('Contract Hybrid Sync')
+                    ->dispatch();
 
-            legalEntity()?->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_DOCUMENT);
+                $currentLegalEntity->setEntityStatus(JobStatus::PROCESSING, LegalEntity::ENTITY_CONTRACT);
+            } else {
+                $currentLegalEntity->setEntityStatus(JobStatus::COMPLETED, LegalEntity::ENTITY_CONTRACT);
+            }
+
         } catch (\Exception $e) {
-            session()->flash('error', 'Помилка синхронізації: ' . $e->getMessage());
+            Log::error('Manual contract sync error', ['message' => $e->getMessage()]);
+            $this->dispatch('flashMessage', ['message' => 'Error: ' . $e->getMessage(), 'type' => 'error']);
         }
     }
 
-    public function render(): View
+    public function render(): \Illuminate\View\View
     {
-        return view('livewire.contract.contract-index', [
-            'contracts' => $this->contracts
-        ]);
+        $contracts = Contract::query()
+            ->where('legal_entity_id', legalEntity()->id)
+            ->when($this->isFiltersApplied, function ($query) {
+                $query->whereIn('type', $this->typeFilter);
+            })
+            ->orderByDesc('start_date')
+            ->paginate(config('app.per_page', 15));
+
+        return view('livewire.contract.contract-index', ['contracts' => $contracts]);
     }
 }

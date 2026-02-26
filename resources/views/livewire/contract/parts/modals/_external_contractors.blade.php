@@ -183,7 +183,7 @@
                                 >
                                     <x-slot name='option'>
                                         <option  value=''>{{ __('forms.select') }}</option>
-                                        <option  value="PMD_1">{{ __('Послуга ПМД') }}</option>
+                                        <option  value="PMD_1">{{ __('contracts.pmd_service') }}</option>
                                     </x-slot>
                                 </x-forms.select>
 

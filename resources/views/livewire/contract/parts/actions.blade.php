@@ -8,13 +8,13 @@
     $hasActions = $canView;
 @endphp
 
+{{--
 @if ($hasActions)
     <div class="relative flex justify-center" x-data="{ open: false }" @click.outside="open = false">
         <button
             @click="open = !open"
             class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-white"
             type="button">
-            {{-- Using the same icon style as Employees --}}
             @icon('edit-user-outline', 'svg-hover-action w-6 h-6 text-gray-800 dark:text-gray-300')
         </button>
 
@@ -24,7 +24,6 @@
 
             <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" @click="open = false">
 
-                {{-- VIEW ACTION --}}
                 @if($canView)
                     <li>
                         <a href="{{ route('contract.show', ['legalEntity' => legalEntity(), 'contract' => $contract->id]) }}"
@@ -35,8 +34,6 @@
                     </li>
                 @endif
 
-                {{-- EDIT ACTION (Only for Drafts/New) --}}
-                {{-- Example logic: Show edit only if status is NEW --}}
                 @if($contract->status->value === 'NEW')
                     <li>
                         <a href="#"
@@ -57,5 +54,15 @@
 
             </ul>
         </div>
+    </div>
+@endif
+--}}
+
+@if ($hasActions)
+    <div class="shift-content">
+        <a href="{{ route('contract.index', legalEntity()) }}" class="button-minor flex items-center gap-2">
+            @icon('arrow-left', 'w-4 h-4')
+            {{ __('forms.back') }}
+        </a>
     </div>
 @endif
