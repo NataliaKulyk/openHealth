@@ -230,13 +230,18 @@ class LegalEntityDetails extends LegalEntityComponent
             return;
         }
 
+        $partyUsers = $owner->party->users()->get();
         $ownerData = $owner->party->toArray() ?? [];
 
         $ownerData['phones'] = $owner->party->phones->toArray() ?? [];
         $ownerData['documents'] = $this->prepareDocumentsData($owner->party->documents->toArray());
         $ownerData['position'] = $owner->position;
         $ownerData['employee_id'] = $owner->uuid;
-        $ownerData['email'] = $owner->user->email;
+
+        // Return or email user logined (if it has OWNER role) or first email attached to the employee with OWNER role
+        $ownerData['email'] = $partyUsers
+            ->where('email', Auth::user()->email)
+            ->first()?->email ?? $partyUsers->first()?->email;
 
         // TODO: remove it when all other entity will use the same date format
         $ownerData['birthDate'] = convertToAppDateFormat($ownerData['birthDate']);

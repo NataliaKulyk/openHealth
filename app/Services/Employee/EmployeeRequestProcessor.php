@@ -386,21 +386,26 @@ class EmployeeRequestProcessor
      */
     private function assignUserRoles(Employee $employee, int $legalEntityId): void
     {
-        if (!$employee->user) {
+        $users  = $employee->party->users;
+
+        if ($users->isEmpty()) {
             return;
         }
 
-        // Link User to Party if missing
-        if (!$employee->user->party_id && $employee->party_id) {
-            $employee->user->party_id = $employee->party_id;
-            $employee->user->save();
-        }
-
-        // Assign Role based on Employee Type
         $roleName = $employee->employee_type;
-        if ($roleName && !$employee->user->hasRole($roleName)) {
-            setPermissionsTeamId($legalEntityId);
-            $employee->user->assignRole($roleName);
+
+        foreach ($users as $user) {
+            // Link User to Party if missing
+            if (!$user->party_id && $employee->party_id) {
+                $user->party_id = $employee->party_id;
+                $user->save();
+            }
+
+            // Assign Role based on Employee Type
+            if ($roleName && !$user->hasRole($roleName)) {
+                setPermissionsTeamId($legalEntityId);
+                $user->assignRole($roleName);
+            }
         }
     }
 }

@@ -37,7 +37,7 @@ class DeclarationPolicy
         }
 
         // Сan only view their own
-        return $user->employees()->whereKey($declaration->employeeId)->exists()
+        return $user->party->employees()->whereKey($declaration->employeeId)->exists()
             ? Response::allow()
             : Response::denyWithStatus(404);
     }

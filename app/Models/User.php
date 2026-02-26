@@ -116,11 +116,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(EmployeeRequest::class);
     }
 
-    public function employees(): HasMany
-    {
-        return $this->hasMany(Employee::class);
-    }
-
     /**
      * This need to override because trait HasProfilePhoto was disabled to remove 'name' attribute calling.
      *
@@ -161,7 +156,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasAccessToLegalEntityByUuid(string $legalEntityUuid): bool
     {
-        return $this->employees()
+        return $this->party?->employees()
             ->whereHas('legalEntity', fn (Builder $query) => $query->where('uuid', $legalEntityUuid))
             ->exists();
     }
@@ -169,15 +164,15 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get ALL Legal Entities IDs available for this user
      *
-     * @return Collection<int|string, mixed>
+     * @return Collection<int|string, mixed>|null
      */
     public function accessibleLegalEntities(): Collection
     {
-        return $this->employees()
+        return $this->party?->employees()
             ->with('legalEntity')
             ->get()
             ->unique('legal_entity_id')
-            ->pluck('legal_entity_id');
+            ->pluck('legal_entity_id') ?? collect();
     }
 
     /**
@@ -300,7 +295,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $roleValues = array_map(static fn (Role $role) => $role->value, $priorityRoles);
 
-        $employees = $this->employees()
+        $employees = $this->party?->employees()
             ->with('party:id,first_name,last_name,second_name')
             ->whereIn('employee_type', $roleValues)
             ->get(['id', 'uuid', 'party_id', 'employee_type']);

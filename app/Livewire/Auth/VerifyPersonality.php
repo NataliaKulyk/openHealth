@@ -97,22 +97,14 @@ class VerifyPersonality extends Component
         $legalEntityUuid = Session::pull('selected_legal_entity_uuid');
         $legalEntity = LegalEntity::whereUuid($legalEntityUuid)->firstOrFail();
 
-        $affectedRows = $party->employees()
+        $isAlreadyVerified = $party->employees()
             ->whereLegalEntityId($legalEntity->id)
-            ->whereNull('user_id')
-            ->update(['user_id' => $user->id]);
+            ->exists();
 
-        if ($affectedRows === 0) {
-            $isAlreadyVerified = $party->employees()
-                ->whereLegalEntityId($legalEntity->id)
-                ->whereUserId($user->id)
-                ->exists();
+        if (!$isAlreadyVerified) {
+            Session::flash('error', 'Для вашого профілю не знайдено активних посад у цьому закладі. Зверніться до адміністратора.');
 
-            if (!$isAlreadyVerified) {
-                Session::flash('error', 'Для вашого профілю не знайдено активних посад у цьому закладі. Зверніться до адміністратора.');
-
-                return;
-            }
+            return;
         }
 
         EhealthUserVerified::dispatch($user, $legalEntity->id);

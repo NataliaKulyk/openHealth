@@ -1,8 +1,7 @@
-@use('App\Enums\JobStatus')
-
 <div>
     @php
         use App\Enums\User\Role;
+        use App\Enums\JobStatus;
 
         $currentUser = auth()->user();
         // We cache the hospital ID so as not to call the legalEntity() function 100 times in a loop
@@ -292,9 +291,10 @@
                                 {{-- Email --}}
                                 @php
 
-                                    $emailsCollection = $party->employees
+                                    $emailsCollection = $party->loadMissing('users')->employees
                                         ->where('legal_entity_id', $currentLegalEntityId)
-                                        ->map(fn($emp) => $emp->user?->email)
+                                        ->map(fn($emp) => $emp->loadMissing('party.users')->party->users?->map(fn($user) => $user->email))
+                                        ->flatten()
                                         ->filter()
                                         ->unique();
 
@@ -401,7 +401,7 @@
                                         @php
                                             $positionEmail = null;
                                             if ($position instanceof \App\Models\Employee\Employee) {
-                                                $positionEmail = $position->user->email ?? null;
+                                                $positionEmail = $position->loadMissing('party.users')->party->users()->first()?->email ?? null;
                                             } else if ($position instanceof \App\Models\Employee\EmployeeRequest) {
                                                 $positionEmail = $position->revision->data['party']['email'] ?? null;
                                             }

@@ -32,13 +32,11 @@ class EmployeeCreate
             ->where(fn(EloquentBuilder $q) => $q
                 ->where(fn(EloquentBuilder $query) =>
                     $query->where('status', RequestStatus::SIGNED)
-                        ->whereNull('employee_id')
                 )
                 // Sync for requests approved through our system and synced before user's first login
                 ->orWhere(fn(EloquentBuilder $query) =>
                     $query->where('status', RequestStatus::APPROVED)
-                        ->whereNotNull('employee_id')
-                        ->whereNotNull('user_id')
+                        ->whereNotNull(['start_date', 'employee_id', 'user_id'])
                         ->where('user_id', $user->id)
                         ->whereHas('employee', fn(EloquentBuilder $query) =>
                             $query->whereNull('user_id')
@@ -47,6 +45,7 @@ class EmployeeCreate
                 // Sync for requests that weren't approved through our system, were imported from EHealth
                 ->orWhere(fn(EloquentBuilder $query) =>
                     $query->where('status', RequestStatus::APPROVED)
+                        ->whereNotNull('start_date')
                         ->whereNull('employee_id')
                 )
             )
@@ -89,7 +88,9 @@ class EmployeeCreate
         // This filters out only uuids associated with the current user
         $existingUuids = Employee::whereIn('uuid', array_column($employees, 'uuid'))
             ->where('legal_entity_id', $event->legalEntity->id)
-            ->whereNotNull('user_id')
+            ->where(fn(EloquentBuilder $employeeQuery) =>
+                $employeeQuery->whereHas('party.users')
+            )
             ->pluck('uuid')
             ->all();
 
@@ -121,7 +122,6 @@ class EmployeeCreate
                     array_merge($dataFromRevision['employee'], $dataFromEHealth, [
                         'legal_entity_id' => $event->legalEntity->id,
                         'legal_entity_uuid' => $event->legalEntity->uuid,
-                        'user_id' => $user->id
                     ])
                 );
 

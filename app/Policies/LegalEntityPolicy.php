@@ -17,7 +17,7 @@ class LegalEntityPolicy
      */
     public function access(User $user, LegalEntity $currentEntity): Response
     {
-        $legalEntitiesIds = $user->employees()->pluck('legal_entity_id')->toArray();
+        $legalEntitiesIds = $user->party?->employees()->pluck('legal_entity_id')->toArray();
 
         $shouldAllow = in_array($currentEntity->id, $legalEntitiesIds, true);
 

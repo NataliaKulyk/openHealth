@@ -153,7 +153,7 @@ class DiagnosticReportComponent extends Component
         $this->patientId = $patientId;
         $this->employeeFullName = $authUser->getDiagnosticReportWriterEmployee()->fullName;
 
-        $employees = $authUser->employees()
+        $employees = $authUser->party->employees()
             ->select(['uuid', 'party_id', 'position'])
             ->with('party:id,last_name,first_name,second_name')
             ->whereLegalEntityId(legalEntity()->id)

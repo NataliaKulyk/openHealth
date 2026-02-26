@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models\Employee;
 
+use App\Models\User;
+use App\Models\Revision;
 use App\Casts\EHealthDateCast;
 use App\Enums\Employee\RequestStatus;
-use App\Models\Revision;
 use App\Models\Relations\ScienceDegree;
 use App\Models\Relations\Education;
 use App\Models\Relations\Qualification;
@@ -69,6 +70,14 @@ class EmployeeRequest extends BaseEmployee
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /**
+     * The user this request is associated with (can be null for synced employees)
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function revision(): MorphOne
