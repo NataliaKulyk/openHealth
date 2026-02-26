@@ -26,4 +26,8 @@ enum AuthStep: int
     case ADD_NEW_BY_SMS = 10;
     case APPROVE_ADDING_BY_SMS = 11;
     case ADD_NEW_BY_DOCUMENT = 12;
+    case ADD_NEW_BY_THIRD_PERSON = 13;
+    case ADD_ALIAS_FOR_THIRD_PERSON = 14;
+    case APPROVE_ADDING_NEW_METHOD = 15;
+    case APPROVE_DEACTIVATING_METHOD = 16;
 }

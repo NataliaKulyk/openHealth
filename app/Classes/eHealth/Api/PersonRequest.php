@@ -40,6 +40,8 @@ class PersonRequest extends Request
         $this->setValidator($this->validateResponse(...));
         $this->setMapper($this->mapResponse(...));
 
+        $data = $this->format($data, ['birthDate', 'issuedAt', 'expirationDate', 'activeTo']);
+
         return $this->post(self::URL_V2, $data);
     }
 

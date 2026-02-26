@@ -91,12 +91,12 @@
         >
             <option value="_placeholder_" hidden>-- {{ __('forms.select') }} --</option>
 
-                @forelse ($regions as $regionItem)
-                    <option value="{{ $regionItem['name'] }}">
-                        {{ $regionItem['name'] }}
-                    </option>
-                @empty
-                @endforelse
+            @forelse ($regions as $regionItem)
+                <option value="{{ $regionItem['name'] }}">
+                    {{ $regionItem['name'] }}
+                </option>
+            @empty
+            @endforelse
 
         </select>
 
@@ -113,8 +113,8 @@
 
     {{-- REGION --}}
     <div class="form-group group !z-[17]"
-        {{-- @mouseleave="timeout = setTimeout(() => { showTo = false }, 800)" --}}
-        x-data="{
+         {{-- @mouseleave="timeout = setTimeout(() => { showTo = false }, 800)" --}}
+         x-data="{
             showTo: false,
             districts: $wire.entangle('receptionDistricts'),
             initialized: false,
@@ -147,7 +147,7 @@
                 });
             }
         }"
-        x-init="init()"
+         x-init="init()"
     >
         <input
             x-model.debounce.400ms="address.region"
@@ -243,8 +243,8 @@
 
     {{-- SETTLEMENT --}}
     <div class="form-group group !z-[15]"
-        {{-- @mouseleave="timeout = setTimeout(() => { showTo = false }, 800)" --}}
-        x-data="{
+         {{-- @mouseleave="timeout = setTimeout(() => { showTo = false }, 800)" --}}
+         x-data="{
             showTo: false,
             settlements: $wire.entangle('receptionSettlements'),
             initialized: false,
@@ -277,7 +277,7 @@
                 });
             }
         }"
-        x-init="init()"
+         x-init="init()"
     >
         <input
             x-model.debounce.400ms="address.settlement"
@@ -373,8 +373,8 @@
 
     {{-- STREET --}}
     <div class="form-group group !z-[13]"
-       {{-- @mouseleave="timeout = setTimeout(() => { showTo = false }, 800)" --}}
-        x-data="{
+         {{-- @mouseleave="timeout = setTimeout(() => { showTo = false }, 800)" --}}
+         x-data="{
             showTo: false,
             streets: $wire.entangle('receptionStreets'),
             initialized: false,
@@ -410,62 +410,62 @@
                 });
             }
         }"
-        x-init="init()"
+         x-init="init()"
     >
-            <input
-                x-model.debounce.400ms="address.street"
-                @keydown.escape="showTo = false"
-                @change="showTo = false; streets = []"
-                @blur="selecting = false"
-                type="text"
-                placeholder=" "
-                id="addressRStreet"
-                autocomplete="off"
-                aria-describedby="{{ $hasStreetError ? 'addressRStreetErrorHelp' : '' }}"
-                class="input {{ $hasStreetError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
-                :disabled="(!address.settlementType && !selecting) || readonly"
-            />
+        <input
+            x-model.debounce.400ms="address.street"
+            @keydown.escape="showTo = false"
+            @change="showTo = false; streets = []"
+            @blur="selecting = false"
+            type="text"
+            placeholder=" "
+            id="addressRStreet"
+            autocomplete="off"
+            aria-describedby="{{ $hasStreetError ? 'addressRStreetErrorHelp' : '' }}"
+            class="input {{ $hasStreetError ? 'input-error border-red-500 focus:border-red-500' : ''}} peer"
+            :disabled="(!address.settlementType && !selecting) || readonly"
+        />
 
-            <div x-cloak x-show="showTo"
-                @click.away="showTo = false"
+        <div x-cloak x-show="showTo"
+             @click.away="showTo = false"
 
-                x-transition
+             x-transition
 
-                class="absolute left-0 right-0 top-full bg-white border border-gray-300 rounded-bl-md rounded-br-md shadow-lg dark:bg-gray-800 dark:border-gray-500"
-             >
-                <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownHoverButton">
-                    <template x-for="street in streets" :key="street.id">
-                        <li
-                            x-on:mousedown.stop="
-                                selecting = true;
-                                showTo = false;
+             class="absolute left-0 right-0 top-full bg-white border border-gray-300 rounded-bl-md rounded-br-md shadow-lg dark:bg-gray-800 dark:border-gray-500"
+        >
+            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownHoverButton">
+                <template x-for="street in streets" :key="street.id">
+                    <li
+                        x-on:mousedown.stop="
+                            selecting = true;
+                            showTo = false;
 
-                                address.street = street.name.replace(/'/g, '\'');
-                            "
-                            class="cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-blue-800"
-                        >
-                            <span x-text="street.name"></span>
-                        </li>
-                    </template>
+                            address.street = street.name.replace(/'/g, '\'');
+                        "
+                        class="cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-blue-800"
+                    >
+                        <span x-text="street.name"></span>
+                    </li>
+                </template>
 
-                    <div x-show="!streets || (Array.isArray(streets) && streets.length === 0)" x-cloak>
-                        <li class="cursor-default px-4 py-2">
-                            {{ __('forms.nothing_found') }}
-                        </li>
-                    </div>
-                </ul>
-            </div>
+                <div x-show="!streets || (Array.isArray(streets) && streets.length === 0)" x-cloak>
+                    <li class="cursor-default px-4 py-2">
+                        {{ __('forms.nothing_found') }}
+                    </li>
+                </div>
+            </ul>
+        </div>
 
 
-            @if($hasStreetError)
-                <p id="addressRStreetErrorHelp" class="text-error">
-                    {{ $errors->first('receptionAddress.street') }}
-                </p>
-            @endif
+        @if($hasStreetError)
+            <p id="addressRStreetErrorHelp" class="text-error">
+                {{ $errors->first('receptionAddress.street') }}
+            </p>
+        @endif
 
-            <label for="addressRStreet" class="label z-10">
-                {{ __('forms.street') }}
-            </label>
+        <label for="addressRStreet" class="label z-10">
+            {{ __('forms.street') }}
+        </label>
     </div>
 
     {{-- BUILDING --}}

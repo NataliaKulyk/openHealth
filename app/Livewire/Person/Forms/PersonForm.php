@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\Person\Forms;
 
-use App\Core\Arr;
 use App\Core\BaseForm;
 use App\Rules\AlphaNumericWithSymbols;
 use App\Rules\InDictionary;
@@ -106,6 +105,7 @@ class PersonForm extends BaseForm
 
         if (!empty($this->person['documentsRelationship'])) {
             $this->addNumberDocumentsRelationshipValidation($createRules);
+            $this->validateBirthCertificateAge();
         }
 
         if (!empty($this->person['birthDate'])) {
@@ -261,63 +261,15 @@ class PersonForm extends BaseForm
 
     public function messages(): array
     {
-        return [
-            'person.unzr.required' => "Поле УНЗР є обов’язковим, якщо вибрано документ типу 'Біометричний паспорт громадянина України'.",
-            'person.documents.*.expirationDate' => "Поле 'дійсний до' в документі має містити дату не раніше сьогоднішньої."
+        $messages = [
+            'person.unzr.required' => __('validation.custom.person.unzr_required_for_national_id'),
+            'person.taxId.required_if' => __('validation.custom.person.tax_id_required_when_not_absent')
         ];
-    }
 
-    /**
-     * Format API request for search confidant person.
-     *
-     * @param  array  $validatedData
-     * @return array
-     */
-    public function formatForConfidantSearchApi(array $validatedData): array
-    {
-        collect($validatedData)
-            ->only(['birthDate'])
-            ->filter()
-            ->each(static function (string $value, string $key) use (&$validatedData) {
-                $validatedData[$key] = convertToYmd($value);
-            });
+        // Add translated message for document expiration date
+        $messages['person.documents.*.expirationDate.required_if'] = $this->getExpirationDateRequiredMessage();
 
-        return removeEmptyKeys(Arr::toSnakeCase($validatedData));
-    }
-
-    /**
-     * Format API request for create person.
-     *
-     * @param  array  $validatedData
-     * @return array
-     */
-    public function formatForPersonCreationApi(array $validatedData): array
-    {
-        $validatedData['person']['birthDate'] = convertToYmd($validatedData['person']['birthDate']);
-
-        // change date format in array
-        foreach ($validatedData['person']['documents'] as $key => $document) {
-            $validatedData['person']['documents'][$key]['issuedAt'] = convertToYmd($document['issuedAt']);
-
-            if (!empty($document['expirationDate'])) {
-                $validatedData['person']['documents'][$key]['expirationDate'] =
-                    convertToYmd($document['expirationDate']);
-            }
-        }
-
-        if (!empty(Arr::get($validatedData, 'person.confidantPerson.documentsRelationship'))) {
-            foreach ($validatedData['person']['confidantPerson']['documentsRelationship'] as $key => $documentRelationship) {
-                $validatedData['person']['confidantPerson']['documentsRelationship'][$key]['issuedAt'] =
-                    convertToYmd($documentRelationship['issuedAt']);
-
-                if (!empty($documentRelationship['activeTo'])) {
-                    $validatedData['person']['confidantPerson']['documentsRelationship'][$key]['activeTo'] =
-                        convertToYmd($documentRelationship['activeTo']);
-                }
-            }
-        }
-
-        return removeEmptyKeys(Arr::toSnakeCase($validatedData));
+        return $messages;
     }
 
     /**
@@ -330,11 +282,34 @@ class PersonForm extends BaseForm
     {
         $requiredTypes = config('ehealth.expiration_date_exists');
 
-        foreach ($this->person['documents'] as $document) {
-            if (empty($document['expirationDate']) && in_array($document['type'], $requiredTypes, true)) {
-                $rules['person.documents.*.expirationDate'][] = 'required';
+        // Simply add required_if rule that checks if document type is in required types
+        $rules['person.documents.*.expirationDate'][] = 'required_if:person.documents.*.type,' . implode(
+            ',',
+            $requiredTypes
+        );
+    }
+
+    /**
+     * Format translation message with translated document type.
+     *
+     * @return string
+     */
+    private function getExpirationDateRequiredMessage(): string
+    {
+        // Find which document type is causing the validation error
+        if (!empty($this->person['documents'])) {
+            $requiredTypes = config('ehealth.expiration_date_exists', []);
+
+            foreach ($this->person['documents'] as $document) {
+                if (empty($document['expirationDate'] && in_array($document['type'], $requiredTypes, true))) {
+                    $translatedType = __("patients.documents.{$document['type']}") ?: $document['type'];
+
+                    return __('validation.custom.person.expiration_date_required_for_type', ['document_type' => $translatedType]);
+                }
             }
         }
+
+        return __('validation.custom.person.expiration_date_required_general');
     }
 
     /**
@@ -349,7 +324,8 @@ class PersonForm extends BaseForm
             $rules["person.documents.$key.number"][] = match ($document['type']) {
                 'PASSPORT', 'REFUGEE_CERTIFICATE', 'COMPLEMENTARY_PROTECTION_CERTIFICATE' => new TwoLettersSixDigits(),
                 'NATIONAL_ID' => 'digits:9',
-                'BIRTH_CERTIFICATE', 'TEMPORARY_PASSPORT', 'CHILD_BIRTH_CERTIFICATE', 'MARRIAGE_CERTIFICATE', 'DIVORCE_CERTIFICATE' => new AlphaNumericWithSymbols(),
+                'BIRTH_CERTIFICATE', 'TEMPORARY_PASSPORT', 'CHILD_BIRTH_CERTIFICATE', 'MARRIAGE_CERTIFICATE',
+                'DIVORCE_CERTIFICATE' => new AlphaNumericWithSymbols(),
                 'TEMPORARY_CERTIFICATE' => new TwoLettersFourToSixDigitsOrComplex(),
                 'BIRTH_CERTIFICATE_FOREIGN', 'PERMANENT_RESIDENCE_PERMIT' => 'string',
                 default => null
@@ -368,6 +344,28 @@ class PersonForm extends BaseForm
         foreach ($this->person['documentsRelationship'] as $key => $document) {
             if ($document['type'] === 'BIRTH_CERTIFICATE') {
                 $rules["person.documentsRelationship.$key.number"][] = new AlphaNumericWithSymbols();
+            }
+        }
+    }
+
+    /**
+     * Validate birth certificate documents based on person age for relationship documents
+     *
+     * @return void
+     */
+    private function validateBirthCertificateAge(): void
+    {
+        foreach ($this->person['documentsRelationship'] as $document) {
+            if ($this->personAge >= self::PERSON_FULL_LEGAL_CAPACITY_AGE &&
+                in_array(
+                    $document['type'],
+                    ['BIRTH_CERTIFICATE', 'BIRTH_CERTIFICATE_FOREIGN'],
+                    true
+                )
+            ) {
+                throw ValidationException::withMessages([
+                    'person.documents' => __('validation.custom.person.invalid_relationship_document_for_age')
+                ]);
             }
         }
     }
@@ -395,7 +393,7 @@ class PersonForm extends BaseForm
         // If age less than 18 then check that confidant_person is submitted
         if ($this->personAge < self::NO_SELF_REGISTRATION_AGE && empty($this->person['confidantPerson']['personId'])) {
             throw ValidationException::withMessages([
-                'person.confidantPerson' => __('validation.custom.person.confidantPersonRequiredForChildren')
+                'person.confidantPerson' => __('validation.custom.person.confidant_person_required_for_children')
             ]);
         }
 
@@ -414,14 +412,14 @@ class PersonForm extends BaseForm
             // if none of persons documents has type from PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter - check that confidant_person is submitted
             if (!$hasLegalCapacityDocument && empty($this->person['confidantPerson']['personId'])) {
                 throw ValidationException::withMessages([
-                    'person.confidantPerson' => __('validation.custom.person.confidantPersonRequiredForMinor')
+                    'person.confidantPerson' => __('validation.custom.person.confidant_person_required_for_minor')
                 ]);
             }
 
             // Else if at least one of submitted person document types exist in PERSON_LEGAL_CAPACITY_DOCUMENT_TYPES config parameter - check that confidant_person is not submitted
             if ($hasLegalCapacityDocument && !empty($this->person['confidantPerson']['personId'])) {
                 throw ValidationException::withMessages([
-                    'person.confidantPerson' => __('validation.custom.person.confidantPersonMustBeCapable')
+                    'person.confidantPerson' => __('validation.custom.person.confidant_person_must_be_capable')
                 ]);
             }
         }
@@ -447,7 +445,7 @@ class PersonForm extends BaseForm
 
             if (!$hasRequiredDocument) {
                 throw ValidationException::withMessages([
-                    'person.documents' => __('validation.custom.person.birthDocumentsRequired')
+                    'person.documents' => __('validation.custom.person.birth_documents_required')
                 ]);
             }
         }
@@ -470,8 +468,9 @@ class PersonForm extends BaseForm
 
         foreach ($this->person['documents'] as $document) {
             if (!in_array($document['type'], (array)$allAllowedTypes, true)) {
+                $documentTypeName = __('patients.documents.' . $document['type']) ?: $document['type'];
                 throw ValidationException::withMessages([
-                    'person.documents' => "Тип поданого документа не допускається: {$document['type']}."
+                    'person.documents' => __('validation.custom.person.document_type_not_allowed', ['document_type' => $documentTypeName])
                 ]);
             }
         }
@@ -481,8 +480,9 @@ class PersonForm extends BaseForm
         if ($this->personAge < self::NO_SELF_REGISTRATION_AGE || $this->personAge > self::PERSON_FULL_LEGAL_CAPACITY_AGE) {
             foreach ($this->person['documents'] as $document) {
                 if (in_array($document['type'], $personLegalCapacityDocumentTypes, true)) {
+                    $documentTypeName = __('patients.documents.' . $document['type']) ?: $document['type'];
                     throw ValidationException::withMessages([
-                        'person.documents' => "{$document['type']} не може бути подана для цієї особи."
+                        'person.documents' => __('validation.custom.person.document_type_not_allowed_for_person', ['document_type' => $documentTypeName])
                     ]);
                 }
             }
@@ -503,7 +503,7 @@ class PersonForm extends BaseForm
 
             if (empty($submittedRegistrationDocuments)) {
                 throw ValidationException::withMessages([
-                    'person.documents' => 'Документ, що підтверджує особисті дані, повинен бути поданий.'
+                    'person.documents' => __('validation.custom.person.registration_document_required')
                 ]);
             }
 
@@ -511,21 +511,34 @@ class PersonForm extends BaseForm
             // check that at least one document type from PERSON_REGISTRATION_DOCUMENT_TYPES is submitted
             if (count($submittedLegalCapacityDocuments) > 1) {
                 throw ValidationException::withMessages([
-                    'person.documents' => 'Only one legal capacity document must be submitted.'
+                    'person.documents' => __('validation.custom.person.only_one_legal_capacity_document')
                 ]);
             }
         }
 
+        // Check that document types NATIONAL_ID and PASSPORT both do not exist in request
+        $submittedTypes = array_column($this->person['documents'], 'type');
+        $hasNationalId = in_array('NATIONAL_ID', $submittedTypes, true);
+        $hasPassport = in_array('PASSPORT', $submittedTypes, true);
+
+        if ($hasNationalId && $hasPassport) {
+            throw ValidationException::withMessages([
+                'person.documents' => __('validation.custom.person.national_id_passport_mutual_exclusion')
+            ]);
+        }
+
         // Check if person age > prm.global_parameters.no_self_auth_age check existence SELF_AUTH_AGE_DOCUMENT_TYPES
         if ($this->personAge > self::NO_SELF_AUTH_AGE) {
-            $submittedTypes = array_column($this->person['documents'], 'type');
             $hasSelfAuthType = (bool)array_intersect($submittedTypes, $selfAuthAgeDocumentTypes);
 
             if (!$hasSelfAuthType) {
-                $allowedTypesList = implode(', ', $selfAuthAgeDocumentTypes);
+                $translatedTypes = array_map(static function ($type) {
+                    return __('patients.documents.' . $type) ?: $type;
+                }, $selfAuthAgeDocumentTypes);
+                $allowedTypesList = implode(', ', $translatedTypes);
 
                 throw ValidationException::withMessages([
-                    'person.documents' => "Не можна створити з таким типом документів, оберіть один із: $allowedTypesList"
+                    'person.documents' => __('validation.custom.person.invalid_document_types_for_age', ['allowed_types' => $allowedTypesList])
                 ]);
             }
         }

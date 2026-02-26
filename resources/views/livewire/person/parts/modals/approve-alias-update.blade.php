@@ -13,7 +13,7 @@
         <div class="pb-4 flex" wire:key="{{ $key }}">
             <div class="flex-grow">
                 <label class="block mb-3 text-sm font-medium text-gray-900 dark:text-white" for="fileInput-{{ $key }}">
-                    {{ __('patients.documents.' . Str::lower(Str::afterLast($document['type'], '.'))) }}
+                    {{ __('patients.documents.' . Str::afterLast($document['type'], '.')) }}
                 </label>
                 <div class="flex items-center gap-4">
                     <input type="file"
@@ -39,18 +39,19 @@
     @endnonempty
 
     @empty($this->uploadedDocuments)
-        <div class="form-row-3 mt-4" x-data="{
-        timer: 60,
-        init() {
-            setInterval(() => { if(this.timer > 0) this.timer-- }, 1000)
-        },
-        resetTimer() {
-            if(this.timer === 0) {
-                this.timer = 60;
-                $wire.resendCode();
-            }
-        }
-    }"
+        <div class="form-row-3 mt-4"
+             x-data="{
+                 timer: 60,
+                 init() {
+                     setInterval(() => { if(this.timer > 0) this.timer-- }, 1000)
+                 },
+                 resetTimer() {
+                     if(this.timer === 0) {
+                         this.timer = 60;
+                         $wire.resendCode();
+                     }
+                 }
+             }"
         >
             <div class="form-group group">
                 <input type="text"

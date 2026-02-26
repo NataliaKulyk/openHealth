@@ -52,10 +52,25 @@ class PersonRequestEdit extends PersonComponent
             $this->form->person['authenticationMethods'] = [['type' => null]];
         }
 
-        if ($this->form->person['confidantPerson']) {
-            $this->form->person['confidantPerson']['personId'] = $personRequest->confidantPersons->first()->person->uuid;
+        if ($this->form->person['confidantPersons']) {
+            // Get the confidant person relationship data (contains documentsRelationship)
+            $confidantPersonRelation = $this->form->person['confidantPersons'][0];
+            $this->form->person['confidantPerson'] = $confidantPersonRelation;
+            unset($this->form->person['confidantPersons']);
+
+            // Get the actual person data and merge it with relationship data
+            $personData = $personRequest->confidantPersons->first()->person->load('phones', 'documents')->toArray();
+
+            // Merge person data into selectedConfidantPersonData for the blade template
+            $this->selectedConfidantPersonData = array_merge($personData, [
+                'documentsRelationship' => $confidantPersonRelation['documentsRelationship'] ?? [],
+                'personId' => $personData['uuid']
+            ]);
+
+            $this->form->person['confidantPerson']['personId'] = $personData['uuid'];
         } else {
             $this->form->person['confidantPerson']['documentsRelationship'] = [];
+            $this->selectedConfidantPersonData = ['documentsRelationship' => []];
         }
     }
 
