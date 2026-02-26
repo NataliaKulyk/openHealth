@@ -1,3 +1,5 @@
+This repository is archived. The link to the new repository: https://github.com/openhealths/ohealth
+
 # Open Health
 Health Information System (Медична інформаційна система)
 ## License & copyright
